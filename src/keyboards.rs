@@ -23,7 +23,8 @@ impl StartKeyboard {
             KeyboardMarkup::new(vec![
                 vec![StartKeyboard::Dislike.into()],
                 vec![StartKeyboard::Stats.into(), StartKeyboard::Cleanup.into()],
-            ]).resize_keyboard(true)
+            ])
+            .resize_keyboard(true),
         )
     }
 }

@@ -1,41 +1,60 @@
+#![feature(stmt_expr_attributes)]
+
 extern crate derive_more;
 
 use std::env;
 use std::str::FromStr;
 use std::time::Duration;
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Context, Result};
 use dotenv::dotenv;
 use futures::FutureExt;
-use rspotify::{AuthCodeSpotify, clients::OAuthClient, scopes, Token};
 use rspotify::model::PlayableItem;
 use rspotify::prelude::*;
-use teloxide::{
-    prelude::*,
+use rspotify::{clients::OAuthClient, scopes, AuthCodeSpotify, Token};
+use teloxide::prelude::*;
+use teloxide::types::{
+    InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup, ParseMode, ReplyMarkup,
 };
-use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::utils::command::{BotCommand, ParseError};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::commands::Command;
 use crate::keyboards::StartKeyboard;
 
-mod keyboards;
 mod commands;
+mod keyboards;
 
-async fn handle_message_button(cx: UpdateWithCx<Bot, CallbackQuery>, _state: &AppState) -> anyhow::Result<()> {
+async fn handle_message_button(
+    cx: UpdateWithCx<Bot, CallbackQuery>,
+    _state: &AppState,
+) -> anyhow::Result<()> {
     if let Some(data) = cx.update.data {
         println!("{}", data);
-        cx.requester.answer_callback_query(cx.update.id)
-            .text(data).send().await?;
+        cx.requester
+            .answer_callback_query(cx.update.id)
+            .text(data)
+            .send()
+            .await?;
 
-        cx.requester.edit_message_text(cx.update.from.id, cx.update.message.unwrap().id, "Dislike cancelled").send().await?;
+        cx.requester
+            .edit_message_text(
+                cx.update.from.id,
+                cx.update.message.unwrap().id,
+                "Dislike cancelled",
+            )
+            .send()
+            .await?;
     }
+
     Ok(())
 }
 
-async fn handle_command(cx: &UpdateWithCx<Bot, Message>, _state: &AppState) -> anyhow::Result<bool> {
-    let text = cx.update.text().ok_or_else(|| Error::msg("No text available"))?;
+async fn handle_command(
+    cx: &UpdateWithCx<Bot, Message>,
+    _state: &AppState,
+) -> anyhow::Result<bool> {
+    let text = cx.update.text().context("No text available")?;
 
     if !text.starts_with('/') {
         return Ok(false);
@@ -44,10 +63,14 @@ async fn handle_command(cx: &UpdateWithCx<Bot, Message>, _state: &AppState) -> a
     let command = Command::parse(text, "Something bot name");
 
     if let Err(ParseError::UnknownCommand(command)) = command {
-        cx.answer(format!("Command `{}` not found: \n\n{}", command, Command::descriptions()))
-            .parse_mode(ParseMode::MarkdownV2)
-            .send()
-            .await?;
+        cx.answer(format!(
+            "Command `{}` not found: \n\n{}",
+            command,
+            Command::descriptions()
+        ))
+        .parse_mode(ParseMode::MarkdownV2)
+        .send()
+        .await?;
 
         return Ok(true);
     }
@@ -72,12 +95,12 @@ async fn handle_command(cx: &UpdateWithCx<Bot, Message>, _state: &AppState) -> a
 }
 
 async fn handle_button(cx: &UpdateWithCx<Bot, Message>, state: &AppState) -> anyhow::Result<bool> {
-    let text = cx.update.text().ok_or_else(|| anyhow!("No text available"))?;
+    let text = cx.update.text().context("No text available")?;
 
     let button = StartKeyboard::from_str(text);
 
     if button.is_err() {
-        return Ok(false)
+        return Ok(false);
     }
 
     let button = button?;
@@ -89,18 +112,18 @@ async fn handle_button(cx: &UpdateWithCx<Bot, Message>, state: &AppState) -> any
                 None => {
                     cx.answer("Nothing is currently playing").send().await?;
 
-                    return Ok(true)
+                    return Ok(true);
                 }
-                Some(playing) => playing.item
+                Some(playing) => playing.item,
             };
 
             let item = match playing {
                 None => {
                     cx.answer("Nothing is currently playing").send().await?;
 
-                    return Ok(true)
+                    return Ok(true);
                 }
-                Some(item) => item
+                Some(item) => item,
             };
 
             let track = match item {
@@ -108,25 +131,31 @@ async fn handle_button(cx: &UpdateWithCx<Bot, Message>, state: &AppState) -> any
                 _ => {
                     cx.answer("I don't skip podcasts").send().await?;
 
-                    return Ok(true)
+                    return Ok(true);
                 }
             };
 
-            let artists = track.artists.iter()
+            let artists = track
+                .artists
+                .iter()
                 .map(|art| art.name.as_ref())
                 .collect::<Vec<_>>()
                 .join(", ");
 
             cx.answer(format!("Disliked `{} — {}`", artists, track.name))
                 .parse_mode(ParseMode::MarkdownV2)
-                .reply_markup(
-                    ReplyMarkup::InlineKeyboard(
-                        InlineKeyboardMarkup::new(vec![
-                            vec![InlineKeyboardButton::new("Cancel ↩", InlineKeyboardButtonKind::CallbackData(track.id.unwrap().id().into()))]
-                        ])
-                    )
-                ).send().await?;
-        },
+                .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+                    #[rustfmt::skip]
+                    vec![
+                        vec![InlineKeyboardButton::new(
+                            "Cancel ↩",
+                            InlineKeyboardButtonKind::CallbackData(track.id.unwrap().id().into()),
+                        )]
+                    ],
+                )))
+                .send()
+                .await?;
+        }
         StartKeyboard::Cleanup => println!("Cleanup"),
         StartKeyboard::Stats => println!("Stats"),
     }
@@ -135,8 +164,7 @@ async fn handle_button(cx: &UpdateWithCx<Bot, Message>, state: &AppState) -> any
 }
 
 async fn handle_message(cx: UpdateWithCx<Bot, Message>, state: &AppState) -> Result<()> {
-    let _ = handle_command(&cx, state).await?
-        || handle_button(&cx, state).await?;
+    let _ = handle_command(&cx, state).await? || handle_button(&cx, state).await?;
 
     Ok(())
 }
@@ -149,24 +177,42 @@ async fn spotify() -> AuthCodeSpotify {
 
     let creds = rspotify::Credentials::new(
         env::var("SPOTIFY_ID").unwrap().as_ref(),
-        env::var("SPOTIFY_SECRET").unwrap().as_ref()
+        env::var("SPOTIFY_SECRET").unwrap().as_ref(),
     );
 
     let oauth = rspotify::OAuth {
         redirect_uri: "http://localhost:8080/callback".into(),
-        scopes: scopes!("user-follow-read", "user-follow-modify"),
+        // TODO Reduce to minimum
+        scopes: scopes!(
+            "ugc-image-upload",
+            "user-read-playback-state",
+            "user-modify-playback-state",
+            "user-read-currently-playing",
+            "user-read-private",
+            "user-read-email",
+            "user-follow-modify",
+            "user-follow-read",
+            "user-library-modify",
+            "user-library-read",
+            "app-remote-control",
+            "user-read-playback-position",
+            "user-top-read",
+            "user-read-recently-played",
+            "playlist-modify-private",
+            "playlist-read-collaborative",
+            "playlist-read-private",
+            "playlist-modify-public"
+        ),
         ..Default::default()
     };
 
     let spotify = rspotify::AuthCodeSpotify::with_config(creds.clone(), oauth, config.clone());
 
-    *spotify.token.lock().await.unwrap() = Some(
-        Token {
-            access_token: env::var("SPOTIFY_ACCESS_TOKEN").unwrap(),
-            refresh_token: Some(env::var("SPOTIFY_REFRESH_TOKEN").unwrap()),
-            ..Default::default()
-        }
-    );
+    *spotify.token.lock().await.unwrap() = Some(Token {
+        access_token: env::var("SPOTIFY_ACCESS_TOKEN").unwrap(),
+        refresh_token: Some(env::var("SPOTIFY_REFRESH_TOKEN").unwrap()),
+        ..Default::default()
+    });
 
     spotify
 
@@ -213,13 +259,16 @@ async fn check_playing(state: &AppState) -> anyhow::Result<()> {
 
 async fn run() {
     dotenv().ok();
+
     let spotify = spotify().await;
 
     teloxide::enable_logging!();
-    log::info!("Starting dices_bot...");
+    log::info!("Starting rustify bot...");
     let bot = Bot::new(env::var("TELEGRAM_BOT_TOKEN").unwrap());
 
-    let state = Box::new(AppState { spotify });
+    // Make state global static variable to prevent hassle with Arc and cloning this mess
+    let state = AppState { spotify };
+    let state = Box::new(state);
     let state = &*Box::leak(state);
 
     tokio::spawn(async {
