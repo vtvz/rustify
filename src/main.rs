@@ -14,7 +14,11 @@ use rspotify::prelude::*;
 use rspotify::{clients::OAuthClient, scopes, AuthCodeSpotify, Token};
 use teloxide::prelude::*;
 use teloxide::types::{
-    InlineKeyboardButton, InlineKeyboardButtonKind, InlineKeyboardMarkup, ParseMode, ReplyMarkup,
+    InlineKeyboardButton,
+    InlineKeyboardButtonKind,
+    InlineKeyboardMarkup,
+    ParseMode,
+    ReplyMarkup,
 };
 use teloxide::utils::command::{BotCommand, ParseError};
 use tokio_stream::wrappers::UnboundedReceiverStream;
