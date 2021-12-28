@@ -1,54 +1,58 @@
-#![feature(stmt_expr_attributes)]
-
 extern crate derive_more;
+#[macro_use]
+extern crate serde;
 
 use std::env;
 use std::str::FromStr;
 use std::time::Duration;
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use dotenv::dotenv;
 use futures::FutureExt;
 use rspotify::model::PlayableItem;
 use rspotify::prelude::*;
 use rspotify::{clients::OAuthClient, scopes, AuthCodeSpotify, Token};
 use teloxide::prelude::*;
-use teloxide::types::{
-    InlineKeyboardButton,
-    InlineKeyboardButtonKind,
-    InlineKeyboardMarkup,
-    ParseMode,
-    ReplyMarkup,
-};
+use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::utils::command::{BotCommand, ParseError};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::commands::Command;
+use crate::inline_buttons::InlineButtons;
 use crate::keyboards::StartKeyboard;
 
 mod commands;
+mod inline_buttons;
 mod keyboards;
 
 async fn handle_message_button(
     cx: UpdateWithCx<Bot, CallbackQuery>,
     _state: &AppState,
 ) -> anyhow::Result<()> {
-    if let Some(data) = cx.update.data {
-        println!("{}", data);
-        cx.requester
-            .answer_callback_query(cx.update.id)
-            .text(data)
-            .send()
-            .await?;
+    let data = cx
+        .update
+        .data
+        .ok_or_else(|| anyhow!("Callback needs data"))?;
 
-        cx.requester
-            .edit_message_text(
-                cx.update.from.id,
-                cx.update.message.unwrap().id,
-                "Dislike cancelled",
-            )
-            .send()
-            .await?;
+    let button: InlineButtons = data.parse()?;
+
+    match button {
+        InlineButtons::Cancel(id) => {
+            cx.requester
+                .answer_callback_query(cx.update.id)
+                .text(id)
+                .send()
+                .await?;
+
+            cx.requester
+                .edit_message_text(
+                    cx.update.from.id,
+                    cx.update.message.unwrap().id,
+                    "Dislike cancelled",
+                )
+                .send()
+                .await?;
+        }
     }
 
     Ok(())
@@ -98,7 +102,7 @@ async fn handle_command(
     Ok(true)
 }
 
-async fn handle_button(cx: &UpdateWithCx<Bot, Message>, state: &AppState) -> anyhow::Result<bool> {
+async fn handle_button(cx: &UpdateWithCx<Bot, Message>, state: &AppState) -> Result<bool> {
     let text = cx.update.text().context("No text available")?;
 
     let button = StartKeyboard::from_str(text);
@@ -113,27 +117,36 @@ async fn handle_button(cx: &UpdateWithCx<Bot, Message>, state: &AppState) -> any
         StartKeyboard::Dislike => {
             let playing = state.spotify.current_playing(None, None::<&[_]>).await?;
             let playing = match playing {
+                Some(playing) => playing.item,
                 None => {
                     cx.answer("Nothing is currently playing").send().await?;
 
                     return Ok(true);
                 }
-                Some(playing) => playing.item,
             };
 
             let item = match playing {
+                Some(item) => item,
                 None => {
                     cx.answer("Nothing is currently playing").send().await?;
 
                     return Ok(true);
                 }
-                Some(item) => item,
             };
 
             let track = match item {
                 PlayableItem::Track(item) => item,
                 _ => {
                     cx.answer("I don't skip podcasts").send().await?;
+
+                    return Ok(true);
+                }
+            };
+
+            let track_id = match track.id {
+                Some(id) => id.id().to_string(),
+                None => {
+                    cx.answer("I don't skip local files").send().await?;
 
                     return Ok(true);
                 }
@@ -146,14 +159,14 @@ async fn handle_button(cx: &UpdateWithCx<Bot, Message>, state: &AppState) -> any
                 .collect::<Vec<_>>()
                 .join(", ");
 
+            #[rustfmt::skip]
             cx.answer(format!("Disliked `{} — {}`", artists, track.name))
                 .parse_mode(ParseMode::MarkdownV2)
                 .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-                    #[rustfmt::skip]
                     vec![
                         vec![InlineKeyboardButton::new(
                             "Cancel ↩",
-                            InlineKeyboardButtonKind::CallbackData(track.id.unwrap().id().into()),
+                            InlineButtons::Cancel(track_id).into(),
                         )]
                     ],
                 )))
@@ -255,8 +268,8 @@ struct AppState {
 }
 
 async fn check_playing(state: &AppState) -> anyhow::Result<()> {
-    let playing = state.spotify.current_playing(None, None::<&[_]>).await?;
-    println!("{:?}", playing);
+    let _playing = state.spotify.current_playing(None, None::<&[_]>).await?;
+    // println!("{:?}", playing);
 
     Ok(())
 }
@@ -279,7 +292,9 @@ async fn run() {
         let mut interval = tokio::time::interval(Duration::from_secs(2));
         loop {
             interval.tick().await;
-            check_playing(state).await.unwrap();
+            if let Err(err) = check_playing(state).await {
+                log::error!("{}: {:?}", "Something gone wrong", err)
+            }
         }
     });
 

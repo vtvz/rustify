@@ -2,6 +2,7 @@
 name = "rustify"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.57.0"
 
 [dependencies]
 log = "0.4.14"
@@ -24,11 +25,13 @@ features = ["rt-multi-thread", "macros"]
 
 [dependencies.teloxide]
 version = "0.5.3"
-features = ["macros",
-"sqlite-storage",
-"bincode-serializer"
+features = [
+    "macros",
+    "sqlite-storage",
+    "bincode-serializer"
 ]
+
 [dependencies.sea-orm]
 default-features = false
 version = "^0"
-features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite" ]
+features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite"]
