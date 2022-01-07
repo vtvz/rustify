@@ -18,6 +18,13 @@ strum_macros = "0.23.1"
 rspotify = "0.11.3"
 warp = "0.3.2"
 dotenv = "0.15.0"
+genius-rs = "0.4.0"
+reqwest = "0.11.8"
+scraper = "0.12.0"
+censor = "0.2.0"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing = "0.1.29"
+sqlx = { version = "0.5.10", features = ["sqlite"] }
 
 [dependencies.tokio]
 version = "1.14.0"
@@ -34,4 +41,6 @@ features = [
 [dependencies.sea-orm]
 default-features = false
 version = "^0"
-features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite"]
+features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print"]
+
+[features]
