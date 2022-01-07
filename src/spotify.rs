@@ -1,7 +1,6 @@
 use rspotify::clients::OAuthClient;
 use rspotify::model::{FullTrack, Id, PlayableItem};
 use rspotify::{scopes, AuthCodeSpotify, Token};
-use std::fmt::format;
 
 pub enum CurrentlyPlaying {
     Error(anyhow::Error),
@@ -29,6 +28,7 @@ pub async fn currently_playing(spotify: &AuthCodeSpotify) -> CurrentlyPlaying {
     let playing = match playing {
         Some(playing) => {
             if !playing.is_playing {
+                // TODO Remove after testing
                 // return CurrentlyPlaying::None("Current track is on pause".into());
             }
 
@@ -118,7 +118,7 @@ impl Manager {
             ..Default::default()
         };
 
-        let spotify = rspotify::AuthCodeSpotify::with_config(creds.clone(), oauth, config.clone());
+        let spotify = rspotify::AuthCodeSpotify::with_config(creds, oauth, config);
 
         Self { spotify }
     }
@@ -134,6 +134,7 @@ impl Manager {
         instance
     }
 
+    #[allow(dead_code)]
     pub async fn get_authorize_url(&self) -> String {
         self.spotify.get_authorize_url(false).unwrap()
     }

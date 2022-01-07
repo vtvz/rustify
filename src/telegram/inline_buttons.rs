@@ -1,36 +1,15 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 
-use std::env;
-use std::sync::Arc;
-use std::time::Duration;
-
-use crate::{spotify, track_status_service, USER_ID};
-use anyhow::{anyhow, Context, Result};
-use censor::{Censor, Custom, Sex, Standard};
-use dotenv::dotenv;
-use futures::{FutureExt, TryFutureExt};
-use genius_rs::Genius;
-use rspotify::model::{FullTrack, TrackId};
+use anyhow::{anyhow, Result};
+use rspotify::model::TrackId;
 use rspotify::prelude::*;
-use rspotify::{clients::OAuthClient, AuthCodeSpotify};
-use sea_orm::prelude::*;
-use sea_orm::IntoActiveModel;
-use sea_orm::{Database, DatabaseConnection, DbConn, NotSet, Set};
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
-use teloxide::utils::command::{BotCommand, ParseError};
-use tokio_stream::wrappers::UnboundedReceiverStream;
-use tracing_subscriber::fmt::format::Full;
+use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
-use crate::entity::prelude::TrackStatus;
-use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
-use crate::telegram::commands::Command;
-use crate::telegram::keyboards::StartKeyboard;
-use crate::track_status_service::Status;
-use crate::CurrentlyPlaying::Error;
+use crate::{spotify, track_status_service, USER_ID};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum InlineButtons {
@@ -49,12 +28,14 @@ impl InlineButtons {
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<InlineKeyboardButtonKind> for InlineButtons {
     fn into(self) -> InlineKeyboardButtonKind {
         InlineKeyboardButtonKind::CallbackData(self.to_string())
     }
 }
 
+#[allow(clippy::from_over_into)]
 impl Into<InlineKeyboardButton> for InlineButtons {
     fn into(self) -> InlineKeyboardButton {
         let label = self.label();

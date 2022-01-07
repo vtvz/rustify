@@ -1,34 +1,11 @@
-use teloxide::utils::command::BotCommand;
-
-use std::env;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::time::Duration;
-
-use anyhow::{anyhow, Context, Result};
-use censor::{Censor, Custom, Sex, Standard};
-use dotenv::dotenv;
-use futures::{FutureExt, TryFutureExt};
-use genius_rs::Genius;
-use rspotify::model::{FullTrack, TrackId};
-use rspotify::prelude::*;
-use rspotify::{clients::OAuthClient, AuthCodeSpotify};
-use sea_orm::prelude::*;
-use sea_orm::IntoActiveModel;
-use sea_orm::{Database, DatabaseConnection, DbConn, NotSet, Set};
+use anyhow::Context;
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::ParseMode;
+use teloxide::utils::command::BotCommand;
 use teloxide::utils::command::ParseError;
-use tokio_stream::wrappers::UnboundedReceiverStream;
-use tracing_subscriber::fmt::format::Full;
 
-use crate::entity::prelude::TrackStatus;
-use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
-use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::keyboards::StartKeyboard;
-use crate::track_status_service::Status;
-use crate::CurrentlyPlaying::Error;
 
 #[derive(BotCommand, PartialEq, Debug)]
 #[command(rename = "lowercase")]

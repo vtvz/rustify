@@ -6,31 +6,19 @@ extern crate derive_more;
 #[macro_use]
 extern crate serde;
 
-use std::env;
-use std::str::FromStr;
-use std::sync::Arc;
 use std::time::Duration;
+
+use futures::FutureExt;
+use rspotify::clients::OAuthClient;
+use rspotify::model::{FullTrack, TrackId};
+use teloxide::prelude::*;
+use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::spotify::CurrentlyPlaying;
 use crate::state::AppState;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::Status;
-use anyhow::{Context, Result};
-use censor::{Censor, Sex, Standard};
-use dotenv::dotenv;
-use futures::{FutureExt, TryFutureExt};
-use genius_rs::Genius;
-use rspotify::clients::OAuthClient;
-use rspotify::model::{FullTrack, TrackId};
-use rspotify::prelude::*;
-use sea_orm::prelude::*;
-use sea_orm::IntoActiveModel;
-use sea_orm::{Database, DbConn};
-use sqlx::migrate::MigrateDatabase;
-use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
-use teloxide::utils::command::BotCommand;
-use tokio_stream::wrappers::UnboundedReceiverStream;
 
 mod entity;
 mod genius;

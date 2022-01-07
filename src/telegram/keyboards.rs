@@ -1,6 +1,6 @@
 use super::helpers;
 use crate::state::UserState;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use std::str::FromStr;
 use strum_macros::{AsRefStr, EnumString};
 use teloxide::prelude::*;

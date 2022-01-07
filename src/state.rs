@@ -1,6 +1,6 @@
 use crate::spotify;
 use anyhow::Context;
-use censor::{Censor, Standard};
+use censor::Censor;
 use genius_rs::Genius;
 use rspotify::AuthCodeSpotify;
 use sea_orm::{Database, DatabaseConnection, DbConn};
