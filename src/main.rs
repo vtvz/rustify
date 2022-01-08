@@ -57,14 +57,23 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
         return Ok(());
     }
 
-    let message = format!(
-        // TODO Return spoilers after teloxide update
-        // "has bad words: \n ||{}||",
-        "Current song \\({}\\) probably has bad words \\(ignore in case of false positive\\): \n\n{}\n\n[Genius Source]({})",
-        spotify::create_track_name(track),
-        bad_lines.join("\n"),
-        first.result.url
-    );
+    let mut lines = bad_lines.len();
+    let message = loop {
+        let message = format!(
+            // TODO Return spoilers after teloxide update
+            // "has bad words: \n ||{}||",
+            "Current song \\({}\\) probably has bad words \\(ignore in case of false positive\\): \n\n{}\n\n[Genius Source]({})",
+            spotify::create_track_name(track),
+            bad_lines[0..lines].join("\n"),
+            first.result.url
+        );
+
+        if message.len() <= 4096 {
+            break message;
+        }
+
+        lines -= 1;
+    };
 
     state
         .app
