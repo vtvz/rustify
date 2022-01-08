@@ -1,10 +1,14 @@
-use super::helpers;
-use crate::state::UserState;
-use anyhow::{Context, Result};
 use std::str::FromStr;
+
+use anyhow::{Context, Result};
 use strum_macros::{AsRefStr, EnumString};
 use teloxide::prelude::*;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, ReplyMarkup};
+
+use crate::state::UserState;
+use crate::telegram::helpers::handle_register_invite;
+
+use super::helpers;
 
 #[derive(Clone, EnumString, AsRefStr)]
 pub enum StartKeyboard {
@@ -26,15 +30,21 @@ impl StartKeyboard {
     pub fn markup() -> ReplyMarkup {
         ReplyMarkup::Keyboard(
             KeyboardMarkup::new(vec![
-                vec![StartKeyboard::Dislike.into()],
-                vec![StartKeyboard::Stats.into(), StartKeyboard::Cleanup.into()],
+                vec![Self::Dislike.into()],
+                vec![Self::Stats.into(), Self::Cleanup.into()],
             ])
             .resize_keyboard(true),
         )
     }
 }
 
-pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState<'static>) -> Result<bool> {
+pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Result<bool> {
+    if !state.is_spotify_authed().await {
+        handle_register_invite(cx, state).await?;
+
+        return Ok(true);
+    }
+
     let text = cx.update.text().context("No text available")?;
 
     let button = StartKeyboard::from_str(text);
@@ -49,8 +59,12 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState<'static>)
         StartKeyboard::Dislike => {
             helpers::handle_dislike(cx, state).await?;
         }
-        StartKeyboard::Cleanup => println!("Cleanup"),
-        StartKeyboard::Stats => println!("Stats"),
+        StartKeyboard::Cleanup => {
+            cx.answer("Not yet implemented").send().await?;
+        }
+        StartKeyboard::Stats => {
+            cx.answer("Not yet implemented").send().await?;
+        }
     }
 
     Ok(true)

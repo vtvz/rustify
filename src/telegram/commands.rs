@@ -12,18 +12,19 @@ use crate::telegram::keyboards::StartKeyboard;
 pub enum Command {
     #[command(description = "start")]
     Start,
+    #[command(description = "show keyboard")]
+    Keyboard,
     #[command(description = "echo back the message")]
     Echo(String),
     #[command(description = "dislike current track")]
     Dislike,
+    #[command(description = "login to spotify")]
+    Register,
     #[command(description = "show this help")]
     Help,
 }
 
-pub async fn handle(
-    cx: &UpdateWithCx<Bot, Message>,
-    state: &UserState<'static>,
-) -> anyhow::Result<bool> {
+pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyhow::Result<bool> {
     let text = cx.update.text().context("No text available")?;
 
     if !text.starts_with('/') {
@@ -48,17 +49,24 @@ pub async fn handle(
     let command = command?;
 
     match command {
-        Command::Start => {
-            cx.answer("Here is your keyboard")
-                .reply_markup(StartKeyboard::markup())
-                .send()
-                .await?;
+        Command::Start | Command::Keyboard => {
+            if state.is_spotify_authed().await {
+                cx.answer("Here is your keyboard")
+                    .reply_markup(StartKeyboard::markup())
+                    .send()
+                    .await?;
+            } else {
+                super::helpers::handle_register_invite(cx, state).await?;
+            }
         }
         Command::Echo(text) => {
             cx.answer(format!("Echo back: {}", text)).send().await?;
         }
         Command::Dislike => {
             super::helpers::handle_dislike(cx, state).await?;
+        }
+        Command::Register => {
+            super::helpers::handle_register_invite(cx, state).await?;
         }
         Command::Help => {
             cx.answer(Command::descriptions()).send().await?;

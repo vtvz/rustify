@@ -14,21 +14,25 @@ impl EntityName for Entity {
 
 #[derive(Clone, Debug, PartialEq, DeriveModel, DeriveActiveModel, Serialize, Deserialize)]
 pub struct Model {
-    pub telegram_id: String,
+    pub user_id: String,
     pub access_token: String,
     pub refresh_token: String,
+    pub created_at: String,
+    pub updated_at: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 pub enum Column {
-    TelegramId,
+    UserId,
     AccessToken,
     RefreshToken,
+    CreatedAt,
+    UpdatedAt,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
 pub enum PrimaryKey {
-    TelegramId,
+    UserId,
 }
 
 impl PrimaryKeyTrait for PrimaryKey {
@@ -47,9 +51,11 @@ impl ColumnTrait for Column {
 
     fn def(&self) -> ColumnDef {
         match self {
-            Self::TelegramId => ColumnType::String(None).def(),
+            Self::UserId => ColumnType::String(None).def(),
             Self::AccessToken => ColumnType::String(None).def(),
             Self::RefreshToken => ColumnType::String(None).def(),
+            Self::CreatedAt => ColumnType::String(None).def(),
+            Self::UpdatedAt => ColumnType::String(None).def(),
         }
     }
 }

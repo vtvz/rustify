@@ -9,7 +9,8 @@ use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::state::UserState;
-use crate::{spotify, track_status_service, USER_ID};
+use crate::track_status_service::TrackStatusService;
+use crate::{spotify, track_status_service};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum InlineButtons {
@@ -61,10 +62,19 @@ impl Display for InlineButtons {
     }
 }
 
-pub async fn handle(
-    cx: UpdateWithCx<Bot, CallbackQuery>,
-    state: &UserState<'static>,
-) -> anyhow::Result<()> {
+pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> anyhow::Result<()> {
+    if !state.is_spotify_authed().await {
+        if let Some(id) = cx.update.inline_message_id {
+            cx.requester
+                .answer_callback_query(id)
+                .text("You need to register first")
+                .send()
+                .await?;
+        }
+
+        return Ok(());
+    }
+
     let data = cx
         .update
         .data
@@ -74,11 +84,16 @@ pub async fn handle(
 
     match button {
         InlineButtons::Cancel(id) => {
-            let track = state.spotify.track(&TrackId::from_id(&id).unwrap()).await?;
+            let track = state
+                .spotify
+                .read()
+                .await
+                .track(&TrackId::from_id(&id)?)
+                .await?;
 
-            track_status_service::set_status(
+            TrackStatusService::set_status(
                 &state.app.db,
-                USER_ID.to_string(),
+                state.user_id.clone(),
                 id.clone(),
                 track_status_service::Status::None,
             )
@@ -87,7 +102,10 @@ pub async fn handle(
             cx.requester
                 .edit_message_text(
                     cx.update.from.id,
-                    cx.update.message.unwrap().id,
+                    cx.update
+                        .message
+                        .ok_or_else(|| anyhow!("Message is empty"))?
+                        .id,
                     format!(
                         "Dislike cancelled for {}",
                         spotify::create_track_name(&track)
@@ -104,11 +122,16 @@ pub async fn handle(
                 .await?;
         }
         InlineButtons::Dislike(id) => {
-            let track = state.spotify.track(&TrackId::from_id(&id).unwrap()).await?;
+            let track = state
+                .spotify
+                .read()
+                .await
+                .track(&TrackId::from_id(&id)?)
+                .await?;
 
-            track_status_service::set_status(
+            TrackStatusService::set_status(
                 &state.app.db,
-                USER_ID.to_string(),
+                state.user_id.clone(),
                 id.clone(),
                 track_status_service::Status::Disliked,
             )
@@ -117,7 +140,10 @@ pub async fn handle(
             cx.requester
                 .edit_message_text(
                     cx.update.from.id,
-                    cx.update.message.unwrap().id,
+                    cx.update
+                        .message
+                        .ok_or_else(|| anyhow!("Message is empty"))?
+                        .id,
                     format!("Disliked {}", spotify::create_track_name(&track)),
                 )
                 .parse_mode(ParseMode::MarkdownV2)
@@ -131,11 +157,16 @@ pub async fn handle(
                 .await?;
         }
         InlineButtons::Ignore(id) => {
-            let track = state.spotify.track(&TrackId::from_id(&id).unwrap()).await?;
+            let track = state
+                .spotify
+                .read()
+                .await
+                .track(&TrackId::from_id(&id)?)
+                .await?;
 
-            track_status_service::set_status(
+            TrackStatusService::set_status(
                 &state.app.db,
-                USER_ID.to_string(),
+                state.user_id.clone(),
                 id.clone(),
                 track_status_service::Status::Ignore,
             )
@@ -144,7 +175,10 @@ pub async fn handle(
             cx.requester
                 .edit_message_text(
                     cx.update.from.id,
-                    cx.update.message.unwrap().id,
+                    cx.update
+                        .message
+                        .ok_or_else(|| anyhow!("Message is empty"))?
+                        .id,
                     format!(
                         "Bad words of {} will be forever ignored",
                         spotify::create_track_name(&track)

@@ -1,9 +1,14 @@
-use rspotify::clients::OAuthClient;
+use anyhow::Context;
+use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::model::{FullTrack, Id, PlayableItem};
-use rspotify::{scopes, AuthCodeSpotify, Token};
+use rspotify::{scopes, AuthCodeSpotify};
+use sea_orm::DbConn;
+use teloxide::utils::markdown::escape;
+
+use crate::spotify_auth_service::SpotifyAuthService;
 
 pub enum CurrentlyPlaying {
-    Error(anyhow::Error),
+    Err(anyhow::Error),
     None(String),
     Ok(Box<FullTrack>),
 }
@@ -12,8 +17,8 @@ impl<E> From<E> for CurrentlyPlaying
 where
     E: std::error::Error + Send + Sync + 'static,
 {
-    fn from(error: E) -> Self {
-        CurrentlyPlaying::Error(error.into())
+    fn from(err: E) -> Self {
+        CurrentlyPlaying::Err(err.into())
     }
 }
 
@@ -22,14 +27,13 @@ pub async fn currently_playing(spotify: &AuthCodeSpotify) -> CurrentlyPlaying {
 
     let playing = match playing {
         Ok(playing) => playing,
-        Err(error) => return error.into(),
+        Err(err) => return err.into(),
     };
 
     let playing = match playing {
         Some(playing) => {
             if !playing.is_playing {
-                // TODO Remove after testing
-                // return CurrentlyPlaying::None("Current track is on pause".into());
+                return CurrentlyPlaying::None("Current track is on pause".into());
             }
 
             playing.item
@@ -58,7 +62,12 @@ pub fn artist_names(track: &FullTrack) -> Vec<String> {
 }
 
 pub fn get_track_id(track: &FullTrack) -> String {
-    track.id.clone().unwrap().id().to_string()
+    track
+        .id
+        .clone()
+        .expect("Should be validated beforehand")
+        .id()
+        .to_owned()
 }
 
 pub fn create_track_name(track: &FullTrack) -> String {
@@ -66,8 +75,8 @@ pub fn create_track_name(track: &FullTrack) -> String {
 
     format!(
         r#"[{} — {}]({})"#,
-        artists,
-        track.name,
+        escape(&artists),
+        escape(&track.name),
         track
             .external_urls
             .get("spotify")
@@ -82,14 +91,15 @@ pub struct Manager {
 
 impl Manager {
     pub fn new() -> Self {
-        let config = rspotify::Config {
-            token_refreshing: true,
-            ..Default::default()
-        };
+        let config = rspotify::Config::default();
 
         let creds = rspotify::Credentials::new(
-            dotenv::var("SPOTIFY_ID").unwrap().as_ref(),
-            dotenv::var("SPOTIFY_SECRET").unwrap().as_ref(),
+            dotenv::var("SPOTIFY_ID")
+                .expect("Env variable SPOTIFY_ID is required")
+                .as_ref(),
+            dotenv::var("SPOTIFY_SECRET")
+                .expect("Env variable SPOTIFY_SECRET is required")
+                .as_ref(),
         );
 
         let oauth = rspotify::OAuth {
@@ -123,19 +133,19 @@ impl Manager {
         Self { spotify }
     }
 
-    pub async fn for_user(&self, _user_id: String) -> AuthCodeSpotify {
+    pub async fn for_user(&self, db: &DbConn, user_id: String) -> anyhow::Result<AuthCodeSpotify> {
         let instance = self.spotify.clone();
-        *instance.token.lock().await.unwrap() = Some(Token {
-            access_token: dotenv::var("SPOTIFY_ACCESS_TOKEN").unwrap(),
-            refresh_token: Some(dotenv::var("SPOTIFY_REFRESH_TOKEN").unwrap()),
-            ..Default::default()
-        });
+        let token = SpotifyAuthService::get_token(db, user_id).await?;
 
-        instance
+        *instance.token.lock().await.expect("Cannot acquire lock") = token;
+
+        instance.refresh_token().await?;
+
+        Ok(instance)
     }
 
     #[allow(dead_code)]
-    pub async fn get_authorize_url(&self) -> String {
-        self.spotify.get_authorize_url(false).unwrap()
+    pub async fn get_authorize_url(&self) -> anyhow::Result<String> {
+        self.spotify.get_authorize_url(false).context("Get auth")
     }
 }

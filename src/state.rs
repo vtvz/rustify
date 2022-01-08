@@ -1,12 +1,15 @@
-use crate::spotify;
+use std::sync::Arc;
+
 use anyhow::Context;
 use censor::Censor;
 use genius_rs::Genius;
 use rspotify::AuthCodeSpotify;
 use sea_orm::{Database, DatabaseConnection, DbConn};
 use sqlx::migrate::MigrateDatabase;
-use std::sync::Arc;
 use teloxide::Bot;
+use tokio::sync::RwLock;
+
+use crate::spotify;
 
 pub struct AppState {
     pub spotify_manager: spotify::Manager,
@@ -45,11 +48,6 @@ async fn genius() -> anyhow::Result<Genius> {
     ))
 }
 
-pub struct UserState<'a> {
-    pub app: &'a AppState,
-    pub spotify: AuthCodeSpotify,
-}
-
 impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
         let spotify_manager = spotify::Manager::new();
@@ -78,10 +76,34 @@ impl AppState {
         Ok(app_state)
     }
 
-    pub async fn user_state(&'static self, user_id: String) -> UserState<'static> {
-        UserState {
+    pub async fn user_state(&'static self, user_id: String) -> anyhow::Result<UserState> {
+        Ok(UserState {
             app: self,
-            spotify: self.spotify_manager.for_user(user_id).await,
-        }
+            spotify: RwLock::new(
+                self.spotify_manager
+                    .for_user(&self.db, user_id.clone())
+                    .await?,
+            ),
+            user_id,
+        })
+    }
+}
+
+pub struct UserState {
+    pub app: &'static AppState,
+    pub spotify: RwLock<AuthCodeSpotify>,
+    pub user_id: String,
+}
+
+impl UserState {
+    pub async fn is_spotify_authed(&self) -> bool {
+        self.spotify
+            .read()
+            .await
+            .token
+            .lock()
+            .await
+            .expect("Failed to acquire lock")
+            .is_some()
     }
 }
