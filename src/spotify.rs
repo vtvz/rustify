@@ -103,7 +103,8 @@ impl Manager {
         );
 
         let oauth = rspotify::OAuth {
-            redirect_uri: "http://localhost:8080/callback".into(),
+            redirect_uri: dotenv::var("SPOTIFY_REDIRECT_URI")
+                .unwrap_or_else(|_| "http://localhost:8080/callback".into()),
             // TODO Reduce to minimum
             scopes: scopes!(
                 "ugc-image-upload",

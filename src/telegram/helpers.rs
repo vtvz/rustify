@@ -1,5 +1,6 @@
 use anyhow::Result;
 use rspotify::clients::OAuthClient;
+use rspotify::ClientResult;
 use teloxide::prelude::*;
 use teloxide::types::{
     InlineKeyboardButton,
@@ -98,9 +99,23 @@ pub async fn handle_register(cx: &UpdateWithCx<Bot, Message>, state: &UserState)
         }
     };
 
+    process_spotify_code(cx, state, code).await
+}
+
+pub async fn process_spotify_code(
+    cx: &UpdateWithCx<Bot, Message>,
+    state: &UserState,
+    code: String,
+) -> Result<bool> {
     let mut instance = state.spotify.write().await;
 
-    instance.request_token(&code).await?;
+    if let Err(err) = instance.request_token(&code).await {
+        cx.answer("Cannot retrieve token. Code is probably broken. Run /register command and try again please")
+            .send()
+            .await?;
+
+        return Err(err.into());
+    }
 
     let token = instance.token.lock().await;
 
