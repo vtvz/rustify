@@ -135,7 +135,8 @@ impl Manager {
     }
 
     pub async fn for_user(&self, db: &DbConn, user_id: String) -> anyhow::Result<AuthCodeSpotify> {
-        let instance = self.spotify.clone();
+        let mut instance = self.spotify.clone();
+        instance.token = Default::default();
         let token = SpotifyAuthService::get_token(db, user_id).await?;
 
         *instance.token.lock().await.expect("Cannot acquire lock") = token;

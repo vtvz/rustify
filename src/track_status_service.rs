@@ -1,6 +1,8 @@
 use crate::entity;
 use crate::entity::prelude::TrackStatus as TrackStatusEntity;
+use crate::entity::track_status;
 use core::str::FromStr;
+use rspotify::model::{Id, TrackId};
 use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
 use sea_orm::IntoActiveModel;
@@ -26,6 +28,20 @@ impl Default for Status {
 pub struct TrackStatusService;
 
 impl TrackStatusService {
+    pub async fn count_status(
+        db: &DbConn,
+        user_id: String,
+        status: Status,
+    ) -> anyhow::Result<usize> {
+        let res = TrackStatusEntity::find()
+            .filter(entity::track_status::Column::UserId.eq(user_id))
+            .filter(entity::track_status::Column::Status.eq(status.as_ref()))
+            .count(db)
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn set_status(
         db: &DbConn,
         user_id: String,
@@ -76,5 +92,24 @@ impl TrackStatusService {
             }
             None => Status::None,
         }
+    }
+
+    pub async fn get_ids_with_status(
+        db: &DbConn,
+        user_id: String,
+        status: Status,
+    ) -> anyhow::Result<Vec<TrackId>> {
+        let tracks: Vec<track_status::Model> = TrackStatusEntity::find()
+            .filter(entity::track_status::Column::UserId.eq(user_id.clone()))
+            .filter(entity::track_status::Column::Status.eq(status.as_ref()))
+            .all(db)
+            .await?;
+
+        let res: Vec<_> = tracks
+            .iter()
+            .map(|track| TrackId::from_id(track.track_id.as_ref()))
+            .collect::<Result<_, _>>()?;
+
+        Ok(res)
     }
 }

@@ -170,7 +170,7 @@ async fn run() {
                         }
                     };
 
-                    let result = telegram::handle_message(cx, &state).await;
+                    let result = telegram::handle_message(&cx, &state).await;
 
                     if let Err(err) = result {
                         log::error!("{:?}", err);
