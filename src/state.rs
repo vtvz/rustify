@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use anyhow::Context;
-use censor::Censor;
 use genius_rs::Genius;
 use rspotify::AuthCodeSpotify;
+use rustrict::Type;
 use sea_orm::{Database, DatabaseConnection, DbConn};
 use sqlx::migrate::MigrateDatabase;
 use teloxide::Bot;
@@ -14,7 +14,6 @@ use crate::spotify;
 pub struct AppState {
     pub spotify_manager: spotify::Manager,
     pub genius: Arc<Genius>,
-    pub censor: Censor,
     pub bot: Bot,
     pub db: DatabaseConnection,
 }
@@ -52,11 +51,15 @@ impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
         let spotify_manager = spotify::Manager::new();
         let genius = Arc::new(genius().await?);
-        let censor =
-            censor::Standard + censor::Sex + Censor::custom(vec!["christmas", "xmas", "halloween"]);
+
+        dotenv::var("CENSOR_BLACKLIST")
+            .unwrap_or_default()
+            .split(',')
+            .for_each(|word| unsafe {
+                rustrict::add_word(word, Type::MODERATE);
+            });
 
         teloxide::enable_logging!();
-        log::info!("Starting rustify bot...");
         let bot = Bot::new(
             dotenv::var("TELEGRAM_BOT_TOKEN").context("Need TELEGRAM_BOT_TOKEN variable")?,
         );
@@ -68,7 +71,6 @@ impl AppState {
             bot: bot.clone(),
             spotify_manager,
             genius,
-            censor,
             db,
         };
         let app_state = Box::new(app_state);

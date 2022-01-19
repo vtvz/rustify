@@ -1,6 +1,5 @@
 use anyhow::Result;
 use rspotify::clients::OAuthClient;
-use rspotify::ClientResult;
 use teloxide::prelude::*;
 use teloxide::types::{
     InlineKeyboardButton,

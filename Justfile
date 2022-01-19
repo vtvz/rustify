@@ -18,3 +18,6 @@ deploy:
 
 logs:
   ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" logs -f
+
+watch:
+  cargo watch -c -x run

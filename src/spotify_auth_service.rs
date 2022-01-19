@@ -1,9 +1,9 @@
 use anyhow::anyhow;
 use rspotify::Token;
+use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
 use sea_orm::DbConn;
 use sea_orm::IntoActiveModel;
-use sea_orm::prelude::*;
 
 use crate::entity;
 use crate::entity::prelude::SpotifyAuth as SpotifyAuthEntity;
@@ -28,9 +28,9 @@ impl SpotifyAuthService {
                 user_id: Set(user_id),
                 ..Default::default()
             }
-                .insert(db)
-                .await?
-                .into_active_model(),
+            .insert(db)
+            .await?
+            .into_active_model(),
         };
 
         spotify_auth.access_token = Set(token.access_token);

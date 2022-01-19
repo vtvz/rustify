@@ -8,7 +8,6 @@ extern crate derive_more;
 extern crate serde;
 
 use std::collections::HashMap;
-use std::error::Error;
 use std::time::Duration;
 
 use futures::FutureExt;
@@ -33,25 +32,13 @@ mod telegram;
 mod track_status_service;
 
 async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
-    let artists = track
-        .artists
-        .iter()
-        .map(|art| art.name.as_ref())
-        .collect::<Vec<_>>()
-        .join(" ");
-
-    let q = format!("{} {}", artists, track.name);
-
-    let hits = state.app.genius.search(q.as_ref()).await?;
-
-    let first = match hits.get(0) {
-        None => return Ok(()),
-        Some(hit) => hit,
+    let Some(hit) = genius::search_for_track(state, track).await? else {
+        return Ok(())
     };
 
-    let lyrics = genius::get_lyrics(&first.result.url).await?;
+    let lyrics = genius::get_lyrics(&hit.result.url).await?;
 
-    let bad_lines: Vec<_> = genius::find_bad_words(lyrics, &state.app.censor);
+    let bad_lines: Vec<_> = genius::find_bad_words(lyrics);
 
     if bad_lines.is_empty() {
         return Ok(());
@@ -65,7 +52,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
             "Current song \\({}\\) probably has bad words \\(ignore in case of false positive\\): \n\n{}\n\n[Genius Source]({})",
             spotify::create_track_name(track),
             bad_lines[0..lines].join("\n"),
-            first.result.url
+            hit.result.url
         );
 
         if message.len() <= 4096 {
@@ -168,6 +155,8 @@ async fn run() {
         Ok(_) => println!("tracing_subscriber::fmt::try_init success"),
         Err(err) => println!("tracing_subscriber::fmt::try_init error: {:?}", err),
     }
+
+    log::info!("Starting rustify bot...");
 
     Dispatcher::new(app_state.bot.clone())
         .messages_handler(move |rx: DispatcherHandlerRx<Bot, Message>| {
