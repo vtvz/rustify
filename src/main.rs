@@ -8,13 +8,15 @@ extern crate derive_more;
 extern crate serde;
 
 use std::collections::HashMap;
-use std::time::Duration;
+use std::str::FromStr;
+use std::time::{Duration, SystemTime};
 
 use futures::FutureExt;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{FullTrack, TrackId};
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::utils::markdown::escape;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::spotify::CurrentlyPlaying;
@@ -25,15 +27,18 @@ use crate::track_status_service::{Status, TrackStatusService};
 
 mod entity;
 mod genius;
+mod rickroll;
 mod spotify;
 mod spotify_auth_service;
 mod state;
 mod telegram;
 mod track_status_service;
 
+pub const CHECK_INTERVAL: u64 = 2;
+
 async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
     let Some(hit) = genius::search_for_track(state, track).await? else {
-        return Ok(())
+        return Ok(());
     };
 
     let lyrics = genius::get_lyrics(&hit.result.url).await?;
@@ -81,7 +86,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
 }
 
 async fn check_playing(app_state: &'static state::AppState) {
-    let mut interval = tokio::time::interval(Duration::from_secs(2));
+    let mut interval = tokio::time::interval(Duration::from_secs(CHECK_INTERVAL));
     let mut prevs: HashMap<String, TrackId> = HashMap::new();
     loop {
         interval.tick().await;
@@ -102,6 +107,11 @@ async fn check_playing(app_state: &'static state::AppState) {
                     continue;
                 }
             };
+
+            if rickroll::should(&state.user_id, false).await {
+                rickroll::like(&state).await;
+            }
+
             let playing = spotify::currently_playing(&*state.spotify.read().await).await;
 
             let track = match playing {
@@ -114,6 +124,10 @@ async fn check_playing(app_state: &'static state::AppState) {
                 }
                 CurrentlyPlaying::Ok(track) => track,
             };
+
+            if rickroll::should(&state.user_id, true).await {
+                rickroll::queue(&state).await;
+            }
 
             let status = TrackStatusService::get_status(
                 &state.app.db,

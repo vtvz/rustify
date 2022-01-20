@@ -16,6 +16,9 @@ deploy:
   ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" build
   ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" up -d
 
+get-db:
+  rsync -P -e ssh "{{ server }}:{{ path }}/var/data.db" "var/data.db"
+
 logs:
   ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" logs -f
 

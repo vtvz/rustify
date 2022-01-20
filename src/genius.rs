@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use anyhow::anyhow;
 use genius_rs::search::Hit;
+use lazy_static::lazy_static;
 use regex::Regex;
 use reqwest::Client;
 use rspotify::model::FullTrack;
@@ -11,25 +12,29 @@ use teloxide::utils::markdown::escape;
 
 use crate::state;
 
+lazy_static! {
+    static ref LYRICS_SELECTOR: Selector =
+        Selector::parse(".lyrics, [class*=Lyrics__Container], [class*=LyricsPlaceholder__Message]")
+            .expect("Should be valid");
+}
+
 pub async fn get_lyrics(url: &str) -> anyhow::Result<Vec<String>> {
     let res = Client::new().get(url).send().await?.text().await?;
     let document = Html::parse_document(&res);
 
-    let lyrics_selector =
-        Selector::parse(".lyrics, [class*=Lyrics__Container]").expect("Should be valid");
     let mut lyrics = vec![];
-    document.select(&lyrics_selector).for_each(|elem| {
+    document.select(&LYRICS_SELECTOR).for_each(|elem| {
         elem.text().for_each(|text| {
             lyrics.push(text.to_owned());
         });
     });
     if lyrics.is_empty() {
-        return Err(anyhow!("Cannot parse lyrics. For some reason"));
+        return Err(anyhow!("Cannot parse lyrics. For some reason for {}", url));
     }
     Ok(lyrics)
 }
 
-pub fn get_type_name(typ: Type) -> String {
+fn get_type_name(typ: Type) -> String {
     let (lvl, emoji) = if typ.is(Type::SEVERE) {
         ("severe", '⛔')
     } else if typ.is(Type::MODERATE) {
@@ -97,21 +102,29 @@ pub fn find_bad_words(lyrics: Vec<String>) -> Vec<String> {
         .collect()
 }
 
+lazy_static! {
+    // https://github.com/khanhas/spicetify-cli/blob/master/CustomApps/lyrics-plus/Utils.js#L50
+    static ref RG_EXTRA_1: Regex = Regex::new(r"\s-\s.*").expect("Should be compilable");
+    static ref RG_EXTRA_2: Regex = Regex::new(r"[^\pL_]+").expect("Should be compilable");
+    // https://github.com/khanhas/spicetify-cli/blob/master/CustomApps/lyrics-plus/Utils.js#L41
+    static ref RG_FEAT_1: Regex =
+        Regex::new(r"(?i)-\s+(feat|with).*").expect("Should be compilable");
+    static ref RG_FEAT_2: Regex =
+        Regex::new(r"(?i)(\(|\[)(feat|with)\.?\s+.*(\)|\])$").expect("Should be compilable");
+}
+
 fn remove_extra_info(name: &str) -> String {
-    name.replace(&Regex::new(r"/\s-\s.*/").expect("Should be compilable"), "")
+    name.replace(&*RG_EXTRA_1, "")
+        .replace(&*RG_EXTRA_2, " ")
+        .trim()
+        .to_owned()
 }
 
 fn remove_song_feat(name: &str) -> String {
-    name.replace(
-        &Regex::new(r"/-\s+(feat|with).*/i").expect("Should be compilable"),
-        "",
-    )
-    .replace(
-        &Regex::new(r"/(\(|\[)(feat|with)\.?\s+.*(\)|\])$/i").expect("Should be compilable"),
-        "",
-    )
-    .trim()
-    .to_owned()
+    name.replace(&*RG_FEAT_1, "")
+        .replace(&*RG_FEAT_2, "")
+        .trim()
+        .to_owned()
 }
 
 fn get_track_names(name: String) -> HashSet<String> {
@@ -135,27 +148,42 @@ pub async fn search_for_track(
         .iter()
         .map(|art| -> &str { art.name.as_ref() })
         .next()
-        .expect("Should be at least 1 artist in track");
+        .ok_or_else(|| anyhow!("Should be at least 1 artist in track"))?;
 
     let names = get_track_names(track.name.clone());
 
-    for name in names {
+    let mut hits_count = 0;
+
+    for (name_i, name) in names.into_iter().enumerate() {
         let q = format!("{} {}", name, artist);
 
         let hits = state.app.genius.search(q.as_ref()).await?;
 
-        for hit in hits {
-            if hit
-                .result
-                .primary_artist
-                .name
-                .to_lowercase()
-                .contains(&artist.to_lowercase())
+        hits_count += hits.len();
+        for (hit_i, hit) in hits.into_iter().enumerate() {
+            let hit_artist = hit.result.primary_artist.name.as_str();
+
+            if hit_artist.to_lowercase().contains(&artist.to_lowercase())
+                || artist.to_lowercase().contains(&hit_artist.to_lowercase())
             {
+                log::debug!(
+                    "Found text at {} hit with {} name variant ({} - {})",
+                    hit_i + 1,
+                    name_i + 1,
+                    artist,
+                    name,
+                );
                 return Ok(Some(hit));
             }
         }
     }
+
+    log::info!(
+        "Found no text in {} hits ({} - {})",
+        hits_count,
+        artist,
+        track.name,
+    );
 
     Ok(None)
 }

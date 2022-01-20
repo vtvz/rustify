@@ -1,13 +1,15 @@
-use crate::entity;
-use crate::entity::prelude::TrackStatus as TrackStatusEntity;
-use crate::entity::track_status;
 use core::str::FromStr;
+
 use rspotify::model::{Id, TrackId};
 use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
 use sea_orm::IntoActiveModel;
 use sea_orm::{DbConn, NotSet};
 use strum_macros::{AsRefStr, EnumString};
+
+use crate::entity;
+use crate::entity::prelude::TrackStatus as TrackStatusEntity;
+use crate::entity::track_status;
 
 #[derive(Clone, EnumString, AsRefStr)]
 pub enum Status {

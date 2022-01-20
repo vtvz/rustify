@@ -3,6 +3,7 @@ use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::command::BotCommand;
 use teloxide::utils::command::ParseError;
+use teloxide::utils::markdown::escape;
 
 use crate::state::UserState;
 use crate::telegram::keyboards::StartKeyboard;
@@ -18,6 +19,12 @@ pub enum Command {
     Echo(String),
     #[command(description = "dislike current track")]
     Dislike,
+    #[command(description = "delete disliked tracks from your playlists")]
+    Cleanup,
+    #[command(description = "show details about currently playing track")]
+    Details,
+    #[command(description = "show statistics about disliked tracks")]
+    Stats,
     #[command(description = "login to spotify")]
     Register,
     #[command(description = "show this help")]
@@ -36,8 +43,8 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
     if let Err(ParseError::UnknownCommand(command)) = command {
         cx.answer(format!(
             "Command `{}` not found: \n\n{}",
-            command,
-            Command::descriptions()
+            escape(&command),
+            escape(&Command::descriptions())
         ))
         .parse_mode(ParseMode::MarkdownV2)
         .send()
@@ -62,12 +69,11 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
         Command::Echo(text) => {
             cx.answer(format!("Echo back: {}", text)).send().await?;
         }
-        Command::Dislike => {
-            super::helpers::handle_dislike(cx, state).await?;
-        }
-        Command::Register => {
-            super::helpers::handle_register_invite(cx, state).await?;
-        }
+        Command::Dislike => return super::handlers::dislike::handle(cx, state).await,
+        Command::Cleanup => return super::handlers::cleanup::handle(cx, state).await,
+        Command::Stats => return super::handlers::stats::handle(cx, state).await,
+        Command::Details => return super::handlers::details::handle(cx, state).await,
+        Command::Register => return super::helpers::handle_register_invite(cx, state).await,
         Command::Help => {
             cx.answer(Command::descriptions()).send().await?;
         }
