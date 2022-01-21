@@ -1,14 +1,32 @@
 use anyhow::anyhow;
 use indoc::formatdoc;
+use lazy_static::lazy_static;
+use regex::Regex;
 use rspotify::clients::BaseClient;
-use rspotify::model::Modality;
+use rspotify::model::{Modality, TrackId};
+use rustrict::Type;
+use std::str::FromStr;
 use teloxide::prelude::*;
-use teloxide::utils::markdown::escape;
+use teloxide::types::{InlineKeyboardMarkup, ReplyMarkup};
 
 use crate::state::UserState;
-use crate::{genius, spotify, CurrentlyPlaying, ParseMode};
+use crate::{
+    genius,
+    get_type_name,
+    spotify,
+    telegram,
+    CurrentlyPlaying,
+    FullTrack,
+    InlineButtons,
+    ParseMode,
+    Status,
+    TrackStatusService,
+};
 
-pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle_current(
+    cx: &UpdateWithCx<Bot, Message>,
+    state: &UserState,
+) -> anyhow::Result<bool> {
     let spotify = state.spotify.read().await;
     let track = match spotify::currently_playing(&*spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err),
@@ -20,7 +38,72 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
         CurrentlyPlaying::Ok(track) => track,
     };
 
+    return common(cx, state, *track).await;
+}
+
+fn extract_id(url: &str) -> Option<TrackId> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new("^/track/([a-zA-Z0-9]+)$").expect("Should be compilable");
+    }
+
+    let Ok(url) = url::Url::parse(url) else {
+        return None;
+    };
+
+    let Some(cap) = RE.captures(url.path()) else {
+        return None;
+    };
+
+    let id = TrackId::from_str(&cap[1]);
+
+    id.ok()
+}
+pub async fn handle_url(
+    cx: &UpdateWithCx<Bot, Message>,
+    state: &UserState,
+) -> anyhow::Result<bool> {
+    let Some(text) = cx.update.text() else {
+        return Ok(false);
+    };
+
+    let Some(track_id) = extract_id(text) else {
+        return Ok(false);
+    };
+
+    let track = state.spotify.read().await.track(&track_id).await?;
+
+    return common(cx, state, track).await;
+}
+
+async fn common(
+    cx: &UpdateWithCx<Bot, Message>,
+    state: &UserState,
+    track: FullTrack,
+) -> anyhow::Result<bool> {
+    let spotify = state.spotify.read().await;
+
     let track_id = track.id.clone().expect("Should be prevalidated");
+
+    let status = TrackStatusService::get_status(
+        &state.app.db,
+        &state.user_id,
+        &spotify::get_track_id(&track),
+    )
+    .await;
+
+    let keyboard = match status {
+        Status::Disliked => {
+            vec![vec![
+                InlineButtons::Cancel(spotify::get_track_id(&track)).into()
+            ]]
+        }
+        Status::Ignore | Status::None => {
+            vec![vec![
+                InlineButtons::Dislike(spotify::get_track_id(&track)).into()
+            ]]
+        }
+    };
+
     let features = spotify.track_features(&track_id).await?;
 
     let modality = match features.mode {
@@ -49,7 +132,7 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
 
     let features: String = formatdoc! {
         "
-            🎶 `{}` {} ⌛ {} BPM
+            🎶 `{} {}` ⌛ {} BPM
             🎻 Acoustic {}%
             🕺 Suitable for dancing {}%
             ⚡️ Energetic {}%
@@ -71,8 +154,24 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
     };
 
     let Some(hit) = genius::search_for_track(state, &track).await? else {
-        cx.answer(format!("{}\n\n{}\n\n`No lyrics found`", spotify::create_track_name(&track), features.trim()))
+        cx
+            .answer(
+                formatdoc!(
+                    "
+                        {track_name}
+                        
+                        {features}
+                        
+                        `No lyrics found`
+                    ",
+                    track_name = spotify::create_track_name(&track),
+                    features = features.trim(),
+                )
+            )
             .parse_mode(ParseMode::MarkdownV2)
+            .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+                keyboard,
+            )))
             .send()
             .await?;
 
@@ -81,26 +180,46 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
 
     let lyrics = genius::get_lyrics(&hit.result.url).await?;
 
+    let checked = genius::profanity_check(lyrics);
+
+    let lyrics: Vec<_> = checked.iter().map(|(_, _, line)| line.clone()).collect();
+
+    let typ = checked
+        .into_iter()
+        .map(|(_, typ, _)| typ)
+        .filter(|typ| typ.isnt(Type::SAFE))
+        .fold(Type::NONE, |acc, typ| acc | typ);
+
     let mut lines = lyrics.len();
     let message = loop {
         if lines == 0 {
             return Err(anyhow!("Issues with lyrics"));
         }
 
-        let message = format!(
-            "{}\n\n{}\n\n{}\n\n[{}]({})",
-            spotify::create_track_name(&track),
-            features.trim(),
-            escape(&lyrics[0..lines].join("\n")),
-            if lines == lyrics.len() {
+        let message = formatdoc!(
+            "
+                {track_name}
+                
+                {features}
+                🤬 Profanity `{profanity}`
+                
+                {lyrics}
+                
+                [{genius_line}]({genius_link})
+            ",
+            track_name = spotify::create_track_name(&track),
+            features = features.trim(),
+            profanity = get_type_name(typ),
+            lyrics = &lyrics[0..lines].join("\n"),
+            genius_line = if lines == lyrics.len() {
                 "Genius Source"
             } else {
-                "Text truncated. Full lyrics can be found at Genius"
+                "Text truncated\\. Full lyrics can be found at Genius"
             },
-            hit.result.url
+            genius_link = hit.result.url
         );
 
-        if message.len() <= 4096 {
+        if message.len() <= telegram::MESSAGE_MAX_LEN {
             break message;
         }
 
@@ -109,6 +228,9 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
 
     cx.answer(message)
         .parse_mode(ParseMode::MarkdownV2)
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            keyboard,
+        )))
         .send()
         .await?;
 

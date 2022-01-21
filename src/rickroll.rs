@@ -6,7 +6,6 @@ use rspotify::clients::OAuthClient;
 use rspotify::model::TrackId;
 use std::collections::HashSet;
 use std::str::FromStr;
-use std::time::Duration;
 
 lazy_static! {
     static ref RICK: TrackId =
@@ -30,8 +29,8 @@ pub async fn should(user_id: &str, play: bool) -> bool {
         return false;
     }
 
-    // Once per 10 days
-    let chance = 10 * (24 * 60 * 60) / CHECK_INTERVAL;
+    // Once per 5 days
+    let chance = 5 * (24 * 60 * 60) / CHECK_INTERVAL;
 
     let mut rng = thread_rng();
     let range = if play { chance / 8 } else { chance / 2 };

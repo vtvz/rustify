@@ -14,18 +14,18 @@ pub struct SpotifyAuthService;
 impl SpotifyAuthService {
     pub async fn set_token(
         db: &DbConn,
-        user_id: String,
+        user_id: &str,
         token: Token,
     ) -> anyhow::Result<entity::spotify_auth::ActiveModel> {
         let spotify_auth = SpotifyAuthEntity::find()
-            .filter(entity::spotify_auth::Column::UserId.eq(user_id.clone()))
+            .filter(entity::spotify_auth::Column::UserId.eq(user_id))
             .one(db)
             .await?;
 
         let mut spotify_auth = match spotify_auth {
             Some(spotify_auth) => spotify_auth.into_active_model(),
             None => entity::spotify_auth::ActiveModel {
-                user_id: Set(user_id),
+                user_id: Set(user_id.to_owned()),
                 ..Default::default()
             }
             .insert(db)
@@ -41,9 +41,9 @@ impl SpotifyAuthService {
         Ok(spotify_auth.save(db).await?)
     }
 
-    pub async fn get_token(db: &DbConn, user_id: String) -> anyhow::Result<Option<Token>> {
+    pub async fn get_token(db: &DbConn, user_id: &str) -> anyhow::Result<Option<Token>> {
         let spotify_auth = SpotifyAuthEntity::find()
-            .filter(entity::spotify_auth::Column::UserId.eq(user_id.clone()))
+            .filter(entity::spotify_auth::Column::UserId.eq(user_id))
             .one(db)
             .await?;
 

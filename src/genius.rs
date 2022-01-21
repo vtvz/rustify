@@ -34,7 +34,11 @@ pub async fn get_lyrics(url: &str) -> anyhow::Result<Vec<String>> {
     Ok(lyrics)
 }
 
-fn get_type_name(typ: Type) -> String {
+pub fn get_type_name(typ: Type) -> String {
+    if typ.is(Type::SAFE) || typ == Type::NONE {
+        return "safe 🟢".into();
+    }
+
     let (lvl, emoji) = if typ.is(Type::SEVERE) {
         ("severe", '⛔')
     } else if typ.is(Type::MODERATE) {
@@ -45,36 +49,49 @@ fn get_type_name(typ: Type) -> String {
         ("undefined", '❔')
     };
 
-    let typ = if typ.is(Type::PROFANE) {
-        "profane"
-    } else if typ.is(Type::OFFENSIVE) {
-        "offensive"
-    } else if typ.is(Type::SEXUAL) {
-        "sexual"
-    } else if typ.is(Type::MEAN) {
-        "mean"
-    } else if typ.is(Type::EVASIVE) {
-        "evasive"
-    } else {
-        "undefined ⚫"
-    };
+    let mut types = vec![];
 
-    format!("{} {} {}", lvl, typ, emoji)
+    if typ.is(Type::PROFANE) {
+        types.push("profane");
+    }
+
+    if typ.is(Type::OFFENSIVE) {
+        types.push("offensive");
+    }
+
+    if typ.is(Type::SEXUAL) {
+        types.push("sexual");
+    }
+
+    if typ.is(Type::MEAN) {
+        types.push("mean");
+    }
+
+    if typ.is(Type::EVASIVE) {
+        types.push("evasive");
+    }
+
+    if typ.is(Type::SPAM) {
+        types.push("spam");
+    }
+
+    format!("{} {} {}", lvl, types.join(" "), emoji)
 }
 
-pub fn find_bad_words(lyrics: Vec<String>) -> Vec<String> {
+pub fn profanity_check(lyrics: Vec<String>) -> Vec<(usize, Type, String)> {
     lyrics
         .into_iter()
         .map(|line| escape(&line))
         .enumerate()
-        .filter_map(|(index, line)| {
+        .map(|(index, line)| {
             let (censored, typ) = rustrict::Censor::from_str(&line)
                 .with_censor_first_character_threshold(Type::ANY)
                 .with_censor_threshold(Type::INAPPROPRIATE)
                 .censor_and_analyze();
 
-            if censored == line {
-                return None;
+            // safe || none || only spam
+            if typ.is(Type::SAFE) || typ.is_empty() || (typ & !Type::SPAM).is_empty() {
+                return (index, Type::SAFE, line);
             }
 
             let highlighted = line
@@ -92,12 +109,7 @@ pub fn find_bad_words(lyrics: Vec<String>) -> Vec<String> {
                 .join("")
                 .replace("____", "");
 
-            Some(format!(
-                "`{}:` {}, `{}`",
-                index + 1,
-                highlighted,
-                get_type_name(typ)
-            ))
+            (index, typ, highlighted)
         })
         .collect()
 }
@@ -127,12 +139,12 @@ fn remove_song_feat(name: &str) -> String {
         .to_owned()
 }
 
-fn get_track_names(name: String) -> HashSet<String> {
-    let no_extra = remove_extra_info(&name);
+fn get_track_names(name: &str) -> HashSet<String> {
+    let no_extra = remove_extra_info(name);
     let names = vec![
-        name.clone(),
+        name.to_owned(),
         no_extra.clone(),
-        remove_song_feat(&name),
+        remove_song_feat(name),
         remove_song_feat(&no_extra),
     ];
 
@@ -150,7 +162,7 @@ pub async fn search_for_track(
         .next()
         .ok_or_else(|| anyhow!("Should be at least 1 artist in track"))?;
 
-    let names = get_track_names(track.name.clone());
+    let names = get_track_names(&track.name);
 
     let mut hits_count = 0;
 

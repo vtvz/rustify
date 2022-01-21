@@ -6,7 +6,7 @@ use teloxide::prelude::*;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, ReplyMarkup};
 
 use crate::state::UserState;
-use crate::telegram::helpers::handle_register_invite;
+use crate::telegram::helpers::send_register_invite;
 
 #[derive(Clone, EnumString, AsRefStr)]
 pub enum StartKeyboard {
@@ -44,7 +44,7 @@ impl StartKeyboard {
 
 pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Result<bool> {
     if !state.is_spotify_authed().await {
-        handle_register_invite(cx, state).await?;
+        send_register_invite(cx, state).await?;
 
         return Ok(true);
     }
@@ -63,6 +63,6 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Resul
         StartKeyboard::Dislike => super::handlers::dislike::handle(cx, state).await,
         StartKeyboard::Cleanup => super::handlers::cleanup::handle(cx, state).await,
         StartKeyboard::Stats => super::handlers::stats::handle(cx, state).await,
-        StartKeyboard::Details => super::handlers::details::handle(cx, state).await,
+        StartKeyboard::Details => super::handlers::details::handle_current(cx, state).await,
     }
 }

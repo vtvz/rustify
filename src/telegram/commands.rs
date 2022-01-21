@@ -63,7 +63,7 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
                     .send()
                     .await?;
             } else {
-                super::helpers::handle_register_invite(cx, state).await?;
+                super::helpers::send_register_invite(cx, state).await?;
             }
         }
         Command::Echo(text) => {
@@ -72,8 +72,8 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
         Command::Dislike => return super::handlers::dislike::handle(cx, state).await,
         Command::Cleanup => return super::handlers::cleanup::handle(cx, state).await,
         Command::Stats => return super::handlers::stats::handle(cx, state).await,
-        Command::Details => return super::handlers::details::handle(cx, state).await,
-        Command::Register => return super::helpers::handle_register_invite(cx, state).await,
+        Command::Details => return super::handlers::details::handle_current(cx, state).await,
+        Command::Register => return super::helpers::send_register_invite(cx, state).await,
         Command::Help => {
             cx.answer(Command::descriptions()).send().await?;
         }

@@ -93,8 +93,8 @@ pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> 
 
             TrackStatusService::set_status(
                 &state.app.db,
-                state.user_id.clone(),
-                id.clone(),
+                &state.user_id,
+                &id,
                 track_status_service::Status::None,
             )
             .await?;
@@ -131,8 +131,8 @@ pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> 
 
             TrackStatusService::set_status(
                 &state.app.db,
-                state.user_id.clone(),
-                id.clone(),
+                &state.user_id,
+                &id,
                 track_status_service::Status::Disliked,
             )
             .await?;
@@ -166,8 +166,8 @@ pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> 
 
             TrackStatusService::set_status(
                 &state.app.db,
-                state.user_id.clone(),
-                id.clone(),
+                &state.user_id,
+                &id,
                 track_status_service::Status::Ignore,
             )
             .await?;

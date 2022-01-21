@@ -30,11 +30,7 @@ impl Default for Status {
 pub struct TrackStatusService;
 
 impl TrackStatusService {
-    pub async fn count_status(
-        db: &DbConn,
-        user_id: String,
-        status: Status,
-    ) -> anyhow::Result<usize> {
+    pub async fn count_status(db: &DbConn, user_id: &str, status: Status) -> anyhow::Result<usize> {
         let res = TrackStatusEntity::find()
             .filter(entity::track_status::Column::UserId.eq(user_id))
             .filter(entity::track_status::Column::Status.eq(status.as_ref()))
@@ -46,21 +42,21 @@ impl TrackStatusService {
 
     pub async fn set_status(
         db: &DbConn,
-        user_id: String,
-        track_id: String,
+        user_id: &str,
+        track_id: &str,
         status: Status,
     ) -> anyhow::Result<entity::track_status::ActiveModel> {
         let track_status = TrackStatusEntity::find()
-            .filter(entity::track_status::Column::TrackId.eq(track_id.clone()))
-            .filter(entity::track_status::Column::UserId.eq(user_id.clone()))
+            .filter(entity::track_status::Column::TrackId.eq(track_id))
+            .filter(entity::track_status::Column::UserId.eq(user_id))
             .one(db)
             .await?;
 
         let mut track_status = match track_status {
             Some(track_status) => track_status.into_active_model(),
             None => entity::track_status::ActiveModel {
-                track_id: Set(track_id),
-                user_id: Set(user_id),
+                track_id: Set(track_id.to_owned()),
+                user_id: Set(user_id.to_owned()),
                 ..Default::default()
             }
             .insert(db)
@@ -74,10 +70,10 @@ impl TrackStatusService {
         Ok(track_status.save(db).await?)
     }
 
-    pub async fn get_status(db: &DbConn, user_id: String, track_id: String) -> Status {
+    pub async fn get_status(db: &DbConn, user_id: &str, track_id: &str) -> Status {
         let track_status = TrackStatusEntity::find()
-            .filter(entity::track_status::Column::TrackId.eq(track_id.clone()))
-            .filter(entity::track_status::Column::UserId.eq(user_id.clone()))
+            .filter(entity::track_status::Column::TrackId.eq(track_id))
+            .filter(entity::track_status::Column::UserId.eq(user_id))
             .one(db)
             .await;
 
@@ -98,11 +94,11 @@ impl TrackStatusService {
 
     pub async fn get_ids_with_status(
         db: &DbConn,
-        user_id: String,
+        user_id: &str,
         status: Status,
     ) -> anyhow::Result<Vec<TrackId>> {
         let tracks: Vec<track_status::Model> = TrackStatusEntity::find()
-            .filter(entity::track_status::Column::UserId.eq(user_id.clone()))
+            .filter(entity::track_status::Column::UserId.eq(user_id))
             .filter(entity::track_status::Column::Status.eq(status.as_ref()))
             .all(db)
             .await?;

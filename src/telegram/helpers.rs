@@ -1,5 +1,4 @@
 use anyhow::Result;
-use rspotify::clients::OAuthClient;
 use teloxide::prelude::*;
 use teloxide::types::{
     InlineKeyboardButton,
@@ -9,11 +8,9 @@ use teloxide::types::{
     ReplyMarkup,
 };
 
-use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::UserState;
-use crate::telegram::keyboards::StartKeyboard;
 
-pub async fn handle_register_invite(
+pub async fn send_register_invite(
     cx: &UpdateWithCx<Bot, Message>,
     state: &UserState,
 ) -> Result<bool> {
@@ -29,67 +26,6 @@ pub async fn handle_register_invite(
                 }]
             ],
         )))
-        .send()
-        .await?;
-
-    Ok(true)
-}
-
-pub async fn handle_register(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Result<bool> {
-    let Some(text) = cx.update.text() else {
-        return Ok(false);
-    };
-
-    let Ok(url) = url::Url::parse(text) else {
-        return Ok(false);
-    };
-
-    let code = loop {
-        let Some((key, value)) = url.query_pairs().next() else {
-            return Ok(false);
-        };
-
-        if key == "code" {
-            break value.to_string();
-        }
-    };
-
-    process_spotify_code(cx, state, code).await
-}
-
-pub async fn process_spotify_code(
-    cx: &UpdateWithCx<Bot, Message>,
-    state: &UserState,
-    code: String,
-) -> Result<bool> {
-    let mut instance = state.spotify.write().await;
-
-    if let Err(err) = instance.request_token(&code).await {
-        cx.answer("Cannot retrieve token. Code is probably broken. Run /register command and try again please")
-            .send()
-            .await?;
-
-        return Err(err.into());
-    }
-
-    let token = instance.token.lock().await;
-
-    let Ok(token) = token else {
-        cx.answer("Cannot retrieve token. Try again").send().await?;
-
-        return Ok(true);
-    };
-
-    let Some(token) = token.clone() else {
-        cx.answer("Token is not retrieved. Try again").send().await?;
-
-        return Ok(true);
-    };
-
-    SpotifyAuthService::set_token(&state.app.db, state.user_id.clone(), token).await?;
-
-    cx.answer("Yeah! You registered successfully!")
-        .reply_markup(StartKeyboard::markup())
         .send()
         .await?;
 

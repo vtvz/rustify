@@ -8,12 +8,14 @@ extern crate derive_more;
 extern crate serde;
 
 use std::collections::HashMap;
-use std::str::FromStr;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
+use crate::genius::get_type_name;
 use futures::FutureExt;
+use indoc::formatdoc;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{FullTrack, TrackId};
+use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::utils::markdown::escape;
@@ -43,7 +45,11 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
 
     let lyrics = genius::get_lyrics(&hit.result.url).await?;
 
-    let bad_lines: Vec<_> = genius::find_bad_words(lyrics);
+    let bad_lines: Vec<_> = genius::profanity_check(lyrics)
+        .into_iter()
+        .filter(|(_, typ, _)| !typ.is(Type::SAFE))
+        .map(|(index, typ, line)| format!("`{}:` {}, `{}`", index + 1, line, get_type_name(typ)))
+        .collect();
 
     if bad_lines.is_empty() {
         return Ok(());
@@ -51,16 +57,22 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
 
     let mut lines = bad_lines.len();
     let message = loop {
-        let message = format!(
+        let message = formatdoc!(
             // TODO Return spoilers after teloxide update
             // "has bad words: \n ||{}||",
-            "Current song \\({}\\) probably has bad words \\(ignore in case of false positive\\): \n\n{}\n\n[Genius Source]({})",
-            spotify::create_track_name(track),
-            bad_lines[0..lines].join("\n"),
-            hit.result.url
+            "
+                Current song \\({track_name}\\) probably has bad words \\(ignore in case of false positive\\):
+                
+                {bad_lines}
+                
+                [Genius Source]({genius_link})
+            ",
+            track_name = spotify::create_track_name(track),
+            bad_lines = bad_lines[0..lines].join("\n"),
+            genius_link = hit.result.url
         );
 
-        if message.len() <= 4096 {
+        if message.len() <= telegram::MESSAGE_MAX_LEN {
             break message;
         }
 
@@ -100,7 +112,7 @@ async fn check_playing(app_state: &'static state::AppState) {
         };
 
         for user_id in user_ids {
-            let state = match app_state.user_state(user_id.clone()).await {
+            let state = match app_state.user_state(&user_id).await {
                 Ok(state) => state,
                 Err(err) => {
                     log::error!("{}: {:?}", "Something went wrong", err);
@@ -131,8 +143,8 @@ async fn check_playing(app_state: &'static state::AppState) {
 
             let status = TrackStatusService::get_status(
                 &state.app.db,
-                state.user_id.clone(),
-                spotify::get_track_id(&track),
+                &state.user_id,
+                &spotify::get_track_id(&track),
             )
             .await;
 
@@ -176,7 +188,7 @@ async fn run() {
         .messages_handler(move |rx: DispatcherHandlerRx<Bot, Message>| {
             UnboundedReceiverStream::new(rx)
                 .for_each(move |cx| async move {
-                    let state = match app_state.user_state(cx.update.chat_id().to_string()).await {
+                    let state = match app_state.user_state(&cx.update.chat_id().to_string()).await {
                         Ok(state) => state,
                         Err(err) => {
                             log::error!("{:?}", err);
@@ -188,6 +200,14 @@ async fn run() {
 
                     if let Err(err) = result {
                         log::error!("{:?}", err);
+                        cx.answer(format!(
+                            "Sorry, error has happened :\\(\n`{}`",
+                            escape(&format!("{:?}", err))
+                        ))
+                        .parse_mode(ParseMode::MarkdownV2)
+                        .send()
+                        .await
+                        .ok();
                     }
                 })
                 .boxed()
@@ -195,7 +215,7 @@ async fn run() {
         .callback_queries_handler(move |rx: DispatcherHandlerRx<Bot, CallbackQuery>| {
             UnboundedReceiverStream::new(rx)
                 .for_each(move |cx| async {
-                    let state = match app_state.user_state(cx.update.from.id.to_string()).await {
+                    let state = match app_state.user_state(&cx.update.from.id.to_string()).await {
                         Ok(state) => state,
                         Err(err) => {
                             log::error!("{:?}", err);

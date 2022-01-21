@@ -19,12 +19,9 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
         .await
         .context("Cannot get current user")?;
 
-    let disliked = TrackStatusService::get_ids_with_status(
-        &state.app.db,
-        state.user_id.clone(),
-        Status::Disliked,
-    )
-    .await?;
+    let disliked =
+        TrackStatusService::get_ids_with_status(&state.app.db, &state.user_id, Status::Disliked)
+            .await?;
 
     let mut offset = 0;
     let mut before = 0;

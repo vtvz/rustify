@@ -28,8 +28,8 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Resul
 
     TrackStatusService::set_status(
         &state.app.db,
-        state.user_id.clone(),
-        track_id.clone(),
+        &state.user_id,
+        &track_id,
         track_status_service::Status::Disliked,
     )
     .await?;

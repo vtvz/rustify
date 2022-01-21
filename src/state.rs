@@ -78,15 +78,11 @@ impl AppState {
         Ok(app_state)
     }
 
-    pub async fn user_state(&'static self, user_id: String) -> anyhow::Result<UserState> {
+    pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {
         Ok(UserState {
             app: self,
-            spotify: RwLock::new(
-                self.spotify_manager
-                    .for_user(&self.db, user_id.clone())
-                    .await?,
-            ),
-            user_id,
+            spotify: RwLock::new(self.spotify_manager.for_user(&self.db, user_id).await?),
+            user_id: user_id.to_string(),
         })
     }
 }
