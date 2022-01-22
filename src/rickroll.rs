@@ -4,8 +4,11 @@ use lazy_static::lazy_static;
 use rand::prelude::*;
 use rspotify::clients::OAuthClient;
 use rspotify::model::TrackId;
+use rspotify::AuthCodeSpotify;
 use std::collections::HashSet;
+use std::ops::Deref;
 use std::str::FromStr;
+use teloxide::requests::{Request, Requester};
 
 lazy_static! {
     static ref RICK: TrackId =
@@ -18,6 +21,9 @@ lazy_static! {
     static ref ENABLED: bool = dotenv::var("RICKROLL_ENABLED")
         .unwrap_or_else(|_| "true".into())
         .eq("true");
+    static ref REPORT: Option<i64> = dotenv::var("RICKROLL_REPORT")
+        .map(|res| res.parse().expect("Reporter should be valid chat number"))
+        .ok();
 }
 
 pub async fn should(user_id: &str, play: bool) -> bool {
@@ -40,8 +46,6 @@ pub async fn should(user_id: &str, play: bool) -> bool {
 }
 
 pub async fn like(state: &UserState) {
-    log::warn!("User {} was RickRolled in favorites!", state.user_id);
-
     let rick = vec![RICK.clone()];
     let spotify = state.spotify.read().await;
 
@@ -54,11 +58,40 @@ pub async fn like(state: &UserState) {
         .current_user_saved_tracks_add(rick.iter())
         .await
         .ok();
+
+    report(state, spotify.deref(), "favorites").await;
 }
 
 pub async fn queue(state: &UserState) {
-    log::warn!("User {} was RickRolled in queue!", state.user_id);
     let spotify = state.spotify.read().await;
 
     spotify.add_item_to_queue(&RICK.clone(), None).await.ok();
+
+    report(state, spotify.deref(), "queue").await;
+}
+
+async fn report(state: &UserState, spotify: &AuthCodeSpotify, wher: &str) {
+    let message = format!(
+        "User {} {} was RickRolled in {wher}!",
+        state.user_id,
+        spotify
+            .me()
+            .await
+            .map(|res| res.display_name.unwrap_or_default())
+            .unwrap_or_default()
+    );
+
+    log::warn!("{}", message);
+
+    let Some(report_id) = *REPORT else {
+        return;
+    };
+
+    state
+        .app
+        .bot
+        .send_message(report_id, message)
+        .send()
+        .await
+        .ok();
 }
