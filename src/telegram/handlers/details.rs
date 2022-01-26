@@ -1,27 +1,19 @@
+use std::str::FromStr;
+
 use anyhow::anyhow;
 use indoc::formatdoc;
 use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
-use rspotify::model::{Modality, TrackId};
-use rustrict::Type;
-use std::str::FromStr;
+use rspotify::model::{FullTrack, Modality, TrackId};
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ReplyMarkup};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
+use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
-use crate::{
-    genius,
-    get_type_name,
-    spotify,
-    telegram,
-    CurrentlyPlaying,
-    FullTrack,
-    InlineButtons,
-    ParseMode,
-    Status,
-    TrackStatusService,
-};
+use crate::telegram::inline_buttons::InlineButtons;
+use crate::track_status_service::{Status, TrackStatusService};
+use crate::{genius, profanity, spotify, telegram};
 
 pub async fn handle_current(
     cx: &UpdateWithCx<Bot, Message>,
@@ -178,17 +170,13 @@ async fn common(
         return Ok(true);
     };
 
-    let lyrics = genius::get_lyrics(&hit.result.url).await?;
+    let lyrics = genius::get_lyrics(&hit).await?;
 
-    let checked = genius::profanity_check(lyrics);
+    let checked = profanity::Check::perform(lyrics);
 
-    let lyrics: Vec<_> = checked.iter().map(|(_, _, line)| line.clone()).collect();
+    let lyrics: Vec<_> = checked.iter().map(|line| line.highlighted()).collect();
 
-    let typ = checked
-        .into_iter()
-        .map(|(_, typ, _)| typ)
-        .filter(|typ| typ.isnt(Type::SAFE))
-        .fold(Type::NONE, |acc, typ| acc | typ);
+    let typ = checked.sum_type_name();
 
     let mut lines = lyrics.len();
     let message = loop {
@@ -209,14 +197,14 @@ async fn common(
             ",
             track_name = spotify::create_track_name(&track),
             features = features.trim(),
-            profanity = get_type_name(typ),
+            profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),
             genius_line = if lines == lyrics.len() {
                 "Genius Source"
             } else {
                 "Text truncated\\. Full lyrics can be found at Genius"
             },
-            genius_link = hit.result.url
+            genius_link = hit
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {

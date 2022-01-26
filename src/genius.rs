@@ -1,14 +1,12 @@
 use std::collections::HashSet;
 
 use anyhow::anyhow;
-use genius_rs::search::Hit;
+use cached::proc_macro::cached;
 use lazy_static::lazy_static;
 use regex::Regex;
 use reqwest::Client;
 use rspotify::model::FullTrack;
-use rustrict::Type;
 use scraper::{Html, Selector};
-use teloxide::utils::markdown::escape;
 
 use crate::state;
 
@@ -32,86 +30,6 @@ pub async fn get_lyrics(url: &str) -> anyhow::Result<Vec<String>> {
         return Err(anyhow!("Cannot parse lyrics. For some reason for {}", url));
     }
     Ok(lyrics)
-}
-
-pub fn get_type_name(typ: Type) -> String {
-    if typ.is(Type::SAFE) || typ == Type::NONE {
-        return "safe 🟢".into();
-    }
-
-    let (lvl, emoji) = if typ.is(Type::SEVERE) {
-        ("severe", '⛔')
-    } else if typ.is(Type::MODERATE) {
-        ("moderate", '🟠')
-    } else if typ.is(Type::MILD) {
-        ("mild", '🟡')
-    } else {
-        ("undefined", '❔')
-    };
-
-    let mut types = vec![];
-
-    if typ.is(Type::PROFANE) {
-        types.push("profane");
-    }
-
-    if typ.is(Type::OFFENSIVE) {
-        types.push("offensive");
-    }
-
-    if typ.is(Type::SEXUAL) {
-        types.push("sexual");
-    }
-
-    if typ.is(Type::MEAN) {
-        types.push("mean");
-    }
-
-    if typ.is(Type::EVASIVE) {
-        types.push("evasive");
-    }
-
-    if typ.is(Type::SPAM) {
-        types.push("spam");
-    }
-
-    format!("{} {} {}", lvl, types.join(" "), emoji)
-}
-
-pub fn profanity_check(lyrics: Vec<String>) -> Vec<(usize, Type, String)> {
-    lyrics
-        .into_iter()
-        .map(|line| escape(&line))
-        .enumerate()
-        .map(|(index, line)| {
-            let (censored, typ) = rustrict::Censor::from_str(&line)
-                .with_censor_first_character_threshold(Type::ANY)
-                .with_censor_threshold(Type::INAPPROPRIATE)
-                .censor_and_analyze();
-
-            // safe || none || only spam
-            if typ.is(Type::SAFE) || typ.is_empty() || (typ & !Type::SPAM).is_empty() {
-                return (index, Type::SAFE, line);
-            }
-
-            let highlighted = line
-                .chars()
-                .into_iter()
-                .enumerate()
-                .map(|(i, c)| {
-                    if !censored.chars().nth(i).contains(&c) {
-                        format!("__{}__", c)
-                    } else {
-                        c.into()
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join("")
-                .replace("____", "");
-
-            (index, typ, highlighted)
-        })
-        .collect()
 }
 
 lazy_static! {
@@ -151,10 +69,20 @@ fn get_track_names(name: &str) -> HashSet<String> {
     HashSet::from_iter(names.into_iter())
 }
 
+/// Returns url to Genius page
+#[cached(
+    key = "String",
+    convert = r#"{ format!("{:?}", track.id) }"#,
+    result = true,
+    sync_writes = true,
+    size = 100,
+    time = 3600,
+    time_refresh = true
+)]
 pub async fn search_for_track(
     state: &state::UserState,
     track: &FullTrack,
-) -> anyhow::Result<Option<Hit>> {
+) -> anyhow::Result<Option<String>> {
     let artist = track
         .artists
         .iter()
@@ -185,7 +113,7 @@ pub async fn search_for_track(
                     artist,
                     name,
                 );
-                return Ok(Some(hit));
+                return Ok(Some(hit.result.url));
             }
         }
     }

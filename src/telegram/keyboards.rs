@@ -6,7 +6,8 @@ use teloxide::prelude::*;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, ReplyMarkup};
 
 use crate::state::UserState;
-use crate::telegram::helpers::send_register_invite;
+
+use super::helpers::send_register_invite;
 
 #[derive(Clone, EnumString, AsRefStr)]
 pub enum StartKeyboard {

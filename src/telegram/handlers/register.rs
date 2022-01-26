@@ -2,9 +2,10 @@ use anyhow::Result;
 use rspotify::clients::OAuthClient;
 use teloxide::prelude::*;
 
+use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::UserState;
-use crate::telegram::keyboards::StartKeyboard;
-use crate::SpotifyAuthService;
+
+use super::super::keyboards::StartKeyboard;
 
 pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Result<bool> {
     let Some(text) = cx.update.text() else {

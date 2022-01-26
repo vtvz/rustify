@@ -56,7 +56,7 @@ impl AppState {
             .unwrap_or_default()
             .split(',')
             .for_each(|word| unsafe {
-                rustrict::add_word(word, Type::MODERATE);
+                rustrict::add_word(word, Type::MODERATE & Type::PROFANE);
             });
 
         teloxide::enable_logging!();

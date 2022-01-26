@@ -3,10 +3,11 @@ use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::command::BotCommand;
 use teloxide::utils::command::ParseError;
-use teloxide::utils::markdown::escape;
+use teloxide::utils::markdown;
 
 use crate::state::UserState;
-use crate::telegram::keyboards::StartKeyboard;
+
+use super::keyboards::StartKeyboard;
 
 #[derive(BotCommand, PartialEq, Debug)]
 #[command(rename = "lowercase")]
@@ -43,8 +44,8 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
     if let Err(ParseError::UnknownCommand(command)) = command {
         cx.answer(format!(
             "Command `{}` not found: \n\n{}",
-            escape(&command),
-            escape(&Command::descriptions())
+            markdown::escape(&command),
+            markdown::escape(&Command::descriptions())
         ))
         .parse_mode(ParseMode::MarkdownV2)
         .send()

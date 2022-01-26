@@ -5,9 +5,10 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use crate::spotify;
 use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
-use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service;
 use crate::track_status_service::TrackStatusService;
+
+use super::super::inline_buttons::InlineButtons;
 
 pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Result<bool> {
     if !state.is_spotify_authed().await {

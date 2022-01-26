@@ -2,7 +2,7 @@ use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
 use crate::state::UserState;
-use crate::{Status, TrackStatusService};
+use crate::track_status_service::{Status, TrackStatusService};
 
 pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyhow::Result<bool> {
     let count =

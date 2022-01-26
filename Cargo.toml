@@ -30,6 +30,7 @@ rustrict = { version = "0.3.5", features = ["customize"] }
 lazy_static = "1.4.0"
 indoc = "1.0.3"
 rand = "0.8.4"
+cached = "0.30.0"
 
 [dependencies.tokio]
 version = "1.14.0"

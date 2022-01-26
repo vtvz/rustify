@@ -1,8 +1,9 @@
 use anyhow::Result;
 use teloxide::prelude::*;
 
+use keyboards::StartKeyboard;
+
 use crate::state::UserState;
-use crate::telegram::keyboards::StartKeyboard;
 
 pub mod commands;
 mod handlers;

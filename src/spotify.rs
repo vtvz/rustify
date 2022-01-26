@@ -3,7 +3,7 @@ use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::model::{FullTrack, Id, PlayableItem};
 use rspotify::{scopes, AuthCodeSpotify};
 use sea_orm::DbConn;
-use teloxide::utils::markdown::escape;
+use teloxide::utils::markdown;
 
 use crate::spotify_auth_service::SpotifyAuthService;
 
@@ -75,8 +75,8 @@ pub fn create_track_name(track: &FullTrack) -> String {
 
     format!(
         r#"[{} — {}]({})"#,
-        escape(&artists),
-        escape(&track.name),
+        markdown::escape(&artists),
+        markdown::escape(&track.name),
         track
             .external_urls
             .get("spotify")
