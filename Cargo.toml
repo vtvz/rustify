@@ -7,10 +7,10 @@ rust-version = "1.57.0"
 [dependencies]
 log = "0.4.14"
 pretty_env_logger = "0.4.0"
-serde_json = "1.0.72"
-anyhow = "1.0.51"
-serde = "1.0.131"
-futures = "0.3.18"
+serde_json = "1.0.78"
+anyhow = "1.0.53"
+serde = "1.0.136"
+futures = "0.3.19"
 derive_more = "0.99.17"
 tokio-stream = "0.1.8"
 strum = "0.23.0"
@@ -19,21 +19,21 @@ rspotify = "0.11.3"
 warp = "0.3.2"
 dotenv = "0.15.0"
 genius-rs = "0.4.0"
-reqwest = "0.11.8"
+reqwest = "0.11.9"
 scraper = "0.12.0"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.7", features = ["env-filter"] }
 tracing = "0.1.29"
 sqlx = { version = "0.5.10", features = ["sqlite"] }
 url = "2.2.2"
 regex = { version = "1.5.4", features = ["pattern"] }
-rustrict = { version = "0.3.5", features = ["customize"] }
+rustrict = { version = "0.3.6", features = ["customize"] }
 lazy_static = "1.4.0"
 indoc = "1.0.3"
 rand = "0.8.4"
 cached = "0.30.0"
 
 [dependencies.tokio]
-version = "1.14.0"
+version = "1.15.0"
 features = ["rt-multi-thread", "macros"]
 
 [dependencies.teloxide]
@@ -46,7 +46,7 @@ features = [
 
 [dependencies.sea-orm]
 default-features = false
-version = "^0"
+version = "0.5.0"
 features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print"]
 
 [features]
