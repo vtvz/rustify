@@ -172,7 +172,7 @@ async fn common(
 
     let lyrics = genius::get_lyrics(&hit).await?;
 
-    let checked = profanity::Check::perform(lyrics);
+    let checked = profanity::Manager::check(lyrics);
 
     let lyrics: Vec<_> = checked.iter().map(|line| line.highlighted()).collect();
 

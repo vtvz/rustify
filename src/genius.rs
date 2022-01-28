@@ -97,7 +97,7 @@ pub async fn search_for_track(
     for (name_i, name) in names.into_iter().enumerate() {
         let q = format!("{} {}", name, artist);
 
-        let hits = state.app.genius.search(q.as_ref()).await?;
+        let hits = state.app.genius.search(q.as_str()).await?;
 
         hits_count += hits.len();
         for (hit_i, hit) in hits.into_iter().enumerate() {

@@ -1,5 +1,4 @@
 #![warn(clippy::unwrap_used)]
-#![allow(unused_imports)]
 #![feature(option_result_contains, stmt_expr_attributes, let_else)]
 
 #[macro_use]
@@ -29,10 +28,6 @@ mod track_status_service;
 async fn run() {
     let app_state = AppState::init().await.expect("State to be built");
     tokio::spawn(tick::check_playing(app_state));
-    match tracing_subscriber::fmt::try_init() {
-        Ok(_) => println!("tracing_subscriber::fmt::try_init success"),
-        Err(err) => println!("tracing_subscriber::fmt::try_init error: {:?}", err),
-    }
 
     log::info!("Starting rustify bot...");
 

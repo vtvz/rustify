@@ -5,36 +5,35 @@ edition = "2021"
 rust-version = "1.57.0"
 
 [dependencies]
-log = "0.4.14"
-pretty_env_logger = "0.4.0"
-serde_json = "1.0.78"
-anyhow = "1.0.53"
-serde = "1.0.136"
-futures = "0.3.19"
+anyhow = { version = "1.0.53", features = ["backtrace"] }
+cached = "0.30.0"
 derive_more = "0.99.17"
-tokio-stream = "0.1.8"
+dotenv = "0.15.0"
+futures = "0.3.19"
+genius-rs = "0.4.0"
+indoc = "1.0.3"
+lazy_static = "1.4.0"
+log = "0.4.14"
+rand = "0.8.4"
+regex = { version = "1.5.4", features = ["pattern"] }
+reqwest = "0.11.9"
+rspotify = "0.11.3"
+rustrict = { version = "0.3.8", features = ["customize"] }
+scraper = "0.12.0"
+serde = "1.0.136"
+serde_json = "1.0.78"
+sqlx = { version = "0.5.10", features = ["sqlite"] }
 strum = "0.23.0"
 strum_macros = "0.23.1"
-rspotify = "0.11.3"
-warp = "0.3.2"
-dotenv = "0.15.0"
-genius-rs = "0.4.0"
-reqwest = "0.11.9"
-scraper = "0.12.0"
-tracing-subscriber = { version = "0.3.7", features = ["env-filter"] }
+tokio-stream = "0.1.8"
 tracing = "0.1.29"
-sqlx = { version = "0.5.10", features = ["sqlite"] }
+tracing-subscriber = { version = "0.3.7", features = ["env-filter"] }
 url = "2.2.2"
-regex = { version = "1.5.4", features = ["pattern"] }
-rustrict = { version = "0.3.6", features = ["customize"] }
-lazy_static = "1.4.0"
-indoc = "1.0.3"
-rand = "0.8.4"
-cached = "0.30.0"
 
-[dependencies.tokio]
-version = "1.15.0"
-features = ["rt-multi-thread", "macros"]
+[dependencies.sea-orm]
+default-features = false
+version = "0.5.0"
+features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print"]
 
 [dependencies.teloxide]
 version = "0.5.3"
@@ -44,9 +43,8 @@ features = [
     "bincode-serializer"
 ]
 
-[dependencies.sea-orm]
-default-features = false
-version = "0.5.0"
-features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print"]
+[dependencies.tokio]
+version = "1.16.1"
+features = ["rt-multi-thread", "macros"]
 
 [features]

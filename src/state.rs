@@ -1,19 +1,19 @@
-use std::sync::Arc;
-
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use genius_rs::Genius;
 use rspotify::AuthCodeSpotify;
-use rustrict::Type;
 use sea_orm::{Database, DatabaseConnection, DbConn};
 use sqlx::migrate::MigrateDatabase;
 use teloxide::Bot;
 use tokio::sync::RwLock;
+use tracing_subscriber::filter::Targets;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::util::SubscriberInitExt;
 
-use crate::spotify;
+use crate::{profanity, spotify};
 
 pub struct AppState {
     pub spotify_manager: spotify::Manager,
-    pub genius: Arc<Genius>,
+    pub genius: Genius,
     pub bot: Bot,
     pub db: DatabaseConnection,
 }
@@ -47,19 +47,49 @@ async fn genius() -> anyhow::Result<Genius> {
     ))
 }
 
+fn logger() -> anyhow::Result<()> {
+    let tracing_init = tracing_subscriber::fmt()
+        .with_file(false)
+        .with_line_number(true)
+        .without_time()
+        .with_max_level(tracing::Level::TRACE)
+        .finish()
+        .with(
+            Targets::new()
+                .with_target(
+                    &env!("CARGO_PKG_NAME").replace('-', "_"),
+                    tracing::Level::TRACE,
+                )
+                .with_target("teloxide", tracing::Level::INFO)
+                .with_default(tracing::Level::WARN),
+        )
+        .try_init();
+
+    match tracing_init {
+        Ok(_) => log::info!("tracing_subscriber::fmt::try_init success"),
+        Err(err) => log::error!(
+            "tracing_subscriber::fmt::try_init error: {:?}",
+            anyhow!(err)
+        ),
+    }
+
+    Ok(())
+}
+
 impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
+        logger()?;
+
+        log::trace!("Init application");
+
         let spotify_manager = spotify::Manager::new();
-        let genius = Arc::new(genius().await?);
+        let genius = genius().await?;
 
         dotenv::var("CENSOR_BLACKLIST")
             .unwrap_or_default()
             .split(',')
-            .for_each(|word| unsafe {
-                rustrict::add_word(word, Type::MODERATE & Type::PROFANE);
-            });
+            .for_each(profanity::Manager::add_word);
 
-        teloxide::enable_logging!();
         let bot = Bot::new(
             dotenv::var("TELEGRAM_BOT_TOKEN").context("Need TELEGRAM_BOT_TOKEN variable")?,
         );
@@ -67,14 +97,14 @@ impl AppState {
         let db = db().await?;
 
         // Make state global static variable to prevent hassle with Arc and cloning this mess
-        let app_state = Self {
-            bot: bot.clone(),
+        let app_state = Box::new(Self {
+            bot,
             spotify_manager,
             genius,
             db,
-        };
-        let app_state = Box::new(app_state);
+        });
         let app_state = &*Box::leak(app_state);
+
         Ok(app_state)
     }
 
