@@ -6,6 +6,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use reqwest::Client;
 use rspotify::model::FullTrack;
+use rustrict::is_whitespace;
 use scraper::{Html, Selector};
 
 use crate::state;
@@ -23,7 +24,7 @@ pub async fn get_lyrics(url: &str) -> anyhow::Result<Vec<String>> {
     let mut lyrics = vec![];
     document.select(&LYRICS_SELECTOR).for_each(|elem| {
         elem.text().for_each(|text| {
-            lyrics.push(text.replace('\u{2005}', " "));
+            lyrics.push(text.replace(is_whitespace, " "));
         });
     });
     if lyrics.is_empty() {

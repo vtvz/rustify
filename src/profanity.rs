@@ -113,15 +113,19 @@ impl LineResult {
             .into_iter()
             .enumerate()
             .map(|(i, c)| {
-                if self.bad_chars.contains(&i) {
-                    format!("__{}__", c)
-                } else {
-                    c.into()
+                match (
+                    i != 0 && self.bad_chars.contains(&(i - 1)),
+                    self.bad_chars.contains(&i),
+                    self.bad_chars.contains(&(i + 1)),
+                ) {
+                    (false, true, false) => format!("__{}__", c),
+                    (true, true, false) => format!("{}__", c),
+                    (false, true, true) => format!("__{}", c),
+                    _ => c.into(),
                 }
             })
             .collect::<Vec<_>>()
             .join("")
-            .replace("____", "")
     }
 
     pub fn get_type_name(&self) -> String {
