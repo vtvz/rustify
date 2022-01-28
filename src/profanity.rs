@@ -20,6 +20,13 @@ impl Manager {
         tracing::debug!(word, "Added custom word");
     }
 
+    pub fn remove_word(word: &str) {
+        unsafe {
+            rustrict::add_word(word, Type::NONE);
+        }
+        tracing::debug!(word, "Removed custom word");
+    }
+
     pub fn check(lyrics: Vec<String>) -> CheckResult {
         CheckResult::perform(lyrics)
     }

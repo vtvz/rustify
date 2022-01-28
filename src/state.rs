@@ -90,6 +90,11 @@ impl AppState {
             .split(',')
             .for_each(profanity::Manager::add_word);
 
+        dotenv::var("CENSOR_WHITELIST")
+            .unwrap_or_default()
+            .split(',')
+            .for_each(profanity::Manager::remove_word);
+
         let bot = Bot::new(
             dotenv::var("TELEGRAM_BOT_TOKEN").context("Need TELEGRAM_BOT_TOKEN variable")?,
         );

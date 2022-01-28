@@ -18,7 +18,7 @@ rand = "0.8.4"
 regex = { version = "1.5.4", features = ["pattern"] }
 reqwest = "0.11.9"
 rspotify = "0.11.3"
-rustrict = { version = "0.3.8", features = ["customize"] }
+rustrict = { version = "0.3.9", features = ["customize"] }
 scraper = "0.12.0"
 serde = "1.0.136"
 serde_json = "1.0.78"

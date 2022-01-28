@@ -23,7 +23,7 @@ pub async fn get_lyrics(url: &str) -> anyhow::Result<Vec<String>> {
     let mut lyrics = vec![];
     document.select(&LYRICS_SELECTOR).for_each(|elem| {
         elem.text().for_each(|text| {
-            lyrics.push(text.to_owned());
+            lyrics.push(text.replace('\u{2005}', " "));
         });
     });
     if lyrics.is_empty() {
