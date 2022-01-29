@@ -5,7 +5,7 @@ use indoc::formatdoc;
 use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
-use rspotify::model::{FullTrack, Modality, TrackId};
+use rspotify::model::{FullTrack, Id, Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
@@ -76,23 +76,14 @@ async fn common(
 
     let track_id = track.id.clone().expect("Should be prevalidated");
 
-    let status = TrackStatusService::get_status(
-        &state.app.db,
-        &state.user_id,
-        &spotify::get_track_id(&track),
-    )
-    .await;
+    let status = TrackStatusService::get_status(&state.app.db, &state.user_id, track_id.id()).await;
 
     let keyboard = match status {
         Status::Disliked => {
-            vec![vec![
-                InlineButtons::Cancel(spotify::get_track_id(&track)).into()
-            ]]
+            vec![vec![InlineButtons::Cancel(track_id.id().to_owned()).into()]]
         }
         Status::Ignore | Status::None => {
-            vec![vec![
-                InlineButtons::Dislike(spotify::get_track_id(&track)).into()
-            ]]
+            vec![vec![InlineButtons::Dislike(track_id.id().to_owned()).into()]]
         }
     };
 
@@ -122,6 +113,14 @@ async fn common(
 
     let round = |num: f32| (num * 100.0).round() as u32;
 
+    let disliked_by =
+        TrackStatusService::count_track_status(&state.app.db, track_id.id(), Status::Disliked)
+            .await?;
+
+    let ignored_by =
+        TrackStatusService::count_track_status(&state.app.db, track_id.id(), Status::Ignore)
+            .await?;
+
     let features: String = formatdoc! {
         "
             🎶 `{} {}` ⌛ {} BPM
@@ -132,6 +131,8 @@ async fn common(
             🏟 Performed live {}%
             🎤 Speech\\-like {}%
             ☺️ Positiveness {}%
+            👎 Disliked by {} people
+            🙈 Ignored by {} people
         ",
         key,
         modality,
@@ -143,6 +144,8 @@ async fn common(
         round(features.liveness),
         round(features.speechiness),
         round(features.valence),
+        disliked_by,
+        ignored_by,
     };
 
     let Some(hit) = genius::search_for_track(state, &track).await? else {
@@ -176,7 +179,7 @@ async fn common(
 
     let lyrics: Vec<_> = checked.iter().map(|line| line.highlighted()).collect();
 
-    let typ = checked.sum_type_name();
+    let typ = checked.typ.to_string();
 
     let mut lines = lyrics.len();
     let message = loop {

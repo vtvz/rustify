@@ -38,7 +38,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
                 "`{}:` {}, `[{}]`",
                 line.no + 1,
                 line.highlighted(),
-                line.get_type_name()
+                line.typ
             )
         })
         .collect();

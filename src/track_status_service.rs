@@ -30,9 +30,27 @@ impl Default for Status {
 pub struct TrackStatusService;
 
 impl TrackStatusService {
-    pub async fn count_status(db: &DbConn, user_id: &str, status: Status) -> anyhow::Result<usize> {
+    pub async fn count_user_status(
+        db: &DbConn,
+        user_id: &str,
+        status: Status,
+    ) -> anyhow::Result<usize> {
         let res = TrackStatusEntity::find()
             .filter(entity::track_status::Column::UserId.eq(user_id))
+            .filter(entity::track_status::Column::Status.eq(status.as_ref()))
+            .count(db)
+            .await?;
+
+        Ok(res)
+    }
+
+    pub async fn count_track_status(
+        db: &DbConn,
+        track_id: &str,
+        status: Status,
+    ) -> anyhow::Result<usize> {
+        let res = TrackStatusEntity::find()
+            .filter(entity::track_status::Column::TrackId.eq(track_id))
             .filter(entity::track_status::Column::Status.eq(status.as_ref()))
             .count(db)
             .await?;

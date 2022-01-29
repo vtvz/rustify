@@ -120,7 +120,7 @@ pub async fn queue(state: &UserState) {
 
 async fn report(state: &UserState, spotify: &AuthCodeSpotify, track_id: &TrackId, wher: &str) {
     let message = format!(
-        "User {} {} was RickRolled in {} with https://open.spotify.com/track/{}!",
+        "User {} {} was RickRolled in {} with {}!",
         state.user_id,
         spotify
             .me()
@@ -129,7 +129,7 @@ async fn report(state: &UserState, spotify: &AuthCodeSpotify, track_id: &TrackId
             .map(|res| markdown::escape(res.as_str()))
             .unwrap_or_default(),
         markdown::escape(wher),
-        track_id.id()
+        track_id.url()
     );
 
     log::warn!("{}", message);

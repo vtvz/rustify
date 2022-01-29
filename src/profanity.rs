@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use std::fmt::{Display, Formatter};
 use std::slice::Iter;
 
 use rustrict::Type;
@@ -33,19 +34,19 @@ impl Manager {
 }
 
 #[derive(IntoIterator)]
-pub struct CheckResult(#[into_iterator] Vec<LineResult>, Type);
+pub struct CheckResult {
+    #[into_iterator]
+    lines: Vec<LineResult>,
+    pub typ: TypeWrapper,
+}
 
 impl CheckResult {
     pub fn iter(&self) -> Iter<LineResult> {
-        self.0.iter()
+        self.lines.iter()
     }
 
     pub fn should_trigger(&self) -> bool {
-        self.1.is(*TYPE_TRIGGER)
-    }
-
-    pub fn sum_type_name(&self) -> String {
-        get_type_name(self.1)
+        self.typ.is(*TYPE_TRIGGER)
     }
 
     fn perform(lyrics: Vec<String>) -> Self {
@@ -61,7 +62,7 @@ impl CheckResult {
                 if typ.isnt(*TYPE_THRESHOLD) {
                     return LineResult {
                         no: index,
-                        typ: Type::SAFE,
+                        typ: Type::SAFE.into(),
                         line,
                         bad_chars: Default::default(),
                     };
@@ -82,7 +83,7 @@ impl CheckResult {
 
                 LineResult {
                     no: index,
-                    typ,
+                    typ: typ.into(),
                     line,
                     bad_chars,
                 }
@@ -93,15 +94,18 @@ impl CheckResult {
             .iter()
             .map(|LineResult { typ, .. }| typ)
             .filter(|typ| typ.is(*TYPE_THRESHOLD))
-            .fold(Type::NONE, |acc, typ| acc | *typ);
+            .fold(Type::NONE, |acc, typ| acc | **typ);
 
-        Self(checks, sum_type)
+        Self {
+            lines: checks,
+            typ: sum_type.into(),
+        }
     }
 }
 
 pub struct LineResult {
     pub no: usize,
-    pub typ: Type,
+    pub typ: TypeWrapper,
     pub line: String,
     pub bad_chars: Vec<usize>,
 }
@@ -127,54 +131,61 @@ impl LineResult {
             .collect::<Vec<_>>()
             .join("")
     }
+}
 
-    pub fn get_type_name(&self) -> String {
-        let typ = self.typ;
+#[derive(Clone, Copy, Deref, From)]
+pub struct TypeWrapper(Type);
 
-        get_type_name(typ)
+impl TypeWrapper {
+    fn name(&self) -> String {
+        let typ = self.0;
+
+        if typ.isnt(*TYPE_THRESHOLD) {
+            return "safe 🟢".into();
+        }
+
+        let (lvl, emoji) = if typ.is(Type::SEVERE) {
+            ("severe", '⛔')
+        } else if typ.is(Type::MODERATE) {
+            ("moderate", '🟠')
+        } else if typ.is(Type::MILD) {
+            ("mild", '🟡')
+        } else {
+            ("undefined", '❔')
+        };
+
+        let mut types = vec![];
+
+        if typ.is(Type::PROFANE) {
+            types.push("profane");
+        }
+
+        if typ.is(Type::OFFENSIVE) {
+            types.push("offensive");
+        }
+
+        if typ.is(Type::SEXUAL) {
+            types.push("sexual");
+        }
+
+        if typ.is(Type::MEAN) {
+            types.push("mean");
+        }
+
+        if typ.is(Type::EVASIVE) {
+            types.push("evasive");
+        }
+
+        if typ.is(Type::SPAM) {
+            types.push("spam");
+        }
+
+        format!("{} {} {}", lvl, types.join(" "), emoji)
     }
 }
 
-fn get_type_name(typ: Type) -> String {
-    if typ.isnt(*TYPE_THRESHOLD) {
-        return "safe 🟢".into();
+impl Display for TypeWrapper {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name())
     }
-
-    let (lvl, emoji) = if typ.is(Type::SEVERE) {
-        ("severe", '⛔')
-    } else if typ.is(Type::MODERATE) {
-        ("moderate", '🟠')
-    } else if typ.is(Type::MILD) {
-        ("mild", '🟡')
-    } else {
-        ("undefined", '❔')
-    };
-
-    let mut types = vec![];
-
-    if typ.is(Type::PROFANE) {
-        types.push("profane");
-    }
-
-    if typ.is(Type::OFFENSIVE) {
-        types.push("offensive");
-    }
-
-    if typ.is(Type::SEXUAL) {
-        types.push("sexual");
-    }
-
-    if typ.is(Type::MEAN) {
-        types.push("mean");
-    }
-
-    if typ.is(Type::EVASIVE) {
-        types.push("evasive");
-    }
-
-    if typ.is(Type::SPAM) {
-        types.push("spam");
-    }
-
-    format!("{} {} {}", lvl, types.join(" "), emoji)
 }
