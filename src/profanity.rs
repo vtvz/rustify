@@ -6,7 +6,7 @@ use rustrict::Type;
 use teloxide::utils::markdown;
 
 lazy_static! {
-    static ref TYPE_THRESHOLD: Type = Type::ANY;
+    static ref TYPE_THRESHOLD: Type = Type::ANY & !Type::SPAM;
     static ref TYPE_CUSTOM: Type = Type::MODERATE & Type::EVASIVE;
     static ref TYPE_TRIGGER: Type = Type::INAPPROPRIATE | Type::EVASIVE;
 }
@@ -198,4 +198,24 @@ impl Display for TypeWrapper {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.name())
     }
+}
+
+#[allow(dead_code)]
+pub fn check_cases() {
+    let cases = [];
+
+    cases.map(|case| {
+        let (censored, typ) = rustrict::Censor::from_str(case)
+            .with_censor_first_character_threshold(Type::ANY)
+            .with_censor_threshold(Type::ANY)
+            .censor_and_analyze();
+
+        println!(
+            "{:?} {:?} {:#b} ({})",
+            case,
+            censored,
+            typ,
+            TypeWrapper::from(typ)
+        );
+    });
 }
