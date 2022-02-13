@@ -35,17 +35,21 @@ lazy_static! {
     static ref RND: Mutex<StdRng> = Mutex::new(StdRng::from_entropy());
 }
 
+pub fn is_admin(user_id: &str) -> bool {
+    BLACKLIST.contains(user_id)
+}
+
 pub async fn should(user_id: &str, play: bool) -> bool {
     if !*ENABLED {
         return false;
     }
 
-    if BLACKLIST.contains(user_id) {
+    if is_admin(user_id) {
         return false;
     }
 
     let range = if play {
-        2 * 60 * 60 // once per 2 hours
+        4 * 60 * 60 // once per 4 hours
     } else {
         7 * (24 * 60 * 60) // once per 7 days
     } / tick::CHECK_INTERVAL;

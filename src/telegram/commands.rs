@@ -5,6 +5,7 @@ use teloxide::utils::command::BotCommand;
 use teloxide::utils::command::ParseError;
 use teloxide::utils::markdown;
 
+use crate::rickroll;
 use crate::state::UserState;
 
 use super::keyboards::StartKeyboard;
@@ -30,6 +31,9 @@ pub enum Command {
     Register,
     #[command(description = "show this help")]
     Help,
+
+    #[command(description = "off")]
+    Rickroll(String),
 }
 
 pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
@@ -84,6 +88,13 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
             bot.send_message(m.chat.id, Command::descriptions())
                 .send()
                 .await?;
+        }
+        Command::Rickroll(user_id) => {
+            if rickroll::is_admin(&state.user_id) {
+                let state = state.app.user_state(&user_id).await?;
+
+                rickroll::queue(&state).await;
+            }
         }
     }
     Ok(true)
