@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use lazy_static::lazy_static;
 use rand::prelude::*;
+use rand::seq::SliceRandom;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{Id, TrackId};
 use rspotify::AuthCodeSpotify;
@@ -46,7 +47,7 @@ pub async fn should(user_id: &str, play: bool) -> bool {
     let range = if play {
         2 * 60 * 60 // once per 2 hours
     } else {
-        2 * (24 * 60 * 60) // once per 2 days
+        7 * (24 * 60 * 60) // once per 7 days
     } / tick::CHECK_INTERVAL;
 
     let chance = RND.lock().await.gen_range(0..range);
@@ -55,9 +56,10 @@ pub async fn should(user_id: &str, play: bool) -> bool {
 }
 
 async fn pick() -> TrackId {
-    let variant = RND.lock().await.gen_range(0..TRACKS.len());
-
-    TRACKS.get(variant).cloned().expect("Should exist")
+    TRACKS
+        .choose(&mut *RND.lock().await)
+        .cloned()
+        .expect("Should exist")
 }
 
 pub async fn like(state: &UserState) {

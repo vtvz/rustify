@@ -1,14 +1,14 @@
 use anyhow::Result;
 use rspotify::clients::OAuthClient;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::UserState;
 
 use super::super::keyboards::StartKeyboard;
 
-pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Result<bool> {
-    let Some(text) = cx.update.text() else {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> Result<bool> {
+    let Some(text) = m.text() else {
         return Ok(false);
     };
 
@@ -25,18 +25,19 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Resul
         return Ok(false);
     };
 
-    process_spotify_code(cx, state, code).await
+    process_spotify_code(m, bot, state, code).await
 }
 
 async fn process_spotify_code(
-    cx: &UpdateWithCx<Bot, Message>,
+    m: &Message,
+    bot: &Bot,
     state: &UserState,
     code: String,
 ) -> Result<bool> {
     let mut instance = state.spotify.write().await;
 
     if let Err(err) = instance.request_token(&code).await {
-        cx.answer("Cannot retrieve token. Code is probably broken. Run /register command and try again please")
+        bot.send_message(m.chat.id,"Cannot retrieve token. Code is probably broken. Run /register command and try again please")
             .send()
             .await?;
 
@@ -46,20 +47,20 @@ async fn process_spotify_code(
     let token = instance.token.lock().await;
 
     let Ok(token) = token else {
-        cx.answer("Cannot retrieve token. Try again").send().await?;
+        bot.send_message(m.chat.id,"Cannot retrieve token. Try again").send().await?;
 
         return Ok(true);
     };
 
     let Some(token) = token.clone() else {
-        cx.answer("Token is not retrieved. Try again").send().await?;
+        bot.send_message(m.chat.id,"Token is not retrieved. Try again").send().await?;
 
         return Ok(true);
     };
 
     SpotifyAuthService::set_token(&state.app.db, &state.user_id, token).await?;
 
-    cx.answer("Yeah! You registered successfully!")
+    bot.send_message(m.chat.id, "Yeah! You registered successfully!")
         .reply_markup(StartKeyboard::markup())
         .send()
         .await?;

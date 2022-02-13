@@ -2,14 +2,17 @@ use anyhow::Context;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{Page, PlayableId};
 use rspotify::DEFAULT_PAGINATION_CHUNKS;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 
 use crate::state::UserState;
 use crate::track_status_service::{Status, TrackStatusService};
 
-pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyhow::Result<bool> {
-    let message = cx
-        .answer("Started cleanup. Please wait, it can take a bit of time 🕐")
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+    let message = bot
+        .send_message(
+            m.chat.id,
+            "Started cleanup. Please wait, it can take a bit of time 🕐",
+        )
         .send()
         .await?;
 
@@ -27,6 +30,7 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
     let mut before = 0;
     let mut count = 0u32;
 
+    // current_user_playlists for some reason has the issue with Send
     loop {
         let Page {
             items: playlists,
@@ -89,14 +93,13 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
             break;
         }
     }
-    cx.requester
-        .edit_message_text(
-            message.chat_id(),
-            message.id,
-            format!("Deleted {} tracks in {} playlists 🗑", before - after, count),
-        )
-        .send()
-        .await?;
+    bot.edit_message_text(
+        message.chat_id(),
+        message.id,
+        format!("Deleted {} tracks in {} playlists 🗑", before - after, count),
+    )
+    .send()
+    .await?;
 
     Ok(true)
 }

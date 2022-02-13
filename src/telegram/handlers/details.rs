@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
 use rspotify::model::{FullTrack, Id, Modality, TrackId};
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::spotify::CurrentlyPlaying;
@@ -15,22 +15,19 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::{Status, TrackStatusService};
 use crate::{genius, profanity, spotify, telegram};
 
-pub async fn handle_current(
-    cx: &UpdateWithCx<Bot, Message>,
-    state: &UserState,
-) -> anyhow::Result<bool> {
+pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     let spotify = state.spotify.read().await;
     let track = match spotify::currently_playing(&*spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err),
         CurrentlyPlaying::None(message) => {
-            cx.answer(message).send().await?;
+            bot.send_message(m.chat.id, message).send().await?;
 
             return Ok(true);
         }
         CurrentlyPlaying::Ok(track) => track,
     };
 
-    return common(cx, state, *track).await;
+    return common(m, bot, state, *track).await;
 }
 
 fn extract_id(url: &str) -> Option<TrackId> {
@@ -50,11 +47,8 @@ fn extract_id(url: &str) -> Option<TrackId> {
 
     id.ok()
 }
-pub async fn handle_url(
-    cx: &UpdateWithCx<Bot, Message>,
-    state: &UserState,
-) -> anyhow::Result<bool> {
-    let Some(text) = cx.update.text() else {
+pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+    let Some(text) = m.text() else {
         return Ok(false);
     };
 
@@ -64,11 +58,12 @@ pub async fn handle_url(
 
     let track = state.spotify.read().await.track(&track_id).await?;
 
-    return common(cx, state, track).await;
+    return common(m, bot, state, track).await;
 }
 
 async fn common(
-    cx: &UpdateWithCx<Bot, Message>,
+    m: &Message,
+    bot: &Bot,
     state: &UserState,
     track: FullTrack,
 ) -> anyhow::Result<bool> {
@@ -149,8 +144,7 @@ async fn common(
     };
 
     let Some(hit) = genius::search_for_track(state, &track).await? else {
-        cx
-            .answer(
+        bot.send_message(m.chat.id,
                 formatdoc!(
                     "
                         {track_name}
@@ -217,7 +211,7 @@ async fn common(
         lines -= 1;
     };
 
-    cx.answer(message)
+    bot.send_message(m.chat.id, message)
         .parse_mode(ParseMode::MarkdownV2)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,

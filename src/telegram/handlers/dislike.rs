@@ -1,5 +1,5 @@
 use anyhow::Result;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::spotify;
@@ -10,7 +10,7 @@ use crate::track_status_service::TrackStatusService;
 
 use super::super::inline_buttons::InlineButtons;
 
-pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Result<bool> {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> Result<bool> {
     if !state.is_spotify_authed().await {
         return Ok(false);
     }
@@ -18,7 +18,7 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Resul
     let track = match spotify::currently_playing(&*state.spotify.read().await).await {
         CurrentlyPlaying::Err(err) => return Err(err),
         CurrentlyPlaying::None(message) => {
-            cx.answer(message).send().await?;
+            bot.send_message(m.chat.id, message).send().await?;
 
             return Ok(true);
         }
@@ -35,16 +35,19 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Resul
     )
     .await?;
 
-    cx.answer(format!("Disliked {}", spotify::create_track_name(&track)))
-        .parse_mode(ParseMode::MarkdownV2)
-        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            #[rustfmt::skip]
+    bot.send_message(
+        m.chat.id,
+        format!("Disliked {}", spotify::create_track_name(&track)),
+    )
+    .parse_mode(ParseMode::MarkdownV2)
+    .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+        #[rustfmt::skip]
             vec![
                 vec![InlineButtons::Cancel(track_id).into()]
             ],
-        )))
-        .send()
-        .await?;
+    )))
+    .send()
+    .await?;
 
     Ok(true)
 }

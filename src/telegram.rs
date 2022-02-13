@@ -1,5 +1,5 @@
 use anyhow::Result;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 
 use keyboards::StartKeyboard;
 
@@ -13,14 +13,14 @@ pub mod keyboards;
 
 pub const MESSAGE_MAX_LEN: usize = 4096;
 
-pub async fn handle_message(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> Result<()> {
-    let handled = handlers::register::handle(cx, state).await?
-        || handlers::details::handle_url(cx, state).await?
-        || commands::handle(cx, state).await?
-        || keyboards::handle(cx, state).await?;
+pub async fn handle_message(m: Message, bot: Bot, state: &UserState) -> Result<()> {
+    let handled = handlers::register::handle(&m, &bot, state).await?
+        || handlers::details::handle_url(&m, &bot, state).await?
+        || commands::handle(&m, &bot, state).await?
+        || keyboards::handle(&m, &bot, state).await?;
 
     if !handled {
-        cx.answer("You request is not handled 😔")
+        bot.send_message(m.chat.id, "You request was not handled 😔")
             .reply_markup(StartKeyboard::markup())
             .send()
             .await?;

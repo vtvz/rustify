@@ -1,5 +1,5 @@
 use anyhow::Result;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 use teloxide::types::{
     InlineKeyboardButton,
     InlineKeyboardButtonKind,
@@ -10,24 +10,24 @@ use teloxide::types::{
 
 use crate::state::UserState;
 
-pub async fn send_register_invite(
-    cx: &UpdateWithCx<Bot, Message>,
-    state: &UserState,
-) -> Result<bool> {
+pub async fn send_register_invite(m: &Message, bot: &Bot, state: &UserState) -> Result<bool> {
     let url = state.app.spotify_manager.get_authorize_url().await?;
-    cx.answer("Click this button below and after authentication copy URL from browser and send me")
-        .parse_mode(ParseMode::MarkdownV2)
-        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            #[rustfmt::skip]
+    bot.send_message(
+        m.chat.id,
+        "Click this button below and after authentication copy URL from browser and send me",
+    )
+    .parse_mode(ParseMode::MarkdownV2)
+    .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+        #[rustfmt::skip]
             vec![
                 vec![InlineKeyboardButton {
                     text: "Login with Spotify".into(),
-                    kind: InlineKeyboardButtonKind::Url(url),
+                    kind: InlineKeyboardButtonKind::Url(url.parse()?),
                 }]
             ],
-        )))
-        .send()
-        .await?;
+    )))
+    .send()
+    .await?;
 
     Ok(true)
 }

@@ -4,7 +4,7 @@ use std::str::FromStr;
 use anyhow::{anyhow, Result};
 use rspotify::model::TrackId;
 use rspotify::prelude::*;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
@@ -62,11 +62,10 @@ impl Display for InlineButtons {
     }
 }
 
-pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> anyhow::Result<()> {
+pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
-        if let Some(id) = cx.update.inline_message_id {
-            cx.requester
-                .answer_callback_query(id)
+        if let Some(id) = q.inline_message_id {
+            bot.answer_callback_query(id)
                 .text("You need to register first")
                 .send()
                 .await?;
@@ -75,10 +74,7 @@ pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> 
         return Ok(());
     }
 
-    let data = cx
-        .update
-        .data
-        .ok_or_else(|| anyhow!("Callback needs data"))?;
+    let data = q.data.ok_or_else(|| anyhow!("Callback needs data"))?;
 
     let button: InlineButtons = data.parse()?;
 
@@ -99,27 +95,23 @@ pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> 
             )
             .await?;
 
-            cx.requester
-                .edit_message_text(
-                    cx.update.from.id,
-                    cx.update
-                        .message
-                        .ok_or_else(|| anyhow!("Message is empty"))?
-                        .id,
-                    format!(
-                        "Dislike cancelled for {}",
-                        spotify::create_track_name(&track)
-                    ),
-                )
-                .parse_mode(ParseMode::MarkdownV2)
-                .reply_markup(InlineKeyboardMarkup::new(
-                    #[rustfmt::skip]
+            bot.edit_message_text(
+                q.from.id,
+                q.message.ok_or_else(|| anyhow!("Message is empty"))?.id,
+                format!(
+                    "Dislike cancelled for {}",
+                    spotify::create_track_name(&track)
+                ),
+            )
+            .parse_mode(ParseMode::MarkdownV2)
+            .reply_markup(InlineKeyboardMarkup::new(
+                #[rustfmt::skip]
                     vec![
                         vec![InlineButtons::Dislike(id).into()]
                     ],
-                ))
-                .send()
-                .await?;
+            ))
+            .send()
+            .await?;
         }
         InlineButtons::Dislike(id) => {
             let track = state
@@ -137,24 +129,20 @@ pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> 
             )
             .await?;
 
-            cx.requester
-                .edit_message_text(
-                    cx.update.from.id,
-                    cx.update
-                        .message
-                        .ok_or_else(|| anyhow!("Message is empty"))?
-                        .id,
-                    format!("Disliked {}", spotify::create_track_name(&track)),
-                )
-                .parse_mode(ParseMode::MarkdownV2)
-                .reply_markup(InlineKeyboardMarkup::new(
-                    #[rustfmt::skip]
+            bot.edit_message_text(
+                q.from.id,
+                q.message.ok_or_else(|| anyhow!("Message is empty"))?.id,
+                format!("Disliked {}", spotify::create_track_name(&track)),
+            )
+            .parse_mode(ParseMode::MarkdownV2)
+            .reply_markup(InlineKeyboardMarkup::new(
+                #[rustfmt::skip]
                     vec![
                         vec![InlineButtons::Cancel(id).into()]
                     ],
-                ))
-                .send()
-                .await?;
+            ))
+            .send()
+            .await?;
         }
         InlineButtons::Ignore(id) => {
             let track = state
@@ -172,27 +160,23 @@ pub async fn handle(cx: UpdateWithCx<Bot, CallbackQuery>, state: &UserState) -> 
             )
             .await?;
 
-            cx.requester
-                .edit_message_text(
-                    cx.update.from.id,
-                    cx.update
-                        .message
-                        .ok_or_else(|| anyhow!("Message is empty"))?
-                        .id,
-                    format!(
-                        "Bad words of {} will be forever ignored",
-                        spotify::create_track_name(&track)
-                    ),
-                )
-                .parse_mode(ParseMode::MarkdownV2)
-                .reply_markup(InlineKeyboardMarkup::new(
-                    #[rustfmt::skip]
+            bot.edit_message_text(
+                q.from.id,
+                q.message.ok_or_else(|| anyhow!("Message is empty"))?.id,
+                format!(
+                    "Bad words of {} will be forever ignored",
+                    spotify::create_track_name(&track)
+                ),
+            )
+            .parse_mode(ParseMode::MarkdownV2)
+            .reply_markup(InlineKeyboardMarkup::new(
+                #[rustfmt::skip]
                     vec![
                         vec![InlineButtons::Cancel(id).into()]
                     ],
-                ))
-                .send()
-                .await?;
+            ))
+            .send()
+            .await?;
         }
     }
 

@@ -6,7 +6,7 @@ use indoc::formatdoc;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{FullTrack, TrackId};
 use rustrict::Type;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::spotify::CurrentlyPlaying;
@@ -50,8 +50,6 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
     let mut lines = bad_lines.len();
     let message = loop {
         let message = formatdoc!(
-            // TODO Return spoilers after teloxide update
-            // "has bad words: \n ||{}||",
             "
                 Current song \\({track_name}\\) probably has bad words \\(ignore in case of false positive\\):
                 

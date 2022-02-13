@@ -103,7 +103,7 @@ pub async fn search_for_track(
         hits_count += hits.len();
         for (hit_i, hit) in hits.into_iter().enumerate() {
             let hit_artist = hit.result.primary_artist.name.as_str();
-
+            // Probably use https://crates.io/crates/strsim to find most appropriate track
             if hit_artist.to_lowercase().contains(&artist.to_lowercase())
                 || artist.to_lowercase().contains(&hit_artist.to_lowercase())
             {

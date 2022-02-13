@@ -1,5 +1,5 @@
 use anyhow::Context;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::command::BotCommand;
 use teloxide::utils::command::ParseError;
@@ -32,8 +32,8 @@ pub enum Command {
     Help,
 }
 
-pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyhow::Result<bool> {
-    let text = cx.update.text().context("No text available")?;
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+    let text = m.text().context("No text available")?;
 
     if !text.starts_with('/') {
         return Ok(false);
@@ -42,11 +42,14 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
     let command = Command::parse(text, "Something bot name");
 
     if let Err(ParseError::UnknownCommand(command)) = command {
-        cx.answer(format!(
-            "Command `{}` not found: \n\n{}",
-            markdown::escape(&command),
-            markdown::escape(&Command::descriptions())
-        ))
+        bot.send_message(
+            m.chat.id,
+            format!(
+                "Command `{}` not found: \n\n{}",
+                markdown::escape(&command),
+                markdown::escape(&Command::descriptions())
+            ),
+        )
         .parse_mode(ParseMode::MarkdownV2)
         .send()
         .await?;
@@ -59,24 +62,28 @@ pub async fn handle(cx: &UpdateWithCx<Bot, Message>, state: &UserState) -> anyho
     match command {
         Command::Start | Command::Keyboard => {
             if state.is_spotify_authed().await {
-                cx.answer("Here is your keyboard")
+                bot.send_message(m.chat.id, "Here is your keyboard")
                     .reply_markup(StartKeyboard::markup())
                     .send()
                     .await?;
             } else {
-                super::helpers::send_register_invite(cx, state).await?;
+                super::helpers::send_register_invite(m, bot, state).await?;
             }
         }
         Command::Echo(text) => {
-            cx.answer(format!("Echo back: {}", text)).send().await?;
+            bot.send_message(m.chat.id, format!("Echo back: {}", text))
+                .send()
+                .await?;
         }
-        Command::Dislike => return super::handlers::dislike::handle(cx, state).await,
-        Command::Cleanup => return super::handlers::cleanup::handle(cx, state).await,
-        Command::Stats => return super::handlers::stats::handle(cx, state).await,
-        Command::Details => return super::handlers::details::handle_current(cx, state).await,
-        Command::Register => return super::helpers::send_register_invite(cx, state).await,
+        Command::Dislike => return super::handlers::dislike::handle(m, bot, state).await,
+        Command::Cleanup => return super::handlers::cleanup::handle(m, bot, state).await,
+        Command::Stats => return super::handlers::stats::handle(m, bot, state).await,
+        Command::Details => return super::handlers::details::handle_current(m, bot, state).await,
+        Command::Register => return super::helpers::send_register_invite(m, bot, state).await,
         Command::Help => {
-            cx.answer(Command::descriptions()).send().await?;
+            bot.send_message(m.chat.id, Command::descriptions())
+                .send()
+                .await?;
         }
     }
     Ok(true)

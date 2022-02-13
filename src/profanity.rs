@@ -33,11 +33,19 @@ impl Manager {
     }
 }
 
-#[derive(IntoIterator)]
 pub struct CheckResult {
-    #[into_iterator]
     lines: Vec<LineResult>,
     pub typ: TypeWrapper,
+}
+
+impl IntoIterator for CheckResult {
+    type IntoIter = <Vec<LineResult> as IntoIterator>::IntoIter;
+    type Item = <Vec<LineResult> as IntoIterator>::Item;
+
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        <Vec<LineResult> as IntoIterator>::into_iter(self.lines)
+    }
 }
 
 impl CheckResult {
@@ -54,6 +62,8 @@ impl CheckResult {
             .into_iter()
             .enumerate()
             .map(|(index, line)| {
+                let line = markdown::escape(&line);
+
                 let (censored, typ) = rustrict::Censor::from_str(&line)
                     .with_censor_first_character_threshold(*TYPE_THRESHOLD)
                     .with_censor_threshold(*TYPE_THRESHOLD)
@@ -112,7 +122,7 @@ pub struct LineResult {
 
 impl LineResult {
     pub fn highlighted(&self) -> String {
-        markdown::escape(self.line.as_str())
+        self.line
             .chars()
             .into_iter()
             .enumerate()
@@ -122,9 +132,9 @@ impl LineResult {
                     self.bad_chars.contains(&i),
                     self.bad_chars.contains(&(i + 1)),
                 ) {
-                    (false, true, false) => format!("__{}__", c),
-                    (true, true, false) => format!("{}__", c),
-                    (false, true, true) => format!("__{}", c),
+                    (false, true, false) => format!("||{}||", c),
+                    (true, true, false) => format!("{}||", c),
+                    (false, true, true) => format!("||{}", c),
                     _ => c.into(),
                 }
             })

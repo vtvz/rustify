@@ -6,11 +6,9 @@ extern crate derive_more;
 #[macro_use]
 extern crate serde;
 
-use futures::FutureExt;
-use teloxide::prelude::*;
+use teloxide::prelude2::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::markdown;
-use tokio_stream::wrappers::UnboundedReceiverStream;
 
 use crate::state::AppState;
 
@@ -31,58 +29,49 @@ async fn run() {
 
     log::info!("Starting rustify bot...");
 
-    Dispatcher::new(app_state.bot.clone())
-        .messages_handler(move |rx: DispatcherHandlerRx<Bot, Message>| {
-            UnboundedReceiverStream::new(rx)
-                .for_each(move |cx| async move {
-                    let state = match app_state.user_state(&cx.update.chat_id().to_string()).await {
-                        Ok(state) => state,
-                        Err(err) => {
-                            log::error!("{:?}", err);
-                            return;
-                        }
-                    };
+    let handler = dptree::entry()
+        .branch(
+            Update::filter_message().endpoint(move |m: Message, bot: Bot| async {
+                let state = app_state.user_state(&m.chat.id.to_string()).await?;
 
-                    let result = telegram::handle_message(&cx, &state).await;
+                let clone = (m.clone(), bot.clone());
 
-                    if let Err(err) = result {
-                        log::error!("{:?}", err);
-                        cx.answer(format!(
+                let result = telegram::handle_message(m, bot, &state).await;
+
+                let (m, bot) = clone;
+                if let Err(err) = &result {
+                    log::error!("{:?}", err);
+                    bot.send_message(
+                        m.chat.id,
+                        format!(
                             "Sorry, error has happened :\\(\n`{}`",
                             markdown::escape(&format!("{:?}", err))
-                        ))
-                        .parse_mode(ParseMode::MarkdownV2)
-                        .send()
-                        .await
-                        .ok();
-                    }
-                })
-                .boxed()
-        })
-        .callback_queries_handler(move |rx: DispatcherHandlerRx<Bot, CallbackQuery>| {
-            UnboundedReceiverStream::new(rx)
-                .for_each(move |cx| async {
-                    let state = match app_state.user_state(&cx.update.from.id.to_string()).await {
-                        Ok(state) => state,
-                        Err(err) => {
-                            log::error!("{:?}", err);
-                            return;
-                        }
-                    };
+                        ),
+                    )
+                    .parse_mode(ParseMode::MarkdownV2)
+                    .send()
+                    .await?;
+                }
 
-                    let result = telegram::inline_buttons::handle(cx, &state).await;
+                result
+            }),
+        )
+        .branch(Update::filter_callback_query().endpoint(
+            move |q: CallbackQuery, bot: Bot| async {
+                let state = app_state.user_state(&q.from.id.to_string()).await?;
 
-                    if let Err(err) = result {
-                        log::error!("{:?}", err);
-                    }
-                })
-                .boxed()
-        })
+                telegram::inline_buttons::handle(q, bot, &state).await
+            },
+        ));
+
+    Dispatcher::builder(app_state.bot.clone(), handler)
+        .build()
+        .setup_ctrlc_handler()
         .dispatch()
         .await;
 }
 
-#[tokio::main]
+#[tokio::main(worker_threads = 4)]
 async fn main() {
     run().await;
 }
