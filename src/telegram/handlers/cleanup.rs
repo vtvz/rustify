@@ -26,6 +26,26 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         TrackStatusService::get_ids_with_status(&state.app.db, &state.user_id, Status::Disliked)
             .await?;
 
+    let Page {
+        total: liked_before,
+        ..
+    } = spotify
+        .current_user_saved_tracks_manual(None, Some(1), None)
+        .await?;
+
+    for chunk in disliked.chunks(50) {
+        spotify
+            .current_user_saved_tracks_delete(chunk)
+            .await
+            .context("Cannot remove occurrences of items for saved songs")?;
+    }
+
+    let Page {
+        total: liked_after, ..
+    } = spotify
+        .current_user_saved_tracks_manual(None, Some(1), None)
+        .await?;
+
     let mut offset = 0;
     let mut before = 0;
     let mut count = 0u32;
@@ -96,7 +116,12 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     bot.edit_message_text(
         message.chat_id(),
         message.id,
-        format!("Deleted {} tracks in {} playlists 🗑", before - after, count),
+        format!(
+            "Deleted {} tracks in {} playlists and {} in favorite songs 🗑",
+            before - after,
+            count,
+            liked_before - liked_after
+        ),
     )
     .send()
     .await?;
