@@ -132,9 +132,9 @@ impl LineResult {
                     self.bad_chars.contains(&i),
                     self.bad_chars.contains(&(i + 1)),
                 ) {
-                    (false, true, false) => format!("||{}||", c),
-                    (true, true, false) => format!("{}||", c),
-                    (false, true, true) => format!("||{}", c),
+                    (false, true, false) => format!("||__{}__||", c),
+                    (true, true, false) => format!("{}__||", c),
+                    (false, true, true) => format!("||__{}", c),
                     _ => c.into(),
                 }
             })
@@ -151,46 +151,20 @@ impl TypeWrapper {
         let typ = self.0;
 
         if typ.isnt(*TYPE_THRESHOLD) {
-            return "safe 🟢".into();
+            return "🟢 safe".into();
         }
 
-        let (lvl, emoji) = if typ.is(Type::SEVERE) {
-            ("severe", '⛔')
+        let emoji = if typ.is(Type::SEVERE) {
+            '⛔'
         } else if typ.is(Type::MODERATE) {
-            ("moderate", '🟠')
+            '🟠'
         } else if typ.is(Type::MILD) {
-            ("mild", '🟡')
+            '🟡'
         } else {
-            ("undefined", '❔')
+            '❔'
         };
 
-        let mut types = vec![];
-
-        if typ.is(Type::PROFANE) {
-            types.push("profane");
-        }
-
-        if typ.is(Type::OFFENSIVE) {
-            types.push("offensive");
-        }
-
-        if typ.is(Type::SEXUAL) {
-            types.push("sexual");
-        }
-
-        if typ.is(Type::MEAN) {
-            types.push("mean");
-        }
-
-        if typ.is(Type::EVASIVE) {
-            types.push("evasive");
-        }
-
-        if typ.is(Type::SPAM) {
-            types.push("spam");
-        }
-
-        format!("{} {} {}", lvl, types.join(" "), emoji)
+        format!("{} {:?}", emoji, typ)
     }
 }
 
@@ -210,12 +184,6 @@ pub fn check_cases() {
             .with_censor_threshold(Type::ANY)
             .censor_and_analyze();
 
-        println!(
-            "{:?} {:?} {:#b} ({})",
-            case,
-            censored,
-            typ,
-            TypeWrapper::from(typ)
-        );
+        println!("{:?} {:?} {:?}", case, censored, typ);
     });
 }
