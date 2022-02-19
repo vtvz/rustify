@@ -22,5 +22,8 @@ get-db:
 logs:
   ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" logs -f
 
+ssh:
+  ssh -t "{{ server }}" "cd {{ path }}; bash --login"
+
 watch:
   cargo watch -c -x run

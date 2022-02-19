@@ -5,13 +5,13 @@ edition = "2021"
 rust-version = "1.57.0"
 
 [dependencies]
-anyhow = { version = "1.0.53", features = ["backtrace"] }
+anyhow = { version = "1.0.54", features = ["backtrace"] }
 cached = "0.30.0"
 derive_more = "0.99.17"
 dotenv = "0.15.0"
 futures = "0.3.21"
 genius-rs = "0.4.0"
-indoc = "1.0.3"
+indoc = "1.0.4"
 lazy_static = "1.4.0"
 log = "0.4.14"
 rand = "0.8.5"
@@ -22,12 +22,12 @@ rustrict = { version = "0.4.0", features = ["customize"] }
 scraper = "0.12.0"
 serde = "1.0.136"
 serde_json = "1.0.79"
-sqlx = { version = "0.5.10", features = ["sqlite"] }
+sqlx = { version = "0.5.11", features = ["sqlite"] }
 strum = "0.23.0"
 strum_macros = "0.23.1"
 tokio-stream = "0.1.8"
-tracing = "0.1.30"
-tracing-subscriber = { version = "0.3.8", features = ["env-filter"] }
+tracing = "0.1.31"
+tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
 url = "2.2.2"
 
 [dependencies.sea-orm]

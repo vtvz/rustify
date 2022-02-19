@@ -68,6 +68,17 @@ async fn pick() -> TrackId {
 }
 
 pub async fn like(state: &UserState) {
+    if !state.is_spotify_authed().await {
+        tracing::warn!(
+            user_id = state.user_id.as_str(),
+            reason = "spotify isn't authed",
+            place = "favorites",
+            "Cannot rickroll"
+        );
+
+        return;
+    }
+
     let spotify = state.spotify.read().await;
     let variant = pick().await;
 
@@ -76,13 +87,13 @@ pub async fn like(state: &UserState) {
     let del = spotify.current_user_saved_tracks_delete(rick.iter()).await;
 
     if let Err(err) = del {
-        report(
-            state,
-            spotify.deref(),
-            &variant,
-            format!("remove {:?}", err).as_str(),
-        )
-        .await;
+        tracing::warn!(
+            user_id = state.user_id.as_str(),
+            reason = format!("{:?}", err).as_str(),
+            place = "favorites",
+            action = "delete",
+            "Cannot rickroll"
+        );
 
         return;
     }
@@ -90,13 +101,13 @@ pub async fn like(state: &UserState) {
     let add = spotify.current_user_saved_tracks_add(rick.iter()).await;
 
     if let Err(err) = add {
-        report(
-            state,
-            spotify.deref(),
-            &variant,
-            format!("add {:?}", err).as_str(),
-        )
-        .await;
+        tracing::warn!(
+            user_id = state.user_id.as_str(),
+            reason = format!("{:?}", err).as_str(),
+            place = "favorites",
+            action = "add",
+            "Cannot rickroll"
+        );
 
         return;
     }
@@ -114,19 +125,29 @@ pub async fn like(state: &UserState) {
 }
 
 pub async fn queue(state: &UserState) {
+    if !state.is_spotify_authed().await {
+        tracing::warn!(
+            user_id = state.user_id.as_str(),
+            reason = "spotify isn't authed",
+            place = "queue",
+            "Cannot rickroll"
+        );
+
+        return;
+    }
+
     let spotify = state.spotify.read().await;
 
     let variant = pick().await;
     let queue = spotify.add_item_to_queue(&variant, None).await;
 
     if let Err(err) = queue {
-        report(
-            state,
-            spotify.deref(),
-            &variant,
-            format!("queue {:?}", err).as_str(),
-        )
-        .await;
+        tracing::warn!(
+            user_id = state.user_id.as_str(),
+            reason = format!("{:?}", err).as_str(),
+            place = "queue",
+            "Cannot rickroll"
+        );
 
         return;
     }
