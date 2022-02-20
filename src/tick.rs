@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
@@ -8,6 +9,7 @@ use rspotify::model::{FullTrack, TrackId};
 use rustrict::Type;
 use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use tokio::sync::{RwLock, Semaphore};
 
 use crate::spotify::CurrentlyPlaying;
 use crate::spotify_auth_service::SpotifyAuthService;
@@ -16,13 +18,16 @@ use crate::track_status_service::{Status, TrackStatusService};
 use crate::{genius, profanity, rickroll, spotify, state, telegram};
 
 pub const CHECK_INTERVAL: u64 = 2;
+const PARALLEL_CHECKS: usize = 3;
+
+type PrevTracksMap = Arc<RwLock<HashMap<String, TrackId>>>;
 
 async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
     let Some(hit) = genius::search_for_track(state, track).await? else {
         return Ok(());
     };
 
-    let lyrics = genius::get_lyrics(&hit).await?;
+    let lyrics = genius::get_lyrics(&hit.url).await?;
 
     let check = profanity::Manager::check(lyrics);
 
@@ -59,7 +64,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
             ",
             track_name = spotify::create_track_name(track),
             bad_lines = bad_lines[0..lines].join("\n"),
-            genius_link = hit
+            genius_link = hit.url
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {
@@ -90,7 +95,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
 async fn check_playing_for_user(
     app_state: &'static state::AppState,
     user_id: &str,
-    prevs: &mut HashMap<String, TrackId>,
+    prevs: PrevTracksMap,
 ) -> anyhow::Result<String> {
     let state = app_state
         .user_state(user_id)
@@ -135,7 +140,7 @@ async fn check_playing_for_user(
                 .context("Skip current track")?;
         }
         Status::None => {
-            if prevs.get(user_id) == track.id.as_ref() {
+            if prevs.read().await.get(user_id) == track.id.as_ref() {
                 return Ok("Skip same track".to_owned());
             }
 
@@ -147,7 +152,7 @@ async fn check_playing_for_user(
     }
 
     if let Some(id) = track.id {
-        prevs.insert(user_id.to_owned(), id);
+        prevs.write().await.insert(user_id.to_owned(), id);
     }
 
     Ok("Complete check".to_owned())
@@ -155,7 +160,7 @@ async fn check_playing_for_user(
 
 pub async fn check_playing(app_state: &'static state::AppState) {
     let mut interval = tokio::time::interval(Duration::from_secs(CHECK_INTERVAL));
-    let mut prevs: HashMap<String, TrackId> = HashMap::new();
+    let prevs: PrevTracksMap = Arc::new(RwLock::new(HashMap::new()));
     loop {
         interval.tick().await;
 
@@ -167,11 +172,33 @@ pub async fn check_playing(app_state: &'static state::AppState) {
             }
         };
 
+        let semaphore = Arc::new(Semaphore::new(PARALLEL_CHECKS));
+        let mut join_handles = Vec::new();
+
         for user_id in user_ids {
-            let user_id = user_id.as_str();
-            if let Err(err) = check_playing_for_user(app_state, user_id, &mut prevs).await {
-                tracing::error!(user_id, "Something went wrong: {:?}", err);
-            }
+            let prevs = Arc::clone(&prevs);
+
+            let permit = semaphore
+                .clone()
+                .acquire_owned()
+                .await
+                .context("Shouldn't fail")
+                .expect("Shouldn't fail");
+
+            join_handles.push(tokio::spawn(async move {
+                let user_id = user_id.as_str();
+                if let Err(err) = check_playing_for_user(app_state, user_id, prevs).await {
+                    tracing::error!(user_id, "Something went wrong: {:?}", err);
+                }
+                drop(permit);
+            }));
+        }
+
+        for handle in join_handles {
+            handle
+                .await
+                .context("Shouldn't fail")
+                .expect("Shouldn't fail");
         }
     }
 }

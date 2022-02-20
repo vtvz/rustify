@@ -70,6 +70,12 @@ fn get_track_names(name: &str) -> HashSet<String> {
     HashSet::from_iter(names.into_iter())
 }
 
+#[derive(Clone)]
+pub struct SearchResult {
+    pub url: String,
+    pub title: String,
+}
+
 /// Returns url to Genius page
 #[cached(
     key = "String",
@@ -83,7 +89,7 @@ fn get_track_names(name: &str) -> HashSet<String> {
 pub async fn search_for_track(
     state: &state::UserState,
     track: &FullTrack,
-) -> anyhow::Result<Option<String>> {
+) -> anyhow::Result<Option<SearchResult>> {
     let artist = track
         .artists
         .iter()
@@ -92,6 +98,7 @@ pub async fn search_for_track(
         .ok_or_else(|| anyhow!("Should be at least 1 artist in track"))?;
 
     let names = get_track_names(&track.name);
+    let names_len = names.len();
 
     let mut hits_count = 0;
 
@@ -108,20 +115,31 @@ pub async fn search_for_track(
                 || artist.to_lowercase().contains(&hit_artist.to_lowercase())
             {
                 log::debug!(
-                    "Found text at {} hit with {} name variant ({} - {})",
+                    "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
                     hit_i + 1,
                     name_i + 1,
                     artist,
                     name,
+                    hit.result.full_title,
                 );
-                return Ok(Some(hit.result.url));
+
+                return Ok(Some(SearchResult {
+                    url: hit.result.url,
+                    title: hit
+                        .result
+                        .full_title
+                        .replace(is_whitespace, " ")
+                        .trim()
+                        .to_string(),
+                }));
             }
         }
     }
 
     log::info!(
-        "Found no text in {} hits ({} - {})",
+        "Found no text in {} hits in {} name variants ({} - {})",
         hits_count,
+        names_len,
         artist,
         track.name,
     );

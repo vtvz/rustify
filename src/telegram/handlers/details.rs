@@ -167,7 +167,7 @@ async fn common(
         return Ok(true);
     };
 
-    let lyrics = genius::get_lyrics(&hit).await?;
+    let lyrics = genius::get_lyrics(&hit.url).await?;
 
     let checked = profanity::Manager::check(lyrics);
 
@@ -190,7 +190,7 @@ async fn common(
                 
                 {lyrics}
                 
-                [{genius_line}]({genius_link})
+                [{genius_line} \\({genius_title}\\)]({genius_link})
             ",
             track_name = spotify::create_track_name(&track),
             features = features.trim(),
@@ -201,7 +201,8 @@ async fn common(
             } else {
                 "Text truncated\\. Full lyrics can be found at Genius"
             },
-            genius_link = hit
+            genius_title = markdown::escape(&hit.title),
+            genius_link = hit.url
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {
