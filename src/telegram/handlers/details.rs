@@ -106,8 +106,6 @@ async fn common(
         _ => "Unknown",
     };
 
-    let round = |num: f32| (num * 100.0).round() as u32;
-
     let disliked_by =
         TrackStatusService::count_track_status(&state.app.db, track_id.id(), Status::Disliked)
             .await?;
@@ -118,34 +116,34 @@ async fn common(
 
     let features: String = formatdoc! {
         "
-            🎶 `{} {}` ⌛ {} BPM
-            🎻 Acoustic {}%
-            🕺 Suitable for dancing {}%
-            ⚡️ Energetic {}%
-            🤐 Without vocal {}%
-            🏟 Performed live {}%
-            🎤 Speech\\-like {}%
-            ☺️ Positiveness {}%
+            🎶 `{} {}` ⌛ {:.0} BPM
+            🎻 Acoustic {:.0}%
+            🕺 Suitable for dancing {:.0}%
+            ⚡️ Energetic {:.0}%
+            🤐 Without vocal {:.0}%
+            🏟 Performed live {:.0}%
+            🎤 Speech\\-like {:.0}%
+            ☺️ Positiveness {:.0}%
             👎 Disliked by {} people
             🙈 Ignored by {} people
         ",
         key,
         modality,
-        features.tempo.round() as u32,
-        round(features.acousticness),
-        round(features.danceability),
-        round(features.energy),
-        round(features.instrumentalness),
-        round(features.liveness),
-        round(features.speechiness),
-        round(features.valence),
+        features.tempo,
+        features.acousticness * 100.0,
+        features.danceability * 100.0,
+        features.energy * 100.0,
+        features.instrumentalness * 100.0,
+        features.liveness * 100.0,
+        features.speechiness * 100.0,
+        features.valence * 100.0,
         disliked_by,
         ignored_by,
     };
 
     let Some(hit) = genius::search_for_track(state, &track).await? else {
         bot.send_message(m.chat.id,
-                formatdoc!(
+            formatdoc!(
                     "
                         {track_name}
                         

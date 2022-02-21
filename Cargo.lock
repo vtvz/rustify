@@ -1892,6 +1892,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "strsim",
  "strum",
  "strum_macros",
  "teloxide",
@@ -1904,9 +1905,9 @@ dependencies = [
 
 [[package]]
 name = "rustrict"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27ff7d7a32045763f1ee7a60e4004d5d20bda570e95c3fa21e213f598d0e91a8"
+checksum = "492d28a7c51c0c6eb1fe658cc128e2db96d49ab2a8f8b5648bd97402e7571b43"
 dependencies = [
  "bitflags",
  "doc-comment",

@@ -8,6 +8,7 @@ use reqwest::Client;
 use rspotify::model::FullTrack;
 use rustrict::is_whitespace;
 use scraper::{Html, Selector};
+use strsim::normalized_damerau_levenshtein;
 use teloxide::utils::markdown;
 
 use crate::state;
@@ -75,20 +76,22 @@ fn get_track_names(name: &str) -> HashSet<String> {
 pub struct SearchResult {
     pub url: String,
     pub title: String,
+    pub confidence: f64,
 }
 
 impl SearchResult {
     pub fn tg_link(&self, text: &str) -> String {
         format!(
-            "[{} \\({}\\)]({})",
-            markdown::escape(text),
-            markdown::escape(&self.title),
-            self.url
+            "[{text} \\(with {confidence:.0}% confidence\\)\n{title}]({url})",
+            text = markdown::escape(text),
+            title = markdown::escape(&self.title),
+            confidence = self.confidence * 100.0,
+            url = self.url
         )
     }
 }
 
-/// Returns url to Genius page
+/// Returns url to Genius page with some additional information
 #[cached(
     key = "String",
     convert = r#"{ format!("{:?}", track.id) }"#,
@@ -102,6 +105,8 @@ pub async fn search_for_track(
     state: &state::UserState,
     track: &FullTrack,
 ) -> anyhow::Result<Option<SearchResult>> {
+    const THRESHOLD: f64 = 0.50;
+
     let artist = track
         .artists
         .iter()
@@ -121,18 +126,21 @@ pub async fn search_for_track(
 
         hits_count += hits.len();
         for (hit_i, hit) in hits.into_iter().enumerate() {
-            let hit_artist = hit.result.primary_artist.name.as_str();
-            // Probably use https://crates.io/crates/strsim to find most appropriate track
-            if hit_artist.to_lowercase().contains(&artist.to_lowercase())
-                || artist.to_lowercase().contains(&hit_artist.to_lowercase())
-            {
-                let title = hit
-                    .result
-                    .full_title
-                    .replace(is_whitespace, " ")
-                    .trim()
-                    .to_string();
+            let title = hit
+                .result
+                .full_title
+                .replace(is_whitespace, " ")
+                .trim()
+                .to_string();
 
+            let compare_spotify = format!("{} by {}", track.name, artist).to_lowercase();
+
+            let confidence = normalized_damerau_levenshtein(
+                title.to_lowercase().as_str(),
+                compare_spotify.as_str(),
+            );
+
+            if confidence >= THRESHOLD {
                 log::debug!(
                     "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
                     hit_i + 1,
@@ -145,6 +153,7 @@ pub async fn search_for_track(
                 return Ok(Some(SearchResult {
                     url: hit.result.url,
                     title,
+                    confidence,
                 }));
             }
         }
