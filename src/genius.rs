@@ -8,6 +8,7 @@ use reqwest::Client;
 use rspotify::model::FullTrack;
 use rustrict::is_whitespace;
 use scraper::{Html, Selector};
+use teloxide::utils::markdown;
 
 use crate::state;
 
@@ -76,6 +77,17 @@ pub struct SearchResult {
     pub title: String,
 }
 
+impl SearchResult {
+    pub fn tg_link(&self, text: &str) -> String {
+        format!(
+            "[{} \\({}\\)]({})",
+            markdown::escape(text),
+            markdown::escape(&self.title),
+            self.url
+        )
+    }
+}
+
 /// Returns url to Genius page
 #[cached(
     key = "String",
@@ -114,23 +126,25 @@ pub async fn search_for_track(
             if hit_artist.to_lowercase().contains(&artist.to_lowercase())
                 || artist.to_lowercase().contains(&hit_artist.to_lowercase())
             {
+                let title = hit
+                    .result
+                    .full_title
+                    .replace(is_whitespace, " ")
+                    .trim()
+                    .to_string();
+
                 log::debug!(
                     "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
                     hit_i + 1,
                     name_i + 1,
                     artist,
                     name,
-                    hit.result.full_title,
+                    title,
                 );
 
                 return Ok(Some(SearchResult {
                     url: hit.result.url,
-                    title: hit
-                        .result
-                        .full_title
-                        .replace(is_whitespace, " ")
-                        .trim()
-                        .to_string(),
+                    title,
                 }));
             }
         }

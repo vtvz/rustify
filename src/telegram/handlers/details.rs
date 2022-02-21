@@ -190,19 +190,17 @@ async fn common(
                 
                 {lyrics}
                 
-                [{genius_line} \\({genius_title}\\)]({genius_link})
+                {genius}
             ",
             track_name = spotify::create_track_name(&track),
             features = features.trim(),
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),
-            genius_line = if lines == lyrics.len() {
+            genius = hit.tg_link(if lines == lyrics.len() {
                 "Genius Source"
             } else {
-                "Text truncated\\. Full lyrics can be found at Genius"
-            },
-            genius_title = markdown::escape(&hit.title),
-            genius_link = hit.url
+                "Text truncated. Full lyrics can be found at Genius"
+            })
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {

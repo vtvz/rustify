@@ -60,11 +60,11 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
                 
                 {bad_lines}
                 
-                [Genius Source]({genius_link})
+                {genius}
             ",
             track_name = spotify::create_track_name(track),
             bad_lines = bad_lines[0..lines].join("\n"),
-            genius_link = hit.url
+            genius = hit.tg_link("Genius Source")
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {
