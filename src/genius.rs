@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::fmt::{Display, Formatter};
 
 use anyhow::anyhow;
 use cached::proc_macro::cached;
@@ -76,18 +77,44 @@ fn get_track_names(name: &str) -> HashSet<String> {
 pub struct SearchResult {
     pub url: String,
     pub title: String,
-    pub confidence: f64,
+    pub confidence: SearchResultConfidence,
 }
 
 impl SearchResult {
     pub fn tg_link(&self, text: &str) -> String {
         format!(
-            "[{text} \\(with {confidence:.0}% confidence\\)\n{title}]({url})",
+            "[{text} \\(with {confidence}% confidence\\)\n{title}]({url})",
             text = markdown::escape(text),
             title = markdown::escape(&self.title),
-            confidence = self.confidence * 100.0,
+            confidence = self.confidence,
             url = self.url
         )
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct SearchResultConfidence {
+    title: f64,
+    artist: f64,
+}
+
+impl SearchResultConfidence {
+    pub fn new(artist: f64, title: f64) -> Self {
+        Self { title, artist }
+    }
+
+    pub fn confident(&self, threshold: f64) -> bool {
+        self.artist >= threshold && self.title >= threshold
+    }
+
+    pub fn avg(&self) -> f64 {
+        (self.title + self.artist) / 2.0
+    }
+}
+
+impl Display for SearchResultConfidence {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.0}", self.avg() * 100.0)
     }
 }
 
@@ -105,7 +132,7 @@ pub async fn search_for_track(
     state: &state::UserState,
     track: &FullTrack,
 ) -> anyhow::Result<Option<SearchResult>> {
-    const THRESHOLD: f64 = 0.50;
+    const THRESHOLD: f64 = 0.45;
 
     let artist = track
         .artists
@@ -116,6 +143,9 @@ pub async fn search_for_track(
 
     let names = get_track_names(&track.name);
     let names_len = names.len();
+
+    let cmp_artist = artist.to_lowercase();
+    let cmp_title = track.name.to_lowercase();
 
     let mut hits_count = 0;
 
@@ -133,14 +163,18 @@ pub async fn search_for_track(
                 .trim()
                 .to_string();
 
-            let compare_spotify = format!("{} by {}", track.name, artist).to_lowercase();
-
-            let confidence = normalized_damerau_levenshtein(
-                title.to_lowercase().as_str(),
-                compare_spotify.as_str(),
+            let confidence = SearchResultConfidence::new(
+                normalized_damerau_levenshtein(
+                    &cmp_artist,
+                    hit.result.primary_artist.name.to_lowercase().as_str(),
+                ),
+                normalized_damerau_levenshtein(
+                    &cmp_title,
+                    hit.result.title.to_lowercase().as_str(),
+                ),
             );
 
-            if confidence >= THRESHOLD {
+            if confidence.confident(THRESHOLD) {
                 log::debug!(
                     "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
                     hit_i + 1,

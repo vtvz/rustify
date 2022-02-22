@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.57.0"
 
 [dependencies]
-anyhow = { version = "1.0.54", features = ["backtrace"] }
+anyhow = { version = "1.0.55", features = ["backtrace"] }
 cached = "0.30.0"
 derive_more = "0.99.17"
 dotenv = "0.15.0"
@@ -24,8 +24,8 @@ serde = "1.0.136"
 serde_json = "1.0.79"
 sqlx = { version = "0.5.11", features = ["sqlite"] }
 strsim = "0.10.0"
-strum = "0.23.0"
-strum_macros = "0.23.1"
+strum = "0.24.0"
+strum_macros = "0.24.0"
 tokio-stream = "0.1.8"
 tracing = "0.1.31"
 tracing-subscriber = { version = "0.3.9", features = ["env-filter"] }
