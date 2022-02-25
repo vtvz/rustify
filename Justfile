@@ -27,3 +27,6 @@ ssh:
 
 watch:
   cargo watch -c -x run
+
+xwatch:
+   x-terminal-emulator -e just watch

@@ -1,13 +1,17 @@
+use std::collections::HashSet;
 use std::str::FromStr;
 
 use anyhow::anyhow;
+use convert_case::{Case, Casing};
 use indoc::formatdoc;
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
 use rspotify::model::{FullTrack, Id, Modality, TrackId};
 use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::utils::markdown;
 
 use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
@@ -114,6 +118,31 @@ async fn common(
         TrackStatusService::count_track_status(&state.app.db, track_id.id(), Status::Ignore)
             .await?;
 
+    let genres: HashSet<_> = {
+        let artist_ids: Vec<_> = track
+            .artists
+            .iter()
+            .filter_map(|artist| artist.id.as_ref())
+            .collect();
+
+        let artists = spotify.artists(artist_ids).await?;
+
+        artists
+            .iter()
+            .flat_map(|artist| artist.genres.clone())
+            .unique()
+            .map(|genre| genre.to_case(Case::Pascal))
+            .map(|genre| format!("#{}", genre))
+            .map(|genre| markdown::escape(&genre))
+            .collect()
+    };
+
+    let genres_line = if genres.is_empty() {
+        "".into()
+    } else {
+        format!("🎭 Genres: {}\n", genres.iter().join(", "))
+    };
+
     let features: String = formatdoc! {
         "
             🎶 `{} {}` ⌛ {:.0} BPM
@@ -148,11 +177,12 @@ async fn common(
                         {track_name}
                         
                         {features}
-                        
+                        {genres_line}
                         `No lyrics found`
                     ",
                     track_name = spotify::create_track_name(&track),
                     features = features.trim(),
+                    genres_line = genres_line,
                 )
             )
             .parse_mode(ParseMode::MarkdownV2)
@@ -185,7 +215,7 @@ async fn common(
                 
                 {features}
                 🤬 Profanity `{profanity}`
-                
+                {genres_line}
                 {lyrics}
                 
                 {genius}
@@ -194,6 +224,7 @@ async fn common(
             features = features.trim(),
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),
+            genres_line = genres_line,
             genius = hit.tg_link(if lines == lyrics.len() {
                 "Genius Source"
             } else {
