@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context};
-use genius_rs::Genius;
 use rspotify::AuthCodeSpotify;
 use sea_orm::{Database, DatabaseConnection, DbConn};
 use sqlx::migrate::MigrateDatabase;
@@ -9,11 +8,14 @@ use tracing_subscriber::filter::Targets;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+use crate::genius::GeniusLocal;
+use crate::musixmatch::Musixmatch;
 use crate::{profanity, spotify};
 
 pub struct AppState {
     pub spotify_manager: spotify::Manager,
-    pub genius: Genius,
+    pub genius: GeniusLocal,
+    pub musixmatch: Musixmatch,
     pub bot: Bot,
     pub db: DatabaseConnection,
 }
@@ -41,10 +43,23 @@ async fn db() -> anyhow::Result<DbConn> {
         .context("Cannot connect DB")?)
 }
 
-async fn genius() -> anyhow::Result<Genius> {
-    Ok(Genius::new(
+fn genius() -> anyhow::Result<GeniusLocal> {
+    Ok(GeniusLocal::new(
         dotenv::var("GENIUS_ACCESS_TOKEN").context("Needs GENIUS_ACCESS_TOKEN")?,
     ))
+}
+
+fn musixmatch() -> anyhow::Result<Musixmatch> {
+    let mut tokens: Vec<_> = dotenv::var("MUSIXMATCH_USER_TOKENS")
+        .unwrap_or_else(|_| "".into())
+        .split(',')
+        .map(ToOwned::to_owned)
+        .collect();
+
+    tokens.push("21051986b9886beabe1ce01c3ce94c96319411f8f2c122676365e3".to_owned());
+    tokens.push("2005218b74f939209bda92cb633c7380612e14cb7fe92dcd6a780f".to_owned());
+
+    Ok(Musixmatch::new(tokens))
 }
 
 fn logger() -> anyhow::Result<()> {
@@ -83,7 +98,8 @@ impl AppState {
         log::trace!("Init application");
 
         let spotify_manager = spotify::Manager::new();
-        let genius = genius().await?;
+        let genius = genius()?;
+        let musixmatch = musixmatch()?;
 
         dotenv::var("CENSOR_BLACKLIST")
             .unwrap_or_default()
@@ -106,6 +122,7 @@ impl AppState {
             bot,
             spotify_manager,
             genius,
+            musixmatch,
             db,
         });
         let app_state = &*Box::leak(app_state);

@@ -17,7 +17,7 @@ use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::{Status, TrackStatusService};
-use crate::{genius, profanity, spotify, telegram};
+use crate::{profanity, spotify, telegram};
 
 pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     let spotify = state.spotify.read().await;
@@ -170,7 +170,7 @@ async fn common(
         ignored_by,
     };
 
-    let Some(hit) = genius::search_for_track(state, &track).await? else {
+    let Some(hit) = state.app.genius.search_for_track(&track).await? else {
         bot.send_message(m.chat.id,
             formatdoc!(
                     "
@@ -195,7 +195,7 @@ async fn common(
         return Ok(true);
     };
 
-    let lyrics = genius::get_lyrics(&hit.url).await?;
+    let lyrics = state.app.genius.get_lyrics(&hit).await?;
 
     let checked = profanity::Manager::check(lyrics);
 

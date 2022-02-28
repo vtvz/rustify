@@ -13,7 +13,7 @@ use teloxide::utils::markdown;
 use crate::state::AppState;
 
 mod entity;
-mod genius;
+mod lyrics;
 mod profanity;
 mod rickroll;
 mod spotify;

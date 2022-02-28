@@ -6,7 +6,7 @@ rust-version = "1.57.0"
 
 [dependencies]
 anyhow = { version = "1.0.55", features = ["backtrace"] }
-cached = "0.30.0"
+cached = "0.32.1"
 convert_case = "0.5.0"
 derive_more = "0.99.17"
 dotenv = "0.15.0"

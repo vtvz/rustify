@@ -15,7 +15,7 @@ use crate::spotify::CurrentlyPlaying;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::{Status, TrackStatusService};
-use crate::{genius, profanity, rickroll, spotify, state, telegram};
+use crate::{profanity, rickroll, spotify, state, telegram};
 
 pub const CHECK_INTERVAL: u64 = 2;
 const PARALLEL_CHECKS: usize = 3;
@@ -23,11 +23,15 @@ const PARALLEL_CHECKS: usize = 3;
 type PrevTracksMap = Arc<RwLock<HashMap<String, TrackId>>>;
 
 async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
-    let Some(hit) = genius::search_for_track(state, track).await? else {
+    let res = state.app.musixmatch.search_for_track(track).await;
+
+    println!("{:?}", res);
+
+    let Some(hit) = state.app.genius.search_for_track(track).await? else {
         return Ok(());
     };
 
-    let lyrics = genius::get_lyrics(&hit.url).await?;
+    let lyrics = state.app.genius.get_lyrics(&hit).await?;
 
     let check = profanity::Manager::check(lyrics);
 
