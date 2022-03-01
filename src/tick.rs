@@ -23,17 +23,17 @@ const PARALLEL_CHECKS: usize = 3;
 type PrevTracksMap = Arc<RwLock<HashMap<String, TrackId>>>;
 
 async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
-    let res = state.app.musixmatch.search_for_track(track).await;
-
-    println!("{:?}", res);
-
-    let Some(hit) = state.app.genius.search_for_track(track).await? else {
+    let Some(hit) = state.app.lyrics.search_for_track(track).await? else {
         return Ok(());
     };
 
-    let lyrics = state.app.genius.get_lyrics(&hit).await?;
+    if hit.language() != "en" {
+        tracing::trace!("Track has non English lyrics: {:?}", track.id);
 
-    let check = profanity::Manager::check(lyrics);
+        return Ok(());
+    }
+
+    let check = profanity::Manager::check(hit.lyrics());
 
     if !check.should_trigger() {
         return Ok(());
@@ -45,7 +45,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
         .map(|line: profanity::LineResult| {
             format!(
                 "`{}:` {}, `[{}]`",
-                line.no + 1,
+                hit.line_index_name(line.no),
                 line.highlighted(),
                 line.typ
             )
@@ -68,7 +68,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
             ",
             track_name = spotify::create_track_name(track),
             bad_lines = bad_lines[0..lines].join("\n"),
-            genius = hit.tg_link("Genius Source")
+            genius = hit.tg_link(true)
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {

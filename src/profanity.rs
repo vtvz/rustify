@@ -28,7 +28,7 @@ impl Manager {
         tracing::debug!(word, "Removed custom word");
     }
 
-    pub fn check(lyrics: Vec<String>) -> CheckResult {
+    pub fn check(lyrics: Vec<&str>) -> CheckResult {
         CheckResult::perform(lyrics)
     }
 }
@@ -57,12 +57,12 @@ impl CheckResult {
         self.typ.is(*TYPE_TRIGGER)
     }
 
-    fn perform(lyrics: Vec<String>) -> Self {
+    fn perform(lyrics: Vec<&str>) -> Self {
         let checks: Vec<_> = lyrics
             .into_iter()
             .enumerate()
             .map(|(index, line)| {
-                let line = markdown::escape(&line);
+                let line = markdown::escape(line);
 
                 let (censored, typ) = rustrict::Censor::from_str(&line)
                     .with_censor_first_character_threshold(*TYPE_THRESHOLD)

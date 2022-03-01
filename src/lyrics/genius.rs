@@ -42,6 +42,13 @@ impl GeniusLocal {
     }
 
     async fn get_lyrics(&self, hit: &SearchResult) -> anyhow::Result<Vec<String>> {
+        lazy_static! {
+            static ref LYRICS_SELECTOR: Selector = Selector::parse(
+                ".lyrics, [class*=Lyrics__Container], [class*=LyricsPlaceholder__Message]"
+            )
+            .expect("Should be valid");
+        }
+
         let res = self
             .reqwest
             .get(hit.url.as_str())
@@ -77,11 +84,17 @@ pub struct SearchResult {
 }
 
 impl super::SearchResult for SearchResult {
-    fn lyrics(&self) -> &Vec<String> {
-        &self.lyrics
+    fn lyrics(&self) -> Vec<&str> {
+        self.lyrics.iter().map(String::as_str).collect()
     }
 
-    fn tg_link(&self, text: &str) -> String {
+    fn tg_link(&self, full: bool) -> String {
+        let text = if full {
+            "Genius Source"
+        } else {
+            "Text truncated. Full lyrics can be found at Genius"
+        };
+
         format!(
             "[{text} \\(with {confidence}% confidence\\)\n{title}]({url})",
             text = markdown::escape(text),
@@ -203,12 +216,6 @@ async fn search_for_track(
     );
 
     Ok(None)
-}
-
-lazy_static! {
-    static ref LYRICS_SELECTOR: Selector =
-        Selector::parse(".lyrics, [class*=Lyrics__Container], [class*=LyricsPlaceholder__Message]")
-            .expect("Should be valid");
 }
 
 lazy_static! {

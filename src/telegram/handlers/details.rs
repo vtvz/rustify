@@ -170,7 +170,7 @@ async fn common(
         ignored_by,
     };
 
-    let Some(hit) = state.app.genius.search_for_track(&track).await? else {
+    let Some(hit) = state.app.lyrics.search_for_track(&track).await? else {
         bot.send_message(m.chat.id,
             formatdoc!(
                     "
@@ -195,9 +195,7 @@ async fn common(
         return Ok(true);
     };
 
-    let lyrics = state.app.genius.get_lyrics(&hit).await?;
-
-    let checked = profanity::Manager::check(lyrics);
+    let checked = profanity::Manager::check(hit.lyrics());
 
     let lyrics: Vec<_> = checked.iter().map(|line| line.highlighted()).collect();
 
@@ -225,11 +223,7 @@ async fn common(
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),
             genres_line = genres_line,
-            genius = hit.tg_link(if lines == lyrics.len() {
-                "Genius Source"
-            } else {
-                "Text truncated. Full lyrics can be found at Genius"
-            })
+            genius = hit.tg_link(lines == lyrics.len())
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {
