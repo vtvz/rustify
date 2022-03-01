@@ -186,6 +186,10 @@ impl Musixmatch {
             return Ok(None);
         };
 
+        if lyrics.restricted {
+            return Ok(None);
+        }
+
         let subtitle_json = root["message"]["body"]["macro_calls"]["track.subtitles.get"]
             ["message"]["body"]["subtitle_list"][0]["subtitle"]["subtitle_body"]
             .clone();
@@ -196,7 +200,18 @@ impl Musixmatch {
             return Ok(Some(lyrics));
         };
 
-        let subtitle: Vec<Value> = serde_json::from_str(&subtitle_json)?;
+        if subtitle_json.is_empty() {
+            return Ok(Some(lyrics));
+        }
+
+        let subtitle: Vec<Value> = match serde_json::from_str(&subtitle_json) {
+            Ok(subtitle) => subtitle,
+            Err(err) => {
+                tracing::error!("Error with parsing track subtitles: {:?}", err);
+
+                return Ok(Some(lyrics));
+            }
+        };
 
         let subtitle: Vec<(_, _)> = subtitle
             .iter()
