@@ -1,8 +1,8 @@
+use anyhow::anyhow;
 use itertools::Itertools;
-use rand::prelude::*;
-use rand::seq::SliceRandom;
 use reqwest::Client;
 use rspotify::model::FullTrack;
+use std::collections::VecDeque;
 use std::time::Duration;
 
 use serde::{Deserialize, Deserializer, Serialize};
@@ -84,7 +84,7 @@ impl super::SearchResult for Lyrics {
 
         let secs = line.0.as_secs();
 
-        format!("{}:{}", secs / 60, secs % 60)
+        format!("{}:{:02}", secs / 60, secs % 60)
     }
 
     fn language(&self) -> &str {
@@ -94,16 +94,14 @@ impl super::SearchResult for Lyrics {
 
 pub struct Musixmatch {
     reqwest: Client,
-    tokens: Vec<String>,
-    rnd: Mutex<StdRng>,
+    tokens: Mutex<VecDeque<String>>,
 }
 
 impl Musixmatch {
-    pub fn new(tokens: Vec<String>) -> Self {
+    pub fn new(tokens: impl IntoIterator<Item = String>) -> Self {
         Self {
             reqwest: Client::new(),
-            tokens,
-            rnd: Mutex::new(StdRng::from_entropy()),
+            tokens: Mutex::new(tokens.into_iter().collect()),
         }
     }
 
@@ -125,11 +123,15 @@ impl Musixmatch {
             .map(|artist| artist.name.as_str())
             .join(",");
 
-        let usertoken = self
-            .tokens
-            .choose(&mut *self.rnd.lock().await)
-            .cloned()
-            .expect("Should exist");
+        let usertoken = {
+            let mut tokens = self.tokens.lock().await;
+            tokens.rotate_left(1);
+
+            tokens
+                .front()
+                .cloned()
+                .ok_or_else(|| anyhow!("Queue shouldn't be empty"))?
+        };
 
         // Dynamic
         url.query_pairs_mut().extend_pairs(&[
@@ -186,7 +188,7 @@ impl Musixmatch {
             return Ok(None);
         };
 
-        if lyrics.restricted {
+        if lyrics.restricted || lyrics.instrumental {
             return Ok(None);
         }
 

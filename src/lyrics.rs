@@ -24,7 +24,7 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub fn new(genius_token: String, musixmatch_tokens: Vec<String>) -> Self {
+    pub fn new(genius_token: String, musixmatch_tokens: impl IntoIterator<Item = String>) -> Self {
         let genius = GeniusLocal::new(genius_token);
         let musixmatch = Musixmatch::new(musixmatch_tokens);
         Self { genius, musixmatch }
@@ -41,12 +41,12 @@ impl Manager {
                 return Ok(Some(Box::new(res)));
             }
             Err(err) => {
-                tracing::error!("Error with Musixmatch occurred: {:?}", err);
+                tracing::error!(err = ?err, "Error with Musixmatch occurred");
 
                 Err(err)
             }
             _ => {
-                tracing::debug!("Musixmatch text not found for {:?}", track.id);
+                tracing::debug!(track_id = ?track.id, "Musixmatch text not found");
 
                 Ok(None)
             }
