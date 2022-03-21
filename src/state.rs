@@ -1,12 +1,9 @@
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use rspotify::AuthCodeSpotify;
 use sea_orm::{Database, DatabaseConnection, DbConn};
 use sqlx::migrate::MigrateDatabase;
 use teloxide::Bot;
 use tokio::sync::RwLock;
-use tracing_subscriber::filter::Targets;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::{lyrics, profanity, spotify};
 
@@ -60,39 +57,8 @@ fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {
     Ok(lyrics::Manager::new(genius_token, musixmatch_tokens))
 }
 
-fn logger() -> anyhow::Result<()> {
-    let tracing_init = tracing_subscriber::fmt()
-        .with_file(false)
-        .with_line_number(true)
-        .without_time()
-        .with_max_level(tracing::Level::TRACE)
-        .finish()
-        .with(
-            Targets::new()
-                .with_target(
-                    &env!("CARGO_PKG_NAME").replace('-', "_"),
-                    tracing::Level::TRACE,
-                )
-                .with_target("teloxide", tracing::Level::INFO)
-                .with_default(tracing::Level::WARN),
-        )
-        .try_init();
-
-    match tracing_init {
-        Ok(_) => log::info!("tracing_subscriber::fmt::try_init success"),
-        Err(err) => log::error!(
-            "tracing_subscriber::fmt::try_init error: {:?}",
-            anyhow!(err)
-        ),
-    }
-
-    Ok(())
-}
-
 impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
-        logger()?;
-
         log::trace!("Init application");
 
         let spotify_manager = spotify::Manager::new();
