@@ -1,19 +1,15 @@
-use anyhow::{anyhow, Context};
-use genius_rs::Genius;
+use anyhow::Context;
 use rspotify::AuthCodeSpotify;
 use sea_orm::{Database, DatabaseConnection, DbConn};
 use sqlx::migrate::MigrateDatabase;
 use teloxide::Bot;
 use tokio::sync::RwLock;
-use tracing_subscriber::filter::Targets;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
 
-use crate::{profanity, spotify};
+use crate::{lyrics, profanity, spotify};
 
 pub struct AppState {
     pub spotify_manager: spotify::Manager,
-    pub genius: Genius,
+    pub lyrics: lyrics::Manager,
     pub bot: Bot,
     pub db: DatabaseConnection,
 }
@@ -36,54 +32,37 @@ async fn db() -> anyhow::Result<DbConn> {
 
     pool.close().await;
 
-    Ok(Database::connect(database_url)
+    Database::connect(database_url)
         .await
-        .context("Cannot connect DB")?)
+        .context("Cannot connect DB")
 }
 
-async fn genius() -> anyhow::Result<Genius> {
-    Ok(Genius::new(
-        dotenv::var("GENIUS_ACCESS_TOKEN").context("Needs GENIUS_ACCESS_TOKEN")?,
-    ))
-}
+fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {
+    let mut musixmatch_tokens: Vec<_> = dotenv::var("MUSIXMATCH_USER_TOKENS")
+        .unwrap_or_else(|_| "".into())
+        .split(',')
+        .map(ToOwned::to_owned)
+        .collect();
 
-fn logger() -> anyhow::Result<()> {
-    let tracing_init = tracing_subscriber::fmt()
-        .with_file(false)
-        .with_line_number(true)
-        .without_time()
-        .with_max_level(tracing::Level::TRACE)
-        .finish()
-        .with(
-            Targets::new()
-                .with_target(
-                    &env!("CARGO_PKG_NAME").replace('-', "_"),
-                    tracing::Level::TRACE,
-                )
-                .with_target("teloxide", tracing::Level::INFO)
-                .with_default(tracing::Level::WARN),
-        )
-        .try_init();
+    if musixmatch_tokens.is_empty() {
+        // https://github.com/spicetify/spicetify-cli/blob/7a9338db56719841fe4c431039dc2fbc287c0fe2/CustomApps/lyrics-plus/index.js#L64
+        musixmatch_tokens.push("21051986b9886beabe1ce01c3ce94c96319411f8f2c122676365e3".to_owned());
 
-    match tracing_init {
-        Ok(_) => log::info!("tracing_subscriber::fmt::try_init success"),
-        Err(err) => log::error!(
-            "tracing_subscriber::fmt::try_init error: {:?}",
-            anyhow!(err)
-        ),
+        // https://github.com/spicetify/spicetify-cli/blob/045379c46ff4027d1db210da17a1e93f43941120/Extensions/popupLyrics.js#L276
+        musixmatch_tokens.push("2005218b74f939209bda92cb633c7380612e14cb7fe92dcd6a780f".to_owned());
     }
 
-    Ok(())
+    let genius_token = dotenv::var("GENIUS_ACCESS_TOKEN").context("Needs GENIUS_ACCESS_TOKEN")?;
+
+    Ok(lyrics::Manager::new(genius_token, musixmatch_tokens))
 }
 
 impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
-        logger()?;
-
         log::trace!("Init application");
 
         let spotify_manager = spotify::Manager::new();
-        let genius = genius().await?;
+        let lyrics_manager = lyrics_manager()?;
 
         dotenv::var("CENSOR_BLACKLIST")
             .unwrap_or_default()
@@ -105,7 +84,7 @@ impl AppState {
         let app_state = Box::new(Self {
             bot,
             spotify_manager,
-            genius,
+            lyrics: lyrics_manager,
             db,
         });
         let app_state = &*Box::leak(app_state);

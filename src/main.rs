@@ -13,7 +13,8 @@ use teloxide::utils::markdown;
 use crate::state::AppState;
 
 mod entity;
-mod genius;
+mod logger;
+mod lyrics;
 mod profanity;
 mod rickroll;
 mod spotify;
@@ -27,6 +28,7 @@ async fn run() {
     // profanity::check_cases();
 
     let app_state = AppState::init().await.expect("State to be built");
+    logger::init().expect("Logger should be built");
     tokio::spawn(tick::check_playing(app_state));
 
     log::info!("Starting rustify bot...");
