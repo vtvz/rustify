@@ -1,4 +1,6 @@
 use anyhow::Context;
+use rspotify::clients::OAuthClient;
+use rspotify::model::{PrivateUser, SubscriptionLevel};
 use rspotify::AuthCodeSpotify;
 use sea_orm::{Database, DatabaseConnection, DbConn};
 use sqlx::migrate::MigrateDatabase;
@@ -93,9 +95,15 @@ impl AppState {
     }
 
     pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {
+        let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
+        let spotify_user = spotify.me().await?;
+
+        let spotify = RwLock::new(spotify);
+
         Ok(UserState {
             app: self,
-            spotify: RwLock::new(self.spotify_manager.for_user(&self.db, user_id).await?),
+            spotify,
+            spotify_user,
             user_id: user_id.to_string(),
         })
     }
@@ -104,6 +112,7 @@ impl AppState {
 pub struct UserState {
     pub app: &'static AppState,
     pub spotify: RwLock<AuthCodeSpotify>,
+    pub spotify_user: PrivateUser,
     pub user_id: String,
 }
 
@@ -117,5 +126,12 @@ impl UserState {
             .await
             .expect("Failed to acquire lock")
             .is_some()
+    }
+
+    pub fn is_spotify_premium(&self) -> bool {
+        self.spotify_user
+            .product
+            .map(|product| product == SubscriptionLevel::Premium)
+            .unwrap_or_default()
     }
 }

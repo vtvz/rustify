@@ -136,6 +136,10 @@ pub async fn queue(state: &UserState) {
         return;
     }
 
+    if !state.is_spotify_premium() {
+        return;
+    }
+
     let spotify = state.spotify.read().await;
 
     let variant = pick().await;

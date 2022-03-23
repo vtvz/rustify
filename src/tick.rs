@@ -96,6 +96,35 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
     Ok(())
 }
 
+async fn handle_disliked_track(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
+    if state.is_spotify_premium() {
+        state
+            .spotify
+            .read()
+            .await
+            .next_track(None)
+            .await
+            .context("Skip current track")?;
+
+        return Ok(());
+    }
+
+    let message = format!(
+        "Current song \\({track_name}\\) was disliked, but I cannot skip it...",
+        track_name = spotify::create_track_name(track),
+    );
+
+    state
+        .app
+        .bot
+        .send_message(state.user_id.clone(), message)
+        .parse_mode(ParseMode::MarkdownV2)
+        .send()
+        .await?;
+
+    Ok(())
+}
+
 async fn check_playing_for_user(
     app_state: &'static state::AppState,
     user_id: &str,
@@ -135,13 +164,9 @@ async fn check_playing_for_user(
 
     match status {
         Status::Disliked => {
-            state
-                .spotify
-                .read()
+            handle_disliked_track(&state, &track)
                 .await
-                .next_track(None)
-                .await
-                .context("Skip current track")?;
+                .context("Handle Disliked Tracks")?;
         }
         Status::None => {
             if prevs.read().await.get(user_id) == track.id.as_ref() {
