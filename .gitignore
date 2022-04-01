@@ -1,5 +1,5 @@
 .idea
-
+src/entity.example
 /target
 .env
 .env.deploy

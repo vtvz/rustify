@@ -1,13 +1,12 @@
 use anyhow::anyhow;
+use chrono::Utc;
 use rspotify::Token;
 use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
 use sea_orm::DbConn;
 use sea_orm::IntoActiveModel;
 
-use crate::entity;
-use crate::entity::prelude::SpotifyAuth as SpotifyAuthEntity;
-use crate::entity::spotify_auth::Model;
+use crate::entity::prelude::*;
 
 pub struct SpotifyAuthService;
 
@@ -16,15 +15,15 @@ impl SpotifyAuthService {
         db: &DbConn,
         user_id: &str,
         token: Token,
-    ) -> anyhow::Result<entity::spotify_auth::ActiveModel> {
+    ) -> anyhow::Result<SpotifyAuthActiveModel> {
         let spotify_auth = SpotifyAuthEntity::find()
-            .filter(entity::spotify_auth::Column::UserId.eq(user_id))
+            .filter(SpotifyAuthColumn::UserId.eq(user_id))
             .one(db)
             .await?;
 
         let mut spotify_auth = match spotify_auth {
             Some(spotify_auth) => spotify_auth.into_active_model(),
-            None => entity::spotify_auth::ActiveModel {
+            None => SpotifyAuthActiveModel {
                 user_id: Set(user_id.to_owned()),
                 ..Default::default()
             }
@@ -36,14 +35,16 @@ impl SpotifyAuthService {
         spotify_auth.access_token = Set(token.access_token);
         spotify_auth.refresh_token = Set(token
             .refresh_token
-            .ok_or(anyhow!("Refresh token is required"))?);
+            .ok_or_else(|| anyhow!("Refresh token is required"))?);
+
+        spotify_auth.updated_at = Set(Utc::now().naive_local());
 
         Ok(spotify_auth.save(db).await?)
     }
 
     pub async fn get_token(db: &DbConn, user_id: &str) -> anyhow::Result<Option<Token>> {
         let spotify_auth = SpotifyAuthEntity::find()
-            .filter(entity::spotify_auth::Column::UserId.eq(user_id))
+            .filter(SpotifyAuthColumn::UserId.eq(user_id))
             .one(db)
             .await?;
 
@@ -60,7 +61,7 @@ impl SpotifyAuthService {
     }
 
     pub async fn get_registered(db: &DbConn) -> anyhow::Result<Vec<String>> {
-        let auths: Vec<Model> = match SpotifyAuthEntity::find().all(db).await {
+        let auths: Vec<SpotifyAuthModel> = match SpotifyAuthEntity::find().all(db).await {
             Ok(auths) => auths,
             Err(err) => return Err(anyhow!(err)),
         };

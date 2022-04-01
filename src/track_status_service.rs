@@ -1,15 +1,14 @@
+use chrono::Utc;
 use core::str::FromStr;
 
 use rspotify::model::{Id, TrackId};
 use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
+use sea_orm::DbConn;
 use sea_orm::IntoActiveModel;
-use sea_orm::{DbConn, NotSet};
 use strum_macros::{AsRefStr, EnumString};
 
-use crate::entity;
-use crate::entity::prelude::TrackStatus as TrackStatusEntity;
-use crate::entity::track_status;
+use crate::entity::prelude::*;
 
 #[derive(Clone, EnumString, AsRefStr)]
 pub enum Status {
@@ -36,8 +35,8 @@ impl TrackStatusService {
         status: Status,
     ) -> anyhow::Result<usize> {
         let res = TrackStatusEntity::find()
-            .filter(entity::track_status::Column::UserId.eq(user_id))
-            .filter(entity::track_status::Column::Status.eq(status.as_ref()))
+            .filter(TrackStatusColumn::UserId.eq(user_id))
+            .filter(TrackStatusColumn::Status.eq(status.as_ref()))
             .count(db)
             .await?;
 
@@ -50,8 +49,8 @@ impl TrackStatusService {
         status: Status,
     ) -> anyhow::Result<usize> {
         let res = TrackStatusEntity::find()
-            .filter(entity::track_status::Column::TrackId.eq(track_id))
-            .filter(entity::track_status::Column::Status.eq(status.as_ref()))
+            .filter(TrackStatusColumn::TrackId.eq(track_id))
+            .filter(TrackStatusColumn::Status.eq(status.as_ref()))
             .count(db)
             .await?;
 
@@ -63,16 +62,16 @@ impl TrackStatusService {
         user_id: &str,
         track_id: &str,
         status: Status,
-    ) -> anyhow::Result<entity::track_status::ActiveModel> {
+    ) -> anyhow::Result<TrackStatusActiveModel> {
         let track_status = TrackStatusEntity::find()
-            .filter(entity::track_status::Column::TrackId.eq(track_id))
-            .filter(entity::track_status::Column::UserId.eq(user_id))
+            .filter(TrackStatusColumn::TrackId.eq(track_id))
+            .filter(TrackStatusColumn::UserId.eq(user_id))
             .one(db)
             .await?;
 
         let mut track_status = match track_status {
             Some(track_status) => track_status.into_active_model(),
-            None => entity::track_status::ActiveModel {
+            None => TrackStatusActiveModel {
                 track_id: Set(track_id.to_owned()),
                 user_id: Set(user_id.to_owned()),
                 ..Default::default()
@@ -83,15 +82,15 @@ impl TrackStatusService {
         };
 
         track_status.status = Set(status.as_ref().to_owned());
-        track_status.updated_at = NotSet;
+        track_status.updated_at = Set(Utc::now().naive_local());
 
         Ok(track_status.save(db).await?)
     }
 
     pub async fn get_status(db: &DbConn, user_id: &str, track_id: &str) -> Status {
         let track_status = TrackStatusEntity::find()
-            .filter(entity::track_status::Column::TrackId.eq(track_id))
-            .filter(entity::track_status::Column::UserId.eq(user_id))
+            .filter(TrackStatusColumn::TrackId.eq(track_id))
+            .filter(TrackStatusColumn::UserId.eq(user_id))
             .one(db)
             .await;
 
@@ -115,9 +114,9 @@ impl TrackStatusService {
         user_id: &str,
         status: Status,
     ) -> anyhow::Result<Vec<TrackId>> {
-        let tracks: Vec<track_status::Model> = TrackStatusEntity::find()
-            .filter(entity::track_status::Column::UserId.eq(user_id))
-            .filter(entity::track_status::Column::Status.eq(status.as_ref()))
+        let tracks: Vec<TrackStatusModel> = TrackStatusEntity::find()
+            .filter(TrackStatusColumn::UserId.eq(user_id))
+            .filter(TrackStatusColumn::Status.eq(status.as_ref()))
             .all(db)
             .await?;
 

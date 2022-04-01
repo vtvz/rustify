@@ -2,8 +2,9 @@ use anyhow::Context;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{PrivateUser, SubscriptionLevel};
 use rspotify::AuthCodeSpotify;
-use sea_orm::{Database, DatabaseConnection, DbConn};
-use sqlx::migrate::MigrateDatabase;
+use sea_orm::{DatabaseConnection, DbConn, SqlxSqliteConnector};
+use sqlx::sqlite::SqliteConnectOptions;
+use std::str::FromStr;
 use teloxide::Bot;
 use tokio::sync::RwLock;
 
@@ -19,11 +20,11 @@ pub struct AppState {
 async fn db() -> anyhow::Result<DbConn> {
     let database_url = dotenv::var("DATABASE_URL").context("Needs DATABASE_URL")?;
 
-    sqlx::Sqlite::create_database(&database_url)
-        .await
-        .context("Create database")?;
+    let options = SqliteConnectOptions::from_str(&database_url)?.create_if_missing(true);
 
-    let pool = sqlx::SqlitePool::connect(&database_url)
+    // let options = options.pragma("key", "passphrase");
+
+    let pool = sqlx::SqlitePool::connect_with(options)
         .await
         .context("Cannot connect DB")?;
 
@@ -32,11 +33,7 @@ async fn db() -> anyhow::Result<DbConn> {
         .await
         .context("Cannot migrate")?;
 
-    pool.close().await;
-
-    Database::connect(database_url)
-        .await
-        .context("Cannot connect DB")
+    Ok(SqlxSqliteConnector::from_sqlx_sqlite_pool(pool))
 }
 
 fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {
@@ -96,23 +93,27 @@ impl AppState {
 
     pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {
         let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
-        let spotify_user = spotify.me().await?;
-
         let spotify = RwLock::new(spotify);
 
-        Ok(UserState {
+        let mut state = UserState {
             app: self,
             spotify,
-            spotify_user,
+            spotify_user: None,
             user_id: user_id.to_string(),
-        })
+        };
+
+        if state.is_spotify_authed().await {
+            state.spotify_user = Some(state.spotify.read().await.me().await?);
+        }
+
+        Ok(state)
     }
 }
 
 pub struct UserState {
     pub app: &'static AppState,
     pub spotify: RwLock<AuthCodeSpotify>,
-    pub spotify_user: PrivateUser,
+    pub spotify_user: Option<PrivateUser>,
     pub user_id: String,
 }
 
@@ -130,8 +131,13 @@ impl UserState {
 
     pub fn is_spotify_premium(&self) -> bool {
         self.spotify_user
-            .product
-            .map(|product| product == SubscriptionLevel::Premium)
+            .as_ref()
+            .map(|spotify_user| {
+                spotify_user
+                    .product
+                    .map(|product| product == SubscriptionLevel::Premium)
+                    .unwrap_or_default()
+            })
             .unwrap_or_default()
     }
 }

@@ -1,7 +1,7 @@
 set dotenv-load := true
 
 generate:
-  sea-orm-cli generate entity -o src/entity --expanded-format --with-serde both
+  sea-orm-cli generate entity -o src/entity.example --expanded-format --with-serde both
 
 server := env_var("DEPLOY_SERVER")
 path := env_var_or_default("DEPLOY_PATH", "/srv/rustify")
@@ -18,6 +18,10 @@ deploy:
 
 get-db:
   rsync -P -e ssh "{{ server }}:{{ path }}/var/data.db" "var/data.db"
+
+upload-db:
+  ssh "{{ server }}" -- mkdir -p "{{ path }}/var"
+  rsync -P -e ssh "var/data.db" "{{ server }}:{{ path }}/var/data.db"
 
 logs:
   ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" logs -f

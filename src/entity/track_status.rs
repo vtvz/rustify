@@ -2,6 +2,7 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use sqlx::types::chrono;
 
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;
@@ -17,10 +18,12 @@ pub struct Model {
     pub id: i32,
     pub user_id: String,
     pub track_id: String,
-    pub created_at: String,
-    pub updated_at: String,
+    pub created_at: chrono::NaiveDateTime,
+    pub updated_at: chrono::NaiveDateTime,
     pub status: String,
 }
+
+impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 pub enum Column {
@@ -45,9 +48,6 @@ impl PrimaryKeyTrait for PrimaryKey {
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {}
-
 impl ColumnTrait for Column {
     type EntityName = Entity;
 
@@ -56,17 +56,18 @@ impl ColumnTrait for Column {
             Self::Id => ColumnType::Integer.def(),
             Self::UserId => ColumnType::String(None).def(),
             Self::TrackId => ColumnType::String(None).def(),
-            Self::CreatedAt => ColumnType::String(None).def(),
-            Self::UpdatedAt => ColumnType::String(None).def(),
+            Self::CreatedAt => ColumnType::DateTime.def(),
+            Self::UpdatedAt => ColumnType::DateTime.def(),
             Self::Status => ColumnType::String(None).def(),
         }
     }
 }
+
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum Relation {}
 
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         panic!("No RelationDef")
     }
 }
-
-impl ActiveModelBehavior for ActiveModel {}
