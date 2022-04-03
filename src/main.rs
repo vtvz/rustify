@@ -28,11 +28,17 @@ async fn run() {
     // profanity::check_cases();
 
     logger::init().await.expect("Logger should be built");
+
+    tracing::info!(
+        build_timestamp = env!("VERGEN_BUILD_TIMESTAMP"),
+        git_commit_timestamp = env!("VERGEN_GIT_COMMIT_TIMESTAMP"),
+        git_sha = env!("VERGEN_GIT_SHA"),
+        "Starting Rustify bot..."
+    );
+
     let app_state = AppState::init().await.expect("State to be built");
 
     tokio::spawn(tick::check_playing(app_state));
-
-    log::info!("Starting rustify bot...");
 
     let handler = dptree::entry()
         .branch(

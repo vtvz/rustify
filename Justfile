@@ -17,7 +17,9 @@ deploy:
   ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" up -d
 
 get-db:
-  rsync -P -e ssh "{{ server }}:{{ path }}/var/data.db" "var/data.db"
+  scp "{{ server }}:{{ path }}/var/data.db" "var/data.db"
+  scp "{{ server }}:{{ path }}/var/data.db-shm" "var/data.db-shm"
+  scp "{{ server }}:{{ path }}/var/data.db-wal" "var/data.db-wal"
 
 upload-db:
   ssh "{{ server }}" -- mkdir -p "{{ path }}/var"

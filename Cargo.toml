@@ -56,4 +56,7 @@ features = [
 version = "1.17.0"
 features = ["rt-multi-thread", "macros"]
 
-[features]
+[build-dependencies.vergen]
+version = "7.0.0"
+default-features = false
+features = ["build", "git"]

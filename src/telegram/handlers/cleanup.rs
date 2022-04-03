@@ -114,7 +114,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         }
     }
     bot.edit_message_text(
-        message.chat_id(),
+        message.chat.id,
         message.id,
         format!(
             "Deleted {} tracks in {} playlists and {} in favorite songs 🗑",
