@@ -1,7 +1,8 @@
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use rspotify::clients::{BaseClient, OAuthClient};
+use rspotify::http::HttpError;
 use rspotify::model::{FullTrack, Id, PlayableItem};
-use rspotify::{scopes, AuthCodeSpotify};
+use rspotify::{scopes, AuthCodeSpotify, ClientError, ClientResult, Token};
 use sea_orm::DbConn;
 use teloxide::utils::markdown;
 
@@ -134,14 +135,88 @@ impl Manager {
         Self { spotify }
     }
 
+    async fn token_refresh(
+        db: &DbConn,
+        user_id: &str,
+        instance: &AuthCodeSpotify,
+    ) -> anyhow::Result<()> {
+        let should_reauth = instance
+            .get_token()
+            .lock()
+            .await
+            .expect("Cannot acquire lock")
+            .as_ref()
+            .map(Token::is_expired)
+            .unwrap_or(false);
+
+        if !should_reauth {
+            return Ok(());
+        }
+
+        let res = instance.refresh_token().await;
+
+        if !Self::is_token_valid(res).await? {
+            SpotifyAuthService::remove_token(db, user_id).await?;
+
+            return Err(anyhow!("Token is invalid"));
+        };
+
+        let token = instance
+            .get_token()
+            .lock()
+            .await
+            .expect("Cannot acquire lock")
+            .clone();
+
+        if let Some(token) = token {
+            SpotifyAuthService::set_token(db, user_id, token).await?;
+        }
+
+        Ok(())
+    }
+
+    async fn is_token_valid(res: ClientResult<()>) -> anyhow::Result<bool> {
+        let Err(err) = res else {
+            return Ok(true);
+        };
+
+        let ClientError::Http(http_error) = err else {
+            return Err(err)?;
+        };
+
+        let HttpError::StatusCode(mut response) = *http_error else {
+            return Err(ClientError::Http(http_error))?;
+        };
+
+        let body = {
+            let mut bytes = vec![];
+            while let Some(chunk) = response.chunk().await? {
+                bytes.extend(chunk);
+            }
+            String::from_utf8(bytes)?
+        };
+
+        let json: serde_json::Value = serde_json::from_str(&body)?;
+
+        if json["error"].as_str() == Some("invalid_grant") {
+            return Ok(false);
+        }
+
+        Err(ClientError::Http(Box::new(HttpError::StatusCode(response))))?
+    }
+
     pub async fn for_user(&self, db: &DbConn, user_id: &str) -> anyhow::Result<AuthCodeSpotify> {
         let mut instance = self.spotify.clone();
         instance.token = Default::default();
         let token = SpotifyAuthService::get_token(db, user_id).await?;
 
-        *instance.token.lock().await.expect("Cannot acquire lock") = token;
+        *instance
+            .get_token()
+            .lock()
+            .await
+            .expect("Cannot acquire lock") = token;
 
-        instance.refresh_token().await?;
+        Self::token_refresh(db, user_id, &instance).await?;
 
         Ok(instance)
     }

@@ -27,7 +27,7 @@ mod track_status_service;
 async fn run() {
     // profanity::check_cases();
 
-    logger::init().expect("Logger should be built");
+    logger::init().await.expect("Logger should be built");
     let app_state = AppState::init().await.expect("State to be built");
 
     tokio::spawn(tick::check_playing(app_state));

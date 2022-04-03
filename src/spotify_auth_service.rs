@@ -36,6 +36,7 @@ impl SpotifyAuthService {
         spotify_auth.refresh_token = Set(token
             .refresh_token
             .ok_or_else(|| anyhow!("Refresh token is required"))?);
+        spotify_auth.expires_at = Set(token.expires_at);
 
         spotify_auth.updated_at = Set(Utc::now().naive_local());
 
@@ -56,8 +57,18 @@ impl SpotifyAuthService {
         Ok(Some(Token {
             access_token: spotify_auth.access_token,
             refresh_token: Some(spotify_auth.refresh_token),
+            expires_at: spotify_auth.expires_at,
             ..Default::default()
         }))
+    }
+
+    pub async fn remove_token(
+        db: &DbConn,
+        user_id: &str,
+    ) -> Result<sea_orm::DeleteResult, sea_orm::DbErr> {
+        SpotifyAuthEntity::delete_by_id(user_id.to_owned())
+            .exec(db)
+            .await
     }
 
     pub async fn get_registered(db: &DbConn) -> anyhow::Result<Vec<String>> {

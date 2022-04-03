@@ -18,6 +18,7 @@ pub struct Model {
     pub user_id: String,
     pub access_token: String,
     pub refresh_token: String,
+    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }
@@ -30,6 +31,7 @@ pub enum Column {
     AccessToken,
     RefreshToken,
     CreatedAt,
+    ExpiresAt,
     UpdatedAt,
 }
 
@@ -54,6 +56,7 @@ impl ColumnTrait for Column {
             Self::UserId => ColumnType::String(None).def(),
             Self::AccessToken => ColumnType::String(None).def(),
             Self::RefreshToken => ColumnType::String(None).def(),
+            Self::ExpiresAt => ColumnType::DateTime.def(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),
         }
