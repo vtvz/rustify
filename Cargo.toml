@@ -36,7 +36,7 @@ tracing-subscriber = { version = "0.3.10", features = ["env-filter"] }
 url = "2.2.2"
 
 [dependencies.libsqlite3-sys]
-version = "0.24.2"
+version = "0.23.2"
 features = ["pkg-config", "vcpkg", "bundled", "unlock_notify", "bundled-sqlcipher"]
 
 [dependencies.sea-orm]
