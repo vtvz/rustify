@@ -31,8 +31,8 @@ logs:
 ssh:
   ssh -t "{{ server }}" "cd {{ path }}; bash --login"
 
-watch:
-  cargo watch -c -x run
+watch cmd="run":
+  cargo watch -c -x {{ cmd }}
 
-xwatch:
-   x-terminal-emulator -e just watch
+xwatch cmd="run":
+   x-terminal-emulator -e just watch {{ cmd }}

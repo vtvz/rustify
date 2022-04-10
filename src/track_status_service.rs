@@ -3,9 +3,12 @@ use core::str::FromStr;
 
 use rspotify::model::{Id, TrackId};
 use sea_orm::prelude::*;
+use sea_orm::sea_query::Expr;
 use sea_orm::ActiveValue::Set;
-use sea_orm::DbConn;
+use sea_orm::FromQueryResult;
 use sea_orm::IntoActiveModel;
+use sea_orm::QuerySelect;
+use sea_orm::{DbConn, UpdateResult};
 use strum_macros::{AsRefStr, EnumString};
 
 use crate::entity::prelude::*;
@@ -41,6 +44,24 @@ impl TrackStatusService {
             .await?;
 
         Ok(res)
+    }
+
+    pub async fn sum_user_skips(db: &DbConn, user_id: &str) -> anyhow::Result<u32> {
+        #[derive(FromQueryResult, Default)]
+        struct SkipsCount {
+            count: u32,
+        }
+
+        let skips: SkipsCount = TrackStatusEntity::find()
+            .select_only()
+            .filter(TrackStatusColumn::UserId.eq(user_id))
+            .column_as(TrackStatusColumn::Skips.sum(), "skips")
+            .into_model::<SkipsCount>()
+            .one(db)
+            .await?
+            .unwrap_or_default();
+
+        Ok(skips.count)
     }
 
     pub async fn count_track_status(
@@ -126,5 +147,27 @@ impl TrackStatusService {
             .collect::<Result<_, _>>()?;
 
         Ok(res)
+    }
+
+    pub async fn increase_skips(
+        db: &DbConn,
+        user_id: &str,
+        track_id: &str,
+    ) -> anyhow::Result<UpdateResult> {
+        let update_result: UpdateResult = TrackStatusEntity::update_many()
+            .col_expr(
+                TrackStatusColumn::Skips,
+                Expr::col(TrackStatusColumn::Skips).add(1),
+            )
+            .col_expr(
+                TrackStatusColumn::UpdatedAt,
+                Expr::value(Utc::now().naive_local()),
+            )
+            .filter(TrackStatusColumn::UserId.eq(user_id))
+            .filter(TrackStatusColumn::TrackId.eq(track_id))
+            .exec(db)
+            .await?;
+
+        Ok(update_result)
     }
 }

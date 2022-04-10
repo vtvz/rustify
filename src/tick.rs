@@ -1,11 +1,19 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
 use indoc::formatdoc;
 use rspotify::clients::OAuthClient;
-use rspotify::model::{FullTrack, TrackId};
+use rspotify::model::{
+    Context as SpotifyContext,
+    FullTrack,
+    PlayableId,
+    PlaylistId,
+    TrackId,
+    Type as SpotifyType,
+};
 use rustrict::Type;
 use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
@@ -17,8 +25,8 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::{Status, TrackStatusService};
 use crate::{profanity, rickroll, spotify, state, telegram};
 
-pub const CHECK_INTERVAL: u64 = 2;
-const PARALLEL_CHECKS: usize = 3;
+pub const CHECK_INTERVAL: u64 = 3;
+const PARALLEL_CHECKS: usize = 1;
 
 type PrevTracksMap = Arc<RwLock<HashMap<String, TrackId>>>;
 
@@ -96,15 +104,49 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
     Ok(())
 }
 
-async fn handle_disliked_track(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
+async fn handle_disliked_track(
+    state: &state::UserState,
+    track: &FullTrack,
+    context: Option<&SpotifyContext>,
+) -> anyhow::Result<()> {
     if state.is_spotify_premium() {
-        state
-            .spotify
-            .read()
-            .await
+        let spotify = state.spotify.read().await;
+
+        spotify
             .next_track(None)
             .await
             .context("Skip current track")?;
+
+        let track_id = spotify::get_track_id(track);
+        TrackStatusService::increase_skips(&state.app.db, &state.user_id, &track_id).await?;
+
+        let Some(context) = context else {
+            return Ok(());
+        };
+
+        match context._type {
+            SpotifyType::Playlist => {
+                let track_id = TrackId::from_str(&track_id)?;
+                let hate: Option<&dyn PlayableId> = Some(&track_id);
+
+                spotify
+                    .playlist_remove_all_occurrences_of_items(
+                        &PlaylistId::from_str(&context.uri)?,
+                        hate,
+                        None,
+                    )
+                    .await?;
+            }
+
+            SpotifyType::Collection => {
+                let track_id = TrackId::from_str(&track_id)?;
+
+                spotify
+                    .current_user_saved_tracks_delete(Some(&track_id))
+                    .await?;
+            }
+            _ => {}
+        }
 
         return Ok(());
     }
@@ -141,14 +183,14 @@ async fn check_playing_for_user(
 
     let playing = spotify::currently_playing(&*state.spotify.read().await).await;
 
-    let track = match playing {
+    let (track, context) = match playing {
         CurrentlyPlaying::Err(err) => {
             return Err(err).context("Get currently playing track");
         }
         CurrentlyPlaying::None(message) => {
             return Ok(message);
         }
-        CurrentlyPlaying::Ok(track) => track,
+        CurrentlyPlaying::Ok(track, context) => (track, context),
     };
 
     if rickroll::should(&state.user_id, true).await {
@@ -164,7 +206,7 @@ async fn check_playing_for_user(
 
     match status {
         Status::Disliked => {
-            handle_disliked_track(&state, &track)
+            handle_disliked_track(&state, &track, context.as_ref())
                 .await
                 .context("Handle Disliked Tracks")?;
         }

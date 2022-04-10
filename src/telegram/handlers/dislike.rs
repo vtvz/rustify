@@ -22,7 +22,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> Result<bool> {
 
             return Ok(true);
         }
-        CurrentlyPlaying::Ok(track) => track,
+        CurrentlyPlaying::Ok(track, _) => track,
     };
 
     let track_id = spotify::get_track_id(&track);

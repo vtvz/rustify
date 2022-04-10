@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context};
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
-use rspotify::model::{FullTrack, Id, PlayableItem};
+use rspotify::model::{Context as SpotifyContext, FullTrack, Id, PlayableItem};
 use rspotify::{scopes, AuthCodeSpotify, ClientError, ClientResult, Token};
 use sea_orm::DbConn;
 use teloxide::utils::markdown;
@@ -11,7 +11,7 @@ use crate::spotify_auth_service::SpotifyAuthService;
 pub enum CurrentlyPlaying {
     Err(anyhow::Error),
     None(String),
-    Ok(Box<FullTrack>),
+    Ok(Box<FullTrack>, Option<SpotifyContext>),
 }
 
 impl<E> From<E> for CurrentlyPlaying
@@ -31,18 +31,18 @@ pub async fn currently_playing(spotify: &AuthCodeSpotify) -> CurrentlyPlaying {
         Err(err) => return err.into(),
     };
 
-    let playing = match playing {
+    let (item, context) = match playing {
         Some(playing) => {
             if !playing.is_playing {
                 return CurrentlyPlaying::None("Current track is on pause".into());
             }
 
-            playing.item
+            (playing.item, playing.context)
         }
         None => return CurrentlyPlaying::None("Nothing is currently playing".into()),
     };
 
-    let item = match playing {
+    let item = match item {
         Some(item) => item,
         None => return CurrentlyPlaying::None("Nothing is currently playing".into()),
     };
@@ -53,7 +53,7 @@ pub async fn currently_playing(spotify: &AuthCodeSpotify) -> CurrentlyPlaying {
     };
 
     match &track.id {
-        Some(_) => CurrentlyPlaying::Ok(Box::new(track)),
+        Some(_) => CurrentlyPlaying::Ok(Box::new(track), context),
         None => CurrentlyPlaying::None("It's a local file".into()),
     }
 }

@@ -6,6 +6,7 @@ use teloxide::prelude2::*;
 
 use crate::state::UserState;
 use crate::track_status_service::{Status, TrackStatusService};
+use crate::utils::retry;
 
 pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     let message = bot
@@ -17,10 +18,11 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         .await?;
 
     let spotify = state.spotify.read().await;
-    let me = spotify
-        .current_user()
-        .await
-        .context("Cannot get current user")?;
+
+    let me = state
+        .spotify_user
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("Spotify user not found"))?;
 
     let disliked =
         TrackStatusService::get_ids_with_status(&state.app.db, &state.user_id, Status::Disliked)
@@ -29,22 +31,17 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     let Page {
         total: liked_before,
         ..
-    } = spotify
-        .current_user_saved_tracks_manual(None, Some(1), None)
-        .await?;
+    } = retry(|| spotify.current_user_saved_tracks_manual(None, Some(1), None)).await?;
 
     for chunk in disliked.chunks(50) {
-        spotify
-            .current_user_saved_tracks_delete(chunk)
+        retry(|| spotify.current_user_saved_tracks_delete(chunk))
             .await
             .context("Cannot remove occurrences of items for saved songs")?;
     }
 
     let Page {
         total: liked_after, ..
-    } = spotify
-        .current_user_saved_tracks_manual(None, Some(1), None)
-        .await?;
+    } = retry(|| spotify.current_user_saved_tracks_manual(None, Some(1), None)).await?;
 
     let mut offset = 0;
     let mut before = 0;
@@ -56,10 +53,11 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
             items: playlists,
             next,
             ..
-        } = spotify
-            .current_user_playlists_manual(Some(DEFAULT_PAGINATION_CHUNKS), Some(offset))
-            .await
-            .context("Cannot get current user playlists")?;
+        } = retry(|| {
+            spotify.current_user_playlists_manual(Some(DEFAULT_PAGINATION_CHUNKS), Some(offset))
+        })
+        .await
+        .context("Cannot get current user playlists")?;
 
         offset += playlists.len() as u32;
 
@@ -72,15 +70,16 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
             before += playlist.tracks.total;
 
             for chunk in disliked.chunks(100) {
-                let hate: Vec<&dyn PlayableId> =
-                    chunk.iter().map(|item| item as &dyn PlayableId).collect();
-                spotify
-                    .playlist_remove_all_occurrences_of_items(&playlist.id, hate, None)
-                    .await
-                    .context(format!(
-                        "Cannot remove occurrences of items for playlist {}",
-                        playlist.id
-                    ))?;
+                retry(|| {
+                    let hate: Vec<&dyn PlayableId> =
+                        chunk.iter().map(|item| item as &dyn PlayableId).collect();
+                    spotify.playlist_remove_all_occurrences_of_items(&playlist.id, hate, None)
+                })
+                .await
+                .context(format!(
+                    "Cannot remove occurrences of items for playlist {}",
+                    playlist.id
+                ))?;
             }
         }
 
@@ -96,9 +95,10 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
             items: playlists,
             next,
             ..
-        } = spotify
-            .current_user_playlists_manual(Some(DEFAULT_PAGINATION_CHUNKS), Some(offset))
-            .await?;
+        } = retry(|| {
+            spotify.current_user_playlists_manual(Some(DEFAULT_PAGINATION_CHUNKS), Some(offset))
+        })
+        .await?;
 
         offset += playlists.len() as u32;
 

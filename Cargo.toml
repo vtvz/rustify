@@ -14,6 +14,7 @@ dotenv = "0.15.0"
 futures = "0.3.21"
 genius-rs = "0.4.0"
 indoc = "1.0.4"
+influxdb = { version = "0.5.2", features = ["derive"] }
 itertools = "0.10.3"
 lazy_static = "1.4.0"
 log = "0.4.16"
@@ -29,10 +30,11 @@ sqlx = { version = "0.5.11", features = ["sqlite"] }
 strsim = "0.10.0"
 strum = "0.24.0"
 strum_macros = "0.24.0"
+tokio-retry = "0.3.0"
 tokio-stream = "0.1.8"
-tracing = "0.1.32"
+tracing = "0.1.33"
 tracing-loki = "0.1.0"
-tracing-subscriber = { version = "0.3.10", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
 url = "2.2.2"
 
 [dependencies.libsqlite3-sys]
@@ -55,6 +57,8 @@ features = [
 [dependencies.tokio]
 version = "1.17.0"
 features = ["rt-multi-thread", "macros"]
+
+[features]
 
 [build-dependencies.vergen]
 version = "7.0.0"

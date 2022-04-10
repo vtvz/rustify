@@ -28,7 +28,7 @@ pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow
 
             return Ok(true);
         }
-        CurrentlyPlaying::Ok(track) => track,
+        CurrentlyPlaying::Ok(track, _) => track,
     };
 
     return common(m, bot, state, *track).await;
@@ -51,6 +51,7 @@ fn extract_id(url: &str) -> Option<TrackId> {
 
     id.ok()
 }
+
 pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
