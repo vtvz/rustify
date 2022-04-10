@@ -55,7 +55,7 @@ impl TrackStatusService {
         let skips: SkipsCount = TrackStatusEntity::find()
             .select_only()
             .filter(TrackStatusColumn::UserId.eq(user_id))
-            .column_as(TrackStatusColumn::Skips.sum(), "skips")
+            .column_as(TrackStatusColumn::Skips.sum(), "count")
             .into_model::<SkipsCount>()
             .one(db)
             .await?
