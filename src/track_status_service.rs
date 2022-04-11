@@ -32,29 +32,49 @@ impl Default for Status {
 pub struct TrackStatusService;
 
 impl TrackStatusService {
-    pub async fn count_user_status(
+    fn query(
+        status: Option<Status>,
+        user_id: Option<&str>,
+        track_id: Option<&str>,
+    ) -> Select<TrackStatusEntity> {
+        let mut query: Select<_> = TrackStatusEntity::find();
+
+        if let Some(user_id) = user_id {
+            query = query.filter(TrackStatusColumn::UserId.eq(user_id));
+        };
+
+        if let Some(track_id) = track_id {
+            query = query.filter(TrackStatusColumn::TrackId.eq(track_id));
+        };
+
+        if let Some(status) = status {
+            query = query.filter(TrackStatusColumn::Status.eq(status.as_ref()));
+        };
+
+        query
+    }
+
+    pub async fn count_status(
         db: &DbConn,
-        user_id: &str,
         status: Status,
+        user_id: Option<&str>,
+        track_id: Option<&str>,
     ) -> anyhow::Result<usize> {
-        let res = TrackStatusEntity::find()
-            .filter(TrackStatusColumn::UserId.eq(user_id))
-            .filter(TrackStatusColumn::Status.eq(status.as_ref()))
+        let res = Self::query(Some(status), user_id, track_id)
             .count(db)
             .await?;
 
         Ok(res)
     }
 
-    pub async fn sum_user_skips(db: &DbConn, user_id: &str) -> anyhow::Result<u32> {
+    pub async fn sum_user_skips(db: &DbConn, user_id: Option<&str>) -> anyhow::Result<u32> {
         #[derive(FromQueryResult, Default)]
         struct SkipsCount {
             count: u32,
         }
 
-        let skips: SkipsCount = TrackStatusEntity::find()
+        let skips: SkipsCount = Self::query(None, user_id, None)
             .select_only()
-            .filter(TrackStatusColumn::UserId.eq(user_id))
             .column_as(TrackStatusColumn::Skips.sum(), "count")
             .into_model::<SkipsCount>()
             .one(db)
@@ -64,29 +84,13 @@ impl TrackStatusService {
         Ok(skips.count)
     }
 
-    pub async fn count_track_status(
-        db: &DbConn,
-        track_id: &str,
-        status: Status,
-    ) -> anyhow::Result<usize> {
-        let res = TrackStatusEntity::find()
-            .filter(TrackStatusColumn::TrackId.eq(track_id))
-            .filter(TrackStatusColumn::Status.eq(status.as_ref()))
-            .count(db)
-            .await?;
-
-        Ok(res)
-    }
-
     pub async fn set_status(
         db: &DbConn,
         user_id: &str,
         track_id: &str,
         status: Status,
     ) -> anyhow::Result<TrackStatusActiveModel> {
-        let track_status = TrackStatusEntity::find()
-            .filter(TrackStatusColumn::TrackId.eq(track_id))
-            .filter(TrackStatusColumn::UserId.eq(user_id))
+        let track_status = Self::query(None, Some(user_id), Some(track_id))
             .one(db)
             .await?;
 
@@ -109,9 +113,7 @@ impl TrackStatusService {
     }
 
     pub async fn get_status(db: &DbConn, user_id: &str, track_id: &str) -> Status {
-        let track_status = TrackStatusEntity::find()
-            .filter(TrackStatusColumn::TrackId.eq(track_id))
-            .filter(TrackStatusColumn::UserId.eq(user_id))
+        let track_status = Self::query(None, Some(user_id), Some(track_id))
             .one(db)
             .await;
 
@@ -135,9 +137,7 @@ impl TrackStatusService {
         user_id: &str,
         status: Status,
     ) -> anyhow::Result<Vec<TrackId>> {
-        let tracks: Vec<TrackStatusModel> = TrackStatusEntity::find()
-            .filter(TrackStatusColumn::UserId.eq(user_id))
-            .filter(TrackStatusColumn::Status.eq(status.as_ref()))
+        let tracks: Vec<TrackStatusModel> = Self::query(Some(status), Some(user_id), None)
             .all(db)
             .await?;
 

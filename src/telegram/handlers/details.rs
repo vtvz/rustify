@@ -111,12 +111,16 @@ async fn common(
         _ => "Unknown",
     };
 
-    let disliked_by =
-        TrackStatusService::count_track_status(&state.app.db, track_id.id(), Status::Disliked)
-            .await?;
+    let disliked_by = TrackStatusService::count_status(
+        &state.app.db,
+        Status::Disliked,
+        None,
+        Some(track_id.id()),
+    )
+    .await?;
 
     let ignored_by =
-        TrackStatusService::count_track_status(&state.app.db, track_id.id(), Status::Ignore)
+        TrackStatusService::count_status(&state.app.db, Status::Ignore, None, Some(track_id.id()))
             .await?;
 
     let genres: HashSet<_> = {

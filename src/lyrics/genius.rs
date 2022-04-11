@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
 
+use crate::spotify;
 use anyhow::anyhow;
 use cached::proc_macro::cached;
 use genius_rs::Genius;
@@ -188,7 +189,9 @@ async fn search_for_track(
             );
 
             if confidence.confident(THRESHOLD) {
-                log::debug!(
+                tracing::debug!(
+                    track_id = spotify::get_track_id(track).as_str(),
+                    confidence = confidence.to_string().as_str(),
                     "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
                     hit_i + 1,
                     name_i + 1,
@@ -207,7 +210,8 @@ async fn search_for_track(
         }
     }
 
-    log::info!(
+    tracing::info!(
+        track_id = spotify::get_track_id(track).as_str(),
         "Found no text in {} hits in {} name variants ({} - {})",
         hits_count,
         names_len,

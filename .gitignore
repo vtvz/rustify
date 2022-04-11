@@ -3,3 +3,4 @@ src/entity.example
 /target
 .env
 .env.deploy
+proxychains.conf

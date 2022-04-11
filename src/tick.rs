@@ -17,6 +17,7 @@ use rspotify::model::{
 use rustrict::Type;
 use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::ApiError;
 use tokio::sync::{RwLock, Semaphore};
 
 use crate::spotify::CurrentlyPlaying;
@@ -29,6 +30,18 @@ pub const CHECK_INTERVAL: u64 = 3;
 const PARALLEL_CHECKS: usize = 1;
 
 type PrevTracksMap = Arc<RwLock<HashMap<String, TrackId>>>;
+
+async fn handle_telegram_error(
+    result: Result<Message, teloxide::RequestError>,
+) -> anyhow::Result<()> {
+    if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::NotFound)) = result {
+        // TODO Add users with blocked bot
+    }
+
+    result?;
+
+    Ok(())
+}
 
 async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
     let Some(hit) = state.app.lyrics.search_for_track(track).await? else {
@@ -86,7 +99,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
         lines -= 1;
     };
 
-    state
+    let result: Result<Message, teloxide::RequestError> = state
         .app
         .bot
         .send_message(state.user_id.clone(), message)
@@ -99,9 +112,9 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
             ],
         )))
         .send()
-        .await?;
+        .await;
 
-    Ok(())
+    handle_telegram_error(result).await
 }
 
 async fn handle_disliked_track(
@@ -135,7 +148,8 @@ async fn handle_disliked_track(
                         hate,
                         None,
                     )
-                    .await?;
+                    .await
+                    .ok(); // It's a bit too much to check if user owns this playlist
             }
 
             SpotifyType::Collection => {
@@ -153,18 +167,18 @@ async fn handle_disliked_track(
 
     let message = format!(
         "Current song \\({track_name}\\) was disliked, but I cannot skip it...",
-        track_name = spotify::create_track_name(track),
+        track_name = spotify::create_track_tg_link(track),
     );
 
-    state
+    let result = state
         .app
         .bot
         .send_message(state.user_id.clone(), message)
         .parse_mode(ParseMode::MarkdownV2)
         .send()
-        .await?;
+        .await;
 
-    Ok(())
+    handle_telegram_error(result).await
 }
 
 async fn check_playing_for_user(

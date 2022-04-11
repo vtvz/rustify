@@ -8,3 +8,6 @@ services:
     restart: always
     volumes:
       - ./var:/var/app
+      - ./proxychains.conf:/etc/proxychains4.conf
+    entrypoint: [proxychains]
+    command: [/usr/local/bin/rustify]

@@ -1,3 +1,4 @@
+use crate::spotify;
 use genius::GeniusLocal;
 use musixmatch::Musixmatch;
 use rspotify::model::FullTrack;
@@ -46,7 +47,11 @@ impl Manager {
                 Err(err)
             }
             _ => {
-                tracing::debug!(track_id = ?track.id, "Musixmatch text not found");
+                tracing::debug!(
+                    track_id = spotify::get_track_id(track).as_str(),
+                    track_name = spotify::create_track_name(track).as_str(),
+                    "Musixmatch text not found"
+                );
 
                 Ok(None)
             }
