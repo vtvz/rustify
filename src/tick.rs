@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use indoc::formatdoc;
+use lazy_static::lazy_static;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{
     Context as SpotifyContext,
@@ -18,7 +19,8 @@ use rustrict::Type;
 use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::ApiError;
-use tokio::sync::{RwLock, Semaphore};
+use tokio::sync::{Mutex, RwLock, Semaphore};
+use tokio::time::Instant;
 
 use crate::spotify::CurrentlyPlaying;
 use crate::spotify_auth_service::SpotifyAuthService;
@@ -27,7 +29,7 @@ use crate::track_status_service::{Status, TrackStatusService};
 use crate::{profanity, rickroll, spotify, state, telegram};
 
 pub const CHECK_INTERVAL: u64 = 3;
-const PARALLEL_CHECKS: usize = 1;
+const PARALLEL_CHECKS: usize = 2;
 
 type PrevTracksMap = Arc<RwLock<HashMap<String, TrackId>>>;
 
@@ -243,11 +245,18 @@ async fn check_playing_for_user(
     Ok("Complete check".to_owned())
 }
 
+lazy_static! {
+    pub static ref PROCESS_TIME: Mutex<Option<Duration>> = Mutex::new(None);
+}
+
 pub async fn check_playing(app_state: &'static state::AppState) {
     let mut interval = tokio::time::interval(Duration::from_secs(CHECK_INTERVAL));
     let prevs: PrevTracksMap = Arc::new(RwLock::new(HashMap::new()));
-    loop {
+
+    while !app_state.is_shutting_down().await {
         interval.tick().await;
+
+        let start = Instant::now();
 
         let user_ids = match SpotifyAuthService::get_registered(&app_state.db).await {
             Ok(user_ids) => user_ids,
@@ -285,5 +294,9 @@ pub async fn check_playing(app_state: &'static state::AppState) {
                 .context("Shouldn't fail")
                 .expect("Shouldn't fail");
         }
+
+        let diff = Instant::now().duration_since(start);
+
+        *PROCESS_TIME.lock().await = Some(diff);
     }
 }

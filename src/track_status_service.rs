@@ -67,7 +67,7 @@ impl TrackStatusService {
         Ok(res)
     }
 
-    pub async fn sum_user_skips(db: &DbConn, user_id: Option<&str>) -> anyhow::Result<u32> {
+    pub async fn sum_skips(db: &DbConn, user_id: Option<&str>) -> anyhow::Result<u32> {
         #[derive(FromQueryResult, Default)]
         struct SkipsCount {
             count: u32,

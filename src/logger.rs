@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use tracing_loki::Layer;
 use tracing_subscriber::filter::Targets;
 use tracing_subscriber::layer::SubscriberExt;
@@ -41,6 +42,8 @@ pub async fn init() -> anyhow::Result<()> {
         .with_max_level(tracing::Level::TRACE)
         .finish();
 
+    let level = dotenv::var("LOG_LEVEL").unwrap_or_else(|_| "warn".into());
+
     let builder = subscriber.with(loki).with(
         Targets::new()
             .with_target(
@@ -48,7 +51,7 @@ pub async fn init() -> anyhow::Result<()> {
                 tracing::Level::TRACE,
             )
             .with_target("teloxide", tracing::Level::INFO)
-            .with_default(tracing::Level::WARN),
+            .with_default(tracing::Level::from_str(&level)?),
     );
 
     let tracing_init = builder.try_init();

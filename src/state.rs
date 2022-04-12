@@ -6,15 +6,37 @@ use sea_orm::{DatabaseConnection, DbConn, SqlxSqliteConnector};
 use sqlx::sqlite::SqliteConnectOptions;
 use std::str::FromStr;
 use teloxide::Bot;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 
+use crate::metrics::influx::InfluxClient;
 use crate::{lyrics, profanity, spotify};
 
 pub struct AppState {
+    pub shutting_down: Mutex<bool>,
     pub spotify_manager: spotify::Manager,
     pub lyrics: lyrics::Manager,
     pub bot: Bot,
     pub db: DatabaseConnection,
+    pub influx: Option<InfluxClient>,
+}
+
+fn influx() -> anyhow::Result<Option<InfluxClient>> {
+    let Ok(api_url) = dotenv::var("INFLUX_API_URL") else {
+        return Ok(None)
+    };
+
+    if api_url.is_empty() {
+        return Ok(None);
+    }
+
+    let token = dotenv::var("INFLUX_TOKEN").context("Cannot obtain INFLUX_TOKEN variable")?;
+    let bucket = dotenv::var("INFLUX_BUCKET").context("Cannot obtain INFLUX_BUCKET variable")?;
+    let org = dotenv::var("INFLUX_ORG").context("Cannot obtain INFLUX_ORG variable")?;
+
+    let instance_tag = dotenv::var("INFLUX_INSTANCE").ok();
+    let client = InfluxClient::new(&api_url, &bucket, &org, &token, instance_tag.as_deref())?;
+
+    Ok(Some(client))
 }
 
 async fn db() -> anyhow::Result<DbConn> {
@@ -79,12 +101,16 @@ impl AppState {
 
         let db = db().await?;
 
+        let influx = influx().context("Cannot configure Influx Client")?;
+
         // Make state global static variable to prevent hassle with Arc and cloning this mess
         let app_state = Box::new(Self {
+            shutting_down: Default::default(),
             bot,
             spotify_manager,
             lyrics: lyrics_manager,
             db,
+            influx,
         });
         let app_state = &*Box::leak(app_state);
 
@@ -107,6 +133,10 @@ impl AppState {
         }
 
         Ok(state)
+    }
+
+    pub async fn is_shutting_down(&self) -> bool {
+        *self.shutting_down.lock().await
     }
 }
 

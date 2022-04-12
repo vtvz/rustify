@@ -13,7 +13,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     )
     .await?;
 
-    let skips = TrackStatusService::sum_user_skips(&state.app.db, Some(&state.user_id)).await?;
+    let skips = TrackStatusService::sum_skips(&state.app.db, Some(&state.user_id)).await?;
 
     let message = format!("You disliked `{dislikes}` songs so far and I skipped `{skips}` times");
 

@@ -15,6 +15,7 @@ use crate::state::AppState;
 mod entity;
 mod logger;
 mod lyrics;
+mod metrics;
 mod profanity;
 mod rickroll;
 mod spotify;
@@ -39,7 +40,14 @@ async fn run() {
 
     let app_state = AppState::init().await.expect("State to be built");
 
+    tokio::spawn(async {
+        tokio::signal::ctrl_c().await.ok();
+
+        *app_state.shutting_down.lock().await = true;
+    });
+
     tokio::spawn(tick::check_playing(app_state));
+    tokio::spawn(metrics::collect_daemon(app_state));
 
     let handler = dptree::entry()
         .branch(
