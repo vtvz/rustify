@@ -89,7 +89,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
                 
                 {genius}
             ",
-            track_name = spotify::create_track_name(track),
+            track_name = spotify::create_track_tg_link(track),
             bad_lines = bad_lines[0..lines].join("\n"),
             genius = hit.tg_link(true)
         );
@@ -231,9 +231,17 @@ async fn check_playing_for_user(
                 return Ok("Skip same track".to_owned());
             }
 
-            check_bad_words(&state, &track)
+            let res = check_bad_words(&state, &track)
                 .await
-                .context("Check bad words")?;
+                .context("Check bad words");
+
+            if let Err(err) = res {
+                tracing::error!(
+                    err = ?err,
+                    track_id = spotify::get_track_id(track.as_ref()).as_str(),
+                    "Error occurred on checking bad words",
+                )
+            }
         }
         Status::Ignore => {}
     }

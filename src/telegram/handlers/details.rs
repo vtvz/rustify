@@ -185,7 +185,7 @@ async fn common(
                         {genres_line}
                         `No lyrics found`
                     ",
-                    track_name = spotify::create_track_name(&track),
+                    track_name = spotify::create_track_tg_link(&track),
                     features = features.trim(),
                     genres_line = genres_line,
                 )
@@ -223,7 +223,7 @@ async fn common(
                 
                 {genius}
             ",
-            track_name = spotify::create_track_name(&track),
+            track_name = spotify::create_track_tg_link(&track),
             features = features.trim(),
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),
