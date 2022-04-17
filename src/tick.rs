@@ -26,7 +26,7 @@ use crate::spotify::CurrentlyPlaying;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::{Status, TrackStatusService};
-use crate::{profanity, rickroll, spotify, state, telegram};
+use crate::{profanity, rickroll, spotify, state, telegram, utils};
 
 pub const CHECK_INTERVAL: u64 = 3;
 const PARALLEL_CHECKS: usize = 2;
@@ -51,7 +51,12 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
     };
 
     if hit.language() != "en" {
-        tracing::trace!("Track has non English lyrics: {:?}", track.id);
+        tracing::trace!(
+            language = hit.language(),
+            track_id = spotify::get_track_id(track).as_str(),
+            track_name = spotify::create_track_name(track).as_str(),
+            "Track has non English lyrics",
+        );
 
         return Ok(());
     }
@@ -238,7 +243,8 @@ async fn check_playing_for_user(
             if let Err(err) = res {
                 tracing::error!(
                     err = ?err,
-                    track_id = spotify::get_track_id(track.as_ref()).as_str(),
+                    track_id = spotify::get_track_id(&track).as_str(),
+                    track_name = spotify::create_track_name(&track).as_str(),
                     "Error occurred on checking bad words",
                 )
             }
@@ -258,12 +264,9 @@ lazy_static! {
 }
 
 pub async fn check_playing(app_state: &'static state::AppState) {
-    let mut interval = tokio::time::interval(Duration::from_secs(CHECK_INTERVAL));
     let prevs: PrevTracksMap = Arc::new(RwLock::new(HashMap::new()));
 
-    while !app_state.is_shutting_down().await {
-        interval.tick().await;
-
+    utils::tick!(Duration::from_secs(CHECK_INTERVAL), {
         let start = Instant::now();
 
         let user_ids = match SpotifyAuthService::get_registered(&app_state.db).await {
@@ -306,5 +309,5 @@ pub async fn check_playing(app_state: &'static state::AppState) {
         let diff = Instant::now().duration_since(start);
 
         *PROCESS_TIME.lock().await = Some(diff);
-    }
+    });
 }

@@ -6,13 +6,12 @@ use sea_orm::{DatabaseConnection, DbConn, SqlxSqliteConnector};
 use sqlx::sqlite::SqliteConnectOptions;
 use std::str::FromStr;
 use teloxide::Bot;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 
 use crate::metrics::influx::InfluxClient;
 use crate::{lyrics, profanity, spotify};
 
 pub struct AppState {
-    pub shutting_down: Mutex<bool>,
     pub spotify_manager: spotify::Manager,
     pub lyrics: lyrics::Manager,
     pub bot: Bot,
@@ -105,7 +104,6 @@ impl AppState {
 
         // Make state global static variable to prevent hassle with Arc and cloning this mess
         let app_state = Box::new(Self {
-            shutting_down: Default::default(),
             bot,
             spotify_manager,
             lyrics: lyrics_manager,
@@ -133,10 +131,6 @@ impl AppState {
         }
 
         Ok(state)
-    }
-
-    pub async fn is_shutting_down(&self) -> bool {
-        *self.shutting_down.lock().await
     }
 }
 

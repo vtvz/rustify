@@ -4,3 +4,4 @@ pub mod prelude;
 
 pub mod spotify_auth;
 pub mod track_status;
+pub mod user;

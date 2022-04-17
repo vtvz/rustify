@@ -1,5 +1,4 @@
 use chrono::Utc;
-use core::str::FromStr;
 
 use rspotify::model::{Id, TrackId};
 use sea_orm::prelude::*;
@@ -9,25 +8,10 @@ use sea_orm::FromQueryResult;
 use sea_orm::IntoActiveModel;
 use sea_orm::QuerySelect;
 use sea_orm::{DbConn, UpdateResult};
-use strum_macros::{AsRefStr, EnumString};
 
 use crate::entity::prelude::*;
 
-#[derive(Clone, EnumString, AsRefStr)]
-pub enum Status {
-    #[strum(serialize = "disliked")]
-    Disliked,
-    #[strum(serialize = "ignore")]
-    Ignore,
-    #[strum(serialize = "none")]
-    None,
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Self::None
-    }
-}
+pub use crate::entity::track_status::Status;
 
 pub struct TrackStatusService;
 
@@ -48,7 +32,7 @@ impl TrackStatusService {
         };
 
         if let Some(status) = status {
-            query = query.filter(TrackStatusColumn::Status.eq(status.as_ref()));
+            query = query.filter(TrackStatusColumn::Status.eq(status));
         };
 
         query
@@ -106,8 +90,7 @@ impl TrackStatusService {
             .into_active_model(),
         };
 
-        track_status.status = Set(status.as_ref().to_owned());
-        track_status.updated_at = Set(Utc::now().naive_local());
+        track_status.status = Set(status);
 
         Ok(track_status.save(db).await?)
     }
@@ -117,18 +100,9 @@ impl TrackStatusService {
             .one(db)
             .await;
 
-        let track_status = match track_status {
-            Ok(track_status) => track_status,
-            Err(_) => return Status::None,
-        };
-
         match track_status {
-            Some(track_status) => {
-                let res: Result<Status, _> = Status::from_str(track_status.status.as_ref());
-
-                res.unwrap_or_default()
-            }
-            None => Status::None,
+            Ok(Some(track_status)) => track_status.status,
+            _ => Status::None,
         }
     }
 

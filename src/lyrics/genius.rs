@@ -191,6 +191,7 @@ async fn search_for_track(
             if confidence.confident(THRESHOLD) {
                 tracing::debug!(
                     track_id = spotify::get_track_id(track).as_str(),
+                    track_name = spotify::create_track_name(track).as_str(),
                     confidence = confidence.to_string().as_str(),
                     "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
                     hit_i + 1,
@@ -212,6 +213,7 @@ async fn search_for_track(
 
     tracing::info!(
         track_id = spotify::get_track_id(track).as_str(),
+        track_name = spotify::create_track_name(track).as_str(),
         "Found no text in {} hits in {} name variants ({} - {})",
         hits_count,
         names_len,

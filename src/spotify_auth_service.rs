@@ -1,5 +1,4 @@
 use anyhow::anyhow;
-use chrono::Utc;
 use rspotify::Token;
 use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
@@ -37,8 +36,6 @@ impl SpotifyAuthService {
             .refresh_token
             .ok_or_else(|| anyhow!("Refresh token is required"))?);
         spotify_auth.expires_at = Set(token.expires_at);
-
-        spotify_auth.updated_at = Set(Utc::now().naive_local());
 
         Ok(spotify_auth.save(db).await?)
     }

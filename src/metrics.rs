@@ -4,7 +4,7 @@ use influxdb::{InfluxDbWriteable, Timestamp};
 use std::time::Duration;
 
 use crate::track_status_service::{Status, TrackStatusService};
-use crate::{tick, AppState};
+use crate::{tick, utils, AppState};
 
 pub mod influx;
 
@@ -65,18 +65,9 @@ pub async fn collect_daemon(app_state: &AppState) {
         return;
     };
 
-    let mut interval = tokio::time::interval(Duration::from_secs(60));
-
-    while !app_state.is_shutting_down().await {
-        tokio::select! {
-            _ = interval.tick() => {},
-            _ = tokio::signal::ctrl_c() => {
-                return;
-            },
-        }
-
+    utils::tick!(Duration::from_secs(60), {
         if let Err(err) = collect(client, app_state).await {
             tracing::error!(err = ?err, "Something went wrong on metrics collection: {:?}", err);
         }
-    }
+    });
 }

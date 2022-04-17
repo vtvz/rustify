@@ -1,26 +1,26 @@
 use chrono::Utc;
-use core::str::FromStr;
 use sea_orm::entity::prelude::*;
 use sea_orm::Set;
+use std::str::FromStr;
 
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;
 
 impl EntityName for Entity {
     fn table_name(&self) -> &str {
-        "track_status"
+        "user"
     }
 }
 
 #[derive(Clone, Debug, PartialEq, DeriveModel, DeriveActiveModel)]
 pub struct Model {
-    pub id: u32,
-    pub user_id: String,
-    pub track_id: String,
+    pub id: String,
+    pub name: String,
+    pub removed_playlists: u32,
+    pub removed_collection: u32,
+    pub status: Status,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
-    pub skips: u32,
-    pub status: Status,
 }
 
 impl ActiveModelBehavior for ActiveModel {
@@ -37,12 +37,12 @@ impl ActiveModelBehavior for ActiveModel {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 pub enum Column {
     Id,
-    UserId,
-    TrackId,
+    Name,
+    RemovedPlaylists,
+    RemovedCollection,
+    Status,
     CreatedAt,
     UpdatedAt,
-    Skips,
-    Status,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -51,10 +51,10 @@ pub enum PrimaryKey {
 }
 
 impl PrimaryKeyTrait for PrimaryKey {
-    type ValueType = u32;
+    type ValueType = String;
 
     fn auto_increment() -> bool {
-        true
+        false
     }
 }
 
@@ -63,35 +63,34 @@ impl ColumnTrait for Column {
 
     fn def(&self) -> ColumnDef {
         match self {
-            Self::Id => ColumnType::Unsigned.def(),
-            Self::UserId => ColumnType::String(None).def(),
-            Self::TrackId => ColumnType::String(None).def(),
+            Self::Id => ColumnType::String(None).def(),
+            Self::Name => ColumnType::String(None).def(),
+            Self::RemovedPlaylists => ColumnType::Unsigned.def(),
+            Self::RemovedCollection => ColumnType::Unsigned.def(),
+            Self::Status => Status::db_type(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),
-            Self::Skips => ColumnType::Unsigned.def(),
-            Self::Status => Status::db_type(),
         }
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {}
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(has_one = "super::spotify_auth::Entity")]
+    SpotifyAuth,
+}
 
-impl RelationTrait for Relation {
-    fn def(&self) -> RelationDef {
-        panic!("No RelationDef")
+impl Related<super::spotify_auth::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::SpotifyAuth.def()
     }
 }
 
 #[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq)]
 #[sea_orm(rs_type = "String", db_type = "String(None)")]
 pub enum Status {
-    #[sea_orm(string_value = "disliked")]
-    Disliked,
-    #[sea_orm(string_value = "ignore")]
-    Ignore,
-    #[sea_orm(string_value = "none")]
-    None,
+    #[sea_orm(string_value = "active")]
+    Active,
 }
 
 impl FromStr for Status {
@@ -118,6 +117,6 @@ impl ToString for Status {
 
 impl Default for Status {
     fn default() -> Self {
-        Self::None
+        Self::Active
     }
 }

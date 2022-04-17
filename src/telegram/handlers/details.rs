@@ -74,7 +74,10 @@ async fn common(
 ) -> anyhow::Result<bool> {
     let spotify = state.spotify.read().await;
 
-    let track_id = track.id.clone().expect("Should be prevalidated");
+    let track_id = track
+        .id
+        .clone()
+        .ok_or_else(|| anyhow!("Should be prevalidated"))?;
 
     let status = TrackStatusService::get_status(&state.app.db, &state.user_id, track_id.id()).await;
 

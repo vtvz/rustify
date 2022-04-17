@@ -40,12 +40,7 @@ async fn run() {
 
     let app_state = AppState::init().await.expect("State to be built");
 
-    tokio::spawn(async {
-        tokio::signal::ctrl_c().await.ok();
-
-        *app_state.shutting_down.lock().await = true;
-    });
-
+    tokio::spawn(utils::listen_for_ctrl_c());
     tokio::spawn(tick::check_playing(app_state));
     tokio::spawn(metrics::collect_daemon(app_state));
 
@@ -84,11 +79,17 @@ async fn run() {
             },
         ));
 
-    Dispatcher::builder(app_state.bot.clone(), handler)
-        .build()
-        .setup_ctrlc_handler()
-        .dispatch()
-        .await;
+    let mut dispatcher = Dispatcher::builder(app_state.bot.clone(), handler).build();
+
+    let token = dispatcher.shutdown_token();
+
+    tokio::spawn(async move {
+        utils::ctrl_c().await;
+
+        token.shutdown().expect("To be good").await;
+    });
+
+    dispatcher.dispatch().await;
 }
 
 #[tokio::main(worker_threads = 4)]
