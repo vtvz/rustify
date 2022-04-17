@@ -2,16 +2,18 @@ use anyhow::anyhow;
 use rspotify::Token;
 use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
-use sea_orm::DbConn;
+use sea_orm::ConnectionTrait;
 use sea_orm::IntoActiveModel;
+use sea_orm::{QuerySelect, QueryTrait};
 
 use crate::entity::prelude::*;
+use crate::user_service::UserService;
 
 pub struct SpotifyAuthService;
 
 impl SpotifyAuthService {
     pub async fn set_token(
-        db: &DbConn,
+        db: &impl ConnectionTrait,
         user_id: &str,
         token: Token,
     ) -> anyhow::Result<SpotifyAuthActiveModel> {
@@ -21,15 +23,17 @@ impl SpotifyAuthService {
             .await?;
 
         let mut spotify_auth = match spotify_auth {
-            Some(spotify_auth) => spotify_auth.into_active_model(),
-            None => SpotifyAuthActiveModel {
-                user_id: Set(user_id.to_owned()),
-                ..Default::default()
+            Some(spotify_auth) => spotify_auth,
+            None => {
+                SpotifyAuthActiveModel {
+                    user_id: Set(user_id.to_owned()),
+                    ..Default::default()
+                }
+                .insert(db)
+                .await?
             }
-            .insert(db)
-            .await?
-            .into_active_model(),
-        };
+        }
+        .into_active_model();
 
         spotify_auth.access_token = Set(token.access_token);
         spotify_auth.refresh_token = Set(token
@@ -40,7 +44,10 @@ impl SpotifyAuthService {
         Ok(spotify_auth.save(db).await?)
     }
 
-    pub async fn get_token(db: &DbConn, user_id: &str) -> anyhow::Result<Option<Token>> {
+    pub async fn get_token(
+        db: &impl ConnectionTrait,
+        user_id: &str,
+    ) -> anyhow::Result<Option<Token>> {
         let spotify_auth = SpotifyAuthEntity::find()
             .filter(SpotifyAuthColumn::UserId.eq(user_id))
             .one(db)
@@ -60,7 +67,7 @@ impl SpotifyAuthService {
     }
 
     pub async fn remove_token(
-        db: &DbConn,
+        db: &impl ConnectionTrait,
         user_id: &str,
     ) -> Result<sea_orm::DeleteResult, sea_orm::DbErr> {
         SpotifyAuthEntity::delete_by_id(user_id.to_owned())
@@ -68,8 +75,15 @@ impl SpotifyAuthService {
             .await
     }
 
-    pub async fn get_registered(db: &DbConn) -> anyhow::Result<Vec<String>> {
-        let auths: Vec<SpotifyAuthModel> = match SpotifyAuthEntity::find().all(db).await {
+    pub async fn get_registered(db: &impl ConnectionTrait) -> anyhow::Result<Vec<String>> {
+        let subquery: Select<UserEntity> = UserService::query(None, Some(UserStatus::Active))
+            .select_only()
+            .column(UserColumn::Id);
+
+        let query = SpotifyAuthEntity::find()
+            .filter(SpotifyAuthColumn::UserId.in_subquery(subquery.into_query()));
+
+        let auths: Vec<SpotifyAuthModel> = match query.all(db).await {
             Ok(auths) => auths,
             Err(err) => return Err(anyhow!(err)),
         };

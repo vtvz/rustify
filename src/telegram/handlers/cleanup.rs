@@ -4,8 +4,10 @@ use rspotify::model::{Page, PlayableId};
 use rspotify::DEFAULT_PAGINATION_CHUNKS;
 use teloxide::prelude2::*;
 
+use crate::entity::prelude::*;
 use crate::state::UserState;
-use crate::track_status_service::{Status, TrackStatusService};
+use crate::track_status_service::TrackStatusService;
+use crate::user_service::UserService;
 use crate::utils::retry;
 
 pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
@@ -24,9 +26,12 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         .as_ref()
         .ok_or_else(|| anyhow::anyhow!("Spotify user not found"))?;
 
-    let disliked =
-        TrackStatusService::get_ids_with_status(&state.app.db, &state.user_id, Status::Disliked)
-            .await?;
+    let disliked = TrackStatusService::get_ids_with_status(
+        &state.app.db,
+        &state.user_id,
+        TrackStatus::Disliked,
+    )
+    .await?;
 
     let Page {
         total: liked_before,
@@ -113,14 +118,24 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
             break;
         }
     }
+
+    let removed_playlists = before - after;
+    let removed_collection = liked_before - liked_after;
+
+    UserService::increase_stats(
+        &state.app.db,
+        &state.user_id,
+        removed_playlists,
+        removed_collection,
+    )
+    .await?;
+
     bot.edit_message_text(
         message.chat.id,
         message.id,
         format!(
             "Deleted {} tracks in {} playlists and {} in favorite songs 🗑",
-            before - after,
-            count,
-            liked_before - liked_after
+            removed_playlists, count, removed_collection
         ),
     )
     .send()

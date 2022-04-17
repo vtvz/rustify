@@ -3,10 +3,12 @@ use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
 use rspotify::model::{Context as SpotifyContext, FullTrack, Id, PlayableItem};
 use rspotify::{scopes, AuthCodeSpotify, ClientError, ClientResult, Token};
-use sea_orm::DbConn;
+use sea_orm::{DbConn, TransactionTrait};
 use teloxide::utils::markdown;
 
+use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
+use crate::user_service::UserService;
 
 pub enum CurrentlyPlaying {
     Err(anyhow::Error),
@@ -158,7 +160,14 @@ impl Manager {
         let res = instance.refresh_token().await;
 
         if !Self::is_token_valid(res).await? {
-            SpotifyAuthService::remove_token(db, user_id).await?;
+            {
+                let txn = db.begin().await?;
+
+                SpotifyAuthService::remove_token(&txn, user_id).await?;
+                UserService::set_status(&txn, user_id, UserStatus::TokenInvalid).await?;
+
+                txn.commit().await?;
+            }
 
             return Err(anyhow!("Token is invalid"));
         };

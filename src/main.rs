@@ -24,6 +24,7 @@ mod state;
 mod telegram;
 mod tick;
 mod track_status_service;
+mod user_service;
 mod utils;
 
 async fn run() {

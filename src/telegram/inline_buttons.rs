@@ -8,9 +8,10 @@ use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
+use crate::entity::prelude::*;
+use crate::spotify;
 use crate::state::UserState;
 use crate::track_status_service::TrackStatusService;
-use crate::{spotify, track_status_service};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum InlineButtons {
@@ -87,13 +88,8 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .track(&TrackId::from_id(&id)?)
                 .await?;
 
-            TrackStatusService::set_status(
-                &state.app.db,
-                &state.user_id,
-                &id,
-                track_status_service::Status::None,
-            )
-            .await?;
+            TrackStatusService::set_status(&state.app.db, &state.user_id, &id, TrackStatus::None)
+                .await?;
 
             bot.edit_message_text(
                 q.from.id,
@@ -125,7 +121,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 &state.app.db,
                 &state.user_id,
                 &id,
-                track_status_service::Status::Disliked,
+                TrackStatus::Disliked,
             )
             .await?;
 
@@ -152,13 +148,8 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .track(&TrackId::from_id(&id)?)
                 .await?;
 
-            TrackStatusService::set_status(
-                &state.app.db,
-                &state.user_id,
-                &id,
-                track_status_service::Status::Ignore,
-            )
-            .await?;
+            TrackStatusService::set_status(&state.app.db, &state.user_id, &id, TrackStatus::Ignore)
+                .await?;
 
             bot.edit_message_text(
                 q.from.id,

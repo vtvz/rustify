@@ -2,10 +2,10 @@ use anyhow::Result;
 use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
+use crate::entity::prelude::*;
 use crate::spotify;
 use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
-use crate::track_status_service;
 use crate::track_status_service::TrackStatusService;
 
 use super::super::inline_buttons::InlineButtons;
@@ -31,7 +31,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> Result<bool> {
         &state.app.db,
         &state.user_id,
         &track_id,
-        track_status_service::Status::Disliked,
+        TrackStatus::Disliked,
     )
     .await?;
 

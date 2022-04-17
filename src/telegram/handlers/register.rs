@@ -1,9 +1,12 @@
 use anyhow::Result;
 use rspotify::clients::OAuthClient;
+use sea_orm::TransactionTrait;
 use teloxide::prelude2::*;
 
+use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::UserState;
+use crate::user_service::UserService;
 
 use super::super::keyboards::StartKeyboard;
 
@@ -53,12 +56,19 @@ async fn process_spotify_code(
     };
 
     let Some(token) = token.clone() else {
-        bot.send_message(m.chat.id,"Token is not retrieved. Try again").send().await?;
+        bot.send_message(m.chat.id, "Token is not retrieved. Try again").send().await?;
 
         return Ok(true);
     };
 
-    SpotifyAuthService::set_token(&state.app.db, &state.user_id, token).await?;
+    {
+        let txn = state.app.db.begin().await?;
+
+        SpotifyAuthService::set_token(&txn, &state.user_id, token).await?;
+        UserService::set_status(&txn, &state.user_id, UserStatus::Active).await?;
+
+        txn.commit().await?;
+    }
 
     bot.send_message(m.chat.id, "Yeah! You registered successfully!")
         .reply_markup(StartKeyboard::markup())

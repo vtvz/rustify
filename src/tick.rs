@@ -22,10 +22,12 @@ use teloxide::ApiError;
 use tokio::sync::{Mutex, RwLock, Semaphore};
 use tokio::time::Instant;
 
+use crate::entity::prelude::*;
 use crate::spotify::CurrentlyPlaying;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::track_status_service::{Status, TrackStatusService};
+use crate::track_status_service::TrackStatusService;
+use crate::user_service::UserService;
 use crate::{profanity, rickroll, spotify, state, telegram, utils};
 
 pub const CHECK_INTERVAL: u64 = 3;
@@ -34,10 +36,11 @@ const PARALLEL_CHECKS: usize = 2;
 type PrevTracksMap = Arc<RwLock<HashMap<String, TrackId>>>;
 
 async fn handle_telegram_error(
+    state: &state::UserState,
     result: Result<Message, teloxide::RequestError>,
 ) -> anyhow::Result<()> {
     if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::NotFound)) = result {
-        // TODO Add users with blocked bot
+        UserService::set_status(&state.app.db, &state.user_id, UserStatus::Blocked).await?;
     }
 
     result?;
@@ -121,7 +124,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
         .send()
         .await;
 
-    handle_telegram_error(result).await
+    handle_telegram_error(state, result).await
 }
 
 async fn handle_disliked_track(
@@ -149,14 +152,18 @@ async fn handle_disliked_track(
                 let track_id = TrackId::from_str(&track_id)?;
                 let hate: Option<&dyn PlayableId> = Some(&track_id);
 
-                spotify
+                let res = spotify
                     .playlist_remove_all_occurrences_of_items(
                         &PlaylistId::from_str(&context.uri)?,
                         hate,
                         None,
                     )
-                    .await
-                    .ok(); // It's a bit too much to check if user owns this playlist
+                    .await;
+
+                // It's a bit too much to check if user owns this playlist
+                if res.is_ok() {
+                    UserService::increase_stats(&state.app.db, &state.user_id, 1, 0).await?;
+                }
             }
 
             SpotifyType::Collection => {
@@ -165,6 +172,8 @@ async fn handle_disliked_track(
                 spotify
                     .current_user_saved_tracks_delete(Some(&track_id))
                     .await?;
+
+                UserService::increase_stats(&state.app.db, &state.user_id, 0, 1).await?;
             }
             _ => {}
         }
@@ -185,7 +194,7 @@ async fn handle_disliked_track(
         .send()
         .await;
 
-    handle_telegram_error(result).await
+    handle_telegram_error(state, result).await
 }
 
 async fn check_playing_for_user(
@@ -226,12 +235,12 @@ async fn check_playing_for_user(
     .await;
 
     match status {
-        Status::Disliked => {
+        TrackStatus::Disliked => {
             handle_disliked_track(&state, &track, context.as_ref())
                 .await
                 .context("Handle Disliked Tracks")?;
         }
-        Status::None => {
+        TrackStatus::None => {
             if prevs.read().await.get(user_id) == track.id.as_ref() {
                 return Ok("Skip same track".to_owned());
             }
@@ -249,7 +258,7 @@ async fn check_playing_for_user(
                 )
             }
         }
-        Status::Ignore => {}
+        TrackStatus::Ignore => {}
     }
 
     if let Some(id) = track.id {

@@ -91,6 +91,12 @@ impl Related<super::spotify_auth::Entity> for Entity {
 pub enum Status {
     #[sea_orm(string_value = "active")]
     Active,
+    #[sea_orm(string_value = "blocked")]
+    Blocked,
+    #[sea_orm(string_value = "token_invalid")]
+    TokenInvalid,
+    #[sea_orm(string_value = "none")]
+    None,
 }
 
 impl FromStr for Status {
@@ -117,6 +123,6 @@ impl ToString for Status {
 
 impl Default for Status {
     fn default() -> Self {
-        Self::Active
+        Self::None
     }
 }

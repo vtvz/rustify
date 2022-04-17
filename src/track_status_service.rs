@@ -5,59 +5,84 @@ use sea_orm::prelude::*;
 use sea_orm::sea_query::Expr;
 use sea_orm::ActiveValue::Set;
 use sea_orm::FromQueryResult;
-use sea_orm::IntoActiveModel;
 use sea_orm::QuerySelect;
-use sea_orm::{DbConn, UpdateResult};
+use sea_orm::UpdateResult;
+use sea_orm::{ConnectionTrait, IntoActiveModel};
 
 use crate::entity::prelude::*;
 
-pub use crate::entity::track_status::Status;
+pub struct TrackStatusQueryBuilder(Select<TrackStatusEntity>);
+
+impl TrackStatusQueryBuilder {
+    fn new() -> Self {
+        Self(TrackStatusEntity::find())
+    }
+
+    pub fn user_id(mut self, user_id: Option<&str>) -> Self {
+        if let Some(user_id) = user_id {
+            self.0 = self.0.filter(TrackStatusColumn::UserId.eq(user_id));
+        }
+
+        self
+    }
+
+    pub fn track_id(mut self, track_id: Option<&str>) -> Self {
+        if let Some(track_id) = track_id {
+            self.0 = self.0.filter(TrackStatusColumn::TrackId.eq(track_id));
+        }
+
+        self
+    }
+
+    pub fn status(mut self, status: Option<TrackStatus>) -> Self {
+        if let Some(status) = status {
+            self.0 = self.0.filter(TrackStatusColumn::Status.eq(status));
+        }
+
+        self
+    }
+
+    pub fn build(self) -> Select<TrackStatusEntity> {
+        self.0
+    }
+}
 
 pub struct TrackStatusService;
 
 impl TrackStatusService {
-    fn query(
-        status: Option<Status>,
-        user_id: Option<&str>,
-        track_id: Option<&str>,
-    ) -> Select<TrackStatusEntity> {
-        let mut query: Select<_> = TrackStatusEntity::find();
-
-        if let Some(user_id) = user_id {
-            query = query.filter(TrackStatusColumn::UserId.eq(user_id));
-        };
-
-        if let Some(track_id) = track_id {
-            query = query.filter(TrackStatusColumn::TrackId.eq(track_id));
-        };
-
-        if let Some(status) = status {
-            query = query.filter(TrackStatusColumn::Status.eq(status));
-        };
-
-        query
+    fn builder() -> TrackStatusQueryBuilder {
+        TrackStatusQueryBuilder::new()
     }
 
     pub async fn count_status(
-        db: &DbConn,
-        status: Status,
+        db: &impl ConnectionTrait,
+        status: TrackStatus,
         user_id: Option<&str>,
         track_id: Option<&str>,
     ) -> anyhow::Result<usize> {
-        let res = Self::query(Some(status), user_id, track_id)
+        let res = Self::builder()
+            .status(Some(status))
+            .user_id(user_id)
+            .track_id(track_id)
+            .build()
             .count(db)
             .await?;
 
         Ok(res)
     }
 
-    pub async fn sum_skips(db: &DbConn, user_id: Option<&str>) -> anyhow::Result<u32> {
+    pub async fn sum_skips(
+        db: &impl ConnectionTrait,
+        user_id: Option<&str>,
+    ) -> anyhow::Result<u32> {
         #[derive(FromQueryResult, Default)]
         struct SkipsCount {
             count: u32,
         }
 
-        let skips: SkipsCount = Self::query(None, user_id, None)
+        let skips: SkipsCount = Self::builder()
+            .user_id(user_id)
+            .build()
             .select_only()
             .column_as(TrackStatusColumn::Skips.sum(), "count")
             .into_model::<SkipsCount>()
@@ -69,12 +94,15 @@ impl TrackStatusService {
     }
 
     pub async fn set_status(
-        db: &DbConn,
+        db: &impl ConnectionTrait,
         user_id: &str,
         track_id: &str,
-        status: Status,
+        status: TrackStatus,
     ) -> anyhow::Result<TrackStatusActiveModel> {
-        let track_status = Self::query(None, Some(user_id), Some(track_id))
+        let track_status = Self::builder()
+            .track_id(Some(track_id))
+            .user_id(Some(user_id))
+            .build()
             .one(db)
             .await?;
 
@@ -95,23 +123,33 @@ impl TrackStatusService {
         Ok(track_status.save(db).await?)
     }
 
-    pub async fn get_status(db: &DbConn, user_id: &str, track_id: &str) -> Status {
-        let track_status = Self::query(None, Some(user_id), Some(track_id))
+    pub async fn get_status(
+        db: &impl ConnectionTrait,
+        user_id: &str,
+        track_id: &str,
+    ) -> TrackStatus {
+        let track_status = Self::builder()
+            .track_id(Some(track_id))
+            .user_id(Some(user_id))
+            .build()
             .one(db)
             .await;
 
         match track_status {
             Ok(Some(track_status)) => track_status.status,
-            _ => Status::None,
+            _ => TrackStatus::None,
         }
     }
 
     pub async fn get_ids_with_status(
-        db: &DbConn,
+        db: &impl ConnectionTrait,
         user_id: &str,
-        status: Status,
+        status: TrackStatus,
     ) -> anyhow::Result<Vec<TrackId>> {
-        let tracks: Vec<TrackStatusModel> = Self::query(Some(status), Some(user_id), None)
+        let tracks: Vec<TrackStatusModel> = Self::builder()
+            .status(Some(status))
+            .user_id(Some(user_id))
+            .build()
             .all(db)
             .await?;
 
@@ -124,7 +162,7 @@ impl TrackStatusService {
     }
 
     pub async fn increase_skips(
-        db: &DbConn,
+        db: &impl ConnectionTrait,
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<UpdateResult> {

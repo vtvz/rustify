@@ -12,9 +12,10 @@ use teloxide::requests::{Request, Requester};
 use teloxide::utils::markdown;
 use tokio::sync::Mutex;
 
+use crate::entity::prelude::*;
 use crate::state::UserState;
+use crate::tick;
 use crate::track_status_service::TrackStatusService;
-use crate::{tick, track_status_service};
 
 lazy_static! {
     static ref ENABLED: bool = dotenv::var("RICKROLL_ENABLED")
@@ -116,7 +117,7 @@ pub async fn like(state: &UserState) {
         &state.app.db,
         &state.user_id,
         variant.id(),
-        track_status_service::Status::Ignore,
+        TrackStatus::Ignore,
     )
     .await
     .ok();
@@ -160,7 +161,7 @@ pub async fn queue(state: &UserState) {
         &state.app.db,
         &state.user_id,
         variant.id(),
-        track_status_service::Status::Ignore,
+        TrackStatus::Ignore,
     )
     .await
     .ok();

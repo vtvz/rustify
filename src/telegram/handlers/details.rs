@@ -13,10 +13,11 @@ use teloxide::prelude2::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::utils::markdown;
 
+use crate::entity::prelude::*;
 use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::track_status_service::{Status, TrackStatusService};
+use crate::track_status_service::TrackStatusService;
 use crate::{profanity, spotify, telegram};
 
 pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
@@ -82,10 +83,10 @@ async fn common(
     let status = TrackStatusService::get_status(&state.app.db, &state.user_id, track_id.id()).await;
 
     let keyboard = match status {
-        Status::Disliked => {
+        TrackStatus::Disliked => {
             vec![vec![InlineButtons::Cancel(track_id.id().to_owned()).into()]]
         }
-        Status::Ignore | Status::None => {
+        TrackStatus::Ignore | TrackStatus::None => {
             vec![vec![InlineButtons::Dislike(track_id.id().to_owned()).into()]]
         }
     };
@@ -116,15 +117,19 @@ async fn common(
 
     let disliked_by = TrackStatusService::count_status(
         &state.app.db,
-        Status::Disliked,
+        TrackStatus::Disliked,
         None,
         Some(track_id.id()),
     )
     .await?;
 
-    let ignored_by =
-        TrackStatusService::count_status(&state.app.db, Status::Ignore, None, Some(track_id.id()))
-            .await?;
+    let ignored_by = TrackStatusService::count_status(
+        &state.app.db,
+        TrackStatus::Ignore,
+        None,
+        Some(track_id.id()),
+    )
+    .await?;
 
     let genres: HashSet<_> = {
         let artist_ids: Vec<_> = track

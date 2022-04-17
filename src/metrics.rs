@@ -3,7 +3,9 @@ use influx::InfluxClient;
 use influxdb::{InfluxDbWriteable, Timestamp};
 use std::time::Duration;
 
-use crate::track_status_service::{Status, TrackStatusService};
+use crate::entity::prelude::*;
+use crate::track_status_service::TrackStatusService;
+use crate::user_service::{UserService, UserStats};
 use crate::{tick, utils, AppState};
 
 pub mod influx;
@@ -14,6 +16,8 @@ struct TrackStatusStats {
     disliked: u32,
     ignored: u32,
     skipped: u32,
+    removed_collection: u32,
+    removed_playlists: u32,
 }
 
 #[derive(InfluxDbWriteable, Debug)]
@@ -25,12 +29,17 @@ struct TimingsStats {
 
 pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Result<()> {
     let disliked =
-        TrackStatusService::count_status(&app_state.db, Status::Disliked, None, None).await? as u32;
-    let ignored =
-        TrackStatusService::count_status(&app_state.db, Status::Ignore, None, None).await? as u32;
+        TrackStatusService::count_status(&app_state.db, TrackStatus::Disliked, None, None).await?
+            as u32;
+    let ignored = TrackStatusService::count_status(&app_state.db, TrackStatus::Ignore, None, None)
+        .await? as u32;
     let skipped = TrackStatusService::sum_skips(&app_state.db, None).await?;
 
-    // Let's write some data into a measurement called `weather`
+    let UserStats {
+        removed_collection,
+        removed_playlists,
+    } = UserService::get_stats(&app_state.db, None).await?;
+
     let time = Timestamp::Seconds(Utc::now().timestamp() as u128);
 
     let mut metrics = vec![];
@@ -39,6 +48,8 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Res
         disliked,
         ignored,
         skipped,
+        removed_collection,
+        removed_playlists,
     }
     .into_query("track_status");
 

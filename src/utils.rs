@@ -23,6 +23,7 @@ macro_rules! tick {
             if (__diff > __period) {
                 ::tracing::warn!(
                     diff = (__diff - __period).as_secs_f64(),
+                    unit = "s",
                     "Task took a bit more time than allowed"
                 );
             }

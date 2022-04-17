@@ -9,6 +9,7 @@ use teloxide::Bot;
 use tokio::sync::RwLock;
 
 use crate::metrics::influx::InfluxClient;
+use crate::user_service::UserService;
 use crate::{lyrics, profanity, spotify};
 
 pub struct AppState {
@@ -127,7 +128,16 @@ impl AppState {
         };
 
         if state.is_spotify_authed().await {
-            state.spotify_user = Some(state.spotify.read().await.me().await?);
+            let me = state.spotify.read().await.me().await?;
+
+            UserService::sync_name(
+                &self.db,
+                user_id,
+                me.display_name.as_deref().unwrap_or("unknown"),
+            )
+            .await?;
+
+            state.spotify_user = Some(me);
         }
 
         Ok(state)
