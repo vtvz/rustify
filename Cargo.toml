@@ -26,19 +26,19 @@ rustrict = { version = "0.4.13", features = ["customize"] }
 scraper = "0.12.0"
 serde = "1.0.136"
 serde_json = "1.0.79"
-sqlx = { version = "0.5.11", features = ["sqlite"] }
+sqlx = { version = "0.5.13", features = ["sqlite"] }
 strsim = "0.10.0"
 strum = "0.24.0"
 strum_macros = "0.24.0"
 tokio-retry = "0.3.0"
 tokio-stream = "0.1.8"
-tracing = "0.1.33"
+tracing = "0.1.34"
 tracing-loki = "0.1.0"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
 url = "2.2.2"
 
 [dependencies.libsqlite3-sys]
-version = "0.23.2"
+version = "0.24.2"
 features = ["pkg-config", "vcpkg", "bundled", "unlock_notify", "bundled-sqlcipher"]
 
 [dependencies.sea-orm]
