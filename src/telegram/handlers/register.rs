@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rspotify::clients::OAuthClient;
 use sea_orm::TransactionTrait;
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;

@@ -1,7 +1,7 @@
 use anyhow::Context;
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 use teloxide::types::ParseMode;
-use teloxide::utils::command::BotCommand;
+use teloxide::utils::command::BotCommands;
 use teloxide::utils::command::ParseError;
 use teloxide::utils::markdown;
 
@@ -12,7 +12,7 @@ use crate::user_service::UserService;
 
 use super::keyboards::StartKeyboard;
 
-#[derive(BotCommand, PartialEq, Debug)]
+#[derive(BotCommands, PartialEq, Debug)]
 #[command(rename = "lowercase")]
 pub enum Command {
     #[command(description = "start")]
@@ -53,7 +53,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
             format!(
                 "Command `{}` not found: \n\n{}",
                 markdown::escape(&command),
-                markdown::escape(&Command::descriptions())
+                markdown::escape(&Command::descriptions().to_string())
             ),
         )
         .parse_mode(ParseMode::MarkdownV2)
@@ -89,7 +89,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         Command::Details => return super::handlers::details::handle_current(m, bot, state).await,
         Command::Register => return super::helpers::send_register_invite(m, bot, state).await,
         Command::Help => {
-            bot.send_message(m.chat.id, Command::descriptions())
+            bot.send_message(m.chat.id, Command::descriptions().to_string())
                 .send()
                 .await?;
         }

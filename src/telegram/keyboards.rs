@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anyhow::{Context, Result};
 use strum_macros::{AsRefStr, EnumString};
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, ReplyMarkup};
 
 use crate::state::UserState;

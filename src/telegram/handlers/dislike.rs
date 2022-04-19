@@ -1,5 +1,5 @@
 use anyhow::Result;
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::entity::prelude::*;

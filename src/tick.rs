@@ -16,8 +16,8 @@ use rspotify::model::{
     Type as SpotifyType,
 };
 use rustrict::Type;
-use teloxide::prelude2::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::prelude::*;
+use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::ApiError;
 use tokio::sync::{Mutex, RwLock, Semaphore};
 use tokio::time::Instant;
@@ -112,7 +112,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
     let result: Result<Message, teloxide::RequestError> = state
         .app
         .bot
-        .send_message(state.user_id.clone(), message)
+        .send_message(ChatId(state.user_id.parse()?), message)
         .parse_mode(ParseMode::MarkdownV2)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
@@ -189,7 +189,7 @@ async fn handle_disliked_track(
     let result = state
         .app
         .bot
-        .send_message(state.user_id.clone(), message)
+        .send_message(ChatId(state.user_id.parse()?), message)
         .parse_mode(ParseMode::MarkdownV2)
         .send()
         .await;

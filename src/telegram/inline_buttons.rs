@@ -4,7 +4,7 @@ use std::str::FromStr;
 use anyhow::{anyhow, Result};
 use rspotify::model::TrackId;
 use rspotify::prelude::*;
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 

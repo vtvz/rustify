@@ -2,7 +2,7 @@ use anyhow::Context;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{Page, PlayableId};
 use rspotify::DEFAULT_PAGINATION_CHUNKS;
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 
 use crate::entity::prelude::*;
 use crate::state::UserState;

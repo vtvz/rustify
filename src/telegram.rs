@@ -1,5 +1,5 @@
 use anyhow::Result;
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 
 use keyboards::StartKeyboard;
 

@@ -9,7 +9,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
 use rspotify::model::{FullTrack, Id, Modality, TrackId};
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::utils::markdown;
 

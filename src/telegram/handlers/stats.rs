@@ -1,5 +1,5 @@
 use crate::entity::prelude::*;
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
 use crate::state::UserState;

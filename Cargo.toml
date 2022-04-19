@@ -47,7 +47,7 @@ version = "0.7.1"
 features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print", "with-chrono"]
 
 [dependencies.teloxide]
-version = "0.7.3"
+version = "0.8.0"
 features = [
     "macros",
     "sqlite-storage",

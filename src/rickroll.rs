@@ -9,6 +9,7 @@ use rspotify::clients::OAuthClient;
 use rspotify::model::{Id, TrackId};
 use rspotify::AuthCodeSpotify;
 use teloxide::requests::{Request, Requester};
+use teloxide::types::ChatId;
 use teloxide::utils::markdown;
 use tokio::sync::Mutex;
 
@@ -192,7 +193,7 @@ async fn report(state: &UserState, spotify: &AuthCodeSpotify, track_id: &TrackId
     state
         .app
         .bot
-        .send_message(report_id, message)
+        .send_message(ChatId(report_id), message)
         .send()
         .await
         .ok();

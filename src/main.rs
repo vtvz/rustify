@@ -6,7 +6,7 @@ extern crate derive_more;
 #[macro_use]
 extern crate serde;
 
-use teloxide::prelude2::*;
+use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::markdown;
 
