@@ -1,8 +1,7 @@
+use again::RetryPolicy;
 use lazy_static::lazy_static;
 use std::time::Duration;
 use tokio::sync::broadcast;
-use tokio_retry::strategy::{jitter, ExponentialBackoff};
-use tokio_retry::{Action, Retry};
 
 macro_rules! tick {
     ($period:expr, $code:block) => {
@@ -33,19 +32,16 @@ macro_rules! tick {
 
 pub(crate) use tick;
 
-pub fn retry<A>(action: A) -> Retry<Box<dyn Iterator<Item = Duration> + Send + Sync>, A>
+pub async fn retry<T>(task: T) -> Result<T::Item, T::Error>
 where
-    A: Action + Send + Sync,
+    T: again::Task,
 {
-    let strategy = ExponentialBackoff::from_millis(10)
-        .max_delay(Duration::from_secs(30))
-        .map(jitter)
-        .take(5);
+    let policy = RetryPolicy::exponential(Duration::from_millis(100))
+        .with_jitter(true)
+        .with_max_delay(Duration::from_secs(50))
+        .with_max_retries(10);
 
-    Retry::spawn(
-        Box::new(strategy) as Box<dyn Iterator<Item = Duration> + Send + Sync>,
-        action,
-    )
+    policy.retry(task).await
 }
 
 lazy_static! {
