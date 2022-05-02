@@ -24,8 +24,8 @@ reqwest = "0.11.10"
 rspotify = "0.11.5"
 rustrict = { version = "0.4.13", features = ["customize"] }
 scraper = "0.13.0"
-serde = "1.0.136"
-serde_json = "1.0.79"
+serde = "1.0.137"
+serde_json = "1.0.80"
 sqlx = { version = "0.5.13", features = ["sqlite"] }
 strsim = "0.10.0"
 strum = "0.24.0"
@@ -47,7 +47,7 @@ version = "0.7.1"
 features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print", "with-chrono"]
 
 [dependencies.teloxide]
-version = "0.8.1"
+version = "0.9.0"
 features = [
     "macros",
     "sqlite-storage",
@@ -55,7 +55,7 @@ features = [
 ]
 
 [dependencies.tokio]
-version = "1.17.0"
+version = "1.18.0"
 features = ["rt-multi-thread", "macros"]
 
 [features]

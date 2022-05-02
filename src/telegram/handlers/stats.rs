@@ -1,4 +1,5 @@
 use crate::entity::prelude::*;
+use indoc::formatdoc;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
@@ -15,15 +16,37 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     )
     .await?;
 
+    let ignored = TrackStatusService::count_status(
+        &state.app.db,
+        TrackStatus::Ignore,
+        Some(&state.user_id),
+        None,
+    )
+    .await?;
+
     let skips = TrackStatusService::sum_skips(&state.app.db, Some(&state.user_id)).await?;
 
     let UserStats {
         removed_collection,
         removed_playlists,
+        lyrics_checked,
+        lyrics_profane,
+        ..
     } = UserService::get_stats(&state.app.db, Some(&state.user_id)).await?;
 
-    let message =
-        format!("You disliked `{dislikes}` songs so far\\. I skipped `{skips}` times, removed `{removed_collection}` from liked songs and `{removed_playlists}` from playlists");
+    let message = formatdoc!(
+        "
+            📉 **Some nice stats for you** 📈
+
+            👎 You disliked `{dislikes}` songs
+            ⏭ I skipped `{skips}` times
+            💔 Removed `{removed_collection}` from liked songs
+            🗑 Removed `{removed_playlists}` from playlists
+            🔬 Checked lyrics `{lyrics_checked}` times
+            🙈 You ignored `{ignored}` tracks lyrics
+            🤬 `{lyrics_profane}` lyrics were considered as profane
+        "
+    );
 
     bot.send_message(m.chat.id, message)
         .parse_mode(ParseMode::MarkdownV2)

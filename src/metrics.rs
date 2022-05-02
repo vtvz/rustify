@@ -21,6 +21,16 @@ struct TrackStatusStats {
 }
 
 #[derive(InfluxDbWriteable, Debug)]
+struct LyricsStats {
+    time: Timestamp,
+    checked: u32,
+    found: u32,
+    profane: u32,
+    genius: u32,
+    musixmatch: u32,
+}
+
+#[derive(InfluxDbWriteable, Debug)]
 struct TimingsStats {
     time: Timestamp,
     max_process_time: u64,
@@ -38,6 +48,11 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Res
     let UserStats {
         removed_collection,
         removed_playlists,
+        lyrics_checked,
+        lyrics_found,
+        lyrics_profane,
+        lyrics_genius,
+        lyrics_musixmatch,
     } = UserService::get_stats(&app_state.db, None).await?;
 
     let time = Timestamp::Seconds(Utc::now().timestamp() as u128);
@@ -54,6 +69,18 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Res
     .into_query("track_status");
 
     metrics.push(track_status_stats);
+
+    let lyrics_stats = LyricsStats {
+        time,
+        checked: lyrics_checked,
+        found: lyrics_found,
+        profane: lyrics_profane,
+        genius: lyrics_genius,
+        musixmatch: lyrics_musixmatch,
+    }
+    .into_query("lyrics");
+
+    metrics.push(lyrics_stats);
 
     if let Some(timings) = *tick::PROCESS_TIME.lock().await {
         let timings_stats = TimingsStats {

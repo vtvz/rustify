@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -19,7 +18,7 @@ use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::ApiError;
-use tokio::sync::{Mutex, RwLock, Semaphore};
+use tokio::sync::{Mutex, Semaphore};
 use tokio::time::Instant;
 
 use crate::entity::prelude::*;
@@ -28,12 +27,10 @@ use crate::spotify_auth_service::SpotifyAuthService;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
-use crate::{profanity, rickroll, spotify, state, telegram, utils};
+use crate::{lyrics, profanity, rickroll, spotify, state, telegram, utils};
 
 pub const CHECK_INTERVAL: u64 = 3;
 const PARALLEL_CHECKS: usize = 2;
-
-type PrevTracksMap = Arc<RwLock<HashMap<String, TrackId>>>;
 
 async fn handle_telegram_error(
     state: &state::UserState,
@@ -48,10 +45,25 @@ async fn handle_telegram_error(
     Ok(())
 }
 
-async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow::Result<()> {
+#[derive(Default)]
+struct CheckBadWordsResult {
+    found: bool,
+    profane: bool,
+    provider: Option<lyrics::Provider>,
+}
+
+async fn check_bad_words(
+    state: &state::UserState,
+    track: &FullTrack,
+) -> anyhow::Result<CheckBadWordsResult> {
+    let mut ret = CheckBadWordsResult::default();
+
     let Some(hit) = state.app.lyrics.search_for_track(track).await? else {
-        return Ok(());
+        return Ok(ret);
     };
+
+    ret.provider = Some(hit.provider());
+    ret.found = true;
 
     if hit.language() != "en" {
         tracing::trace!(
@@ -61,13 +73,13 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
             "Track has non English lyrics",
         );
 
-        return Ok(());
+        return Ok(ret);
     }
 
     let check = profanity::Manager::check(hit.lyrics());
 
     if !check.should_trigger() {
-        return Ok(());
+        return Ok(ret);
     }
 
     let bad_lines: Vec<_> = check
@@ -84,8 +96,10 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
         .collect();
 
     if bad_lines.is_empty() {
-        return Ok(());
+        return Ok(ret);
     }
+
+    ret.profane = true;
 
     let mut lines = bad_lines.len();
     let message = loop {
@@ -124,7 +138,7 @@ async fn check_bad_words(state: &state::UserState, track: &FullTrack) -> anyhow:
         .send()
         .await;
 
-    handle_telegram_error(state, result).await
+    handle_telegram_error(state, result).await.map(|_| ret)
 }
 
 async fn handle_disliked_track(
@@ -162,7 +176,10 @@ async fn handle_disliked_track(
 
                 // It's a bit too much to check if user owns this playlist
                 if res.is_ok() {
-                    UserService::increase_stats(&state.app.db, &state.user_id, 1, 0).await?;
+                    UserService::increase_stats_query(&state.user_id)
+                        .removed_playlists(1)
+                        .exec(&state.app.db)
+                        .await?;
                 }
             }
 
@@ -173,7 +190,10 @@ async fn handle_disliked_track(
                     .current_user_saved_tracks_delete(Some(&track_id))
                     .await?;
 
-                UserService::increase_stats(&state.app.db, &state.user_id, 0, 1).await?;
+                UserService::increase_stats_query(&state.user_id)
+                    .removed_collection(1)
+                    .exec(&state.app.db)
+                    .await?;
             }
             _ => {}
         }
@@ -200,7 +220,6 @@ async fn handle_disliked_track(
 async fn check_playing_for_user(
     app_state: &'static state::AppState,
     user_id: &str,
-    prevs: PrevTracksMap,
 ) -> anyhow::Result<String> {
     let state = app_state
         .user_state(user_id)
@@ -241,7 +260,14 @@ async fn check_playing_for_user(
                 .context("Handle Disliked Tracks")?;
         }
         TrackStatus::None => {
-            if prevs.read().await.get(user_id) == track.id.as_ref() {
+            let changed = UserService::sync_current_playing(
+                &state.app.db,
+                &state.user_id,
+                &spotify::get_track_id(&track),
+            )
+            .await?;
+
+            if !changed {
                 return Ok("Skip same track".to_owned());
             }
 
@@ -249,20 +275,29 @@ async fn check_playing_for_user(
                 .await
                 .context("Check bad words");
 
-            if let Err(err) = res {
-                tracing::error!(
-                    err = ?err,
-                    track_id = spotify::get_track_id(&track).as_str(),
-                    track_name = spotify::create_track_name(&track).as_str(),
-                    "Error occurred on checking bad words",
-                )
+            match res {
+                Ok(res) => {
+                    UserService::increase_stats_query(&state.user_id)
+                        .lyrics(
+                            1,
+                            res.profane as u32,
+                            matches!(res.provider, Some(lyrics::Provider::Genius)) as u32,
+                            matches!(res.provider, Some(lyrics::Provider::Musixmatch)) as u32,
+                        )
+                        .exec(&state.app.db)
+                        .await?;
+                }
+                Err(err) => {
+                    tracing::error!(
+                        err = ?err,
+                        track_id = spotify::get_track_id(&track).as_str(),
+                        track_name = spotify::create_track_name(&track).as_str(),
+                        "Error occurred on checking bad words",
+                    )
+                }
             }
         }
         TrackStatus::Ignore => {}
-    }
-
-    if let Some(id) = track.id {
-        prevs.write().await.insert(user_id.to_owned(), id);
     }
 
     Ok("Complete check".to_owned())
@@ -273,8 +308,6 @@ lazy_static! {
 }
 
 pub async fn check_playing(app_state: &'static state::AppState) {
-    let prevs: PrevTracksMap = Arc::new(RwLock::new(HashMap::new()));
-
     utils::tick!(Duration::from_secs(CHECK_INTERVAL), {
         let start = Instant::now();
 
@@ -290,8 +323,6 @@ pub async fn check_playing(app_state: &'static state::AppState) {
         let mut join_handles = Vec::new();
 
         for user_id in user_ids {
-            let prevs = Arc::clone(&prevs);
-
             let permit = semaphore
                 .clone()
                 .acquire_owned()
@@ -301,7 +332,7 @@ pub async fn check_playing(app_state: &'static state::AppState) {
 
             join_handles.push(tokio::spawn(async move {
                 let user_id = user_id.as_str();
-                if let Err(err) = check_playing_for_user(app_state, user_id, prevs).await {
+                if let Err(err) = check_playing_for_user(app_state, user_id).await {
                     tracing::error!(user_id, "Something went wrong: {:?}", err);
                 }
                 drop(permit);
@@ -309,10 +340,7 @@ pub async fn check_playing(app_state: &'static state::AppState) {
         }
 
         for handle in join_handles {
-            handle
-                .await
-                .context("Shouldn't fail")
-                .expect("Shouldn't fail");
+            handle.await.expect("Shouldn't fail");
         }
 
         let diff = Instant::now().duration_since(start);

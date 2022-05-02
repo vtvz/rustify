@@ -122,13 +122,11 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     let removed_playlists = before - after;
     let removed_collection = liked_before - liked_after;
 
-    UserService::increase_stats(
-        &state.app.db,
-        &state.user_id,
-        removed_playlists,
-        removed_collection,
-    )
-    .await?;
+    UserService::increase_stats_query(&state.user_id)
+        .removed_playlists(removed_playlists)
+        .removed_collection(removed_collection)
+        .exec(&state.app.db)
+        .await?;
 
     bot.edit_message_text(
         message.chat.id,

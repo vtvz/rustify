@@ -6,7 +6,13 @@ use rspotify::model::FullTrack;
 pub mod genius;
 pub mod musixmatch;
 
+pub enum Provider {
+    Musixmatch,
+    Genius,
+}
+
 pub trait SearchResult {
+    fn provider(&self) -> Provider;
     fn lyrics(&self) -> Vec<&str>;
     fn tg_link(&self, full: bool) -> String;
 

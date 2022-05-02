@@ -85,6 +85,10 @@ pub struct SearchResult {
 }
 
 impl super::SearchResult for SearchResult {
+    fn provider(&self) -> super::Provider {
+        super::Provider::Genius
+    }
+
     fn lyrics(&self) -> Vec<&str> {
         self.lyrics.iter().map(String::as_str).collect()
     }

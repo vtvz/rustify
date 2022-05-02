@@ -1,10 +1,10 @@
+use std::collections::VecDeque;
+use std::time::Duration;
+
 use anyhow::anyhow;
 use itertools::Itertools;
 use reqwest::Client;
 use rspotify::model::FullTrack;
-use std::collections::VecDeque;
-use std::time::Duration;
-
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{from_value, Value};
 use teloxide::utils::markdown;
@@ -51,6 +51,10 @@ pub struct Lyrics {
 }
 
 impl super::SearchResult for Lyrics {
+    fn provider(&self) -> super::Provider {
+        super::Provider::Musixmatch
+    }
+
     fn lyrics(&self) -> Vec<&str> {
         if let Some(subtitle) = &self.subtitle {
             subtitle.iter().map(|(_, text)| text.as_str()).collect()
