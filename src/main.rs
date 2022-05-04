@@ -13,10 +13,12 @@ extern crate derive_more;
 extern crate serde;
 
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
+use teloxide::types::{ParseMode, User};
 use teloxide::utils::markdown;
 
-use crate::state::AppState;
+use crate::errors::GenericResult;
+use crate::state::{AppState, UserState};
+use crate::user_service::UserService;
 
 mod entity;
 mod errors;
@@ -33,6 +35,41 @@ mod tick;
 mod track_status_service;
 mod user_service;
 mod utils;
+
+async fn sync_name(state: &UserState, tg_user: Option<&User>) -> GenericResult<()> {
+    let spotify_user = state.spotify_user.as_ref().map(|spotify_user| {
+        spotify_user
+            .display_name
+            .as_deref()
+            .unwrap_or("unknown")
+            .to_string()
+    });
+
+    let tg_user = tg_user.map(|tg_user| {
+        format!(
+            "{} {} {}",
+            tg_user.first_name,
+            tg_user.last_name.as_deref().unwrap_or_default(),
+            tg_user
+                .username
+                .as_deref()
+                .map(|username| format!("(@{})", username))
+                .unwrap_or_default()
+        )
+        .trim()
+        .to_string()
+    });
+
+    let name = vec![tg_user, spotify_user]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
+        .join(" | ");
+
+    UserService::sync_name(&state.app.db, &state.user_id, &name).await?;
+
+    Ok(())
+}
 
 async fn run() {
     // profanity::check_cases();
@@ -56,6 +93,10 @@ async fn run() {
         .branch(
             Update::filter_message().endpoint(move |m: Message, bot: Bot| async {
                 let state = app_state.user_state(&m.chat.id.to_string()).await?;
+
+                if let Err(err) = sync_name(&state, m.from()).await {
+                    tracing::error!(err = ?err, user_id = state.user_id.as_str(), "Failed syncing user name: {:?}", err);
+                }
 
                 let clone = (m.clone(), bot.clone());
 

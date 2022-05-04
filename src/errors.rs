@@ -79,6 +79,13 @@ pub enum GenericError {
     ),
 
     #[error(transparent)]
+    ReqwestHeaderToStrError(
+        #[from]
+        #[backtrace]
+        reqwest::header::ToStrError,
+    ),
+
+    #[error(transparent)]
     UrlParseError(
         #[from]
         #[backtrace]

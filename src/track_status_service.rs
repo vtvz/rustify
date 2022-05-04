@@ -1,4 +1,3 @@
-use chrono::Utc;
 use rspotify::model::{Id, TrackId};
 use sea_orm::prelude::*;
 use sea_orm::sea_query::Expr;
@@ -7,6 +6,7 @@ use sea_orm::{ConnectionTrait, FromQueryResult, IntoActiveModel, QuerySelect, Up
 
 use crate::entity::prelude::*;
 use crate::errors::GenericResult;
+use crate::utils::Clock;
 
 pub struct TrackStatusQueryBuilder(Select<TrackStatusEntity>);
 
@@ -165,10 +165,7 @@ impl TrackStatusService {
                 TrackStatusColumn::Skips,
                 Expr::col(TrackStatusColumn::Skips).add(1),
             )
-            .col_expr(
-                TrackStatusColumn::UpdatedAt,
-                Expr::value(Utc::now().naive_local()),
-            )
+            .col_expr(TrackStatusColumn::UpdatedAt, Expr::value(Clock::now()))
             .filter(TrackStatusColumn::UserId.eq(user_id))
             .filter(TrackStatusColumn::TrackId.eq(track_id))
             .exec(db)

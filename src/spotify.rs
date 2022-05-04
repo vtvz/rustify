@@ -184,10 +184,10 @@ impl Manager {
         Ok(())
     }
 
-    async fn is_token_valid(res: ClientResult<()>) -> GenericResult<bool> {
-        let mut response = match res {
+    async fn is_token_valid(mut res: ClientResult<()>) -> GenericResult<bool> {
+        let response = match res {
             Ok(_) => return Ok(true),
-            Err(ClientError::Http(box HttpError::StatusCode(response))) => response,
+            Err(ClientError::Http(box HttpError::StatusCode(ref mut response))) => response,
             Err(err) => return Err(err.into()),
         };
 
@@ -205,7 +205,7 @@ impl Manager {
             return Ok(false);
         }
 
-        Err(ClientError::Http(Box::new(HttpError::StatusCode(response))))?
+        Ok(res.map(|_| true)?)
     }
 
     pub async fn for_user(&self, db: &DbConn, user_id: &str) -> GenericResult<AuthCodeSpotify> {

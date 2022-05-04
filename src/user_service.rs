@@ -1,4 +1,3 @@
-use chrono::Utc;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::Expr;
 use sea_orm::{
@@ -13,6 +12,7 @@ use sea_orm::{
 
 use crate::entity::prelude::*;
 use crate::errors::GenericResult;
+use crate::utils::Clock;
 
 pub struct UserStatsIncreaseQueryBuilder(UpdateMany<UserEntity>);
 
@@ -68,7 +68,7 @@ impl UserStatsIncreaseQueryBuilder {
 
     pub async fn exec(self, db: &impl ConnectionTrait) -> Result<UpdateResult, DbErr> {
         self.0
-            .col_expr(UserColumn::UpdatedAt, Expr::value(Utc::now().naive_local()))
+            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
             .exec(db)
             .await
     }
@@ -111,7 +111,7 @@ impl UserService {
 
         let update_result: UpdateResult = query
             .col_expr(UserColumn::Name, Expr::value(name))
-            .col_expr(UserColumn::UpdatedAt, Expr::value(Utc::now().naive_local()))
+            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
             .filter(UserColumn::Id.eq(id))
             .filter(UserColumn::Name.ne(name))
             .exec(db)
@@ -129,7 +129,7 @@ impl UserService {
 
         let update_result: UpdateResult = query
             .col_expr(UserColumn::PlayingTrack, Expr::value(track_id))
-            .col_expr(UserColumn::UpdatedAt, Expr::value(Utc::now().naive_local()))
+            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
             .filter(UserColumn::Id.eq(user_id))
             .filter(UserColumn::PlayingTrack.ne(track_id))
             .exec(db)
@@ -138,14 +138,10 @@ impl UserService {
         Ok(update_result.rows_affected > 0)
     }
 
-    pub async fn set_status(
-        db: &impl ConnectionTrait,
-        id: &str,
-        status: UserStatus,
-    ) -> GenericResult<UserActiveModel> {
+    async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> GenericResult<UserActiveModel> {
         let user = Self::query(Some(id), None).one(db).await?;
 
-        let mut user = match user {
+        let user = match user {
             Some(spotify_auth) => spotify_auth,
             None => {
                 UserActiveModel {
@@ -157,6 +153,16 @@ impl UserService {
             },
         }
         .into_active_model();
+
+        Ok(user)
+    }
+
+    pub async fn set_status(
+        db: &impl ConnectionTrait,
+        id: &str,
+        status: UserStatus,
+    ) -> GenericResult<UserActiveModel> {
+        let mut user = Self::obtain_by_id(db, id).await?;
 
         user.status = Set(status);
 

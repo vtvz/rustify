@@ -6,6 +6,7 @@ use sea_orm::{ConnectionTrait, IntoActiveModel, QuerySelect, QueryTrait};
 use crate::entity::prelude::*;
 use crate::errors::{Context, GenericResult};
 use crate::user_service::UserService;
+use crate::utils::Clock;
 
 pub struct SpotifyAuthService;
 
@@ -72,13 +73,36 @@ impl SpotifyAuthService {
             .await
     }
 
+    pub async fn suspend(
+        db: &impl ConnectionTrait,
+        user_id: &str,
+        time: chrono::NaiveDateTime,
+    ) -> GenericResult<bool> {
+        let spotify_auth = SpotifyAuthEntity::find()
+            .filter(SpotifyAuthColumn::UserId.eq(user_id))
+            .one(db)
+            .await?;
+
+        let mut spotify_auth = match spotify_auth {
+            Some(spotify_auth) => spotify_auth.into_active_model(),
+            None => return Ok(false),
+        };
+
+        spotify_auth.suspend_until = Set(time);
+
+        spotify_auth.save(db).await?;
+
+        Ok(true)
+    }
+
     pub async fn get_registered(db: &impl ConnectionTrait) -> GenericResult<Vec<String>> {
         let subquery: Select<UserEntity> = UserService::query(None, Some(UserStatus::Active))
             .select_only()
             .column(UserColumn::Id);
 
         let query = SpotifyAuthEntity::find()
-            .filter(SpotifyAuthColumn::UserId.in_subquery(subquery.into_query()));
+            .filter(SpotifyAuthColumn::UserId.in_subquery(subquery.into_query()))
+            .filter(SpotifyAuthColumn::SuspendUntil.lte(Clock::now()));
 
         let auths: Vec<SpotifyAuthModel> = match query.all(db).await {
             Ok(auths) => auths,

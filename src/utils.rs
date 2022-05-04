@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use again::RetryPolicy;
+use chrono::{NaiveDateTime, Utc};
 use lazy_static::lazy_static;
 use tokio::sync::broadcast;
 
@@ -65,4 +66,12 @@ pub async fn ctrl_c() {
     }
 
     KILL.0.subscribe().recv().await.ok();
+}
+
+pub struct Clock;
+
+impl Clock {
+    pub fn now() -> NaiveDateTime {
+        Utc::now().naive_local()
+    }
 }

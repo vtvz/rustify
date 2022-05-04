@@ -3,7 +3,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use indoc::formatdoc;
+use reqwest::{Response, StatusCode};
 use rspotify::clients::OAuthClient;
+use rspotify::http::HttpError;
 use rspotify::model::{
     Context as SpotifyContext,
     FullTrack,
@@ -12,7 +14,9 @@ use rspotify::model::{
     TrackId,
     Type as SpotifyType,
 };
+use rspotify::ClientError;
 use rustrict::Type;
+use sea_orm::DbConn;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::ApiError;
@@ -20,12 +24,13 @@ use tokio::sync::{broadcast, Semaphore};
 use tokio::time::Instant;
 
 use crate::entity::prelude::*;
-use crate::errors::{Context, GenericResult};
+use crate::errors::{Context, GenericError, GenericResult};
 use crate::spotify::CurrentlyPlaying;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
+use crate::utils::Clock;
 use crate::{lyrics, profanity, rickroll, spotify, state, telegram, utils};
 
 pub const CHECK_INTERVAL: u64 = 3;
@@ -216,14 +221,53 @@ async fn handle_disliked_track(
     handle_telegram_error(state, result).await
 }
 
+async fn handle_too_many_requests(
+    db: &DbConn,
+    user_id: &str,
+    response: &Response,
+) -> GenericResult<()> {
+    if response.status() != StatusCode::TOO_MANY_REQUESTS {
+        return Ok(());
+    }
+
+    tracing::info!(user_id, "User got a 429 error (too many requests)");
+
+    let header = response
+        .headers()
+        .get("Retry-After")
+        .context("Need Retry-After header to proceed")?;
+
+    let retry_after: i64 = header.to_str()?.parse()?;
+
+    let suspend_until = Clock::now() + chrono::Duration::seconds(retry_after);
+
+    SpotifyAuthService::suspend(db, user_id, suspend_until).await?;
+
+    Ok(())
+}
+
 async fn check_playing_for_user(
     app_state: &'static state::AppState,
     user_id: &str,
 ) -> GenericResult<&'static str> {
-    let state = app_state
+    let res = app_state
         .user_state(user_id)
         .await
-        .context("Get user state")?;
+        .context("Get user state");
+
+    let state = match res {
+        Err(GenericError::RspotifyClientError(ClientError::Http(box HttpError::StatusCode(
+            ref response,
+        )))) => {
+            if let Err(err) = handle_too_many_requests(&app_state.db, user_id, response).await {
+                tracing::error!(user_id, "Something went wrong: {:?}", err);
+            }
+
+            res?
+        },
+        Err(err) => return Err(err),
+        Ok(state) => state,
+    };
 
     if rickroll::should(&state.user_id, false).await {
         rickroll::like(&state).await;

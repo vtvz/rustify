@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
-use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::Set;
+
+use crate::utils::Clock;
 
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;
@@ -31,9 +32,9 @@ pub struct Model {
 
 impl ActiveModelBehavior for ActiveModel {
     fn before_save(mut self, insert: bool) -> Result<Self, DbErr> {
-        self.updated_at = Set(Utc::now().naive_local());
+        self.updated_at = Set(Clock::now());
         if insert {
-            self.created_at = Set(Utc::now().naive_local());
+            self.created_at = Set(Clock::now());
         }
 
         Ok(self)

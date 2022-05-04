@@ -5,6 +5,8 @@ use sea_orm::entity::prelude::*;
 use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 
+use crate::utils::Clock;
+
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;
 
@@ -19,16 +21,17 @@ pub struct Model {
     pub user_id: String,
     pub access_token: String,
     pub refresh_token: String,
-    pub expires_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub suspend_until: chrono::NaiveDateTime,
+    pub expires_at: Option<chrono::DateTime<Utc>>,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }
 
 impl ActiveModelBehavior for ActiveModel {
     fn before_save(mut self, insert: bool) -> Result<Self, DbErr> {
-        self.updated_at = Set(Utc::now().naive_local());
+        self.updated_at = Set(Clock::now());
         if insert {
-            self.created_at = Set(Utc::now().naive_local());
+            self.created_at = Set(Clock::now());
         }
 
         Ok(self)
@@ -40,8 +43,9 @@ pub enum Column {
     UserId,
     AccessToken,
     RefreshToken,
-    CreatedAt,
+    SuspendUntil,
     ExpiresAt,
+    CreatedAt,
     UpdatedAt,
 }
 
@@ -66,6 +70,7 @@ impl ColumnTrait for Column {
             Self::UserId => ColumnType::String(None).def(),
             Self::AccessToken => ColumnType::String(None).def(),
             Self::RefreshToken => ColumnType::String(None).def(),
+            Self::SuspendUntil => ColumnType::DateTime.def(),
             Self::ExpiresAt => ColumnType::DateTime.def(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),
