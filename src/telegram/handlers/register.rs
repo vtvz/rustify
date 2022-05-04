@@ -1,16 +1,15 @@
-use anyhow::Result;
 use rspotify::clients::OAuthClient;
 use sea_orm::TransactionTrait;
 use teloxide::prelude::*;
 
+use super::super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
+use crate::errors::GenericResult;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::UserState;
 use crate::user_service::UserService;
 
-use super::super::keyboards::StartKeyboard;
-
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> Result<bool> {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
     };
@@ -36,11 +35,11 @@ async fn process_spotify_code(
     bot: &Bot,
     state: &UserState,
     code: String,
-) -> Result<bool> {
+) -> GenericResult<bool> {
     let mut instance = state.spotify.write().await;
 
     if let Err(err) = instance.request_token(&code).await {
-        bot.send_message(m.chat.id,"Cannot retrieve token. Code is probably broken. Run /register command and try again please")
+        bot.send_message(m.chat.id, "Cannot retrieve token. Code is probably broken. Run /register command and try again please")
             .send()
             .await?;
 

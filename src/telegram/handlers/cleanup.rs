@@ -1,16 +1,16 @@
-use anyhow::Context;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{Page, PlayableId};
 use rspotify::DEFAULT_PAGINATION_CHUNKS;
 use teloxide::prelude::*;
 
 use crate::entity::prelude::*;
+use crate::errors::{Context, GenericResult};
 use crate::state::UserState;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::utils::retry;
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
     let message = bot
         .send_message(
             m.chat.id,
@@ -24,7 +24,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     let me = state
         .spotify_user
         .as_ref()
-        .ok_or_else(|| anyhow::anyhow!("Spotify user not found"))?;
+        .context("Spotify user not found")?;
 
     let disliked = TrackStatusService::get_ids_with_status(
         &state.app.db,

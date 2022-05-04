@@ -17,7 +17,7 @@ indoc = "1.0.4"
 influxdb = { version = "0.5.2", features = ["derive"] }
 itertools = "0.10.3"
 lazy_static = "1.4.0"
-log = "0.4.16"
+log = "0.4.17"
 rand = "0.8.5"
 regex = { version = "1.5.5", features = ["pattern"] }
 reqwest = "0.11.10"
@@ -25,11 +25,12 @@ rspotify = "0.11.5"
 rustrict = { version = "0.4.13", features = ["customize"] }
 scraper = "0.13.0"
 serde = "1.0.137"
-serde_json = "1.0.80"
+serde_json = "1.0.81"
 sqlx = { version = "0.5.13", features = ["sqlite"] }
 strsim = "0.10.0"
 strum = "0.24.0"
 strum_macros = "0.24.0"
+thiserror = "1.0.31"
 tracing = "0.1.34"
 tracing-loki = "0.1.0"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
@@ -53,7 +54,7 @@ features = [
 ]
 
 [dependencies.tokio]
-version = "1.18.0"
+version = "1.18.1"
 features = ["rt-multi-thread", "macros"]
 
 [features]

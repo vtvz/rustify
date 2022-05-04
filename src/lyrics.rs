@@ -1,7 +1,9 @@
-use crate::spotify;
 use genius::GeniusLocal;
 use musixmatch::Musixmatch;
 use rspotify::model::FullTrack;
+
+use crate::errors::GenericResult;
+use crate::spotify;
 
 pub mod genius;
 pub mod musixmatch;
@@ -40,7 +42,7 @@ impl Manager {
     pub async fn search_for_track(
         &self,
         track: &FullTrack,
-    ) -> anyhow::Result<Option<Box<dyn SearchResult + Send>>> {
+    ) -> GenericResult<Option<Box<dyn SearchResult + Send>>> {
         let musixmatch_result = self.musixmatch.search_for_track(track).await;
 
         let musixmatch_result = match musixmatch_result {

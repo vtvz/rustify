@@ -14,16 +14,17 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::utils::markdown;
 
 use crate::entity::prelude::*;
+use crate::errors::{Context, GenericResult};
 use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
 use crate::{profanity, spotify, telegram};
 
-pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
     let spotify = state.spotify.read().await;
     let track = match spotify::currently_playing(&*spotify).await {
-        CurrentlyPlaying::Err(err) => return Err(err),
+        CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             bot.send_message(m.chat.id, message).send().await?;
 
@@ -53,7 +54,7 @@ fn extract_id(url: &str) -> Option<TrackId> {
     id.ok()
 }
 
-pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
     };
@@ -72,13 +73,10 @@ async fn common(
     bot: &Bot,
     state: &UserState,
     track: FullTrack,
-) -> anyhow::Result<bool> {
+) -> GenericResult<bool> {
     let spotify = state.spotify.read().await;
 
-    let track_id = track
-        .id
-        .clone()
-        .ok_or_else(|| anyhow!("Should be prevalidated"))?;
+    let track_id = track.id.clone().context("Should be prevalidated")?;
 
     let status = TrackStatusService::get_status(&state.app.db, &state.user_id, track_id.id()).await;
 
@@ -217,7 +215,7 @@ async fn common(
     let mut lines = lyrics.len();
     let message = loop {
         if lines == 0 {
-            return Err(anyhow!("Issues with lyrics"));
+            return Err(anyhow!("Issues with lyrics").into());
         }
 
         let message = formatdoc!(

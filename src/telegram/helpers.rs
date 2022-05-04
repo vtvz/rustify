@@ -1,4 +1,3 @@
-use anyhow::Result;
 use teloxide::prelude::*;
 use teloxide::types::{
     InlineKeyboardButton,
@@ -8,9 +7,14 @@ use teloxide::types::{
     ReplyMarkup,
 };
 
+use crate::errors::GenericResult;
 use crate::state::UserState;
 
-pub async fn send_register_invite(m: &Message, bot: &Bot, state: &UserState) -> Result<bool> {
+pub async fn send_register_invite(
+    m: &Message,
+    bot: &Bot,
+    state: &UserState,
+) -> GenericResult<bool> {
     let url = state.app.spotify_manager.get_authorize_url().await?;
     bot.send_message(
         m.chat.id,

@@ -1,6 +1,7 @@
+use std::time::Duration;
+
 use again::RetryPolicy;
 use lazy_static::lazy_static;
-use std::time::Duration;
 use tokio::sync::broadcast;
 
 macro_rules! tick {
@@ -48,12 +49,20 @@ lazy_static! {
     static ref KILL: (broadcast::Sender<()>, broadcast::Receiver<()>) = broadcast::channel(1);
 }
 
+static mut KILLED: bool = false;
+
 pub async fn listen_for_ctrl_c() {
     tokio::signal::ctrl_c().await.ok();
 
     KILL.0.send(()).ok();
+
+    unsafe { KILLED = true };
 }
 
 pub async fn ctrl_c() {
+    if unsafe { KILLED } {
+        return;
+    }
+
     KILL.0.subscribe().recv().await.ok();
 }

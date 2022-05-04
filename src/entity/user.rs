@@ -1,7 +1,8 @@
+use std::str::FromStr;
+
 use chrono::Utc;
 use sea_orm::entity::prelude::*;
 use sea_orm::Set;
-use std::str::FromStr;
 
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;

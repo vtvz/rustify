@@ -2,9 +2,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::Context;
 use indoc::formatdoc;
-use lazy_static::lazy_static;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{
     Context as SpotifyContext,
@@ -18,10 +16,11 @@ use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::ApiError;
-use tokio::sync::{Mutex, Semaphore};
+use tokio::sync::{broadcast, Semaphore};
 use tokio::time::Instant;
 
 use crate::entity::prelude::*;
+use crate::errors::{Context, GenericResult};
 use crate::spotify::CurrentlyPlaying;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::telegram::inline_buttons::InlineButtons;
@@ -35,7 +34,7 @@ const PARALLEL_CHECKS: usize = 2;
 async fn handle_telegram_error(
     state: &state::UserState,
     result: Result<Message, teloxide::RequestError>,
-) -> anyhow::Result<()> {
+) -> GenericResult<()> {
     if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::NotFound)) = result {
         UserService::set_status(&state.app.db, &state.user_id, UserStatus::Blocked).await?;
     }
@@ -55,7 +54,7 @@ struct CheckBadWordsResult {
 async fn check_bad_words(
     state: &state::UserState,
     track: &FullTrack,
-) -> anyhow::Result<CheckBadWordsResult> {
+) -> GenericResult<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
     let Some(hit) = state.app.lyrics.search_for_track(track).await? else {
@@ -145,7 +144,7 @@ async fn handle_disliked_track(
     state: &state::UserState,
     track: &FullTrack,
     context: Option<&SpotifyContext>,
-) -> anyhow::Result<()> {
+) -> GenericResult<()> {
     if state.is_spotify_premium() {
         let spotify = state.spotify.read().await;
 
@@ -220,7 +219,7 @@ async fn handle_disliked_track(
 async fn check_playing_for_user(
     app_state: &'static state::AppState,
     user_id: &str,
-) -> anyhow::Result<String> {
+) -> GenericResult<&'static str> {
     let state = app_state
         .user_state(user_id)
         .await
@@ -255,9 +254,7 @@ async fn check_playing_for_user(
 
     match status {
         TrackStatus::Disliked => {
-            handle_disliked_track(&state, &track, context.as_ref())
-                .await
-                .context("Handle Disliked Tracks")?;
+            handle_disliked_track(&state, &track, context.as_ref()).await?;
         }
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
@@ -268,7 +265,7 @@ async fn check_playing_for_user(
             .await?;
 
             if !changed {
-                return Ok("Skip same track".to_owned());
+                return Ok("Skip same track");
             }
 
             let res = check_bad_words(&state, &track)
@@ -300,11 +297,11 @@ async fn check_playing_for_user(
         TrackStatus::Ignore => {}
     }
 
-    Ok("Complete check".to_owned())
+    Ok("Complete check")
 }
 
-lazy_static! {
-    pub static ref PROCESS_TIME: Mutex<Option<Duration>> = Mutex::new(None);
+lazy_static::lazy_static! {
+    pub static ref PROCESS_TIME_CHANNEL: (broadcast::Sender<Duration>, broadcast::Receiver<Duration>) = broadcast::channel(5);
 }
 
 pub async fn check_playing(app_state: &'static state::AppState) {
@@ -345,6 +342,6 @@ pub async fn check_playing(app_state: &'static state::AppState) {
 
         let diff = Instant::now().duration_since(start);
 
-        *PROCESS_TIME.lock().await = Some(diff);
+        PROCESS_TIME_CHANNEL.0.send(diff).ok();
     });
 }

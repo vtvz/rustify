@@ -1,5 +1,11 @@
 #![warn(clippy::unwrap_used)]
-#![feature(option_result_contains, stmt_expr_attributes, let_else)]
+#![feature(
+    option_result_contains,
+    stmt_expr_attributes,
+    let_else,
+    backtrace,
+    box_patterns
+)]
 
 #[macro_use]
 extern crate derive_more;
@@ -13,6 +19,7 @@ use teloxide::utils::markdown;
 use crate::state::AppState;
 
 mod entity;
+mod errors;
 mod logger;
 mod lyrics;
 mod metrics;

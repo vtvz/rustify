@@ -1,7 +1,7 @@
-use lazy_static::lazy_static;
 use std::fmt::{Display, Formatter};
 use std::slice::Iter;
 
+use lazy_static::lazy_static;
 use rustrict::Type;
 use teloxide::utils::markdown;
 

@@ -1,12 +1,10 @@
-use anyhow::anyhow;
 use rspotify::Token;
 use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
-use sea_orm::ConnectionTrait;
-use sea_orm::IntoActiveModel;
-use sea_orm::{QuerySelect, QueryTrait};
+use sea_orm::{ConnectionTrait, IntoActiveModel, QuerySelect, QueryTrait};
 
 use crate::entity::prelude::*;
+use crate::errors::{Context, GenericResult};
 use crate::user_service::UserService;
 
 pub struct SpotifyAuthService;
@@ -16,7 +14,7 @@ impl SpotifyAuthService {
         db: &impl ConnectionTrait,
         user_id: &str,
         token: Token,
-    ) -> anyhow::Result<SpotifyAuthActiveModel> {
+    ) -> GenericResult<SpotifyAuthActiveModel> {
         let spotify_auth = SpotifyAuthEntity::find()
             .filter(SpotifyAuthColumn::UserId.eq(user_id))
             .one(db)
@@ -36,9 +34,8 @@ impl SpotifyAuthService {
         .into_active_model();
 
         spotify_auth.access_token = Set(token.access_token);
-        spotify_auth.refresh_token = Set(token
-            .refresh_token
-            .ok_or_else(|| anyhow!("Refresh token is required"))?);
+        spotify_auth.refresh_token =
+            Set(token.refresh_token.context("Refresh token is required")?);
         spotify_auth.expires_at = Set(token.expires_at);
 
         Ok(spotify_auth.save(db).await?)
@@ -47,7 +44,7 @@ impl SpotifyAuthService {
     pub async fn get_token(
         db: &impl ConnectionTrait,
         user_id: &str,
-    ) -> anyhow::Result<Option<Token>> {
+    ) -> GenericResult<Option<Token>> {
         let spotify_auth = SpotifyAuthEntity::find()
             .filter(SpotifyAuthColumn::UserId.eq(user_id))
             .one(db)
@@ -75,7 +72,7 @@ impl SpotifyAuthService {
             .await
     }
 
-    pub async fn get_registered(db: &impl ConnectionTrait) -> anyhow::Result<Vec<String>> {
+    pub async fn get_registered(db: &impl ConnectionTrait) -> GenericResult<Vec<String>> {
         let subquery: Select<UserEntity> = UserService::query(None, Some(UserStatus::Active))
             .select_only()
             .column(UserColumn::Id);
@@ -85,7 +82,7 @@ impl SpotifyAuthService {
 
         let auths: Vec<SpotifyAuthModel> = match query.all(db).await {
             Ok(auths) => auths,
-            Err(err) => return Err(anyhow!(err)),
+            Err(err) => return Err(err.into()),
         };
 
         let user_ids: Vec<String> = auths.iter().map(|item| item.user_id.clone()).collect();

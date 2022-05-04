@@ -1,11 +1,18 @@
 use chrono::Utc;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::Expr;
-use sea_orm::{ConnectionTrait, IntoActiveModel};
-use sea_orm::{FromQueryResult, QuerySelect};
-use sea_orm::{Set, UpdateMany, UpdateResult};
+use sea_orm::{
+    ConnectionTrait,
+    FromQueryResult,
+    IntoActiveModel,
+    QuerySelect,
+    Set,
+    UpdateMany,
+    UpdateResult,
+};
 
 use crate::entity::prelude::*;
+use crate::errors::GenericResult;
 
 pub struct UserStatsIncreaseQueryBuilder(UpdateMany<UserEntity>);
 
@@ -99,7 +106,7 @@ impl UserService {
         db: &impl ConnectionTrait,
         id: &str,
         name: &str,
-    ) -> anyhow::Result<UpdateResult> {
+    ) -> GenericResult<UpdateResult> {
         let query: UpdateMany<_> = UserEntity::update_many();
 
         let update_result: UpdateResult = query
@@ -117,7 +124,7 @@ impl UserService {
         db: &impl ConnectionTrait,
         user_id: &str,
         track_id: &str,
-    ) -> anyhow::Result<bool> {
+    ) -> GenericResult<bool> {
         let query: UpdateMany<_> = UserEntity::update_many();
 
         let update_result: UpdateResult = query
@@ -135,7 +142,7 @@ impl UserService {
         db: &impl ConnectionTrait,
         id: &str,
         status: UserStatus,
-    ) -> anyhow::Result<UserActiveModel> {
+    ) -> GenericResult<UserActiveModel> {
         let user = Self::query(Some(id), None).one(db).await?;
 
         let mut user = match user {
@@ -163,7 +170,7 @@ impl UserService {
     pub async fn get_stats(
         db: &impl ConnectionTrait,
         id: Option<&str>,
-    ) -> anyhow::Result<UserStats> {
+    ) -> GenericResult<UserStats> {
         let res = Self::query(id, None)
             .select_only()
             .column_as(UserColumn::RemovedCollection.sum(), "removed_collection")

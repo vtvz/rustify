@@ -1,13 +1,14 @@
-use anyhow::Context;
+use std::str::FromStr;
+
 use rspotify::clients::OAuthClient;
 use rspotify::model::{PrivateUser, SubscriptionLevel};
 use rspotify::AuthCodeSpotify;
 use sea_orm::{DatabaseConnection, DbConn, SqlxSqliteConnector};
 use sqlx::sqlite::SqliteConnectOptions;
-use std::str::FromStr;
 use teloxide::Bot;
 use tokio::sync::RwLock;
 
+use crate::errors::{Context, GenericResult};
 use crate::metrics::influx::InfluxClient;
 use crate::user_service::UserService;
 use crate::{lyrics, profanity, spotify};
@@ -20,7 +21,7 @@ pub struct AppState {
     pub influx: Option<InfluxClient>,
 }
 
-fn influx() -> anyhow::Result<Option<InfluxClient>> {
+fn influx() -> GenericResult<Option<InfluxClient>> {
     let Ok(api_url) = dotenv::var("INFLUX_API_URL") else {
         return Ok(None)
     };
@@ -39,7 +40,7 @@ fn influx() -> anyhow::Result<Option<InfluxClient>> {
     Ok(Some(client))
 }
 
-async fn db() -> anyhow::Result<DbConn> {
+async fn db() -> GenericResult<DbConn> {
     let database_url = dotenv::var("DATABASE_URL").context("Needs DATABASE_URL")?;
 
     let options = SqliteConnectOptions::from_str(&database_url)?.create_if_missing(true);
@@ -58,7 +59,7 @@ async fn db() -> anyhow::Result<DbConn> {
     Ok(SqlxSqliteConnector::from_sqlx_sqlite_pool(pool))
 }
 
-fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {
+fn lyrics_manager() -> GenericResult<lyrics::Manager> {
     let mut musixmatch_tokens: Vec<_> = dotenv::var("MUSIXMATCH_USER_TOKENS")
         .unwrap_or_else(|_| "".into())
         .split(',')
@@ -79,7 +80,7 @@ fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {
 }
 
 impl AppState {
-    pub async fn init() -> anyhow::Result<&'static Self> {
+    pub async fn init() -> GenericResult<&'static Self> {
         log::trace!("Init application");
 
         let spotify_manager = spotify::Manager::new();
@@ -116,7 +117,7 @@ impl AppState {
         Ok(app_state)
     }
 
-    pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {
+    pub async fn user_state(&'static self, user_id: &str) -> GenericResult<UserState> {
         let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
         let spotify = RwLock::new(spotify);
 

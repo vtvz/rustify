@@ -1,14 +1,18 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
 use rspotify::model::TrackId;
 use rspotify::prelude::*;
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
-use teloxide::types::{InlineKeyboardMarkup, ParseMode};
+use teloxide::types::{
+    InlineKeyboardButton,
+    InlineKeyboardButtonKind,
+    InlineKeyboardMarkup,
+    ParseMode,
+};
 
 use crate::entity::prelude::*;
+use crate::errors::{Context, GenericResult};
 use crate::spotify;
 use crate::state::UserState;
 use crate::track_status_service::TrackStatusService;
@@ -63,7 +67,7 @@ impl Display for InlineButtons {
     }
 }
 
-pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Result<()> {
+pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> GenericResult<()> {
     if !state.is_spotify_authed().await {
         if let Some(id) = q.inline_message_id {
             bot.answer_callback_query(id)
@@ -75,7 +79,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
         return Ok(());
     }
 
-    let data = q.data.ok_or_else(|| anyhow!("Callback needs data"))?;
+    let data = q.data.context("Callback needs data")?;
 
     let button: InlineButtons = data.parse()?;
 
@@ -93,7 +97,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
 
             bot.edit_message_text(
                 q.from.id,
-                q.message.ok_or_else(|| anyhow!("Message is empty"))?.id,
+                q.message.context("Message is empty")?.id,
                 format!(
                     "Dislike cancelled for {}",
                     spotify::create_track_tg_link(&track)
@@ -127,7 +131,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
 
             bot.edit_message_text(
                 q.from.id,
-                q.message.ok_or_else(|| anyhow!("Message is empty"))?.id,
+                q.message.context("Message is empty")?.id,
                 format!("Disliked {}", spotify::create_track_tg_link(&track)),
             )
             .parse_mode(ParseMode::MarkdownV2)
@@ -153,7 +157,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
 
             bot.edit_message_text(
                 q.from.id,
-                q.message.ok_or_else(|| anyhow!("Message is empty"))?.id,
+                q.message.context("Message is empty")?.id,
                 format!(
                     "Bad words of {} will be forever ignored",
                     spotify::create_track_tg_link(&track)

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
 use rspotify::model::{Context as SpotifyContext, FullTrack, Id, PlayableItem};
@@ -7,21 +7,19 @@ use sea_orm::{DbConn, TransactionTrait};
 use teloxide::utils::markdown;
 
 use crate::entity::prelude::*;
+use crate::errors::{Context, GenericResult};
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
 
 pub enum CurrentlyPlaying {
-    Err(anyhow::Error),
-    None(String),
+    Err(ClientError),
+    None(&'static str),
     Ok(Box<FullTrack>, Option<SpotifyContext>),
 }
 
-impl<E> From<E> for CurrentlyPlaying
-where
-    E: std::error::Error + Send + Sync + 'static,
-{
-    fn from(err: E) -> Self {
-        CurrentlyPlaying::Err(err.into())
+impl From<ClientError> for CurrentlyPlaying {
+    fn from(err: ClientError) -> Self {
+        CurrentlyPlaying::Err(err)
     }
 }
 
@@ -36,27 +34,27 @@ pub async fn currently_playing(spotify: &AuthCodeSpotify) -> CurrentlyPlaying {
     let (item, context) = match playing {
         Some(playing) => {
             if !playing.is_playing {
-                return CurrentlyPlaying::None("Current track is on pause".into());
+                return CurrentlyPlaying::None("Current track is on pause");
             }
 
             (playing.item, playing.context)
         }
-        None => return CurrentlyPlaying::None("Nothing is currently playing".into()),
+        None => return CurrentlyPlaying::None("Nothing is currently playing"),
     };
 
     let item = match item {
         Some(item) => item,
-        None => return CurrentlyPlaying::None("Nothing is currently playing".into()),
+        None => return CurrentlyPlaying::None("Nothing is currently playing"),
     };
 
     let track = match item {
         PlayableItem::Track(item) => item,
-        _ => return CurrentlyPlaying::None("It's a podcast".into()),
+        _ => return CurrentlyPlaying::None("It's a podcast"),
     };
 
     match &track.id {
         Some(_) => CurrentlyPlaying::Ok(Box::new(track), context),
-        None => CurrentlyPlaying::None("It's a local file".into()),
+        None => CurrentlyPlaying::None("It's a local file"),
     }
 }
 
@@ -134,7 +132,7 @@ impl Manager {
             ..Default::default()
         };
 
-        let spotify = rspotify::AuthCodeSpotify::with_config(creds, oauth, config);
+        let spotify = AuthCodeSpotify::with_config(creds, oauth, config);
 
         Self { spotify }
     }
@@ -143,7 +141,7 @@ impl Manager {
         db: &DbConn,
         user_id: &str,
         instance: &AuthCodeSpotify,
-    ) -> anyhow::Result<()> {
+    ) -> GenericResult<()> {
         let should_reauth = instance
             .get_token()
             .lock()
@@ -169,7 +167,7 @@ impl Manager {
                 txn.commit().await?;
             }
 
-            return Err(anyhow!("Token is invalid"));
+            return Err(anyhow!("Token is invalid").into());
         };
 
         let token = instance
@@ -186,17 +184,11 @@ impl Manager {
         Ok(())
     }
 
-    async fn is_token_valid(res: ClientResult<()>) -> anyhow::Result<bool> {
-        let Err(err) = res else {
-            return Ok(true);
-        };
-
-        let ClientError::Http(http_error) = err else {
-            return Err(err)?;
-        };
-
-        let HttpError::StatusCode(mut response) = *http_error else {
-            return Err(ClientError::Http(http_error))?;
+    async fn is_token_valid(res: ClientResult<()>) -> GenericResult<bool> {
+        let mut response = match res {
+            Ok(_) => return Ok(true),
+            Err(ClientError::Http(box HttpError::StatusCode(response))) => response,
+            Err(err) => return Err(err.into()),
         };
 
         let body = {
@@ -216,7 +208,7 @@ impl Manager {
         Err(ClientError::Http(Box::new(HttpError::StatusCode(response))))?
     }
 
-    pub async fn for_user(&self, db: &DbConn, user_id: &str) -> anyhow::Result<AuthCodeSpotify> {
+    pub async fn for_user(&self, db: &DbConn, user_id: &str) -> GenericResult<AuthCodeSpotify> {
         let mut instance = self.spotify.clone();
         instance.token = Default::default();
         let token = SpotifyAuthService::get_token(db, user_id).await?;
@@ -233,7 +225,7 @@ impl Manager {
     }
 
     #[allow(dead_code)]
-    pub async fn get_authorize_url(&self) -> anyhow::Result<String> {
+    pub async fn get_authorize_url(&self) -> GenericResult<String> {
         self.spotify.get_authorize_url(false).context("Get auth")
     }
 }

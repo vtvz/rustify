@@ -1,8 +1,7 @@
-use anyhow::Result;
+use keyboards::StartKeyboard;
 use teloxide::prelude::*;
 
-use keyboards::StartKeyboard;
-
+use crate::errors::GenericResult;
 use crate::state::UserState;
 
 pub mod commands;
@@ -13,7 +12,7 @@ pub mod keyboards;
 
 pub const MESSAGE_MAX_LEN: usize = 4096;
 
-pub async fn handle_message(m: Message, bot: Bot, state: &UserState) -> Result<()> {
+pub async fn handle_message(m: Message, bot: Bot, state: &UserState) -> GenericResult<()> {
     let handled = handlers::register::handle(&m, &bot, state).await?
         || handlers::details::handle_url(&m, &bot, state).await?
         || commands::handle(&m, &bot, state).await?

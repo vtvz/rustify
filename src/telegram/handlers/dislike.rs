@@ -1,22 +1,21 @@
-use anyhow::Result;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
+use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
+use crate::errors::GenericResult;
 use crate::spotify;
 use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
 use crate::track_status_service::TrackStatusService;
 
-use super::super::inline_buttons::InlineButtons;
-
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> Result<bool> {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
     if !state.is_spotify_authed().await {
         return Ok(false);
     }
 
     let track = match spotify::currently_playing(&*state.spotify.read().await).await {
-        CurrentlyPlaying::Err(err) => return Err(err),
+        CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             bot.send_message(m.chat.id, message).send().await?;
 

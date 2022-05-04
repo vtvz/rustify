@@ -4,7 +4,6 @@ pub use super::spotify_auth::{
     Entity as SpotifyAuthEntity,
     Model as SpotifyAuthModel,
 };
-
 pub use super::track_status::{
     ActiveModel as TrackStatusActiveModel,
     Column as TrackStatusColumn,
@@ -12,7 +11,6 @@ pub use super::track_status::{
     Model as TrackStatusModel,
     Status as TrackStatus,
 };
-
 pub use super::user::{
     ActiveModel as UserActiveModel,
     Column as UserColumn,

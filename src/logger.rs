@@ -1,10 +1,14 @@
+use std::collections::HashMap;
 use std::str::FromStr;
+
 use tracing_loki::Layer;
 use tracing_subscriber::filter::Targets;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-pub async fn loki() -> anyhow::Result<Option<Layer>> {
+use crate::errors::GenericResult;
+
+pub async fn loki() -> GenericResult<Option<Layer>> {
     let Ok(loki_url) = dotenv::var("LOKI_URL") else {
         return Ok(None)
     };
@@ -24,7 +28,7 @@ pub async fn loki() -> anyhow::Result<Option<Layer>> {
         ]
         .into_iter()
         .collect(),
-        vec![].into_iter().collect(),
+        HashMap::new(),
     )?;
 
     tokio::spawn(task);
@@ -32,7 +36,7 @@ pub async fn loki() -> anyhow::Result<Option<Layer>> {
     Ok(Some(layer))
 }
 
-pub async fn init() -> anyhow::Result<()> {
+pub async fn init() -> GenericResult<()> {
     let loki = loki().await?;
 
     let subscriber = tracing_subscriber::fmt()

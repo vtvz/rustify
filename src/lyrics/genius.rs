@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
 
-use crate::spotify;
 use anyhow::anyhow;
 use cached::proc_macro::cached;
 use genius_rs::Genius;
@@ -13,6 +12,9 @@ use rustrict::is_whitespace;
 use scraper::{Html, Selector};
 use strsim::normalized_damerau_levenshtein;
 use teloxide::utils::markdown;
+
+use crate::errors::{Context, GenericResult};
+use crate::spotify;
 
 pub struct GeniusLocal {
     genius: Genius,
@@ -27,10 +29,7 @@ impl GeniusLocal {
         }
     }
 
-    pub async fn search_for_track(
-        &self,
-        track: &FullTrack,
-    ) -> anyhow::Result<Option<SearchResult>> {
+    pub async fn search_for_track(&self, track: &FullTrack) -> GenericResult<Option<SearchResult>> {
         let res = search_for_track(self, track).await?;
 
         let Some(mut res) = res else {
@@ -42,7 +41,7 @@ impl GeniusLocal {
         Ok(Some(res))
     }
 
-    async fn get_lyrics(&self, hit: &SearchResult) -> anyhow::Result<Vec<String>> {
+    async fn get_lyrics(&self, hit: &SearchResult) -> GenericResult<Vec<String>> {
         lazy_static! {
             static ref LYRICS_SELECTOR: Selector = Selector::parse(
                 ".lyrics, [class*=Lyrics__Container], [class*=LyricsPlaceholder__Message]"
@@ -67,10 +66,7 @@ impl GeniusLocal {
             });
         });
         if lyrics.is_empty() {
-            return Err(anyhow!(
-                "Cannot parse lyrics. For some reason for {}",
-                hit.url
-            ));
+            return Err(anyhow!("Cannot parse lyrics. For some reason for {}", hit.url).into());
         }
         Ok(lyrics)
     }
@@ -149,7 +145,7 @@ impl Display for SearchResultConfidence {
 async fn search_for_track(
     genius: &GeniusLocal,
     track: &FullTrack,
-) -> anyhow::Result<Option<SearchResult>> {
+) -> GenericResult<Option<SearchResult>> {
     const THRESHOLD: f64 = 0.45;
 
     let artist = track
@@ -157,7 +153,7 @@ async fn search_for_track(
         .iter()
         .map(|art| -> &str { art.name.as_ref() })
         .next()
-        .ok_or_else(|| anyhow!("Should be at least 1 artist in track"))?;
+        .context("Should be at least 1 artist in track")?;
 
     let names = get_track_names(&track.name);
     let names_len = names.len();

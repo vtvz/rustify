@@ -1,7 +1,6 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
-use anyhow::anyhow;
 use itertools::Itertools;
 use reqwest::Client;
 use rspotify::model::FullTrack;
@@ -9,6 +8,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{from_value, Value};
 use teloxide::utils::markdown;
 use tokio::sync::Mutex;
+
+use crate::errors::{Context, GenericResult};
 
 fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
@@ -109,7 +110,7 @@ impl Musixmatch {
         }
     }
 
-    pub async fn search_for_track(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
+    pub async fn search_for_track(&self, track: &FullTrack) -> GenericResult<Option<Lyrics>> {
         let mut url =
             reqwest::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
 
@@ -134,7 +135,7 @@ impl Musixmatch {
             tokens
                 .front()
                 .cloned()
-                .ok_or_else(|| anyhow!("Queue shouldn't be empty"))?
+                .context("Queue shouldn't be empty")?
         };
 
         // Dynamic

@@ -1,9 +1,13 @@
+use std::time::Duration;
+
 use chrono::Utc;
 use influx::InfluxClient;
 use influxdb::{InfluxDbWriteable, Timestamp};
-use std::time::Duration;
+use tokio::sync::broadcast::error::RecvError;
 
 use crate::entity::prelude::*;
+use crate::errors::GenericResult;
+use crate::tick::PROCESS_TIME_CHANNEL;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
 use crate::{tick, utils, AppState};
@@ -37,7 +41,7 @@ struct TimingsStats {
     users_process_time: u64,
 }
 
-pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Result<()> {
+pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResult<()> {
     let disliked =
         TrackStatusService::count_status(&app_state.db, TrackStatus::Disliked, None, None).await?
             as u32;
@@ -82,23 +86,27 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Res
 
     metrics.push(lyrics_stats);
 
-    if let Some(timings) = *tick::PROCESS_TIME.lock().await {
-        let timings_stats = TimingsStats {
-            time,
-            users_process_time: timings.as_millis() as u64,
-            max_process_time: Duration::from_secs(tick::CHECK_INTERVAL).as_millis() as u64,
-        }
-        .into_query("process_timings");
-
-        metrics.push(timings_stats);
-    }
-
     client.write(metrics.into_iter()).await?;
 
     Ok(())
 }
 
-pub async fn collect_daemon(app_state: &AppState) {
+pub async fn collect_user_timings(client: &InfluxClient, timings: Duration) -> GenericResult<()> {
+    let time = Timestamp::Milliseconds(Utc::now().timestamp_millis() as u128);
+
+    let timings_stats = TimingsStats {
+        time,
+        users_process_time: timings.as_millis() as u64,
+        max_process_time: Duration::from_secs(tick::CHECK_INTERVAL).as_millis() as u64,
+    }
+    .into_query("process_timings");
+
+    client.write([timings_stats].into_iter()).await?;
+
+    Ok(())
+}
+
+pub async fn collect_daemon(app_state: &'static AppState) {
     let Some(ref client) = app_state.influx else {
         return;
     };
@@ -106,6 +114,29 @@ pub async fn collect_daemon(app_state: &AppState) {
     utils::tick!(Duration::from_secs(60), {
         if let Err(err) = collect(client, app_state).await {
             tracing::error!(err = ?err, "Something went wrong on metrics collection: {:?}", err);
+        }
+    });
+
+    tokio::spawn(async {
+        let mut rx = PROCESS_TIME_CHANNEL.0.subscribe();
+        loop {
+            tokio::select! {
+                timings = rx.recv() => {
+                    let timings: Duration = match timings {
+                        Err(RecvError::Closed) => return,
+                        Err(RecvError::Lagged(lag)) => {
+                            tracing::warn!(lag, "Have a bit of lag here");
+                            continue;
+                        },
+                        Ok(timings) => timings,
+                    };
+
+                    if let Err(err) = collect_user_timings(client, timings).await {
+                        tracing::error!(err = ?err, "Something went wrong on user timing metrics collection: {:?}", err);
+                    }
+                },
+                _ = utils::ctrl_c() => { return },
+            }
         }
     });
 }
