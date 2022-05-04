@@ -111,12 +111,6 @@ pub async fn collect_daemon(app_state: &'static AppState) {
         return;
     };
 
-    utils::tick!(Duration::from_secs(60), {
-        if let Err(err) = collect(client, app_state).await {
-            tracing::error!(err = ?err, "Something went wrong on metrics collection: {:?}", err);
-        }
-    });
-
     tokio::spawn(async {
         let mut rx = PROCESS_TIME_CHANNEL.0.subscribe();
         loop {
@@ -137,6 +131,12 @@ pub async fn collect_daemon(app_state: &'static AppState) {
                 },
                 _ = utils::ctrl_c() => { return },
             }
+        }
+    });
+
+    utils::tick!(Duration::from_secs(60), {
+        if let Err(err) = collect(client, app_state).await {
+            tracing::error!(err = ?err, "Something went wrong on metrics collection: {:?}", err);
         }
     });
 }
