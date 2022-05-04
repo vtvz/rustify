@@ -217,7 +217,7 @@ impl Musixmatch {
                 tracing::error!("Error with parsing track subtitles: {:?}", err);
 
                 return Ok(Some(lyrics));
-            }
+            },
         };
 
         let subtitle: Vec<(_, _)> = subtitle

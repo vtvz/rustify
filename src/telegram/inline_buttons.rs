@@ -112,7 +112,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> GenericRes
             ))
             .send()
             .await?;
-        }
+        },
         InlineButtons::Dislike(id) => {
             let track = state
                 .spotify
@@ -143,7 +143,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> GenericRes
             ))
             .send()
             .await?;
-        }
+        },
         InlineButtons::Ignore(id) => {
             let track = state
                 .spotify
@@ -172,7 +172,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> GenericRes
             ))
             .send()
             .await?;
-        }
+        },
     }
 
     Ok(())

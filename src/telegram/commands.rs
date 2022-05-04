@@ -75,12 +75,12 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
             } else {
                 super::helpers::send_register_invite(m, bot, state).await?;
             }
-        }
+        },
         Command::Echo(text) => {
             bot.send_message(m.chat.id, format!("Echo back: {}", text))
                 .send()
                 .await?;
-        }
+        },
         Command::Dislike => return super::handlers::dislike::handle(m, bot, state).await,
         Command::Cleanup => return super::handlers::cleanup::handle(m, bot, state).await,
         Command::Stats => return super::handlers::stats::handle(m, bot, state).await,
@@ -90,14 +90,14 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
             bot.send_message(m.chat.id, Command::descriptions().to_string())
                 .send()
                 .await?;
-        }
+        },
         Command::Rickroll(user_id) => {
             if rickroll::is_admin(&state.user_id) {
                 let state = state.app.user_state(&user_id).await?;
 
                 rickroll::queue(&state).await;
             }
-        }
+        },
     }
     Ok(true)
 }

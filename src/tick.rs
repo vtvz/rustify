@@ -180,7 +180,7 @@ async fn handle_disliked_track(
                         .exec(&state.app.db)
                         .await?;
                 }
-            }
+            },
 
             SpotifyType::Collection => {
                 let track_id = TrackId::from_str(&track_id)?;
@@ -193,8 +193,8 @@ async fn handle_disliked_track(
                     .removed_collection(1)
                     .exec(&state.app.db)
                     .await?;
-            }
-            _ => {}
+            },
+            _ => {},
         }
 
         return Ok(());
@@ -234,10 +234,10 @@ async fn check_playing_for_user(
     let (track, context) = match playing {
         CurrentlyPlaying::Err(err) => {
             return Err(err).context("Get currently playing track");
-        }
+        },
         CurrentlyPlaying::None(message) => {
             return Ok(message);
-        }
+        },
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
 
@@ -255,7 +255,7 @@ async fn check_playing_for_user(
     match status {
         TrackStatus::Disliked => {
             handle_disliked_track(&state, &track, context.as_ref()).await?;
-        }
+        },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
                 &state.app.db,
@@ -283,7 +283,7 @@ async fn check_playing_for_user(
                         )
                         .exec(&state.app.db)
                         .await?;
-                }
+                },
                 Err(err) => {
                     tracing::error!(
                         err = ?err,
@@ -291,10 +291,10 @@ async fn check_playing_for_user(
                         track_name = spotify::create_track_name(&track).as_str(),
                         "Error occurred on checking bad words",
                     )
-                }
+                },
             }
-        }
-        TrackStatus::Ignore => {}
+        },
+        TrackStatus::Ignore => {},
     }
 
     Ok("Complete check")
@@ -313,7 +313,7 @@ pub async fn check_playing(app_state: &'static state::AppState) {
             Err(err) => {
                 tracing::error!("Something went wrong: {:?}", err);
                 continue;
-            }
+            },
         };
 
         let semaphore = Arc::new(Semaphore::new(PARALLEL_CHECKS));

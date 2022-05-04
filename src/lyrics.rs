@@ -48,12 +48,12 @@ impl Manager {
         let musixmatch_result = match musixmatch_result {
             Ok(Some(res)) => {
                 return Ok(Some(Box::new(res)));
-            }
+            },
             Err(err) => {
                 tracing::error!(err = ?err, "Error with Musixmatch occurred");
 
                 Err(err)
-            }
+            },
             _ => {
                 tracing::debug!(
                     track_id = spotify::get_track_id(track).as_str(),
@@ -62,7 +62,7 @@ impl Manager {
                 );
 
                 Ok(None)
-            }
+            },
         };
 
         if let Some(genius_result) = self.genius.search_for_track(track).await? {

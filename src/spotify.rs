@@ -38,7 +38,7 @@ pub async fn currently_playing(spotify: &AuthCodeSpotify) -> CurrentlyPlaying {
             }
 
             (playing.item, playing.context)
-        }
+        },
         None => return CurrentlyPlaying::None("Nothing is currently playing"),
     };
 

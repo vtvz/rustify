@@ -154,7 +154,7 @@ impl UserService {
                 }
                 .insert(db)
                 .await?
-            }
+            },
         }
         .into_active_model();
 

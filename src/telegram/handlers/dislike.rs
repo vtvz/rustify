@@ -20,7 +20,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
             bot.send_message(m.chat.id, message).send().await?;
 
             return Ok(true);
-        }
+        },
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
