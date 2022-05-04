@@ -29,7 +29,7 @@ pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> Generi
             bot.send_message(m.chat.id, message).send().await?;
 
             return Ok(true);
-        }
+        },
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
@@ -83,10 +83,12 @@ async fn common(
     let keyboard = match status {
         TrackStatus::Disliked => {
             vec![vec![InlineButtons::Cancel(track_id.id().to_owned()).into()]]
-        }
+        },
         TrackStatus::Ignore | TrackStatus::None => {
-            vec![vec![InlineButtons::Dislike(track_id.id().to_owned()).into()]]
-        }
+            vec![vec![
+                InlineButtons::Dislike(track_id.id().to_owned()).into(),
+            ]]
+        },
     };
 
     let features = spotify.track_features(&track_id).await?;
