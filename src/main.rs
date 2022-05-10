@@ -95,6 +95,7 @@ async fn run() {
                 let state = app_state.user_state(&m.chat.id.to_string()).await?;
 
                 if let Err(err) = sync_name(&state, m.from()).await {
+                    let err = err.anyhow();
                     tracing::error!(err = ?err, user_id = state.user_id.as_str(), "Failed syncing user name: {:?}", err);
                 }
 
@@ -104,17 +105,15 @@ async fn run() {
 
                 let (m, bot) = clone;
                 if let Err(err) = &result {
-                    log::error!("{:?}", err);
+                    let err = err;
+                    tracing::error!(err = ?err, "Error on message handling");
                     bot.send_message(
                         m.chat.id,
-                        format!(
-                            "Sorry, error has happened :\\(\n`{}`",
-                            markdown::escape(&format!("{:?}", err))
-                        ),
+                        markdown::escape("Sorry, error has happened :("),
                     )
-                    .parse_mode(ParseMode::MarkdownV2)
-                    .send()
-                    .await?;
+                        .parse_mode(ParseMode::MarkdownV2)
+                        .send()
+                        .await?;
                 }
 
                 result

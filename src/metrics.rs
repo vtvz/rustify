@@ -126,6 +126,7 @@ pub async fn collect_daemon(app_state: &'static AppState) {
                     };
 
                     if let Err(err) = collect_user_timings(client, timings).await {
+                        let err = err.anyhow();
                         tracing::error!(err = ?err, "Something went wrong on user timing metrics collection: {:?}", err);
                     }
                 },
@@ -136,6 +137,7 @@ pub async fn collect_daemon(app_state: &'static AppState) {
 
     utils::tick!(Duration::from_secs(60), {
         if let Err(err) = collect(client, app_state).await {
+            let err = err.anyhow();
             tracing::error!(err = ?err, "Something went wrong on metrics collection: {:?}", err);
         }
     });

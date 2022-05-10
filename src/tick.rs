@@ -260,7 +260,7 @@ async fn check_playing_for_user(
             ref response,
         )))) => {
             if let Err(err) = handle_too_many_requests(&app_state.db, user_id, response).await {
-                tracing::error!(user_id, "Something went wrong: {:?}", err);
+                tracing::error!(user_id, "Something went wrong: {:?}", err.anyhow());
             }
 
             res?
@@ -330,7 +330,7 @@ async fn check_playing_for_user(
                 },
                 Err(err) => {
                     tracing::error!(
-                        err = ?err,
+                        err = ?err.anyhow(),
                         track_id = spotify::get_track_id(&track).as_str(),
                         track_name = spotify::create_track_name(&track).as_str(),
                         "Error occurred on checking bad words",
@@ -355,7 +355,7 @@ pub async fn check_playing(app_state: &'static state::AppState) {
         let user_ids = match SpotifyAuthService::get_registered(&app_state.db).await {
             Ok(user_ids) => user_ids,
             Err(err) => {
-                tracing::error!("Something went wrong: {:?}", err);
+                tracing::error!("Something went wrong: {:?}", err.anyhow());
                 continue;
             },
         };
@@ -374,7 +374,7 @@ pub async fn check_playing(app_state: &'static state::AppState) {
             join_handles.push(tokio::spawn(async move {
                 let user_id = user_id.as_str();
                 if let Err(err) = check_playing_for_user(app_state, user_id).await {
-                    tracing::error!(user_id, "Something went wrong: {:?}", err);
+                    tracing::error!(user_id, "Something went wrong: {:?}", err.anyhow());
                 }
                 drop(permit);
             }));

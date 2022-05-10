@@ -13,7 +13,7 @@ convert_case = "0.5.0"
 derive_more = "0.99.17"
 dotenv = "0.15.0"
 genius-rs = "0.4.0"
-indoc = "1.0.4"
+indoc = "1.0.6"
 influxdb = { version = "0.5.2", features = ["derive"] }
 itertools = "0.10.3"
 lazy_static = "1.4.0"
@@ -42,7 +42,7 @@ features = ["pkg-config", "vcpkg", "bundled", "unlock_notify", "bundled-sqlciphe
 
 [dependencies.sea-orm]
 default-features = false
-version = "0.7.1"
+version = "0.8.0"
 features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print", "with-chrono"]
 
 [dependencies.teloxide]
@@ -54,7 +54,7 @@ features = [
 ]
 
 [dependencies.tokio]
-version = "1.18.1"
+version = "1.18.2"
 features = ["rt-multi-thread", "macros"]
 
 [features]

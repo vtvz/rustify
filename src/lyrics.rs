@@ -50,9 +50,10 @@ impl Manager {
                 return Ok(Some(Box::new(res)));
             },
             Err(err) => {
+                let err = err.anyhow();
                 tracing::error!(err = ?err, "Error with Musixmatch occurred");
 
-                Err(err)
+                Err(err.into())
             },
             _ => {
                 tracing::debug!(
