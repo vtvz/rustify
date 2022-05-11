@@ -31,9 +31,9 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::utils::Clock;
-use crate::{lyrics, profanity, rickroll, spotify, state, telegram, utils};
+use crate::{lyrics, profanity, spotify, state, telegram, utils};
 
-pub const CHECK_INTERVAL: u64 = 3;
+const CHECK_INTERVAL: u64 = 3;
 const PARALLEL_CHECKS: usize = 2;
 
 async fn handle_telegram_error(
@@ -260,7 +260,7 @@ async fn check_playing_for_user(
             ref response,
         )))) => {
             if let Err(err) = handle_too_many_requests(&app_state.db, user_id, response).await {
-                tracing::error!(user_id, "Something went wrong: {:?}", err.anyhow());
+                tracing::error!(user_id, err = ?err.anyhow(), "Something went wrong");
             }
 
             res?
@@ -268,10 +268,6 @@ async fn check_playing_for_user(
         Err(err) => return Err(err),
         Ok(state) => state,
     };
-
-    if rickroll::should(&state.user_id, false).await {
-        rickroll::like(&state).await;
-    }
 
     let playing = spotify::currently_playing(&*state.spotify.read().await).await;
 
@@ -284,10 +280,6 @@ async fn check_playing_for_user(
         },
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
-
-    if rickroll::should(&state.user_id, true).await {
-        rickroll::queue(&state).await;
-    }
 
     let status = TrackStatusService::get_status(
         &state.app.db,
@@ -345,7 +337,18 @@ async fn check_playing_for_user(
 }
 
 lazy_static::lazy_static! {
-    pub static ref PROCESS_TIME_CHANNEL: (broadcast::Sender<Duration>, broadcast::Receiver<Duration>) = broadcast::channel(5);
+    pub static ref PROCESS_TIME_CHANNEL: (
+        broadcast::Sender<CheckPlayingReport>,
+        broadcast::Receiver<CheckPlayingReport>
+    ) = broadcast::channel(5);
+}
+
+#[derive(Clone)]
+pub struct CheckPlayingReport {
+    pub max_process_time: Duration,
+    pub users_process_time: Duration,
+    pub users_count: usize,
+    pub parallel_count: usize,
 }
 
 pub async fn check_playing(app_state: &'static state::AppState) {
@@ -355,13 +358,14 @@ pub async fn check_playing(app_state: &'static state::AppState) {
         let user_ids = match SpotifyAuthService::get_registered(&app_state.db).await {
             Ok(user_ids) => user_ids,
             Err(err) => {
-                tracing::error!("Something went wrong: {:?}", err.anyhow());
+                tracing::error!(err = ?err.anyhow(), "Something went wrong");
                 continue;
             },
         };
 
         let semaphore = Arc::new(Semaphore::new(PARALLEL_CHECKS));
-        let mut join_handles = Vec::new();
+        let user_ids_len = user_ids.len();
+        let mut join_handles = Vec::with_capacity(user_ids_len);
 
         for user_id in user_ids {
             let permit = semaphore
@@ -374,7 +378,7 @@ pub async fn check_playing(app_state: &'static state::AppState) {
             join_handles.push(tokio::spawn(async move {
                 let user_id = user_id.as_str();
                 if let Err(err) = check_playing_for_user(app_state, user_id).await {
-                    tracing::error!(user_id, "Something went wrong: {:?}", err.anyhow());
+                    tracing::error!(user_id, err = ?err.anyhow(), "Something went wrong");
                 }
                 drop(permit);
             }));
@@ -386,6 +390,13 @@ pub async fn check_playing(app_state: &'static state::AppState) {
 
         let diff = Instant::now().duration_since(start);
 
-        PROCESS_TIME_CHANNEL.0.send(diff).ok();
+        let report = CheckPlayingReport {
+            max_process_time: Duration::from_secs(CHECK_INTERVAL),
+            users_process_time: diff,
+            parallel_count: PARALLEL_CHECKS,
+            users_count: user_ids_len,
+        };
+
+        PROCESS_TIME_CHANNEL.0.send(report).ok();
     });
 }

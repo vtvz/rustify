@@ -12,9 +12,9 @@ deploy:
   rsync -P -e ssh "docker-compose.yml" "Dockerfile" "target/release/rustify" ".env.deploy" "proxychains.conf" "{{ server }}:{{ path }}/"
   ssh "{{ server }}" -- mkdir -p "{{ path }}/target/release"
   ssh "{{ server }}" -- cp "{{ path }}/rustify" "{{ path }}/target/release/"
-  ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" down
-  ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" build
-  ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" up -d
+  just compose build
+  just compose down
+  just compose up -d
 
 get-db:
   scp "{{ server }}:{{ path }}/var/data.db" "var/data.db"
@@ -25,8 +25,11 @@ upload-db:
   ssh "{{ server }}" -- mkdir -p "{{ path }}/var"
   rsync -P -e ssh "var/data.db" "{{ server }}:{{ path }}/var/data.db"
 
+compose +args:
+  ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" {{ args }}
+
 logs:
-  ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" logs -f
+  just compose logs -f
 
 ssh:
   ssh -t "{{ server }}" "cd {{ path }}; bash --login"

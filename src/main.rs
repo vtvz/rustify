@@ -26,7 +26,6 @@ mod logger;
 mod lyrics;
 mod metrics;
 mod profanity;
-mod rickroll;
 mod spotify;
 mod spotify_auth_service;
 mod state;
@@ -96,7 +95,7 @@ async fn run() {
 
                 if let Err(err) = sync_name(&state, m.from()).await {
                     let err = err.anyhow();
-                    tracing::error!(err = ?err, user_id = state.user_id.as_str(), "Failed syncing user name: {:?}", err);
+                    tracing::error!(err = ?err, user_id = state.user_id.as_str(), "Failed syncing user name");
                 }
 
                 let clone = (m.clone(), bot.clone());

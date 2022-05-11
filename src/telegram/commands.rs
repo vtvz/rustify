@@ -6,7 +6,6 @@ use teloxide::utils::markdown;
 use super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
 use crate::errors::{Context, GenericResult};
-use crate::rickroll;
 use crate::state::UserState;
 use crate::user_service::UserService;
 
@@ -31,9 +30,6 @@ pub enum Command {
     Register,
     #[command(description = "show this help")]
     Help,
-
-    #[command(description = "off")]
-    Rickroll(String),
 }
 
 pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
@@ -90,13 +86,6 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
             bot.send_message(m.chat.id, Command::descriptions().to_string())
                 .send()
                 .await?;
-        },
-        Command::Rickroll(user_id) => {
-            if rickroll::is_admin(&state.user_id) {
-                let state = state.app.user_state(&user_id).await?;
-
-                rickroll::queue(&state).await;
-            }
         },
     }
     Ok(true)

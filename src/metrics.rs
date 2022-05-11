@@ -7,10 +7,10 @@ use tokio::sync::broadcast::error::RecvError;
 
 use crate::entity::prelude::*;
 use crate::errors::GenericResult;
-use crate::tick::PROCESS_TIME_CHANNEL;
+use crate::tick::{CheckPlayingReport, PROCESS_TIME_CHANNEL};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
-use crate::{tick, utils, AppState};
+use crate::{utils, AppState};
 
 pub mod influx;
 
@@ -39,6 +39,8 @@ struct TimingsStats {
     time: Timestamp,
     max_process_time: u64,
     users_process_time: u64,
+    users_count: u64,
+    parallel_count: u64,
 }
 
 pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResult<()> {
@@ -91,13 +93,18 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResu
     Ok(())
 }
 
-pub async fn collect_user_timings(client: &InfluxClient, timings: Duration) -> GenericResult<()> {
+pub async fn collect_user_timings(
+    client: &InfluxClient,
+    report: CheckPlayingReport,
+) -> GenericResult<()> {
     let time = Timestamp::Milliseconds(Utc::now().timestamp_millis() as u128);
 
     let timings_stats = TimingsStats {
         time,
-        users_process_time: timings.as_millis() as u64,
-        max_process_time: Duration::from_secs(tick::CHECK_INTERVAL).as_millis() as u64,
+        users_process_time: report.users_process_time.as_millis() as u64,
+        max_process_time: report.max_process_time.as_millis() as u64,
+        users_count: report.users_count as u64,
+        parallel_count: report.parallel_count as u64,
     }
     .into_query("process_timings");
 
@@ -116,7 +123,7 @@ pub async fn collect_daemon(app_state: &'static AppState) {
         loop {
             tokio::select! {
                 timings = rx.recv() => {
-                    let timings: Duration = match timings {
+                    let report: CheckPlayingReport = match timings {
                         Err(RecvError::Closed) => return,
                         Err(RecvError::Lagged(lag)) => {
                             tracing::warn!(lag, "Have a bit of lag here");
@@ -125,9 +132,9 @@ pub async fn collect_daemon(app_state: &'static AppState) {
                         Ok(timings) => timings,
                     };
 
-                    if let Err(err) = collect_user_timings(client, timings).await {
+                    if let Err(err) = collect_user_timings(client, report).await {
                         let err = err.anyhow();
-                        tracing::error!(err = ?err, "Something went wrong on user timing metrics collection: {:?}", err);
+                        tracing::error!(err = ?err, "Something went wrong on user timing metrics collection");
                     }
                 },
                 _ = utils::ctrl_c() => { return },
@@ -138,7 +145,7 @@ pub async fn collect_daemon(app_state: &'static AppState) {
     utils::tick!(Duration::from_secs(60), {
         if let Err(err) = collect(client, app_state).await {
             let err = err.anyhow();
-            tracing::error!(err = ?err, "Something went wrong on metrics collection: {:?}", err);
+            tracing::error!(err = ?err, "Something went wrong on metrics collection");
         }
     });
 }

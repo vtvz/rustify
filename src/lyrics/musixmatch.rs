@@ -214,7 +214,7 @@ impl Musixmatch {
         let subtitle: Vec<Value> = match serde_json::from_str(&subtitle_json) {
             Ok(subtitle) => subtitle,
             Err(err) => {
-                tracing::error!("Error with parsing track subtitles: {:?}", err);
+                tracing::error!(err = ?err, "Error with parsing track subtitles");
 
                 return Ok(Some(lyrics));
             },

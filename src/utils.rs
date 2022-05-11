@@ -13,6 +13,7 @@ macro_rules! tick {
             ::tokio::select! {
                 _ = __interval.tick() => {},
                 _ = $crate::utils::ctrl_c() => {
+                    ::tracing::debug!("Received terminate signal. Stop processing");
                     break;
                 },
             }
