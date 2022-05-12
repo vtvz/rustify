@@ -17,6 +17,7 @@ use rspotify::model::{
 use rspotify::ClientError;
 use rustrict::Type;
 use sea_orm::DbConn;
+use strum_macros::Display;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use teloxide::ApiError;
@@ -256,11 +257,21 @@ async fn handle_too_many_requests(
     Ok(())
 }
 
+#[derive(Clone, Display)]
+enum CheckPlayingForUserResult {
+    #[strum(serialize = "Skip same track")]
+    SkipSame,
+    #[strum(serialize = "Complete check")]
+    Complete,
+    #[strum(serialize = "Current track is on pause {1}")]
+    None(spotify::CurrentlyPlayingNoneReason),
+}
+
 #[tracing::instrument(skip_all, fields(user_id = %user_id))]
 async fn check_playing_for_user(
     app_state: &'static state::AppState,
     user_id: &str,
-) -> GenericResult<&'static str> {
+) -> GenericResult<CheckPlayingForUserResult> {
     let res = app_state
         .user_state(user_id)
         .await
@@ -286,11 +297,11 @@ async fn check_playing_for_user(
         CurrentlyPlaying::Err(err) => {
             return Err(err).context("Get currently playing track");
         },
-        CurrentlyPlaying::None(message) => {
+        CurrentlyPlaying::None(reason) => {
             SpotifyAuthService::suspend_for(&state.app.db, user_id, chrono::Duration::seconds(10))
                 .await?;
 
-            return Ok(message);
+            return Ok(CheckPlayingForUserResult::None(reason));
         },
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
@@ -315,7 +326,7 @@ async fn check_playing_for_user(
             .await?;
 
             if !changed {
-                return Ok("Skip same track");
+                return Ok(CheckPlayingForUserResult::SkipSame);
             }
 
             let res = check_bad_words(&state, &track)
@@ -347,7 +358,7 @@ async fn check_playing_for_user(
         TrackStatus::Ignore => {},
     }
 
-    Ok("Complete check")
+    Ok(CheckPlayingForUserResult::Complete)
 }
 
 lazy_static::lazy_static! {
@@ -362,6 +373,7 @@ pub struct CheckPlayingReport {
     pub max_process_time: Duration,
     pub users_process_time: Duration,
     pub users_count: usize,
+    pub users_checked: usize,
     pub parallel_count: usize,
 }
 
@@ -392,24 +404,34 @@ pub async fn check_playing(app_state: &'static state::AppState) {
 
             join_handles.push(tokio::spawn(async move {
                 let user_id = user_id.as_str();
-                if let Err(err) = check_playing_for_user(app_state, user_id).await {
-                    tracing::error!(user_id, err = ?err.anyhow(), "Something went wrong");
-                }
+                let res = check_playing_for_user(app_state, user_id).await;
                 drop(permit);
+                let checked = match res {
+                    Err(err) => {
+                        tracing::error!(user_id, err = ?err.anyhow(), "Something went wrong");
+                        false
+                    },
+                    Ok(CheckPlayingForUserResult::Complete) => true,
+                    _ => false,
+                };
+
+                checked
             }));
         }
 
+        let mut users_checked = 0;
         for handle in join_handles {
-            handle.await.expect("Shouldn't fail");
+            if handle.await.expect("Shouldn't fail") {
+                users_checked += 1;
+            }
         }
-
-        let diff = Instant::now().duration_since(start);
 
         let report = CheckPlayingReport {
             max_process_time: Duration::from_secs(CHECK_INTERVAL),
-            users_process_time: diff,
+            users_process_time: start.elapsed(),
             parallel_count: PARALLEL_CHECKS,
             users_count: user_ids_len,
+            users_checked,
         };
 
         PROCESS_TIME_CHANNEL.0.send(report).ok();

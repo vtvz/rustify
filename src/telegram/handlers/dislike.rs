@@ -17,7 +17,9 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
     let track = match spotify::currently_playing(&*state.spotify.read().await).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
-            bot.send_message(m.chat.id, message).send().await?;
+            bot.send_message(m.chat.id, message.to_string())
+                .send()
+                .await?;
 
             return Ok(true);
         },

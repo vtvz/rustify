@@ -4,6 +4,7 @@ use rspotify::http::HttpError;
 use rspotify::model::{Context as SpotifyContext, FullTrack, Id, PlayableItem};
 use rspotify::{scopes, AuthCodeSpotify, ClientError, ClientResult, Token};
 use sea_orm::{DbConn, TransactionTrait};
+use strum_macros::Display;
 use teloxide::utils::markdown;
 
 use crate::entity::prelude::*;
@@ -11,9 +12,21 @@ use crate::errors::{Context, GenericResult};
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
 
+#[derive(Clone, Display)]
+pub enum CurrentlyPlayingNoneReason {
+    #[strum(serialize = "Current track is on pause")]
+    Pause,
+    #[strum(serialize = "Nothing is currently playing")]
+    Nothing,
+    #[strum(serialize = "It's a podcast")]
+    Podcast,
+    #[strum(serialize = "It's a local file")]
+    Local,
+}
+
 pub enum CurrentlyPlaying {
     Err(ClientError),
-    None(&'static str),
+    None(CurrentlyPlayingNoneReason),
     Ok(Box<FullTrack>, Option<SpotifyContext>),
 }
 
@@ -34,27 +47,27 @@ pub async fn currently_playing(spotify: &AuthCodeSpotify) -> CurrentlyPlaying {
     let (item, context) = match playing {
         Some(playing) => {
             if !playing.is_playing {
-                return CurrentlyPlaying::None("Current track is on pause");
+                return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Pause);
             }
 
             (playing.item, playing.context)
         },
-        None => return CurrentlyPlaying::None("Nothing is currently playing"),
+        None => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing),
     };
 
     let item = match item {
         Some(item) => item,
-        None => return CurrentlyPlaying::None("Nothing is currently playing"),
+        None => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing),
     };
 
     let track = match item {
         PlayableItem::Track(item) => item,
-        _ => return CurrentlyPlaying::None("It's a podcast"),
+        _ => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Podcast),
     };
 
     match &track.id {
         Some(_) => CurrentlyPlaying::Ok(Box::new(track), context),
-        None => CurrentlyPlaying::None("It's a local file"),
+        None => CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Local),
     }
 }
 

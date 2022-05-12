@@ -40,6 +40,7 @@ struct TimingsStats {
     max_process_time: u64,
     users_process_time: u64,
     users_count: u64,
+    users_checked: u64,
     parallel_count: u64,
 }
 
@@ -104,6 +105,7 @@ pub async fn collect_user_timings(
         users_process_time: report.users_process_time.as_millis() as u64,
         max_process_time: report.max_process_time.as_millis() as u64,
         users_count: report.users_count as u64,
+        users_checked: report.users_checked as u64,
         parallel_count: report.parallel_count as u64,
     }
     .into_query("process_timings");

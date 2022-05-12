@@ -20,7 +20,7 @@ macro_rules! tick {
 
             let __start = ::tokio::time::Instant::now();
             $code;
-            let __diff = ::tokio::time::Instant::now().duration_since(__start);
+            let __diff = __start.elapsed();
 
             if (__diff > __period) {
                 ::tracing::warn!(
