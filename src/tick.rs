@@ -348,8 +348,8 @@ async fn check_playing_for_user(
                 Err(err) => {
                     tracing::error!(
                         err = ?err.anyhow(),
-                        track_id = spotify::get_track_id(&track).as_str(),
-                        track_name = spotify::create_track_name(&track).as_str(),
+                        track_id = %spotify::get_track_id(&track),
+                        track_name = %spotify::create_track_name(&track),
                         "Error occurred on checking bad words",
                     )
                 },
