@@ -150,6 +150,7 @@ impl Display for SearchResultConfidence {
     time_refresh = true
 )]
 #[tracing::instrument(
+    name = "search_for_track_internal"
     skip_all,
     fields(
         track_id = %spotify::get_track_id(track),
