@@ -29,6 +29,13 @@ impl GeniusLocal {
         }
     }
 
+    #[tracing::instrument(
+        skip_all,
+        fields(
+            track_id = %spotify::get_track_id(track),
+            track_name = %spotify::create_track_name(track),
+        )
+    )]
     pub async fn search_for_track(&self, track: &FullTrack) -> GenericResult<Option<SearchResult>> {
         let res = search_for_track(self, track).await?;
 
@@ -142,6 +149,13 @@ impl Display for SearchResultConfidence {
     time = 3600,
     time_refresh = true
 )]
+#[tracing::instrument(
+    skip_all,
+    fields(
+        track_id = %spotify::get_track_id(track),
+        track_name = %spotify::create_track_name(track),
+    )
+)]
 async fn search_for_track(
     genius: &GeniusLocal,
     track: &FullTrack,
@@ -190,9 +204,7 @@ async fn search_for_track(
 
             if confidence.confident(THRESHOLD) {
                 tracing::debug!(
-                    track_id = spotify::get_track_id(track).as_str(),
-                    track_name = spotify::create_track_name(track).as_str(),
-                    confidence = confidence.to_string().as_str(),
+                    confidence = %confidence,
                     "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
                     hit_i + 1,
                     name_i + 1,
@@ -212,8 +224,6 @@ async fn search_for_track(
     }
 
     tracing::info!(
-        track_id = spotify::get_track_id(track).as_str(),
-        track_name = spotify::create_track_name(track).as_str(),
         "Found no text in {} hits in {} name variants ({} - {})",
         hits_count,
         names_len,

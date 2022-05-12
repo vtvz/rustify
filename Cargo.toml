@@ -32,7 +32,7 @@ strum = "0.24.0"
 strum_macros = "0.24.0"
 thiserror = "1.0.31"
 tracing = "0.1.34"
-tracing-loki = "0.1.0"
+tracing-loki = "0.2.0"
 tracing-subscriber = { version = "0.3.11", features = ["env-filter"] }
 url = "2.2.2"
 

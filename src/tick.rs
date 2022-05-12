@@ -30,12 +30,12 @@ use crate::spotify_auth_service::SpotifyAuthService;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
-use crate::utils::Clock;
 use crate::{lyrics, profanity, spotify, state, telegram, utils};
 
 const CHECK_INTERVAL: u64 = 3;
 const PARALLEL_CHECKS: usize = 2;
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id))]
 async fn handle_telegram_error(
     state: &state::UserState,
     result: Result<Message, teloxide::RequestError>,
@@ -51,11 +51,19 @@ async fn handle_telegram_error(
 
 #[derive(Default)]
 struct CheckBadWordsResult {
+    skipped: bool,
     found: bool,
     profane: bool,
     provider: Option<lyrics::Provider>,
 }
 
+#[tracing::instrument(
+    skip_all,
+    fields(
+        track_id = %spotify::get_track_id(track),
+        track_name = %spotify::create_track_name(track),
+    )
+)]
 async fn check_bad_words(
     state: &state::UserState,
     track: &FullTrack,
@@ -70,13 +78,9 @@ async fn check_bad_words(
     ret.found = true;
 
     if hit.language() != "en" {
-        tracing::trace!(
-            language = hit.language(),
-            track_id = spotify::get_track_id(track).as_str(),
-            track_name = spotify::create_track_name(track).as_str(),
-            "Track has non English lyrics",
-        );
+        tracing::trace!(language = hit.language(), "Track has non English lyrics",);
 
+        ret.skipped = true;
         return Ok(ret);
     }
 
@@ -145,6 +149,13 @@ async fn check_bad_words(
     handle_telegram_error(state, result).await.map(|_| ret)
 }
 
+#[tracing::instrument(
+    skip_all,
+    fields(
+        track_id = %spotify::get_track_id(track),
+        track_name = %spotify::create_track_name(track),
+    )
+)]
 async fn handle_disliked_track(
     state: &state::UserState,
     track: &FullTrack,
@@ -221,6 +232,7 @@ async fn handle_disliked_track(
     handle_telegram_error(state, result).await
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %user_id))]
 async fn handle_too_many_requests(
     db: &DbConn,
     user_id: &str,
@@ -230,7 +242,7 @@ async fn handle_too_many_requests(
         return Ok(());
     }
 
-    tracing::info!(user_id, "User got a 429 error (too many requests)");
+    tracing::info!("User got a 429 error (too many requests)");
 
     let header = response
         .headers()
@@ -239,13 +251,12 @@ async fn handle_too_many_requests(
 
     let retry_after: i64 = header.to_str()?.parse()?;
 
-    let suspend_until = Clock::now() + chrono::Duration::seconds(retry_after);
-
-    SpotifyAuthService::suspend(db, user_id, suspend_until).await?;
+    SpotifyAuthService::suspend_for(db, user_id, chrono::Duration::seconds(retry_after)).await?;
 
     Ok(())
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %user_id))]
 async fn check_playing_for_user(
     app_state: &'static state::AppState,
     user_id: &str,
@@ -260,7 +271,7 @@ async fn check_playing_for_user(
             ref response,
         )))) => {
             if let Err(err) = handle_too_many_requests(&app_state.db, user_id, response).await {
-                tracing::error!(user_id, err = ?err.anyhow(), "Something went wrong");
+                tracing::error!(err = ?err.anyhow(), "Something went wrong");
             }
 
             res?
@@ -276,6 +287,9 @@ async fn check_playing_for_user(
             return Err(err).context("Get currently playing track");
         },
         CurrentlyPlaying::None(message) => {
+            SpotifyAuthService::suspend_for(&state.app.db, user_id, chrono::Duration::seconds(10))
+                .await?;
+
             return Ok(message);
         },
         CurrentlyPlaying::Ok(track, context) => (track, context),
@@ -351,6 +365,7 @@ pub struct CheckPlayingReport {
     pub parallel_count: usize,
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn check_playing(app_state: &'static state::AppState) {
     utils::tick!(Duration::from_secs(CHECK_INTERVAL), {
         let start = Instant::now();

@@ -51,14 +51,19 @@ impl Manager {
             },
             Err(err) => {
                 let err = err.anyhow();
-                tracing::error!(err = ?err, "Error with Musixmatch occurred");
+                tracing::error!(
+                    err = ?err,
+                    track_id = %spotify::get_track_id(track),
+                    track_name = %spotify::create_track_name(track),
+                    "Error with Musixmatch occurred"
+                );
 
                 Err(err.into())
             },
             _ => {
                 tracing::debug!(
-                    track_id = spotify::get_track_id(track).as_str(),
-                    track_name = spotify::create_track_name(track).as_str(),
+                    track_id = %spotify::get_track_id(track),
+                    track_name = %spotify::create_track_name(track),
                     "Musixmatch text not found"
                 );
 

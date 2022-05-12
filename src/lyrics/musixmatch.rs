@@ -10,6 +10,7 @@ use teloxide::utils::markdown;
 use tokio::sync::Mutex;
 
 use crate::errors::{Context, GenericResult};
+use crate::spotify;
 
 fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
@@ -110,6 +111,13 @@ impl Musixmatch {
         }
     }
 
+    #[tracing::instrument(
+        skip_all,
+        fields(
+            track_id = % spotify::get_track_id(track),
+            track_name = % spotify::create_track_name(track),
+        )
+    )]
     pub async fn search_for_track(&self, track: &FullTrack) -> GenericResult<Option<Lyrics>> {
         let mut url =
             reqwest::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;

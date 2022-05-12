@@ -73,7 +73,7 @@ impl SpotifyAuthService {
             .await
     }
 
-    pub async fn suspend(
+    pub async fn suspend_util(
         db: &impl ConnectionTrait,
         user_id: &str,
         time: chrono::NaiveDateTime,
@@ -93,6 +93,16 @@ impl SpotifyAuthService {
         spotify_auth.save(db).await?;
 
         Ok(true)
+    }
+
+    pub async fn suspend_for(
+        db: &impl ConnectionTrait,
+        user_id: &str,
+        duration: chrono::Duration,
+    ) -> GenericResult<bool> {
+        let suspend_until = Clock::now() + duration;
+
+        SpotifyAuthService::suspend_util(db, user_id, suspend_until).await
     }
 
     pub async fn get_registered(db: &impl ConnectionTrait) -> GenericResult<Vec<String>> {
