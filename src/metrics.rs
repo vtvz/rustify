@@ -7,7 +7,7 @@ use tokio::sync::broadcast::error::RecvError;
 
 use crate::entity::prelude::*;
 use crate::errors::GenericResult;
-use crate::tick::{CheckPlayingReport, PROCESS_TIME_CHANNEL};
+use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
 use crate::{utils, AppState};
@@ -94,10 +94,7 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResu
     Ok(())
 }
 
-pub async fn collect_user_timings(
-    client: &InfluxClient,
-    report: CheckPlayingReport,
-) -> GenericResult<()> {
+pub async fn collect_user_timings(client: &InfluxClient, report: CheckReport) -> GenericResult<()> {
     let time = Timestamp::Milliseconds(Utc::now().timestamp_millis() as u128);
 
     let timings_stats = TimingsStats {
@@ -125,7 +122,7 @@ pub async fn collect_daemon(app_state: &'static AppState) {
         loop {
             tokio::select! {
                 timings = rx.recv() => {
-                    let report: CheckPlayingReport = match timings {
+                    let report: CheckReport = match timings {
                         Err(RecvError::Closed) => return,
                         Err(RecvError::Lagged(lag)) => {
                             tracing::warn!(lag, "Have a bit of lag here");
