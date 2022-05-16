@@ -16,8 +16,6 @@ pub enum Command {
     Start,
     #[command(description = "show keyboard")]
     Keyboard,
-    #[command(description = "echo back the message")]
-    Echo(String),
     #[command(description = "dislike current track")]
     Dislike,
     #[command(description = "delete disliked tracks from your playlists")]
@@ -71,11 +69,6 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
             } else {
                 super::helpers::send_register_invite(m, bot, state).await?;
             }
-        },
-        Command::Echo(text) => {
-            bot.send_message(m.chat.id, format!("Echo back: {}", text))
-                .send()
-                .await?;
         },
         Command::Dislike => return super::handlers::dislike::handle(m, bot, state).await,
         Command::Cleanup => return super::handlers::cleanup::handle(m, bot, state).await,

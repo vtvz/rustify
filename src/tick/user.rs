@@ -5,7 +5,6 @@ use strum_macros::Display;
 use crate::entity::prelude::*;
 use crate::errors::{Context, GenericError, GenericResult};
 use crate::spotify::CurrentlyPlaying;
-use crate::spotify_auth_service::SpotifyAuthService;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::{lyrics, spotify, state};
@@ -53,9 +52,6 @@ pub async fn check(
             return Err(err).context("Get currently playing track");
         },
         CurrentlyPlaying::None(reason) => {
-            SpotifyAuthService::suspend_for(&state.app.db, user_id, chrono::Duration::seconds(10))
-                .await?;
-
             return Ok(CheckUserResult::None(reason));
         },
         CurrentlyPlaying::Ok(track, context) => (track, context),

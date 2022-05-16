@@ -1,7 +1,8 @@
 use rspotify::Token;
 use sea_orm::prelude::*;
+use sea_orm::sea_query::Expr;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ConnectionTrait, IntoActiveModel, QuerySelect, QueryTrait};
+use sea_orm::{ConnectionTrait, IntoActiveModel, QuerySelect, QueryTrait, UpdateResult};
 
 use crate::entity::prelude::*;
 use crate::errors::{Context, GenericResult};
@@ -75,34 +76,27 @@ impl SpotifyAuthService {
 
     pub async fn suspend_util(
         db: &impl ConnectionTrait,
-        user_id: &str,
+        user_ids: &[&str],
         time: chrono::NaiveDateTime,
-    ) -> GenericResult<bool> {
-        let spotify_auth = SpotifyAuthEntity::find()
-            .filter(SpotifyAuthColumn::UserId.eq(user_id))
-            .one(db)
+    ) -> GenericResult<UpdateResult> {
+        let update_result: UpdateResult = SpotifyAuthEntity::update_many()
+            .col_expr(SpotifyAuthColumn::UpdatedAt, Expr::value(Clock::now()))
+            .col_expr(SpotifyAuthColumn::SuspendUntil, Expr::value(time))
+            .filter(SpotifyAuthColumn::UserId.is_in(user_ids.to_vec()))
+            .exec(db)
             .await?;
 
-        let mut spotify_auth = match spotify_auth {
-            Some(spotify_auth) => spotify_auth.into_active_model(),
-            None => return Ok(false),
-        };
-
-        spotify_auth.suspend_until = Set(time);
-
-        spotify_auth.save(db).await?;
-
-        Ok(true)
+        Ok(update_result)
     }
 
     pub async fn suspend_for(
         db: &impl ConnectionTrait,
-        user_id: &str,
+        user_ids: &[&str],
         duration: chrono::Duration,
-    ) -> GenericResult<bool> {
+    ) -> GenericResult<UpdateResult> {
         let suspend_until = Clock::now() + duration;
 
-        SpotifyAuthService::suspend_util(db, user_id, suspend_until).await
+        SpotifyAuthService::suspend_util(db, user_ids, suspend_until).await
     }
 
     pub async fn get_registered(db: &impl ConnectionTrait) -> GenericResult<Vec<String>> {
@@ -114,12 +108,9 @@ impl SpotifyAuthService {
             .filter(SpotifyAuthColumn::UserId.in_subquery(subquery.into_query()))
             .filter(SpotifyAuthColumn::SuspendUntil.lte(Clock::now()));
 
-        let auths: Vec<SpotifyAuthModel> = match query.all(db).await {
-            Ok(auths) => auths,
-            Err(err) => return Err(err.into()),
-        };
+        let auths: Vec<SpotifyAuthModel> = query.all(db).await?;
 
-        let user_ids: Vec<String> = auths.iter().map(|item| item.user_id.clone()).collect();
+        let user_ids: Vec<String> = auths.into_iter().map(|item| item.user_id).collect();
 
         Ok(user_ids)
     }

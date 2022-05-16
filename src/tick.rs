@@ -53,16 +53,14 @@ async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
             .context("Shouldn't fail")?;
 
         join_handles.push(tokio::spawn(async move {
-            let user_id = user_id.as_str();
-            let res = user::check(app_state, user_id).await;
+            let res = user::check(app_state, &user_id).await;
             drop(permit);
             let checked = match res {
                 Err(err) => {
-                    tracing::error!(user_id, err = ?err.anyhow(), "Something went wrong");
-                    false
+                    tracing::error!(user_id = %user_id, err = ?err.anyhow(), "Something went wrong");
+                    None
                 },
-                Ok(CheckUserResult::Complete) => true,
-                _ => false,
+                Ok(res) => Some((user_id, res)),
             };
 
             checked
@@ -70,10 +68,30 @@ async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
     }
 
     let mut users_checked = 0;
+    let mut users_to_suspend = Vec::new();
     for handle in join_handles {
-        if handle.await.expect("Shouldn't fail") {
-            users_checked += 1;
+        match handle.await.expect("Shouldn't fail") {
+            Some((_, CheckUserResult::Complete)) => {
+                users_checked += 1;
+            },
+            Some((user_id, CheckUserResult::None(_))) => {
+                users_to_suspend.push(user_id);
+            },
+            _ => {},
         }
+    }
+
+    // TODO: Prevent overflow on large amount of users
+    if !users_to_suspend.is_empty() {
+        SpotifyAuthService::suspend_for(
+            &app_state.db,
+            &users_to_suspend
+                .iter()
+                .map(AsRef::as_ref)
+                .collect::<Vec<_>>(),
+            chrono::Duration::seconds(10),
+        )
+        .await?;
     }
 
     let report = CheckReport {

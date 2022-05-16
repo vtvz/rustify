@@ -40,7 +40,7 @@ pub async fn handle_too_many_requests(
 
     let retry_after: i64 = header.to_str()?.parse()?;
 
-    SpotifyAuthService::suspend_for(db, user_id, chrono::Duration::seconds(retry_after)).await?;
+    SpotifyAuthService::suspend_for(db, &[user_id], chrono::Duration::seconds(retry_after)).await?;
 
     Ok(())
 }
