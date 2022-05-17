@@ -1,0 +1,109 @@
+---
+- name: Simple Rustify Deploy Ansible Playbook
+  hosts: all
+  tasks:
+    - name: Install System Packages
+      block:
+        - name: Apt Install Prerequisites
+          ansible.builtin.apt:
+            name: [python3, python3-pip]
+            state: present
+            update_cache: true
+
+        - name: Install Python Packages
+          ansible.builtin.pip:
+            name:
+              - docker
+              - docker-compose
+            state: present
+
+    - name: Backup Database
+      block:
+        - name: Backup Folder Name
+          ansible.builtin.set_fact:
+            backup_path: ../var/backup/{{ ansible_date_time.iso8601 }}
+
+        - name: Backup Folder Create
+          ansible.builtin.file:
+            path: "{{ backup_path }}"
+            state: directory
+            mode: 0755
+          delegate_to: localhost
+
+        - name: Backup Database Files
+          register: backup_database_res
+          retries: 5
+          until: backup_database_res is not failed
+          ansible.builtin.fetch:
+            src: "{{ deploy_path }}/var/{{ item }}"
+            dest: "{{ backup_path }}/"
+            fail_on_missing: false
+            flat: true
+          loop:
+            - data.db
+            - data.db-shm
+            - data.db-wal
+
+    - name: Build and Deploy
+      block:
+        - name: Cargo Build
+          ansible.builtin.command:
+            cmd: cargo build -r
+          delegate_to: localhost
+          register: cargo_build_out
+          changed_when: cargo_build_out.stderr is search('Compiling')
+
+        - name: Create Directories
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            mode: 0644
+          loop:
+            - "{{ deploy_path }}"
+            - "{{ deploy_path }}/target/release"
+
+        - name: Copy Text Files
+          ansible.builtin.copy:
+            src: ../{{ item }}
+            dest: "{{ deploy_path }}/{{ item }}"
+            mode: 0644
+          loop:
+            - docker-compose.yml
+            - Dockerfile
+            - .env.deploy
+            - proxychains.conf
+
+        - name: Copy Executables
+          ansible.builtin.copy:
+            src: ../{{ item }}
+            dest: "{{ deploy_path }}/{{ item }}"
+            mode: 0755
+          loop:
+            - target/release/rustify
+
+        - name: Docker Compose Up
+          community.docker.docker_compose:
+            project_src: "{{ deploy_path }}"
+            build: true
+            state: present
+            recreate: always
+
+    - name: Backup Cleanup
+      block:
+        - name: Find Backup Folders
+          ansible.builtin.find:
+            paths: ../var/backup/
+            file_type: directory
+          delegate_to: localhost
+          register: backups
+
+        - name: Backup Folder Names
+          ansible.builtin.set_fact:
+            backups_delete: "{{ backups.files | sort(attribute='path') | map(attribute='path') | list }}"
+
+        - name: Delete Old Backup Folders
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          delegate_to: localhost
+          loop: "{{ backups_delete[0:-5] }}"
