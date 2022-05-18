@@ -6,7 +6,7 @@ use rspotify::AuthCodeSpotify;
 use sea_orm::{DatabaseConnection, DbConn, SqlxSqliteConnector};
 use sqlx::sqlite::SqliteConnectOptions;
 use teloxide::Bot;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 
 use crate::errors::{Context, GenericResult};
 use crate::metrics::influx::InfluxClient;
@@ -120,18 +120,12 @@ impl AppState {
         let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
         let spotify = RwLock::new(spotify);
 
-        let mut state = UserState {
+        let state = UserState {
             app: self,
             spotify,
-            spotify_user: None,
+            spotify_user: Default::default(),
             user_id: user_id.to_string(),
         };
-
-        if state.is_spotify_authed().await {
-            let me = state.spotify.read().await.me().await?;
-
-            state.spotify_user = Some(me);
-        }
 
         Ok(state)
     }
@@ -140,8 +134,9 @@ impl AppState {
 pub struct UserState {
     pub app: &'static AppState,
     pub spotify: RwLock<AuthCodeSpotify>,
-    pub spotify_user: Option<PrivateUser>,
     pub user_id: String,
+
+    spotify_user: Mutex<Option<Option<PrivateUser>>>,
 }
 
 impl UserState {
@@ -156,15 +151,36 @@ impl UserState {
             .is_some()
     }
 
-    pub fn is_spotify_premium(&self) -> bool {
-        self.spotify_user
-            .as_ref()
+    pub async fn spotify_user(&self) -> GenericResult<Option<PrivateUser>> {
+        let mut lock = self.spotify_user.lock().await;
+
+        if lock.is_none() {
+            let user = if self.is_spotify_authed().await {
+                let me = self.spotify.read().await.me().await?;
+
+                Some(me)
+            } else {
+                None
+            };
+
+            lock.replace(user);
+        }
+
+        Ok(lock.as_ref().context("Should be initialized")?.clone())
+    }
+
+    pub async fn is_spotify_premium(&self) -> GenericResult<bool> {
+        let res = self
+            .spotify_user()
+            .await?
             .map(|spotify_user| {
                 spotify_user
                     .product
                     .map(|product| product == SubscriptionLevel::Premium)
                     .unwrap_or_default()
             })
-            .unwrap_or_default()
+            .unwrap_or_default();
+
+        Ok(res)
     }
 }

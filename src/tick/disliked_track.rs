@@ -29,7 +29,7 @@ pub async fn handle(
     track: &FullTrack,
     context: Option<&SpotifyContext>,
 ) -> GenericResult<()> {
-    if state.is_spotify_premium() {
+    if state.is_spotify_premium().await? {
         let spotify = state.spotify.read().await;
 
         spotify

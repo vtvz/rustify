@@ -22,8 +22,8 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
     let spotify = state.spotify.read().await;
 
     let me = state
-        .spotify_user
-        .as_ref()
+        .spotify_user()
+        .await?
         .context("Spotify user not found")?;
 
     let disliked = TrackStatusService::get_ids_with_status(

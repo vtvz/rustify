@@ -4,7 +4,8 @@
     stmt_expr_attributes,
     let_else,
     backtrace,
-    box_patterns
+    box_patterns,
+    once_cell
 )]
 
 #[macro_use]
@@ -36,7 +37,7 @@ mod user_service;
 mod utils;
 
 async fn sync_name(state: &UserState, tg_user: Option<&User>) -> GenericResult<()> {
-    let spotify_user = state.spotify_user.as_ref().map(|spotify_user| {
+    let spotify_user = state.spotify_user().await?.map(|spotify_user| {
         spotify_user
             .display_name
             .as_deref()
