@@ -6,12 +6,14 @@ mod user;
 use std::sync::Arc;
 use std::time::Duration;
 
+use chrono::Timelike;
 use tokio::sync::{broadcast, Semaphore};
 use tokio::time::Instant;
 use user::CheckUserResult;
 
 use crate::errors::Context;
 use crate::spotify_auth_service::SpotifyAuthService;
+use crate::utils::Clock;
 use crate::{state, utils, GenericResult};
 
 const CHECK_INTERVAL: u64 = 3;
@@ -83,13 +85,20 @@ async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
 
     // TODO: Prevent overflow on large amount of users
     if !users_to_suspend.is_empty() {
-        SpotifyAuthService::suspend_for(
+        let suspend_until = Clock::now() + chrono::Duration::seconds(6);
+
+        let roundup = suspend_until.second() as i64 % 5;
+        let roundup = if roundup == 0 { 0 } else { 5 - roundup };
+
+        let suspend_until = suspend_until + chrono::Duration::seconds(roundup);
+
+        SpotifyAuthService::suspend_until(
             &app_state.db,
             &users_to_suspend
                 .iter()
                 .map(AsRef::as_ref)
                 .collect::<Vec<_>>(),
-            chrono::Duration::seconds(10),
+            suspend_until,
         )
         .await?;
     }

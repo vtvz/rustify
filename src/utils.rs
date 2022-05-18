@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use again::RetryPolicy;
-use chrono::{NaiveDateTime, Utc};
+use chrono::{NaiveDateTime, SubsecRound, Utc};
 use lazy_static::lazy_static;
 use tokio::sync::broadcast;
 
@@ -73,6 +73,6 @@ pub struct Clock;
 
 impl Clock {
     pub fn now() -> NaiveDateTime {
-        Utc::now().naive_local()
+        Utc::now().naive_local().round_subsecs(0)
     }
 }
