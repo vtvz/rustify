@@ -1,6 +1,11 @@
 ---
 - name: Simple Rustify Deploy Ansible Playbook
   hosts: all
+  vars:
+    files_path: ../..
+    backups_path: "{{ files_path }}/var/backup"
+    backup_path: "{{ backups_path }}/{{ ansible_date_time.iso8601 }}"
+
   tasks:
     - name: Install System Packages
       block:
@@ -19,10 +24,6 @@
 
     - name: Backup Database
       block:
-        - name: Backup Folder Name
-          ansible.builtin.set_fact:
-            backup_path: ../var/backup/{{ ansible_date_time.iso8601 }}
-
         - name: Backup Folder Create
           ansible.builtin.file:
             path: "{{ backup_path }}"
@@ -64,7 +65,7 @@
 
         - name: Copy Text Files
           ansible.builtin.copy:
-            src: ../{{ item }}
+            src: "{{ files_path }}/{{ item }}"
             dest: "{{ deploy_path }}/{{ item }}"
             mode: 0644
           loop:
@@ -75,7 +76,7 @@
 
         - name: Copy Executables
           ansible.builtin.copy:
-            src: ../{{ item }}
+            src: "{{ files_path }}/{{ item }}"
             dest: "{{ deploy_path }}/{{ item }}"
             mode: 0755
           loop:
@@ -92,7 +93,7 @@
       block:
         - name: Find Backup Folders
           ansible.builtin.find:
-            paths: ../var/backup/
+            paths: "{{ backups_path }}"
             file_type: directory
           delegate_to: localhost
           register: backups

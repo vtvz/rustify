@@ -36,7 +36,7 @@ pub async fn check(
             if let Err(err) =
                 super::errors::handle_too_many_requests(&app_state.db, user_id, response).await
             {
-                tracing::error!(err = ?err.anyhow(), "Something went wrong");
+                tracing::error!(err = ?err, "Something went wrong");
             }
 
             res?
@@ -45,7 +45,7 @@ pub async fn check(
         Ok(state) => state,
     };
 
-    let playing = spotify::currently_playing(&*state.spotify.read().await).await;
+    let playing = CurrentlyPlaying::get(&*state.spotify.read().await).await;
 
     let (track, context) = match playing {
         CurrentlyPlaying::Err(err) => {
@@ -60,7 +60,7 @@ pub async fn check(
     let status = TrackStatusService::get_status(
         &state.app.db,
         &state.user_id,
-        &spotify::get_track_id(&track),
+        &spotify::utils::get_track_id(&track),
     )
     .await;
 
@@ -72,7 +72,7 @@ pub async fn check(
             let changed = UserService::sync_current_playing(
                 &state.app.db,
                 &state.user_id,
-                &spotify::get_track_id(&track),
+                &spotify::utils::get_track_id(&track),
             )
             .await?;
 
@@ -98,9 +98,9 @@ pub async fn check(
                 },
                 Err(err) => {
                     tracing::error!(
-                        err = ?err.anyhow(),
-                        track_id = %spotify::get_track_id(&track),
-                        track_name = %spotify::create_track_name(&track),
+                        err = ?err,
+                        track_id = %spotify::utils::get_track_id(&track),
+                        track_name = %spotify::utils::create_track_name(&track),
                         "Error occurred on checking bad words",
                     )
                 },

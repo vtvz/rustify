@@ -20,8 +20,8 @@ use crate::{spotify, state};
 #[tracing::instrument(
     skip_all,
     fields(
-        track_id = %spotify::get_track_id(track),
-        track_name = %spotify::create_track_name(track),
+        track_id = %spotify::utils::get_track_id(track),
+        track_name = %spotify::utils::create_track_name(track),
     )
 )]
 pub async fn handle(
@@ -37,7 +37,7 @@ pub async fn handle(
             .await
             .context("Skip current track")?;
 
-        let track_id = spotify::get_track_id(track);
+        let track_id = spotify::utils::get_track_id(track);
         TrackStatusService::increase_skips(&state.app.db, &state.user_id, &track_id).await?;
 
         let Some(context) = context else {
@@ -86,7 +86,7 @@ pub async fn handle(
 
     let message = format!(
         "Current song \\({track_name}\\) was disliked, but I cannot skip it...",
-        track_name = spotify::create_track_tg_link(track),
+        track_name = spotify::utils::create_track_tg_link(track),
     );
 
     let result = state

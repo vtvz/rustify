@@ -150,8 +150,12 @@ impl TypeWrapper {
     fn name(&self) -> String {
         let typ = self.0;
 
-        if typ.isnt(*TYPE_THRESHOLD) {
+        if typ.is(Type::SAFE) {
             return "🟢 safe".into();
+        }
+
+        if typ.isnt(*TYPE_THRESHOLD) {
+            return "🟣 probably safe".into();
         }
 
         let emoji = if typ.is(Type::SEVERE) {

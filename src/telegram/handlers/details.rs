@@ -23,7 +23,7 @@ use crate::{profanity, spotify, telegram};
 
 pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
     let spotify = state.spotify.read().await;
-    let track = match spotify::currently_playing(&*spotify).await {
+    let track = match CurrentlyPlaying::get(&*spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             bot.send_message(m.chat.id, message.to_string())
@@ -195,7 +195,7 @@ async fn common(
                         {genres_line}
                         `No lyrics found`
                     ",
-                    track_name = spotify::create_track_tg_link(&track),
+                    track_name = spotify::utils::create_track_tg_link(&track),
                     features = features.trim(),
                     genres_line = genres_line,
                 )
@@ -233,7 +233,7 @@ async fn common(
                 
                 {genius}
             ",
-            track_name = spotify::create_track_tg_link(&track),
+            track_name = spotify::utils::create_track_tg_link(&track),
             features = features.trim(),
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),

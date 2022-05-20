@@ -4,6 +4,7 @@ use chrono::Utc;
 use influx::InfluxClient;
 use influxdb::{InfluxDbWriteable, Timestamp};
 use tokio::sync::broadcast::error::RecvError;
+use tokio::time::Instant;
 
 use crate::entity::prelude::*;
 use crate::errors::GenericResult;
@@ -44,6 +45,25 @@ struct TimingsStats {
     parallel_count: u64,
 }
 
+lazy_static::lazy_static! {
+    static ref START_TIME: Instant = Instant::now();
+}
+
+#[derive(InfluxDbWriteable, Debug)]
+struct Uptime {
+    time: Timestamp,
+    secs_elapsed: u64,
+}
+
+impl Uptime {
+    fn new(time: Timestamp) -> Self {
+        Self {
+            time,
+            secs_elapsed: START_TIME.elapsed().as_secs(),
+        }
+    }
+}
+
 pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResult<()> {
     let disliked =
         TrackStatusService::count_status(&app_state.db, TrackStatus::Disliked, None, None).await?
@@ -64,30 +84,27 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResu
 
     let time = Timestamp::Seconds(Utc::now().timestamp() as u128);
 
-    let mut metrics = vec![];
-    let track_status_stats = TrackStatusStats {
-        time,
-        disliked,
-        ignored,
-        skipped,
-        removed_collection,
-        removed_playlists,
-    }
-    .into_query("track_status");
-
-    metrics.push(track_status_stats);
-
-    let lyrics_stats = LyricsStats {
-        time,
-        checked: lyrics_checked,
-        found: lyrics_found,
-        profane: lyrics_profane,
-        genius: lyrics_genius,
-        musixmatch: lyrics_musixmatch,
-    }
-    .into_query("lyrics");
-
-    metrics.push(lyrics_stats);
+    let metrics = vec![
+        TrackStatusStats {
+            time,
+            disliked,
+            ignored,
+            skipped,
+            removed_collection,
+            removed_playlists,
+        }
+        .into_query("track_status"),
+        LyricsStats {
+            time,
+            checked: lyrics_checked,
+            found: lyrics_found,
+            profane: lyrics_profane,
+            genius: lyrics_genius,
+            musixmatch: lyrics_musixmatch,
+        }
+        .into_query("lyrics"),
+        Uptime::new(time).into_query("uptime"),
+    ];
 
     client.write(metrics.into_iter()).await?;
 
@@ -117,6 +134,8 @@ pub async fn collect_daemon(app_state: &'static AppState) {
         return;
     };
 
+    lazy_static::initialize(&START_TIME);
+
     tokio::spawn(async {
         let mut rx = PROCESS_TIME_CHANNEL.0.subscribe();
         loop {
@@ -132,7 +151,6 @@ pub async fn collect_daemon(app_state: &'static AppState) {
                     };
 
                     if let Err(err) = collect_user_timings(client, report).await {
-                        let err = err.anyhow();
                         tracing::error!(err = ?err, "Something went wrong on user timing metrics collection");
                     }
                 },
@@ -143,7 +161,6 @@ pub async fn collect_daemon(app_state: &'static AppState) {
 
     utils::tick!(Duration::from_secs(60), {
         if let Err(err) = collect(client, app_state).await {
-            let err = err.anyhow();
             tracing::error!(err = ?err, "Something went wrong on metrics collection");
         }
     });

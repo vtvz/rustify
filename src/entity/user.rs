@@ -110,6 +110,8 @@ pub enum Status {
     Active,
     #[sea_orm(string_value = "blocked")]
     Blocked,
+    #[sea_orm(string_value = "forbidden")]
+    Forbidden,
     #[sea_orm(string_value = "token_invalid")]
     TokenInvalid,
     #[sea_orm(string_value = "none")]

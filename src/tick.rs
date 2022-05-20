@@ -11,10 +11,11 @@ use tokio::sync::{broadcast, Semaphore};
 use tokio::time::Instant;
 use user::CheckUserResult;
 
+use crate::entity::prelude::*;
 use crate::errors::Context;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::utils::Clock;
-use crate::{state, utils, GenericResult};
+use crate::{spotify, state, utils, GenericResult, UserService};
 
 const CHECK_INTERVAL: u64 = 3;
 const PARALLEL_CHECKS: usize = 2;
@@ -57,12 +58,42 @@ async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
         join_handles.push(tokio::spawn(async move {
             let res = user::check(app_state, &user_id).await;
             drop(permit);
-            let checked = match res {
+
+            // TODO Refactor this mess...
+            let checked: GenericResult<_> = match res {
                 Err(err) => {
-                    tracing::error!(user_id = %user_id, err = ?err.anyhow(), "Something went wrong");
-                    None
+                    let (mut original_err, context) = err.unwind();
+
+                    match spotify::Error::from_generic(&mut original_err).await {
+                        Err(err) => {
+                            let err = err.context(context);
+                            tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
+
+                            Err(err)
+                        },
+                        Ok(None) => {
+                            let err = original_err.context(context);
+                            tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
+
+                            Err(err)
+                        },
+                        Ok(Some(spotify::Error::Regular(err))) => {
+                            tracing::error!(user_id = %user_id, err = ?err, context = %context, "Regular Spotify Error Happened");
+
+                            if err.error.status == 403 && err.error.message == "Spotify is unavailable in this country" {
+                                UserService::set_status(&app_state.db, &user_id, UserStatus::Forbidden).await?;
+                            }
+
+                            Err(original_err.context(context))
+                        },
+                        Ok(Some(spotify::Error::Auth(err))) => {
+                            tracing::error!(user_id = %user_id, err = ?err, "Auth Spotify Error Happened");
+
+                            Err(original_err.context(context))
+                        },
+                    }
                 },
-                Ok(res) => Some((user_id, res)),
+                Ok(res) => Ok((user_id, res)),
             };
 
             checked
@@ -73,10 +104,10 @@ async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
     let mut users_to_suspend = Vec::new();
     for handle in join_handles {
         match handle.await.expect("Shouldn't fail") {
-            Some((_, CheckUserResult::Complete)) => {
+            Ok((_, CheckUserResult::Complete)) => {
                 users_checked += 1;
             },
-            Some((user_id, CheckUserResult::None(_))) => {
+            Ok((user_id, CheckUserResult::None(_))) => {
                 users_to_suspend.push(user_id);
             },
             _ => {},
@@ -120,7 +151,7 @@ async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
 pub async fn check_playing(app_state: &'static state::AppState) {
     utils::tick!(Duration::from_secs(CHECK_INTERVAL), {
         if let Err(err) = process(app_state).await {
-            tracing::error!(err = ?err.anyhow(), "Something went wrong")
+            tracing::error!(err = ?err, "Something went wrong")
         };
     });
 }

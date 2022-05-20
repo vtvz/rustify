@@ -6,7 +6,7 @@ rust-version = "1.57.0"
 
 [dependencies]
 again = "0.1.2"
-anyhow = { version = "1.0.57", features = ["backtrace"] }
+anyhow = "1.0.57"
 cached = "0.34.0"
 chrono = "0.4.19"
 convert_case = "0.5.0"
@@ -60,6 +60,12 @@ features = ["rt-multi-thread", "macros"]
 [features]
 
 [build-dependencies.vergen]
-version = "7.0.0"
+version = "7.1.0"
 default-features = false
 features = ["build", "git"]
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"

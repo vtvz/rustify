@@ -32,8 +32,8 @@ impl GeniusLocal {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = %spotify::get_track_id(track),
-            track_name = %spotify::create_track_name(track),
+            track_id = %spotify::utils::get_track_id(track),
+            track_name = %spotify::utils::create_track_name(track),
         )
     )]
     pub async fn search_for_track(&self, track: &FullTrack) -> GenericResult<Option<SearchResult>> {
@@ -153,8 +153,8 @@ impl Display for SearchResultConfidence {
     name = "search_for_track_internal"
     skip_all,
     fields(
-        track_id = %spotify::get_track_id(track),
-        track_name = %spotify::create_track_name(track),
+        track_id = %spotify::utils::get_track_id(track),
+        track_name = %spotify::utils::create_track_name(track),
     )
 )]
 async fn search_for_track(

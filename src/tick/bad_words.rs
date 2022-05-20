@@ -19,8 +19,8 @@ pub struct CheckBadWordsResult {
 #[tracing::instrument(
     skip_all,
     fields(
-        track_id = %spotify::get_track_id(track),
-        track_name = %spotify::create_track_name(track),
+        track_id = %spotify::utils::get_track_id(track),
+        track_name = %spotify::utils::create_track_name(track),
     )
 )]
 pub async fn check(
@@ -78,7 +78,7 @@ pub async fn check(
                 
                 {genius}
             ",
-            track_name = spotify::create_track_tg_link(track),
+            track_name = spotify::utils::create_track_tg_link(track),
             bad_lines = bad_lines[0..lines].join("\n"),
             genius = hit.tg_link(true)
         );
@@ -98,8 +98,8 @@ pub async fn check(
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Dislike(spotify::get_track_id(track)).into()],
-                vec![InlineButtons::Ignore(spotify::get_track_id(track)).into()],
+                vec![InlineButtons::Dislike(spotify::utils::get_track_id(track)).into()],
+                vec![InlineButtons::Ignore(spotify::utils::get_track_id(track)).into()],
             ],
         )))
         .send()

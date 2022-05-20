@@ -1,11 +1,14 @@
+pub mod errors;
+pub mod utils;
+
 use anyhow::anyhow;
+pub use errors::Error;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
-use rspotify::model::{Context as SpotifyContext, FullTrack, Id, PlayableItem};
+use rspotify::model::{Context as SpotifyContext, FullTrack, PlayableItem};
 use rspotify::{scopes, AuthCodeSpotify, ClientError, ClientResult, Token};
 use sea_orm::{DbConn, TransactionTrait};
 use strum_macros::Display;
-use teloxide::utils::markdown;
 
 use crate::entity::prelude::*;
 use crate::errors::{Context, GenericResult};
@@ -36,69 +39,41 @@ impl From<ClientError> for CurrentlyPlaying {
     }
 }
 
-pub async fn currently_playing(spotify: &AuthCodeSpotify) -> CurrentlyPlaying {
-    let playing = spotify.current_playing(None, None::<&[_]>).await;
+impl CurrentlyPlaying {
+    pub async fn get(spotify: &AuthCodeSpotify) -> Self {
+        let playing = spotify.current_playing(None, None::<&[_]>).await;
 
-    let playing = match playing {
-        Ok(playing) => playing,
-        Err(err) => return err.into(),
-    };
+        let playing = match playing {
+            Ok(playing) => playing,
+            Err(err) => return err.into(),
+        };
 
-    let (item, context) = match playing {
-        Some(playing) => {
-            if !playing.is_playing {
-                return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Pause);
-            }
+        let (item, context) = match playing {
+            Some(playing) => {
+                if !playing.is_playing {
+                    return Self::None(CurrentlyPlayingNoneReason::Pause);
+                }
 
-            (playing.item, playing.context)
-        },
-        None => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing),
-    };
+                (playing.item, playing.context)
+            },
+            None => return Self::None(CurrentlyPlayingNoneReason::Nothing),
+        };
 
-    let item = match item {
-        Some(item) => item,
-        None => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing),
-    };
+        let item = match item {
+            Some(item) => item,
+            None => return Self::None(CurrentlyPlayingNoneReason::Nothing),
+        };
 
-    let track = match item {
-        PlayableItem::Track(item) => item,
-        _ => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Podcast),
-    };
+        let track = match item {
+            PlayableItem::Track(item) => item,
+            _ => return Self::None(CurrentlyPlayingNoneReason::Podcast),
+        };
 
-    match &track.id {
-        Some(_) => CurrentlyPlaying::Ok(Box::new(track), context),
-        None => CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Local),
+        match &track.id {
+            Some(_) => Self::Ok(Box::new(track), context),
+            None => Self::None(CurrentlyPlayingNoneReason::Local),
+        }
     }
-}
-
-pub fn artist_names(track: &FullTrack) -> Vec<String> {
-    track.artists.iter().map(|art| art.name.clone()).collect()
-}
-
-pub fn get_track_id(track: &FullTrack) -> String {
-    track
-        .id
-        .as_ref()
-        .map(|track_id| track_id.id().to_owned())
-        .unwrap_or_default()
-}
-
-pub fn create_track_tg_link(track: &FullTrack) -> String {
-    format!(
-        r#"[{}]({})"#,
-        markdown::escape(create_track_name(track).as_str()),
-        track
-            .external_urls
-            .get("spotify")
-            .cloned()
-            .unwrap_or_else(|| "https://vtvz.me/".into())
-    )
-}
-
-pub fn create_track_name(track: &FullTrack) -> String {
-    let artists = artist_names(track).join(", ");
-
-    format!(r#"{} — {}"#, &artists, &track.name)
 }
 
 pub struct Manager {
@@ -204,21 +179,12 @@ impl Manager {
             Err(err) => return Err(err.into()),
         };
 
-        let body = {
-            let mut bytes = vec![];
-            while let Some(chunk) = response.chunk().await? {
-                bytes.extend(chunk);
-            }
-            String::from_utf8(bytes)?
-        };
+        let err = Error::from_response(response).await?;
 
-        let json: serde_json::Value = serde_json::from_str(&body)?;
-
-        if json["error"].as_str() == Some("invalid_grant") {
-            return Ok(false);
+        match err {
+            Error::Auth(err) => Ok(err.error != errors::AuthErrorType::InvalidGrant),
+            Error::Regular(_) => Ok(true),
         }
-
-        Ok(res.map(|_| true)?)
     }
 
     pub async fn for_user(&self, db: &DbConn, user_id: &str) -> GenericResult<AuthCodeSpotify> {

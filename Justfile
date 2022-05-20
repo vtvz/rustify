@@ -1,16 +1,26 @@
 set dotenv-load := true
 
-generate:
-  sea-orm-cli generate entity -o src/entity.example --expanded-format --with-serde both
-
 server := env_var('DEPLOY_USER') + "@" + env_var('DEPLOY_HOST')
 path := env_var_or_default("DEPLOY_PATH", "/srv/rustify")
 
 just := quote(just_executable())
 this := just + " -f " + quote(justfile())
 
+generate:
+  sea-orm-cli generate entity -o src/entity.example --expanded-format --with-serde both
+
+validate:
+  cargo clippy
+  cargo test
+  ansible-lint .infra/ansible/playbook.yml
+
+fix:
+  cargo fmt
+  cargo clippy --fix --allow-dirty --allow-staged
+  ansible-lint --write .infra/ansible/playbook.yml
+
 deploy:
-  ansible-playbook -i {{ env_var('DEPLOY_HOST') }}, -u {{ env_var('DEPLOY_USER') }} -e {{ quote("deploy_path=" + path) }} ansible/playbook.yml
+  ansible-playbook -i {{ env_var('DEPLOY_HOST') }}, -u {{ env_var('DEPLOY_USER') }} -e {{ quote("deploy_path=" + path) }} .infra/ansible/playbook.yml
 
 _deploy-old:
   cargo build -r
