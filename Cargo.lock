@@ -819,6 +819,9 @@ name = "hashbrown"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c21d40587b92fa6a6c6e3c1bdbf87d75511db5672f9c93175574b3a00df1758"
+dependencies = [
+ "ahash",
+]
 
 [[package]]
 name = "hashlink"
@@ -1050,6 +1053,15 @@ name = "ipnet"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
+
+[[package]]
+name = "isolang"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "720d09e8448b06a11e55045787204657bfbdac62201ac7388fa5e3d88e463175"
+dependencies = [
+ "phf 0.10.1",
+]
 
 [[package]]
 name = "itertools"
@@ -2041,6 +2053,7 @@ dependencies = [
  "genius-rs",
  "indoc",
  "influxdb",
+ "isolang",
  "itertools 0.10.3",
  "lazy_static",
  "libsqlite3-sys",
@@ -2066,6 +2079,7 @@ dependencies = [
  "tracing-subscriber",
  "url",
  "vergen",
+ "whatlang",
 ]
 
 [[package]]
@@ -3423,6 +3437,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44d8de8415c823c8abd270ad483c6feeac771fad964890779f9a8cb24fbbc1bf"
 dependencies = [
  "webpki",
+]
+
+[[package]]
+name = "whatlang"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2989d7e9d3cb96a76438e879144030b1be0931b944fbfed65e89e2ae536cd3b9"
+dependencies = [
+ "hashbrown 0.12.0",
+ "once_cell",
 ]
 
 [[package]]

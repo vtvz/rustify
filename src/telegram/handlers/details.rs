@@ -142,13 +142,21 @@ async fn common(
 
         let artists = spotify.artists(artist_ids).await?;
 
+        let search_url = url::Url::parse("https://open.spotify.com/search")?;
+
         artists
             .iter()
             .flat_map(|artist| artist.genres.clone())
             .unique()
-            .map(|genre| genre.to_case(Case::Pascal))
-            .map(|genre| format!("#{}", genre))
-            .map(|genre| markdown::escape(&genre))
+            .map(|genre| {
+                let mut url = search_url.clone();
+                url.path_segments_mut()
+                    .expect("Infallible")
+                    .push(&format!(r#"genre:"{}""#, genre));
+
+                (genre.to_case(Case::Title), url)
+            })
+            .map(|(genre, url)| format!("[{genre}]({url})", genre = markdown::escape(&genre)))
             .collect()
     };
 
@@ -228,6 +236,7 @@ async fn common(
                 
                 {features}
                 🤬 Profanity `{profanity}`
+                🌐 Language: {language}
                 {genres_line}
                 {lyrics}
                 
@@ -237,6 +246,7 @@ async fn common(
             features = features.trim(),
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),
+            language = hit.language(),
             genres_line = genres_line,
             genius = hit.tg_link(lines == lyrics.len())
         );

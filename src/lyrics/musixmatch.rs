@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
+use isolang::Language;
 use itertools::Itertools;
 use reqwest::Client;
 use rspotify::model::FullTrack;
@@ -93,8 +94,8 @@ impl super::SearchResult for Lyrics {
         format!("{}:{:02}", secs / 60, secs % 60)
     }
 
-    fn language(&self) -> &str {
-        self.language.as_str()
+    fn language(&self) -> Language {
+        Language::from_639_1(&self.language).unwrap_or_default()
     }
 }
 

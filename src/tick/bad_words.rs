@@ -1,4 +1,5 @@
 use indoc::formatdoc;
+use isolang::Language;
 use rspotify::model::FullTrack;
 use rustrict::Type;
 use teloxide::prelude::*;
@@ -36,8 +37,8 @@ pub async fn check(
     ret.provider = Some(hit.provider());
     ret.found = true;
 
-    if hit.language() != "en" {
-        tracing::trace!(language = hit.language(), "Track has non English lyrics",);
+    if hit.language() != Language::Eng {
+        tracing::trace!(language = %hit.language(), "Track has non English lyrics",);
 
         ret.skipped = true;
         return Ok(ret);

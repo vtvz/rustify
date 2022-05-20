@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 use anyhow::anyhow;
 use cached::proc_macro::cached;
 use genius_rs::Genius;
+use isolang::Language;
 use lazy_static::lazy_static;
 use regex::Regex;
 use reqwest::Client;
@@ -45,6 +46,8 @@ impl GeniusLocal {
 
         res.lyrics = self.get_lyrics(&res).await?;
 
+        res.language = detect_language(track, &res.lyrics);
+
         Ok(Some(res))
     }
 
@@ -85,6 +88,7 @@ pub struct SearchResult {
     title: String,
     confidence: SearchResultConfidence,
     lyrics: Vec<String>,
+    language: Language,
 }
 
 impl super::SearchResult for SearchResult {
@@ -94,6 +98,10 @@ impl super::SearchResult for SearchResult {
 
     fn lyrics(&self) -> Vec<&str> {
         self.lyrics.iter().map(String::as_str).collect()
+    }
+
+    fn language(&self) -> Language {
+        self.language
     }
 
     fn tg_link(&self, full: bool) -> String {
@@ -137,6 +145,21 @@ impl Display for SearchResultConfidence {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:.0}", self.avg() * 100.0)
     }
+}
+
+#[cached(
+    key = "String",
+    convert = r#"{ format!("{:?}", _track.id) }"#,
+    sync_writes = true,
+    size = 100,
+    time = 3600,
+    time_refresh = true
+)]
+pub fn detect_language(_track: &FullTrack, lyrics: &[String]) -> Language {
+    tracing::error!("Once {:?}", _track.id);
+    whatlang::detect_lang(&lyrics.join("\n"))
+        .and_then(|lang| Language::from_639_3(lang.code()))
+        .unwrap_or_default()
 }
 
 /// Returns url to Genius page with some additional information
@@ -219,6 +242,7 @@ async fn search_for_track(
                     title,
                     confidence,
                     lyrics: Default::default(),
+                    language: Default::default(),
                 }));
             }
         }

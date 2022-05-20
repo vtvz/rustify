@@ -1,4 +1,5 @@
 use genius::GeniusLocal;
+use isolang::Language;
 use musixmatch::Musixmatch;
 use rspotify::model::FullTrack;
 
@@ -18,9 +19,7 @@ pub trait SearchResult {
     fn lyrics(&self) -> Vec<&str>;
     fn tg_link(&self, full: bool) -> String;
 
-    fn language(&self) -> &str {
-        "en"
-    }
+    fn language(&self) -> Language;
 
     fn line_index_name(&self, index: usize) -> String {
         (index + 1).to_string()
@@ -39,6 +38,13 @@ impl Manager {
         Self { genius, musixmatch }
     }
 
+    #[tracing::instrument(
+        skip_all,
+        fields(
+            track_id = %spotify::utils::get_track_id(track),
+            track_name = %spotify::utils::create_track_name(track),
+        )
+    )]
     pub async fn search_for_track(
         &self,
         track: &FullTrack,
@@ -47,24 +53,18 @@ impl Manager {
 
         let musixmatch_result = match musixmatch_result {
             Ok(Some(res)) => {
-                return Ok(Some(Box::new(res)));
+                return Ok(Some(Box::new(res) as Box<dyn SearchResult + Send>));
             },
             Err(err) => {
                 tracing::error!(
                     err = ?err,
-                    track_id = %spotify::utils::get_track_id(track),
-                    track_name = %spotify::utils::create_track_name(track),
                     "Error with Musixmatch occurred"
                 );
 
                 Err(err)
             },
             _ => {
-                tracing::debug!(
-                    track_id = %spotify::utils::get_track_id(track),
-                    track_name = %spotify::utils::create_track_name(track),
-                    "Musixmatch text not found"
-                );
+                tracing::debug!("Musixmatch text not found");
 
                 Ok(None)
             },
