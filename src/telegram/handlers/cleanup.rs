@@ -16,6 +16,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
             m.chat.id,
             "Started cleanup. Please wait, it can take a bit of time 🕐",
         )
+        .reply_to_message_id(m.id)
         .send()
         .await?;
 

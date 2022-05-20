@@ -50,6 +50,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
     );
 
     bot.send_message(m.chat.id, message)
+        .reply_to_message_id(m.id)
         .parse_mode(ParseMode::MarkdownV2)
         .send()
         .await?;

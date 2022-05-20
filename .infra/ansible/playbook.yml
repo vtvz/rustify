@@ -6,13 +6,17 @@
     backups_path: "{{ files_path }}/var/backup"
     backup_path: "{{ backups_path }}/{{ ansible_date_time.iso8601 }}"
 
+  roles:
+    - role: geerlingguy.docker
+      docker_package_state: latest
+
   tasks:
     - name: Install System Packages
       block:
         - name: Apt Install Prerequisites
           ansible.builtin.apt:
             name: [python3, python3-pip]
-            state: present
+            state: latest
             update_cache: true
 
         - name: Install Python Packages

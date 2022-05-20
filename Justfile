@@ -20,6 +20,7 @@ fix:
   ansible-lint --write .infra/ansible/playbook.yml
 
 deploy:
+  ansible-galaxy install -r .infra/ansible/requirements.yml
   ansible-playbook -i {{ env_var('DEPLOY_HOST') }}, -u {{ env_var('DEPLOY_USER') }} -e {{ quote("deploy_path=" + path) }} .infra/ansible/playbook.yml
 
 _deploy-old:

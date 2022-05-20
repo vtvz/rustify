@@ -209,6 +209,7 @@ async fn common(
                 )
             )
             .parse_mode(ParseMode::MarkdownV2)
+            .reply_to_message_id(m.id)
             .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
                 keyboard,
             )))
@@ -260,6 +261,7 @@ async fn common(
 
     bot.send_message(m.chat.id, message)
         .parse_mode(ParseMode::MarkdownV2)
+        .reply_to_message_id(m.id)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))

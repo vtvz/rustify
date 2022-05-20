@@ -40,6 +40,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
         m.chat.id,
         format!("Disliked {}", spotify::utils::create_track_tg_link(&track)),
     )
+    .reply_to_message_id(m.id)
     .parse_mode(ParseMode::MarkdownV2)
     .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
         #[rustfmt::skip]
