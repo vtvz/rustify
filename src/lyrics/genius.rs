@@ -156,7 +156,6 @@ impl Display for SearchResultConfidence {
     time_refresh = true
 )]
 pub fn detect_language(_track: &FullTrack, lyrics: &[String]) -> Language {
-    tracing::error!("Once {:?}", _track.id);
     whatlang::detect_lang(&lyrics.join("\n"))
         .and_then(|lang| Language::from_639_3(lang.code()))
         .unwrap_or_default()

@@ -9,26 +9,36 @@ macro_rules! tick {
     ($period:expr, $code:block) => {
         let __period = $period;
         let mut __interval = ::tokio::time::interval(__period);
+        let mut __iteration: u64 = 0;
         loop {
+            use ::tracing::Instrument;
+
             ::tokio::select! {
                 _ = __interval.tick() => {},
                 _ = $crate::utils::ctrl_c() => {
-                    ::tracing::debug!("Received terminate signal. Stop processing");
+                    ::tracing::debug!(tick_iteration = __iteration, "Received terminate signal. Stop processing");
                     break;
                 },
             }
 
             let __start = ::tokio::time::Instant::now();
-            $code;
+
+            async { $code }
+                .instrument(tracing::info_span!("tick", tick_iteration = __iteration))
+                .await;
+
             let __diff = __start.elapsed();
 
             if (__diff > __period) {
                 ::tracing::warn!(
+                    tick_iteration = __iteration,
                     diff = (__diff - __period).as_secs_f64(),
                     unit = "s",
                     "Task took a bit more time than allowed"
                 );
             }
+
+            __iteration += 1;
         }
     };
 }

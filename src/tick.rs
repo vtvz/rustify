@@ -9,6 +9,7 @@ use std::time::Duration;
 use chrono::Timelike;
 use tokio::sync::{broadcast, Semaphore};
 use tokio::time::Instant;
+use tracing::Instrument;
 use user::CheckUserResult;
 
 use crate::entity::prelude::*;
@@ -97,7 +98,7 @@ async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
             };
 
             checked
-        }));
+        }.in_current_span()));
     }
 
     let mut users_checked = 0;

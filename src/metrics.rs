@@ -5,6 +5,7 @@ use influx::InfluxClient;
 use influxdb::{InfluxDbWriteable, Timestamp};
 use tokio::sync::broadcast::error::RecvError;
 use tokio::time::Instant;
+use tracing::Instrument;
 
 use crate::entity::prelude::*;
 use crate::errors::GenericResult;
@@ -157,7 +158,7 @@ pub async fn collect_daemon(app_state: &'static AppState) {
                 _ = utils::ctrl_c() => { return },
             }
         }
-    });
+    }.in_current_span());
 
     utils::tick!(Duration::from_secs(60), {
         if let Err(err) = collect(client, app_state).await {
