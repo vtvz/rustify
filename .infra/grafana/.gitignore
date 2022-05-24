@@ -1,0 +1,7 @@
+vendor
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+*.auto.tf
+
+env.tfvars

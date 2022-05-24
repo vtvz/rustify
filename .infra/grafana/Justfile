@@ -1,0 +1,10 @@
+set dotenv-load := true
+
+export TF_CLI_ARGS := "-var-file=env.tfvars"
+
+fmt:
+  jsonnetfmt -i jsonnet/*.jsonnet
+  terraform fmt -recursive
+
+tf *args:
+  terraform-backend-git git terraform {{ args }}
