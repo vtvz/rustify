@@ -9,8 +9,8 @@ use crate::errors::{Context, GenericResult};
 use crate::state::UserState;
 use crate::user_service::UserService;
 
-#[derive(BotCommands, PartialEq, Debug)]
-#[command(rename = "lowercase")]
+#[derive(BotCommands, PartialEq, Eq, Debug)]
+#[command(rename = "lowercase", parse_with = "split")]
 pub enum Command {
     #[command(description = "start")]
     Start,
@@ -28,6 +28,9 @@ pub enum Command {
     Register,
     #[command(description = "show this help")]
     Help,
+
+    #[command(description = "off")]
+    Whitelist(String, String),
 }
 
 pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
@@ -79,6 +82,9 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
             bot.send_message(m.chat.id, Command::descriptions().to_string())
                 .send()
                 .await?;
+        },
+        Command::Whitelist(action, user_id) => {
+            return super::handlers::whitelist::handle(m, bot, state, action, user_id).await;
         },
     }
     Ok(true)

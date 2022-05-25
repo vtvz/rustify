@@ -8,7 +8,7 @@ just := quote(just_executable())
 this := just + " -f " + quote(justfile())
 
 generate:
-  sea-orm-cli generate entity -o src/entity.example --expanded-format --with-serde both
+  sea-orm-cli generate entity -o src/entity.example --expanded-format
 
 validate:
   cargo clippy

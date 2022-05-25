@@ -13,10 +13,12 @@ extern crate derive_more;
 #[macro_use]
 extern crate serde;
 
+use indoc::formatdoc;
 use teloxide::prelude::*;
-use teloxide::types::{ParseMode, User};
+use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::markdown;
 
+use crate::entity::prelude::UserWhitelistStatus;
 use crate::errors::GenericResult;
 use crate::state::{AppState, UserState};
 use crate::user_service::UserService;
@@ -35,6 +37,7 @@ mod tick;
 mod track_status_service;
 mod user_service;
 mod utils;
+mod whitelist;
 
 async fn sync_name(state: &UserState, tg_user: Option<&User>) -> GenericResult<()> {
     let spotify_user = state.spotify_user().await?.map(|spotify_user| {
@@ -71,6 +74,98 @@ async fn sync_name(state: &UserState, tg_user: Option<&User>) -> GenericResult<(
     Ok(())
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id))]
+async fn whitelisted(state: &UserState) -> GenericResult<bool> {
+    let res = state
+        .app
+        .whitelist
+        .get_status(&state.app.db, &state.user_id)
+        .await?;
+
+    let chat_id = ChatId(state.user_id.parse()?);
+    match res {
+        (UserWhitelistStatus::Allowed, _) => return Ok(true),
+        (UserWhitelistStatus::Denied, _) => {
+            tracing::info!("Denied user tried to use bot");
+
+            state
+                .app
+                .bot
+                .send_message(chat_id, "Sorry, your join request was rejected...")
+                .parse_mode(ParseMode::MarkdownV2)
+                .send()
+                .await?;
+        },
+        (UserWhitelistStatus::Pending, true) => {
+            tracing::info!("New user was sent a request to join");
+
+            let message = formatdoc!(
+                "
+                    This bot is in whitelist mode\\.
+                    Admin already notified that you want to join, but you also can contact [admin](tg://user?id={}) and send this message to him\\.
+
+                    User Id: `{}`",
+                state.app.whitelist.contact_admin(),
+                state.user_id,
+            );
+
+            state
+                .app
+                .bot
+                .send_message(chat_id, message)
+                .parse_mode(ParseMode::MarkdownV2)
+                .send()
+                .await?;
+
+            let message = formatdoc!(
+                "
+                    New [user](tg://user?id={user_id}) wants to join\\!
+
+                    `/whitelist allow {user_id}`
+                    `/whitelist deny {user_id}`
+                ",
+                user_id = state.user_id,
+            );
+
+            state
+                .app
+                .bot
+                .send_message(
+                    ChatId(state.app.whitelist.contact_admin().parse()?),
+                    message,
+                )
+                .parse_mode(ParseMode::MarkdownV2)
+                .send()
+                .await?;
+        },
+        (UserWhitelistStatus::Pending, false) => {
+            tracing::info!("Pending user tried to use bot");
+
+            let message = formatdoc!(
+                "
+                    This bot is in whitelist mode\\.
+                    Your request was already sent, but admin didn't decided yet\\.
+                    You can contact [him](tg://user?id={}) to speedup the process\\.
+                    Send him this message, this will drastically help\\.
+
+                    User Id: `{}`",
+                state.app.whitelist.contact_admin(),
+                state.user_id,
+            );
+
+            state
+                .app
+                .bot
+                .send_message(chat_id, message)
+                .parse_mode(ParseMode::MarkdownV2)
+                .send()
+                .await?;
+        },
+    };
+
+    Ok(false)
+}
+
 async fn run() {
     // profanity::check_cases();
 
@@ -93,6 +188,10 @@ async fn run() {
         .branch(
             Update::filter_message().endpoint(move |m: Message, bot: Bot| async {
                 let state = app_state.user_state(&m.chat.id.to_string()).await?;
+
+                if !whitelisted(&state).await? {
+                    return Ok(());
+                }
 
                 if let Err(err) = sync_name(&state, m.from()).await {
                     tracing::error!(err = ?err, user_id = state.user_id.as_str(), "Failed syncing user name");

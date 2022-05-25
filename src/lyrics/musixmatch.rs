@@ -30,7 +30,7 @@ where
         .collect())
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct Lyrics {
     #[serde(deserialize_with = "bool_from_int")]

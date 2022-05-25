@@ -18,3 +18,10 @@ pub use super::user::{
     Model as UserModel,
     Status as UserStatus,
 };
+pub use super::user_whitelist::{
+    ActiveModel as UserWhitelistActiveModel,
+    Column as UserWhitelistColumn,
+    Entity as UserWhitelistEntity,
+    Model as UserWhitelistModel,
+    Status as UserWhitelistStatus,
+};

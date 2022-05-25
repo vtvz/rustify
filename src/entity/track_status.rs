@@ -14,7 +14,7 @@ impl EntityName for Entity {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, DeriveModel, DeriveActiveModel)]
+#[derive(Clone, Debug, PartialEq, Eq, DeriveModel, DeriveActiveModel)]
 pub struct Model {
     pub id: u32,
     pub user_id: String,
@@ -85,7 +85,7 @@ impl RelationTrait for Relation {
     }
 }
 
-#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq)]
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
 #[sea_orm(rs_type = "String", db_type = "String(None)")]
 pub enum Status {
     #[sea_orm(string_value = "disliked")]

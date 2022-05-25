@@ -10,9 +10,10 @@ use tokio::sync::{Mutex, RwLock};
 
 use crate::errors::{Context, GenericResult};
 use crate::metrics::influx::InfluxClient;
-use crate::{lyrics, profanity, spotify};
+use crate::{lyrics, profanity, spotify, whitelist};
 
 pub struct AppState {
+    pub whitelist: whitelist::Manager,
     pub spotify_manager: spotify::Manager,
     pub lyrics: lyrics::Manager,
     pub bot: Bot,
@@ -105,6 +106,7 @@ impl AppState {
 
         // Make state global static variable to prevent hassle with Arc and cloning this mess
         let app_state = Box::new(Self {
+            whitelist: whitelist::Manager::from_env(),
             bot,
             spotify_manager,
             lyrics: lyrics_manager,
