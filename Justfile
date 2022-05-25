@@ -1,3 +1,4 @@
+set positional-arguments
 set dotenv-load := true
 
 server := env_var('DEPLOY_USER') + "@" + env_var('DEPLOY_HOST')
@@ -55,3 +56,6 @@ watch cmd="run":
 
 xwatch cmd="run":
    x-terminal-emulator -e {{ this }} watch {{ cmd }}
+
+ws *args:
+  {{ just }} -f {{ quote(join(justfile_directory(), ".ws.justfile")) }} "$@"
