@@ -38,7 +38,7 @@ pub async fn check(
     ret.found = true;
 
     if hit.language() != Language::Eng {
-        tracing::trace!(language = %hit.language(), "Track has non English lyrics",);
+        tracing::trace!(language = %hit.language(), provider = %hit.provider(), "Track has non English lyrics");
 
         ret.skipped = true;
         return Ok(ret);
@@ -74,9 +74,9 @@ pub async fn check(
         let message = formatdoc!(
             "
                 Current song \\({track_name}\\) probably has bad words \\(ignore in case of false positive\\):
-                
+
                 {bad_lines}
-                
+
                 {genius}
             ",
             track_name = spotify::utils::create_track_tg_link(track),

@@ -82,14 +82,11 @@
         },
       ],
     },
-    gridPos: { h: 8, w: 12, x: 0, y: 2 },
+    gridPos: { h: 12, w: 12, x: 0, y: 2 },
     options: {
       legend: {
-        calcs: [
-          'lastNotNull',
-          "diff",
-        ],
-        displayMode: 'list',
+        calcs: ['lastNotNull', 'diff'],
+        displayMode: 'table',
         placement: 'bottom',
       },
       tooltip: {

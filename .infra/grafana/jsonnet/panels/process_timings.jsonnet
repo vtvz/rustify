@@ -89,14 +89,12 @@
         },
       ],
     },
-    gridPos: { h: 8, w: 12, x: 12, y: 2 },
+    gridPos: { h: 12, w: 12, x: 12, y: 2 },
     options: {
       legend: {
-        calcs: [
-          'lastNotNull',
-        ],
-        displayMode: 'list',
+        displayMode: 'table',
         placement: 'bottom',
+        calcs: ['lastNotNull', 'range'],
       },
       tooltip: {
         mode: 'multi',

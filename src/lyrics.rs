@@ -2,6 +2,7 @@ use genius::GeniusLocal;
 use isolang::Language;
 use musixmatch::Musixmatch;
 use rspotify::model::FullTrack;
+use strum_macros::Display;
 
 use crate::errors::GenericResult;
 use crate::spotify;
@@ -9,6 +10,7 @@ use crate::spotify;
 pub mod genius;
 pub mod musixmatch;
 
+#[derive(Display)]
 pub enum Provider {
     Musixmatch,
     Genius,

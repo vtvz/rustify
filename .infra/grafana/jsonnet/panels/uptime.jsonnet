@@ -85,7 +85,7 @@
             |> yield(name: "max")
 
           data
-            |> difference()
+            |> difference(nonNegative: true)
             |> yield(name: "increase")
         |||,
         refId: 'A',

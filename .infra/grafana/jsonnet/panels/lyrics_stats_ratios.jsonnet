@@ -55,11 +55,11 @@
       },
       overrides: [],
     },
-    gridPos: { h: 8, w: 12, x: 12, y: 10 },
+    gridPos: { h: 12, w: 12, x: 12, y: 14 },
     options: {
       legend: {
-        calcs: ['lastNotNull'],
-        displayMode: 'list',
+        calcs: ['lastNotNull', 'range'],
+        displayMode: 'table',
         placement: 'bottom',
       },
       tooltip: {
