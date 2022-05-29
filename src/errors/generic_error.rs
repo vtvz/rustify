@@ -122,6 +122,13 @@ pub enum GenericError {
 
     /////////////////////
     #[error(transparent)]
+    GeniusError(
+        #[from]
+        #[backtrace]
+        genius_rs::error::GeniusError,
+    ),
+
+    #[error(transparent)]
     Serde(
         #[from]
         #[backtrace]

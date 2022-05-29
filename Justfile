@@ -21,6 +21,7 @@ fix:
   ansible-lint --write .infra/ansible/playbook.yml
 
 deploy:
+  cargo build -r
   ansible-galaxy install -r .infra/ansible/requirements.yml
   ansible-playbook -i {{ env_var('DEPLOY_HOST') }}, -u {{ env_var('DEPLOY_USER') }} -e {{ quote("deploy_path=" + path) }} .infra/ansible/playbook.yml
 
@@ -41,6 +42,8 @@ get-db:
 upload-db:
   ssh "{{ server }}" -- mkdir -p "{{ path }}/var"
   rsync -P -e ssh "var/data.db" "{{ server }}:{{ path }}/var/data.db"
+  rsync -P -e ssh "var/data.db-shm" "{{ server }}:{{ path }}/var/data.db-shm"
+  rsync -P -e ssh "var/data.db-wal" "{{ server }}:{{ path }}/var/data.db-wal"
 
 compose +args:
   ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" {{ args }}

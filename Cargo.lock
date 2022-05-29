@@ -436,6 +436,7 @@ checksum = "f2fb860ca6fafa5552fb6d0e816a69c8e49f0908bf524e30a90d97c85892d506"
 dependencies = [
  "block-buffer",
  "crypto-common",
+ "subtle",
 ]
 
 [[package]]
@@ -720,14 +721,17 @@ dependencies = [
 
 [[package]]
 name = "genius-rs"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5398000cb7f5729e17ca6b841686875985f20140607a16af03f64acf3a80c02"
+checksum = "8f69e5e03264b48f47ab7c2770d5c38d69ab68b2dc52e38060d3fa6835fd9215"
 dependencies = [
- "regex",
+ "base64",
+ "chrono",
+ "hmac",
  "reqwest",
- "scraper 0.12.0",
  "serde",
+ "sha2",
+ "thiserror",
 ]
 
 [[package]]
@@ -866,17 +870,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
-name = "html5ever"
-version = "0.25.2"
+name = "hmac"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5c13fb08e5d4dfc151ee5e88bae63f7773d61852f3bdc73c9f4b9e1bde03148"
+checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
 dependencies = [
- "log",
- "mac",
- "markup5ever 0.10.1",
- "proc-macro2",
- "quote",
- "syn",
+ "digest",
 ]
 
 [[package]]
@@ -887,7 +886,7 @@ checksum = "bea68cab48b8459f17cf1c944c67ddc572d272d9f2b274140f223ecb1da4a3b7"
 dependencies = [
  "log",
  "mac",
- "markup5ever 0.11.0",
+ "markup5ever",
  "proc-macro2",
  "quote",
  "syn",
@@ -1192,20 +1191,6 @@ name = "mac"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c41e0c4fef86961ac6d6f8a82609f55f31b05e4fce149ac5710e439df7619ba4"
-
-[[package]]
-name = "markup5ever"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a24f40fb03852d1cdd84330cddcaf98e9ec08a7b7768e952fad3b4cf048ec8fd"
-dependencies = [
- "log",
- "phf 0.8.0",
- "phf_codegen 0.8.0",
- "string_cache",
- "string_cache_codegen",
- "tendril",
-]
 
 [[package]]
 name = "markup5ever"
@@ -2063,7 +2048,7 @@ dependencies = [
  "reqwest",
  "rspotify",
  "rustrict",
- "scraper 0.13.0",
+ "scraper",
  "sea-orm",
  "serde",
  "serde_json",
@@ -2149,22 +2134,6 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "scraper"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48e02aa790c80c2e494130dec6a522033b6a23603ffc06360e9fe6c611ea2c12"
-dependencies = [
- "cssparser",
- "ego-tree",
- "getopts",
- "html5ever 0.25.2",
- "matches",
- "selectors",
- "smallvec",
- "tendril",
-]
-
-[[package]]
-name = "scraper"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5684396b456f3eb69ceeb34d1b5cb1a2f6acf7ca4452131efa3ba0ee2c2d0a70"
@@ -2172,7 +2141,7 @@ dependencies = [
  "cssparser",
  "ego-tree",
  "getopts",
- "html5ever 0.26.0",
+ "html5ever",
  "matches",
  "selectors",
  "smallvec",
@@ -2742,6 +2711,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "subtle"
+version = "2.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
+
+[[package]]
 name = "syn"
 version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2766,9 +2741,9 @@ checksum = "20f34339676cdcab560c9a82300c4c2581f68b9369aedf0fae86f2ff9565ff3e"
 
 [[package]]
 name = "teloxide"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22ebffe5b67e1fba9fc14d43572c7a8392cf14edba7584aa8938ae940aed7da7"
+checksum = "10b936f37584a70f0f82eceaaa5fd022606988cf8b79ad452edac494ac36b65a"
 dependencies = [
  "aquamarine",
  "bincode",
@@ -2825,9 +2800,9 @@ dependencies = [
 
 [[package]]
 name = "teloxide-macros"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f734a9766b169a6795cac8429bb4184b58689442a80a9d2eb3674e14ecb0364"
+checksum = "d01426e8e52631fc7c766f03896c04f89264048981d106aafd20479d8b99e103"
 dependencies = [
  "heck 0.4.0",
  "proc-macro2",
@@ -3281,9 +3256,9 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vergen"
-version = "7.1.0"
+version = "7.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20e9626b9dd8e2b78d1f14adacd0787277e612094abceb023d550f9ba33d5d73"
+checksum = "626fd028e124b3ee607632d92ba99b5a5a086cfd404ede4af6c19ecd9b75a02d"
 dependencies = [
  "anyhow",
  "cfg-if",

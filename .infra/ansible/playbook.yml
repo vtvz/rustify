@@ -27,7 +27,29 @@
             state: present
 
     - name: Backup Database
+      vars:
+        backup_files:
+          - data.db
+          - data.db-shm
+          - data.db-wal
+
       block:
+        - name: Create temp
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: rustify_backup
+          register: rustify_backup_tmp
+
+        - name: Copy Database Files
+          register: backup_database_res
+          retries: 5
+          until: backup_database_res is not failed
+          ansible.builtin.copy:
+            src: "{{ deploy_path }}/var/{{ item }}"
+            dest: "{{ rustify_backup_tmp.path }}/{{ item }}"
+            remote_src: true
+          loop: "{{ backup_files }}"
+
         - name: Backup Folder Create
           ansible.builtin.file:
             path: "{{ backup_path }}"
@@ -40,14 +62,16 @@
           retries: 5
           until: backup_database_res is not failed
           ansible.builtin.fetch:
-            src: "{{ deploy_path }}/var/{{ item }}"
+            src: "{{ rustify_backup_tmp.path }}/{{ item }}"
             dest: "{{ backup_path }}/"
             fail_on_missing: false
             flat: true
-          loop:
-            - data.db
-            - data.db-shm
-            - data.db-wal
+          loop: "{{ backup_files }}"
+
+        - name: Delete temp folder
+          ansible.builtin.file:
+            path: "{{ rustify_backup_tmp.path }}"
+            state: absent
 
     - name: Build and Deploy
       block:
@@ -65,6 +89,7 @@
             mode: 0644
           loop:
             - "{{ deploy_path }}"
+            - "{{ deploy_path }}/var"
             - "{{ deploy_path }}/target/release"
 
         - name: Copy Text Files

@@ -59,6 +59,11 @@ impl GeniusLocal {
             .expect("Should be valid");
         }
 
+        // Test lib provided get_lyrics method
+        if let Ok(lyrics) = self.genius.get_lyrics(hit.id).await {
+            return Ok(lyrics);
+        }
+
         let res = self
             .reqwest
             .get(hit.url.as_str())
@@ -84,6 +89,7 @@ impl GeniusLocal {
 
 #[derive(Clone)]
 pub struct SearchResult {
+    id: u32,
     url: String,
     title: String,
     confidence: SearchResultConfidence,
@@ -237,6 +243,7 @@ async fn search_for_track(
                 );
 
                 return Ok(Some(SearchResult {
+                    id: hit.result.id,
                     url: hit.result.url,
                     title,
                     confidence,
