@@ -19,6 +19,11 @@ local panel = {
   uptime: import './panels/uptime.jsonnet',
 };
 
+local template = {
+  instance: import './templates/instance.jsonnet',
+  log_level: import './templates/log_level.jsonnet',
+};
+
 {
   editable: true,
   fiscalYearStartMonth: 0,
@@ -60,53 +65,8 @@ local panel = {
   },
   templating: {
     list: [
-      {
-        allValue: '',
-        current: {
-          selected: true,
-          text: [
-            'All',
-          ],
-          value: [
-            '$__all',
-          ],
-        },
-        datasource: ds.loki,
-        definition: 'label_values({app="rustify", instance="$instance"} , level)',
-        hide: 0,
-        includeAll: true,
-        label: 'Log Level',
-        multi: true,
-        name: 'log_level',
-        options: [],
-        query: 'label_values({app="rustify", instance="$instance"} , level)',
-        refresh: 2,
-        regex: '',
-        skipUrlSync: false,
-        sort: 0,
-        type: 'query',
-      },
-      {
-        current: {
-          selected: false,
-          text: 'prod',
-          value: 'prod',
-        },
-        datasource: ds.loki,
-        definition: 'label_values({app="rustify"} , instance)',
-        hide: 0,
-        includeAll: false,
-        label: 'Instance',
-        multi: false,
-        name: 'instance',
-        options: [],
-        query: 'label_values({app="rustify"} , instance)',
-        refresh: 1,
-        regex: '',
-        skipUrlSync: false,
-        sort: 0,
-        type: 'query',
-      },
+      template.instance.create(ds),
+      template.log_level.create(ds),
     ],
   },
   panels: [
