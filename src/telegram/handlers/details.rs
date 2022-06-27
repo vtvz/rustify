@@ -35,7 +35,7 @@ pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> Generi
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    return common(m, bot, state, *track).await;
+    common(m, bot, state, *track).await
 }
 
 fn extract_id(url: &str) -> Option<TrackId> {
@@ -67,7 +67,7 @@ pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> GenericRes
 
     let track = state.spotify.read().await.track(&track_id).await?;
 
-    return common(m, bot, state, track).await;
+    common(m, bot, state, track).await
 }
 
 async fn common(
@@ -198,7 +198,7 @@ async fn common(
             formatdoc!(
                     "
                         {track_name}
-                        
+
                         {features}
                         {genres_line}
                         `No lyrics found`
@@ -234,13 +234,13 @@ async fn common(
         let message = formatdoc!(
             "
                 {track_name}
-                
+
                 {features}
                 🤬 Profanity `{profanity}`
                 🌐 Language: {language}
                 {genres_line}
                 {lyrics}
-                
+
                 {genius}
             ",
             track_name = spotify::utils::create_track_tg_link(&track),

@@ -46,6 +46,14 @@ struct TimingsStats {
     parallel_count: u64,
 }
 
+#[derive(InfluxDbWriteable, Debug)]
+struct TickHealthStats {
+    time: Timestamp,
+    total_count: u64,
+    unhealthy_count: u64,
+    lagging_count: u64,
+}
+
 lazy_static::lazy_static! {
     static ref START_TIME: Instant = Instant::now();
 }
@@ -83,6 +91,8 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResu
         lyrics_musixmatch,
     } = UserService::get_stats(&app_state.db, None).await?;
 
+    let tick_health_status = utils::tick_health().await;
+
     let time = Timestamp::Seconds(Utc::now().timestamp() as u128);
 
     let metrics = vec![
@@ -104,6 +114,13 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResu
             musixmatch: lyrics_musixmatch,
         }
         .into_query("lyrics"),
+        TickHealthStats {
+            time,
+            total_count: tick_health_status.total as u64,
+            unhealthy_count: tick_health_status.unhealthy.len() as u64,
+            lagging_count: tick_health_status.lagging.len() as u64,
+        }
+        .into_query("tick_health"),
         Uptime::new(time).into_query("uptime"),
     ];
 

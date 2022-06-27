@@ -1,13 +1,52 @@
+use std::collections::HashMap;
 use std::time::Duration;
 
 use again::RetryPolicy;
 use chrono::{NaiveDateTime, SubsecRound, Utc};
 use lazy_static::lazy_static;
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, RwLock};
+use tokio::time::Instant;
+
+lazy_static! {
+    pub static ref TICK_STATUS: RwLock<HashMap<(&'static str, Duration), Instant>> =
+        RwLock::new(HashMap::new());
+}
+
+#[derive(Clone, Debug)]
+pub struct TickHealthStatus {
+    pub lagging: Vec<&'static str>,
+    pub unhealthy: Vec<&'static str>,
+    pub total: usize,
+}
+
+pub async fn tick_health() -> TickHealthStatus {
+    let hash = TICK_STATUS.read().await;
+
+    let now = Instant::now();
+
+    let mut lagging = vec![];
+    let mut unhealthy = vec![];
+    for ((module, period), last) in hash.iter() {
+        let diff = now.duration_since(*last);
+
+        if diff >= (*period * 3) {
+            unhealthy.push(*module);
+        } else if diff >= (*period * 2) {
+            lagging.push(*module);
+        }
+    }
+
+    TickHealthStatus {
+        unhealthy,
+        lagging,
+        total: hash.len(),
+    }
+}
 
 macro_rules! tick {
     ($period:expr, $code:block) => {
         let __period = $period;
+        let __health_check_key = (concat!(module_path!(), ":", line!()), __period);
         let mut __interval = ::tokio::time::interval(__period);
         let mut __iteration: u64 = 0;
         loop {
@@ -17,11 +56,23 @@ macro_rules! tick {
                 _ = __interval.tick() => {},
                 _ = $crate::utils::ctrl_c() => {
                     ::tracing::debug!(tick_iteration = __iteration, "Received terminate signal. Stop processing");
+                    $crate::utils::TICK_STATUS
+                        .write()
+                        .await
+                        .remove(&__health_check_key);
                     break;
                 },
             }
 
+            // __interval.tick() can lag behind
             let __start = ::tokio::time::Instant::now();
+
+            {
+                $crate::utils::TICK_STATUS
+                    .write()
+                    .await
+                    .insert(__health_check_key, __start);
+            }
 
             async { $code }
                 .instrument(tracing::info_span!("tick", tick_iteration = __iteration))

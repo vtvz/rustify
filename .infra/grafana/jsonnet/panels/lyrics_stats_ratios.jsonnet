@@ -1,5 +1,5 @@
 {
-  create(ds): {
+  create(ds, gridPos): {
     id: 10,
     title: 'Lyrics Stats Ratios',
     type: 'timeseries',
@@ -55,7 +55,7 @@
       },
       overrides: [],
     },
-    gridPos: { h: 12, w: 12, x: 12, y: 14 },
+    gridPos: gridPos,
     options: {
       legend: {
         calcs: ['lastNotNull', 'range'],

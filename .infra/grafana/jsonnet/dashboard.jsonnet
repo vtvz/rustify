@@ -14,7 +14,8 @@ local panel = {
   lyrics_stats_ratios: import './panels/lyrics_stats_ratios.jsonnet',
   process_timings: import './panels/process_timings.jsonnet',
   rustify_logs: import './panels/rustify_logs.jsonnet',
-  test: import './panels/test.jsonnet',
+  users_checked: import './panels/users_checked.jsonnet',
+  tick_status: import './panels/tick_status.jsonnet',
   track_status: import './panels/track_status.jsonnet',
   uptime: import './panels/uptime.jsonnet',
 };
@@ -73,12 +74,13 @@ local template = {
     {
       collapsed: true,
       id: 14,
-      title: 'Test',
+      title: 'WIP',
       type: 'row',
       gridPos: { h: 1, w: 24, x: 0, y: 0 },
       panels: [
-        panel.test.create(ds),
-        panel.uptime.create(ds),
+        panel.users_checked.create(ds, { h: 8, w: 12, x: 0, y: 1 }),
+        panel.uptime.create(ds, { h: 8, w: 12, x: 12, y: 1 }),
+        panel.tick_status.create(ds, { h: 8, w: 12, x: 0, y: 9 }),
       ],
     },
     {
@@ -87,11 +89,11 @@ local template = {
       type: 'row',
       gridPos: { h: 1, w: 24, x: 0, y: 1 },
     },
-    panel.track_status.create(ds),
-    panel.process_timings.create(ds),
-    panel.lyrics.create(ds),
-    panel.lyrics_stats_ratios.create(ds),
-    panel.rustify_logs.create(ds),
+    panel.track_status.create(ds, { h: 12, w: 12, x: 0, y: 2 }),
+    panel.process_timings.create(ds, { h: 12, w: 12, x: 12, y: 2 }),
+    panel.lyrics.create(ds, { h: 12, w: 12, x: 0, y: 14 }),
+    panel.lyrics_stats_ratios.create(ds, { h: 12, w: 12, x: 12, y: 14 }),
+    panel.rustify_logs.create(ds, { h: 15, w: 24, x: 0, y: 18 }),
   ],
   tags: [],
 }

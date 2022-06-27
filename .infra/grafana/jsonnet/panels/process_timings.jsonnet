@@ -1,5 +1,5 @@
 {
-  create(ds): {
+  create(ds, gridPos): {
     id: 6,
     title: 'Process Timings',
     type: 'timeseries',
@@ -89,7 +89,7 @@
         },
       ],
     },
-    gridPos: { h: 12, w: 12, x: 12, y: 2 },
+    gridPos: gridPos,
     options: {
       legend: {
         displayMode: 'table',

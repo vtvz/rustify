@@ -1,10 +1,10 @@
 {
-  create(ds): {
+  create(ds, gridPos): {
     id: 2,
     datasource: ds.loki,
     title: 'Rustify Logs',
     type: 'logs',
-    gridPos: { h: 15, w: 24, x: 0, y: 18 },
+    gridPos: gridPos,
     options: {
       dedupStrategy: 'exact',
       enableLogDetails: true,

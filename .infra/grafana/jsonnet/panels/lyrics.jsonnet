@@ -1,5 +1,5 @@
 {
-  create(ds): {
+  create(ds, gridPos): {
     id: 8,
     title: 'Lyrics',
     type: 'timeseries',
@@ -51,7 +51,7 @@
       },
       overrides: [],
     },
-    gridPos: { h: 12, w: 12, x: 0, y: 14 },
+    gridPos: gridPos,
     options: {
       legend: {
         calcs: ['lastNotNull', 'diff'],

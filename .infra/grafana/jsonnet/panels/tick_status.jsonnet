@@ -1,7 +1,7 @@
 {
   create(ds, gridPos): {
-    id: 4,
-    title: 'Track Status',
+    id: 1,
+    title: 'Tick Status',
     type: 'timeseries',
     datasource: ds.influx,
     fieldConfig: {
@@ -53,34 +53,7 @@
           ],
         },
       },
-      overrides: [
-        {
-          __systemRef: 'hideSeriesFrom',
-          matcher: {
-            id: 'byNames',
-            options: {
-              mode: 'exclude',
-              names: [
-                'ignored',
-                'skipped',
-                'disliked',
-              ],
-              prefix: 'All except:',
-              readOnly: true,
-            },
-          },
-          properties: [
-            {
-              id: 'custom.hideFrom',
-              value: {
-                legend: false,
-                tooltip: false,
-                viz: true,
-              },
-            },
-          ],
-        },
-      ],
+      overrides: [],
     },
     gridPos: gridPos,
     options: {
@@ -102,9 +75,9 @@
             |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
             |> filter(fn: (r) => r["app"] == "rustify")
             |> filter(fn: (r) => r["instance"] == "$instance")
-            |> filter(fn: (r) => r["_measurement"] == "track_status")
-            |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
-            |> yield(name: "mean")
+            |> filter(fn: (r) => r["_measurement"] == "tick_health")
+            |> aggregateWindow(every: v.windowPeriod, fn: min, createEmpty: false)
+            |> yield(name: "min")
         |||,
         refId: 'A',
       },

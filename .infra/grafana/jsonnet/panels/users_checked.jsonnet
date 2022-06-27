@@ -1,7 +1,7 @@
 {
-  create(ds): {
+  create(ds, gridPos): {
     id: 16,
-    title: 'Test',
+    title: 'Users Checked',
     type: 'timeseries',
     datasource: ds.influx,
     fieldConfig: {
@@ -20,7 +20,7 @@
           hideFrom: {
             legend: false,
             tooltip: false,
-            viz: true,
+            viz: false,
           },
           lineInterpolation: 'linear',
           lineWidth: 1,
@@ -81,7 +81,7 @@
         },
       ],
     },
-    gridPos: { h: 8, w: 12, x: 0, y: 1 },
+    gridPos: gridPos,
     options: {
       legend: {
         calcs: [],

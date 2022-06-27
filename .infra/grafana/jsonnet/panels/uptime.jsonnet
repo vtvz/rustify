@@ -1,5 +1,5 @@
 {
-  create(ds): {
+  create(ds, gridPos): {
     id: 18,
     title: 'Uptime',
     type: 'timeseries',
@@ -56,7 +56,7 @@
       },
       overrides: [],
     },
-    gridPos: { h: 8, w: 12, x: 12, y: 1 },
+    gridPos: gridPos,
     options: {
       legend: {
         calcs: [

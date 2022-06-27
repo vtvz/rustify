@@ -4,11 +4,14 @@
     name: 'instance',
     datasource: ds.influx,
     query: |||
-      from(bucket: v.bucket)
-        |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
-        |> filter(fn: (r) => r["app"] == "rustify")
-        |> keep(columns: ["instance"])
-        |> distinct(column: "instance")
+      import "influxdata/influxdb/v1"
+      v1.tagValues(
+          bucket: v.bucket,
+          tag: "instance",
+          predicate: (r) => true,
+          start: v.timeRangeStart,
+          stop: v.timeRangeStop
+      )
     |||,
     current: {
       selected: false,
@@ -19,7 +22,7 @@
     includeAll: false,
     multi: false,
     options: [],
-    refresh: 1,
+    refresh: 2,
     regex: '',
     skipUrlSync: false,
     sort: 0,
