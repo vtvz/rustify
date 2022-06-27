@@ -3,6 +3,8 @@ services:
   app:
     build:
       context: .
+      args:
+        EXECUTABLE_PATH: "target/x86_64-unknown-linux-gnu/release"
     env_file:
       - .env.deploy
     restart: always

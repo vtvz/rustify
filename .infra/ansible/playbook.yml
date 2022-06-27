@@ -5,6 +5,7 @@
     files_path: ../..
     backups_path: "{{ files_path }}/var/backup"
     backup_path: "{{ backups_path }}/{{ ansible_date_time.iso8601 }}"
+    executable_path: "target/x86_64-unknown-linux-gnu/release/rustify"
 
   roles:
     - role: geerlingguy.docker
@@ -73,15 +74,8 @@
             path: "{{ rustify_backup_tmp.path }}"
             state: absent
 
-    - name: Build and Deploy
+    - name: Deploy
       block:
-        - name: Cargo Build
-          ansible.builtin.command:
-            cmd: cargo build -r
-          delegate_to: localhost
-          register: cargo_build_out
-          changed_when: cargo_build_out.stderr is search('Compiling')
-
         - name: Create Directories
           ansible.builtin.file:
             path: "{{ item }}"
@@ -90,7 +84,7 @@
           loop:
             - "{{ deploy_path }}"
             - "{{ deploy_path }}/var"
-            - "{{ deploy_path }}/target/release"
+            - "{{ deploy_path }}/{{ executable_path | dirname }}"
 
         - name: Copy Text Files
           ansible.builtin.copy:
@@ -109,7 +103,7 @@
             dest: "{{ deploy_path }}/{{ item }}"
             mode: 0755
           loop:
-            - target/release/rustify
+            - "{{ executable_path }}"
 
         - name: Docker Compose Up
           community.docker.docker_compose:

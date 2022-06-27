@@ -2,8 +2,14 @@
   create(ds): {
     label: 'Instance',
     name: 'instance',
-    datasource: ds.loki,
-    query: 'label_values({app="rustify"} , instance)',
+    datasource: ds.influx,
+    query: |||
+      from(bucket: v.bucket)
+        |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+        |> filter(fn: (r) => r["app"] == "rustify")
+        |> keep(columns: ["instance"])
+        |> distinct(column: "instance")
+    |||,
     current: {
       selected: false,
       text: 'prod',

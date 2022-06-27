@@ -4,11 +4,11 @@ terraform {
   required_providers {
     grafana = {
       source  = "grafana/grafana"
-      version = "1.23.0"
+      version = ">= 1.23.0"
     }
     jsonnet = {
       source  = "alxrem/jsonnet"
-      version = "2.1.0"
+      version = ">= 2.1.0"
     }
   }
 }
