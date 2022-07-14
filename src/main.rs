@@ -1,3 +1,4 @@
+#![allow(clippy::explicit_auto_deref)]
 #![warn(clippy::unwrap_used)]
 #![feature(
     option_result_contains,

@@ -44,7 +44,7 @@ impl StartKeyboard {
 
 pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
     if !state.is_spotify_authed().await {
-        send_register_invite(m, bot, state).await?;
+        send_register_invite(m.chat.id, bot, state).await?;
 
         return Ok(true);
     }

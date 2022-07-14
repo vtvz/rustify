@@ -23,7 +23,7 @@ use crate::{profanity, spotify, telegram};
 
 pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
     let spotify = state.spotify.read().await;
-    let track = match CurrentlyPlaying::get(&*spotify).await {
+    let track = match CurrentlyPlaying::get(&spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             bot.send_message(m.chat.id, message.to_string())
@@ -43,13 +43,9 @@ fn extract_id(url: &str) -> Option<TrackId> {
         static ref RE: Regex = Regex::new("^/track/([a-zA-Z0-9]+)$").expect("Should be compilable");
     }
 
-    let Ok(url) = url::Url::parse(url) else {
-        return None;
-    };
+    let url = url::Url::parse(url).ok()?;
 
-    let Some(cap) = RE.captures(url.path()) else {
-        return None;
-    };
+    let cap = RE.captures(url.path())?;
 
     let id = TrackId::from_str(&cap[1]);
 

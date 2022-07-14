@@ -3,6 +3,7 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::errors::GenericResult;
 use crate::state::UserState;
+use crate::telegram::helpers;
 use crate::telegram::keyboards::StartKeyboard;
 
 pub async fn handle(
@@ -43,6 +44,8 @@ pub async fn handle(
             .reply_markup(StartKeyboard::markup())
             .send()
             .await?;
+
+            helpers::send_register_invite(ChatId(user_id_int), bot, state).await?;
         },
         "deny" => {
             state.app.whitelist.deny(&state.app.db, &user_id).await?;

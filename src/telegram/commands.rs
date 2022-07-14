@@ -70,14 +70,16 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
                     .send()
                     .await?;
             } else {
-                super::helpers::send_register_invite(m, bot, state).await?;
+                super::helpers::send_register_invite(m.chat.id, bot, state).await?;
             }
         },
         Command::Dislike => return super::handlers::dislike::handle(m, bot, state).await,
         Command::Cleanup => return super::handlers::cleanup::handle(m, bot, state).await,
         Command::Stats => return super::handlers::stats::handle(m, bot, state).await,
         Command::Details => return super::handlers::details::handle_current(m, bot, state).await,
-        Command::Register => return super::helpers::send_register_invite(m, bot, state).await,
+        Command::Register => {
+            return super::helpers::send_register_invite(m.chat.id, bot, state).await;
+        },
         Command::Help => {
             bot.send_message(m.chat.id, Command::descriptions().to_string())
                 .send()
