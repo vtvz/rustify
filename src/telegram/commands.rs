@@ -10,7 +10,7 @@ use crate::state::UserState;
 use crate::user_service::UserService;
 
 #[derive(BotCommands, PartialEq, Eq, Debug)]
-#[command(rename = "lowercase", parse_with = "split")]
+#[command(rename_rule = "lowercase", parse_with = "split")]
 pub enum Command {
     #[command(description = "start")]
     Start,

@@ -65,7 +65,7 @@ impl TrackStatusService {
             .count(db)
             .await?;
 
-        Ok(res)
+        Ok(res as _)
     }
 
     pub async fn sum_skips(db: &impl ConnectionTrait, user_id: Option<&str>) -> GenericResult<u32> {

@@ -3,10 +3,11 @@
 #![feature(
     option_result_contains,
     stmt_expr_attributes,
-    let_else,
-    backtrace,
     box_patterns,
-    once_cell
+    once_cell,
+    closure_track_caller,
+    error_generic_member_access,
+    provide_any
 )]
 
 #[macro_use]

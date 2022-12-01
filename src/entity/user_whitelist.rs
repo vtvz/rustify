@@ -103,12 +103,6 @@ impl TryFrom<&str> for Status {
     }
 }
 
-impl ToString for Status {
-    fn to_string(&self) -> String {
-        self.to_value()
-    }
-}
-
 impl Default for Status {
     fn default() -> Self {
         Self::Pending

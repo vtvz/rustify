@@ -1,4 +1,3 @@
-use std::backtrace::Backtrace;
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
@@ -46,10 +45,6 @@ impl Display for GenericAnyhowedError {
 impl Error for GenericAnyhowedError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         Error::source(&*self.0)
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        Error::backtrace(&*self.0)
     }
 }
 

@@ -51,7 +51,7 @@ pub async fn init() -> GenericResult<()> {
     let builder = subscriber.with(loki).with(
         Targets::new()
             .with_target(
-                &env!("CARGO_PKG_NAME").replace('-', "_"),
+                env!("CARGO_PKG_NAME").replace('-', "_"),
                 tracing::Level::TRACE,
             )
             .with_target("teloxide", tracing::Level::INFO)
