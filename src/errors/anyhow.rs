@@ -75,7 +75,7 @@ mod tests {
         let err = GenericError::StrumParseError(strum::ParseError::VariantNotFound);
         let res: Result<(), _> = Err(err);
 
-        let err = res.context("add context").unwrap_err();
+        let err = res.context("add context").expect_err("It's already error");
 
         assert!(matches!(
             err,
