@@ -6,37 +6,37 @@ rust-version = "1.65.0"
 
 [dependencies]
 again = "0.1.2"
-anyhow = "1.0.66"
-cached = "0.40.0"
-chrono = "0.4.23"
+anyhow = "1.0.71"
+cached = "0.43.0"
+chrono = "0.4.24"
 convert_case = "0.6.0"
 derive_more = "0.99.17"
 dotenv = "0.15.0"
 genius-rs = "0.5.0"
-indoc = "1.0.7"
-influxdb = { version = "0.5.2", features = ["derive"] }
-isolang = "2.2.0"
+indoc = "2.0.1"
+influxdb = { version = "0.6.0", features = ["derive"] }
+isolang = "2.3.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
 log = "0.4.17"
 rand = "0.8.5"
-regex = { version = "1.7.0", features = ["pattern"] }
-reqwest = "0.11.13"
-rspotify = "0.11.5"
-rustrict = { version = "0.5.5", features = ["customize"] }
-scraper = "0.13.0"
-serde = "1.0.148"
-serde_json = "1.0.89"
-sqlx = { version = "0.6.2", features = ["sqlite"] }
+regex = { version = "1.8.1", features = ["pattern"] }
+reqwest = "0.11.18"
+rspotify = "0.11.7"
+rustrict = { version = "0.7.6", features = ["customize"] }
+scraper = "0.16.0"
+serde = "1.0.163"
+serde_json = "1.0.96"
+sqlx = { version = "0.6.3", features = ["sqlite"] }
 strsim = "0.10.0"
 strum = "0.24.1"
 strum_macros = "0.24.3"
-thiserror = "1.0.37"
+thiserror = "1.0.40"
 # todo try to remove after next teloxide upgrade
-tokio-util = { version = "0.7.4", features = ["codec"] }
+tokio-util = { version = "0.7.8", features = ["codec"] }
 tracing = "0.1.37"
-tracing-loki = "0.2.1"
-tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+tracing-loki = "0.2.2"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 url = "2.3.1"
 whatlang = "0.16.2"
 
@@ -46,11 +46,11 @@ features = ["pkg-config", "vcpkg", "bundled", "unlock_notify", "bundled-sqlciphe
 
 [dependencies.sea-orm]
 default-features = false
-version = "0.10.4"
+version = "0.11.3"
 features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print", "with-chrono"]
 
 [dependencies.teloxide]
-version = "0.11.3"
+version = "0.12.2"
 features = [
     "macros",
     "sqlite-storage",
@@ -58,15 +58,15 @@ features = [
 ]
 
 [dependencies.tokio]
-version = "1.22.0"
+version = "1.28.1"
 features = ["rt-multi-thread", "macros"]
 
 [features]
 
 [build-dependencies.vergen]
-version = "7.4.3"
+version = "8.1.3"
 default-features = false
-features = ["build", "git"]
+features = ["build", "git", "gitcl"]
 
 [profile.dev]
 panic = "abort"

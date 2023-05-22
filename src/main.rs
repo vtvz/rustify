@@ -1,10 +1,9 @@
 #![allow(clippy::explicit_auto_deref)]
 #![warn(clippy::unwrap_used)]
 #![feature(
-    option_result_contains,
+    const_option_ext,
     stmt_expr_attributes,
     box_patterns,
-    once_cell,
     closure_track_caller,
     error_generic_member_access,
     provide_any

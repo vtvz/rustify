@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::slice::Iter;
 
 use lazy_static::lazy_static;
-use rustrict::Type;
+use rustrict::{Trie, Type};
 use teloxide::utils::markdown;
 
 lazy_static! {
@@ -15,16 +15,12 @@ pub struct Manager;
 
 impl Manager {
     pub fn add_word(word: &str) {
-        unsafe {
-            rustrict::add_word(word, *TYPE_CUSTOM);
-        }
+        unsafe { Trie::customize_default().set(word, *TYPE_CUSTOM) }
         tracing::debug!(word, "Added custom word");
     }
 
     pub fn remove_word(word: &str) {
-        unsafe {
-            rustrict::add_word(word, Type::NONE);
-        }
+        unsafe { Trie::customize_default().set(word, Type::NONE) }
         tracing::debug!(word, "Removed custom word");
     }
 
@@ -83,7 +79,7 @@ impl CheckResult {
                     .into_iter()
                     .enumerate()
                     .filter_map(|(i, c)| {
-                        if !censored.chars().nth(i).contains(&c) {
+                        if censored.chars().nth(i) != Some(c) {
                             Some(i)
                         } else {
                             None

@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::str::FromStr;
 
 use anyhow::anyhow;
 use convert_case::{Case, Casing};
@@ -47,7 +46,7 @@ fn extract_id(url: &str) -> Option<TrackId> {
 
     let cap = RE.captures(url.path())?;
 
-    let id = TrackId::from_str(&cap[1]);
+    let id = TrackId::from_id(cap[1].to_owned());
 
     id.ok()
 }
@@ -61,7 +60,7 @@ pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> GenericRes
         return Ok(false);
     };
 
-    let track = state.spotify.read().await.track(&track_id).await?;
+    let track = state.spotify.read().await.track(track_id).await?;
 
     common(m, bot, state, track).await
 }
@@ -89,7 +88,7 @@ async fn common(
         },
     };
 
-    let features = spotify.track_features(&track_id).await?;
+    let features = spotify.track_features(track_id.clone()).await?;
 
     let modality = match features.mode {
         Modality::Minor => "Minor",
@@ -133,7 +132,7 @@ async fn common(
         let artist_ids: Vec<_> = track
             .artists
             .iter()
-            .filter_map(|artist| artist.id.as_ref())
+            .filter_map(|artist| artist.id.clone())
             .collect();
 
         let artists = spotify.artists(artist_ids).await?;

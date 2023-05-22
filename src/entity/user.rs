@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use sea_orm::entity::prelude::*;
+use sea_orm::prelude::async_trait::async_trait;
 use sea_orm::Set;
 
 use crate::utils::Clock;
@@ -30,8 +31,12 @@ pub struct Model {
     pub updated_at: chrono::NaiveDateTime,
 }
 
+#[async_trait]
 impl ActiveModelBehavior for ActiveModel {
-    fn before_save(mut self, insert: bool) -> Result<Self, DbErr> {
+    async fn before_save<C>(mut self, _db: &C, insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
         self.updated_at = Set(Clock::now());
         if insert {
             self.created_at = Set(Clock::now());

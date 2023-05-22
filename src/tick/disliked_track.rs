@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use rspotify::clients::OAuthClient;
 use rspotify::model::{
     Context as SpotifyContext,
@@ -46,12 +44,12 @@ pub async fn handle(
 
         match context._type {
             SpotifyType::Playlist => {
-                let track_id = TrackId::from_str(&track_id)?;
-                let hate: Option<&dyn PlayableId> = Some(&track_id);
+                let track_id = TrackId::from_id(&track_id)?;
+                let hate: Option<PlayableId> = Some(track_id.into());
 
                 let res = spotify
                     .playlist_remove_all_occurrences_of_items(
-                        &PlaylistId::from_str(&context.uri)?,
+                        PlaylistId::from_id(&context.uri)?,
                         hate,
                         None,
                     )
@@ -67,10 +65,10 @@ pub async fn handle(
             },
 
             SpotifyType::Collection => {
-                let track_id = TrackId::from_str(&track_id)?;
+                let track_id = TrackId::from_id(&track_id)?;
 
                 spotify
-                    .current_user_saved_tracks_delete(Some(&track_id))
+                    .current_user_saved_tracks_delete(Some(track_id))
                     .await?;
 
                 UserService::increase_stats_query(&state.user_id)

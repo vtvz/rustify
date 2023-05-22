@@ -1,7 +1,11 @@
-use vergen::{vergen, Config};
+use vergen::EmitBuilder;
 
 fn main() {
     println!("cargo:rerun-if-changed=migrations");
 
-    vergen(Config::default()).expect("Should do the trick");
+    EmitBuilder::builder()
+        .all_build()
+        .all_git()
+        .emit()
+        .expect("Should do the trick");
 }

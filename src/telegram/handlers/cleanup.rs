@@ -40,7 +40,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
     } = retry(|| spotify.current_user_saved_tracks_manual(None, Some(1), None)).await?;
 
     for chunk in disliked.chunks(50) {
-        retry(|| spotify.current_user_saved_tracks_delete(chunk))
+        retry(|| spotify.current_user_saved_tracks_delete(chunk.iter().cloned()))
             .await
             .context("Cannot remove occurrences of items for saved songs")?;
     }
@@ -75,11 +75,20 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<
 
             before += playlist.tracks.total;
 
+            // let chunks: Vec<Vec<TrackId>> = ;
+
             for chunk in disliked.chunks(100) {
                 retry(|| {
-                    let hate: Vec<&dyn PlayableId> =
-                        chunk.iter().map(|item| item as &dyn PlayableId).collect();
-                    spotify.playlist_remove_all_occurrences_of_items(&playlist.id, hate, None)
+                    let hate: Vec<PlayableId> = chunk
+                        .iter()
+                        .map(|item| PlayableId::Track(item.clone()))
+                        .collect();
+
+                    spotify.playlist_remove_all_occurrences_of_items(
+                        playlist.id.clone(),
+                        hate,
+                        None,
+                    )
                 })
                 .await
                 .context(format!(

@@ -171,11 +171,11 @@ impl Musixmatch {
             ),
             (
                 "q_duration",
-                track.duration.as_secs_f64().to_string().as_str(),
+                track.duration.num_seconds().to_string().as_str(),
             ),
             (
                 "f_subtitle_length",
-                track.duration.as_secs().to_string().as_str(),
+                track.duration.num_seconds().to_string().as_str(),
             ),
             ("usertoken", usertoken.as_str()),
         ]);

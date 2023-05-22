@@ -36,7 +36,7 @@ async fn process_spotify_code(
     state: &UserState,
     code: String,
 ) -> GenericResult<bool> {
-    let mut instance = state.spotify.write().await;
+    let instance = state.spotify.write().await;
 
     if let Err(err) = instance.request_token(&code).await {
         bot.send_message(m.chat.id, "Cannot retrieve token. Code is probably broken. Run /register command and try again please")

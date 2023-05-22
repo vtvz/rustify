@@ -1,4 +1,4 @@
-use rspotify::model::{Id, TrackId};
+use rspotify::model::TrackId;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::Expr;
 use sea_orm::ActiveValue::Set;
@@ -139,7 +139,7 @@ impl TrackStatusService {
         db: &impl ConnectionTrait,
         user_id: &str,
         status: TrackStatus,
-    ) -> GenericResult<Vec<TrackId>> {
+    ) -> GenericResult<Vec<TrackId<'static>>> {
         let tracks: Vec<TrackStatusModel> = Self::builder()
             .status(Some(status))
             .user_id(Some(user_id))
@@ -148,8 +148,8 @@ impl TrackStatusService {
             .await?;
 
         let res: Vec<_> = tracks
-            .iter()
-            .map(|track| TrackId::from_id(track.track_id.as_ref()))
+            .into_iter()
+            .map(|track| TrackId::from_id(track.track_id))
             .collect::<Result<_, _>>()?;
 
         Ok(res)
