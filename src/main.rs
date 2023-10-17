@@ -5,8 +5,7 @@
     stmt_expr_attributes,
     box_patterns,
     closure_track_caller,
-    error_generic_member_access,
-    provide_any
+    error_generic_member_access
 )]
 
 #[macro_use]

@@ -1,11 +1,10 @@
-set positional-arguments
+!include .ws/Justfile
+
 set dotenv-load := true
+set positional-arguments
 
 server := env_var('DEPLOY_USER') + "@" + env_var('DEPLOY_HOST')
 path := env_var_or_default("DEPLOY_PATH", "/srv/rustify")
-
-just := quote(just_executable())
-this := just + " -f " + quote(justfile())
 
 generate:
   sea-orm-cli generate entity -o src/entity.example --expanded-format
@@ -66,6 +65,3 @@ watch cmd="run":
 
 xwatch cmd="run":
    x-terminal-emulator -e {{ this }} watch {{ cmd }}
-
-ws *args:
-  {{ just }} -f {{ quote(join(justfile_directory(), ".ws.justfile")) }} "$@"
