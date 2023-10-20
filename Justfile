@@ -19,26 +19,14 @@ fix:
   cargo clippy --fix --allow-dirty --allow-staged
   ansible-lint --write .infra/ansible/playbook.yml
 
-build:
-  docker pull rustlang/rust:nightly
-  docker run --rm -it -u "$(id -u):$(id -g)" -e CARGO_INCREMENTAL=1 \
-    -v "$PWD:/build/" -v "$PWD/var/docker/cargo-registry:/usr/local/cargo/registry" -w /build/ \
-    rustlang/rust:nightly \
-    cargo build --target=x86_64-unknown-linux-gnu --release
+docker-push:
+	docker push "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}"
+
+docker-build:
+	docker build --progress plain -t "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}" .
 
 deploy:
-  {{ this }} build
-  ansible-galaxy install -r .infra/ansible/requirements.yml
-  ansible-playbook -i {{ env_var('DEPLOY_HOST') }}, -u {{ env_var('DEPLOY_USER') }} -e {{ quote("deploy_path=" + path) }} .infra/ansible/playbook.yml
-
-_deploy-old:
-  cargo build -r
-  ssh "{{ server }}" -- mkdir -p "{{ path }}/"
-  rsync -P -e ssh "docker-compose.yml" "Dockerfile" "target/release/rustify" ".env.deploy" "proxychains.conf" "{{ server }}:{{ path }}/"
-  ssh "{{ server }}" -- mkdir -p "{{ path }}/target/release"
-  ssh "{{ server }}" -- cp "{{ path }}/rustify" "{{ path }}/target/release/"
-  {{ this }} compose build
-  {{ this }} compose up --force-recreate -d
+  cd _infra/ansible && just deploy "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}"
 
 get-db:
   scp "{{ server }}:{{ path }}/var/data.db" "var/data.db"

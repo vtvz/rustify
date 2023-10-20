@@ -1,0 +1,13 @@
+---
+- name: Apt Install Prerequisites
+  ansible.builtin.apt:
+    name: [python3, python3-pip]
+    state: latest
+    update_cache: true
+
+- name: Install Python Packages
+  ansible.builtin.pip:
+    name:
+      - docker
+      - docker-compose
+    state: present

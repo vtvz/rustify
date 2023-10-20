@@ -1,3 +1,10 @@
-target/debug
-target/release/*
-!target/release/rustify
+target
+.dockerignore
+.env*
+.gitignore
+.ws.*
+ws.*
+Makefile
+Justfile
+_infra
+var

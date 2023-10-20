@@ -1,0 +1,7 @@
+deploy docker_image=`echo ghcr.io/vtvz/rustify:$(git describe --abbrev=10 --always)`:
+  ansible-galaxy install -r requirements.yml
+  ansible-playbook \
+    -i inventory/hosts.ini \
+    -e rustify_docker_image="{{ docker_image }}" \
+    -t project \
+    playbook.yml
