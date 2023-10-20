@@ -3,6 +3,7 @@ use std::str::FromStr;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{PrivateUser, SubscriptionLevel};
 use rspotify::AuthCodeSpotify;
+use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxSqliteConnector};
 use sqlx::sqlite::SqliteConnectOptions;
 use teloxide::Bot;
@@ -95,6 +96,19 @@ impl AppState {
             .unwrap_or_default()
             .split(',')
             .for_each(profanity::Manager::remove_word);
+
+        {
+            let mut r = Replacements::new();
+            for b in b'a'..=b'z' {
+                let c = b as char;
+                r.insert(c, c); // still detect lowercased profanity.
+                r.insert(c.to_ascii_uppercase(), c); // still detect capitalized profanity.
+            }
+
+            unsafe {
+                *Replacements::customize_default() = r;
+            }
+        }
 
         let bot = Bot::new(
             dotenv::var("TELEGRAM_BOT_TOKEN").context("Need TELEGRAM_BOT_TOKEN variable")?,
