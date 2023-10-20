@@ -1,0 +1,12 @@
+---
+- name: Simple Rustify Deploy Ansible Playbook
+  hosts: all
+
+  roles:
+    - role: geerlingguy.docker
+      docker_package_state: latest
+      tags: [init, docker]
+    - role: system
+      tags: [init, system]
+    - role: rustify
+      tags: [project, rustify]

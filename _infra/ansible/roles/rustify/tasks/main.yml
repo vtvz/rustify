@@ -1,0 +1,22 @@
+---
+- name: Create Directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0644"
+  loop:
+    - "{{ rustify_deploy_path }}"
+    - "{{ rustify_deploy_path }}/var"
+
+- name: Docker Compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ rustify_deploy_path }}/docker-compose.yml"
+    mode: "0644"
+
+- name: Docker Compose Up
+  community.docker.docker_compose:
+    project_src: "{{ rustify_deploy_path }}"
+    build: true
+    state: present
+    recreate: always

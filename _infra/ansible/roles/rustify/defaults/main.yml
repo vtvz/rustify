@@ -1,0 +1,2 @@
+rustify_deploy_path: "/srv/rustify"
+rustify_env: {}

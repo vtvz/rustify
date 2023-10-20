@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  app:
+    image: "{{ rustify_docker_image }}"
+    environment:
+{% for (key, value) in rustify_env.items() %}
+      {{ key }}: {{ value | to_json }}
+{% endfor %}
+    restart: always
+    volumes:
+      - ./var:/var/app
