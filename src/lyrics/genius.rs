@@ -42,9 +42,7 @@ impl GeniusLocal {
     pub async fn search_for_track(&self, track: &FullTrack) -> GenericResult<Option<SearchResult>> {
         let res = search_for_track(self, track).await?;
 
-        let Some(mut res) = res else {
-            return Ok(None)
-        };
+        let Some(mut res) = res else { return Ok(None) };
 
         res.lyrics = self.get_lyrics(&res).await?;
 

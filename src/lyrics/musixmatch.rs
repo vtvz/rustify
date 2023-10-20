@@ -82,11 +82,11 @@ impl super::SearchResult for Lyrics {
 
     fn line_index_name(&self, index: usize) -> String {
         let Some(subtitle) = &self.subtitle else {
-            return (index + 1).to_string()
+            return (index + 1).to_string();
         };
 
         let Some(line) = subtitle.get(index) else {
-            return (index + 1).to_string()
+            return (index + 1).to_string();
         };
 
         let secs = line.0.as_secs();

@@ -49,13 +49,17 @@ async fn process_spotify_code(
     let token = instance.token.lock().await;
 
     let Ok(token) = token else {
-        bot.send_message(m.chat.id,"Cannot retrieve token. Try again").send().await?;
+        bot.send_message(m.chat.id, "Cannot retrieve token. Try again")
+            .send()
+            .await?;
 
         return Ok(true);
     };
 
     let Some(token) = token.clone() else {
-        bot.send_message(m.chat.id, "Token is not retrieved. Try again").send().await?;
+        bot.send_message(m.chat.id, "Token is not retrieved. Try again")
+            .send()
+            .await?;
 
         return Ok(true);
     };

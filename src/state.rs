@@ -23,7 +23,7 @@ pub struct AppState {
 
 fn influx() -> GenericResult<Option<InfluxClient>> {
     let Ok(api_url) = dotenv::var("INFLUX_API_URL") else {
-        return Ok(None)
+        return Ok(None);
     };
 
     if api_url.is_empty() {

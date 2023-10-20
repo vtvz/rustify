@@ -189,27 +189,28 @@ async fn common(
     };
 
     let Some(hit) = state.app.lyrics.search_for_track(&track).await? else {
-        bot.send_message(m.chat.id,
+        bot.send_message(
+            m.chat.id,
             formatdoc!(
-                    "
-                        {track_name}
+                "
+                    {track_name}
 
-                        {features}
-                        {genres_line}
-                        `No lyrics found`
-                    ",
-                    track_name = spotify::utils::create_track_tg_link(&track),
-                    features = features.trim(),
-                    genres_line = genres_line,
-                )
-            )
-            .parse_mode(ParseMode::MarkdownV2)
-            .reply_to_message_id(m.id)
-            .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-                keyboard,
-            )))
-            .send()
-            .await?;
+                    {features}
+                    {genres_line}
+                    `No lyrics found`
+                ",
+                track_name = spotify::utils::create_track_tg_link(&track),
+                features = features.trim(),
+                genres_line = genres_line,
+            ),
+        )
+        .parse_mode(ParseMode::MarkdownV2)
+        .reply_to_message_id(m.id)
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            keyboard,
+        )))
+        .send()
+        .await?;
 
         return Ok(true);
     };

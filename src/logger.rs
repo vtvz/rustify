@@ -10,7 +10,7 @@ use crate::errors::GenericResult;
 
 pub async fn loki() -> GenericResult<Option<Layer>> {
     let Ok(loki_url) = dotenv::var("LOKI_URL") else {
-        return Ok(None)
+        return Ok(None);
     };
 
     if loki_url.is_empty() {

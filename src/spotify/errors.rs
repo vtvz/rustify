@@ -43,7 +43,10 @@ pub enum Error {
 
 impl Error {
     pub async fn from_generic(err: &mut GenericError) -> GenericResult<Option<Error>> {
-        let GenericError::RspotifyClientError(ClientError::Http(box HttpError::StatusCode(response))) = err else {
+        let GenericError::RspotifyClientError(ClientError::Http(box HttpError::StatusCode(
+            response,
+        ))) = err
+        else {
             return Ok(None);
         };
 
