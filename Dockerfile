@@ -1,8 +1,12 @@
 FROM rustlang/rust:nightly as build
 
-RUN \
-  --mount=type=cache,target=/usr/local/cargo/registry \
-  cargo install sccache && mkdir -p /var/sccache
+ARG SCCACHE_VERSTION=0.5.4
+
+RUN cd /tmp \
+  && curl -fL https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSTION}/sccache-v${SCCACHE_VERSTION}-x86_64-unknown-linux-musl.tar.gz | tar zx \
+  && mv **/sccache /usr/local/bin/ \
+  && rm -rf sccache-* \
+  && mkdir -p /var/sccache
 
 ENV SCCACHE_DIR /var/sccache
 ENV RUSTC_WRAPPER sccache

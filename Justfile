@@ -23,7 +23,7 @@ docker-push:
 	docker push "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}"
 
 docker-build:
-	docker build --progress plain -t "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}" .
+	docker build --pull --progress plain -t "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}" .
 
 deploy:
   cd _infra/ansible && just deploy "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}"
