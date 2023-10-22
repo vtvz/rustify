@@ -16,7 +16,12 @@ RUN USER=root cargo new --bin rustify
 WORKDIR /rustify
 
 # copy over your manifests
-COPY ./rust-toolchain.toml ./Cargo.lock ./Cargo.toml ./
+COPY ./rust-toolchain.toml ./
+
+# for installing toolchain
+RUN rustup show
+
+COPY ./Cargo.lock ./Cargo.toml ./build.rs ./
 
 RUN \
   --mount=type=cache,target=/usr/local/cargo/registry \
@@ -26,6 +31,12 @@ RUN \
 RUN rm -rf /rustify*
 
 COPY . .
+
+ARG GIT_COMMIT_TIMESTAMP
+ENV GIT_COMMIT_TIMESTAMP=${GIT_COMMIT_TIMESTAMP}
+
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
 
 RUN \
   --mount=type=cache,target=/usr/local/cargo/registry \

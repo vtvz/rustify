@@ -172,7 +172,6 @@ async fn run() {
     logger::init().await.expect("Logger should be built");
 
     tracing::info!(
-        build_timestamp = env!("VERGEN_BUILD_TIMESTAMP"),
         git_commit_timestamp = env!("VERGEN_GIT_COMMIT_TIMESTAMP"),
         git_sha = env!("VERGEN_GIT_SHA"),
         "Starting Rustify bot..."
