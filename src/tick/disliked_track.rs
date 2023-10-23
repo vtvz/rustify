@@ -49,7 +49,7 @@ pub async fn handle(
 
                 let res = spotify
                     .playlist_remove_all_occurrences_of_items(
-                        PlaylistId::from_id(&context.uri)?,
+                        PlaylistId::from_id_or_uri(&context.uri)?,
                         hate,
                         None,
                     )
