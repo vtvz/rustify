@@ -81,7 +81,10 @@ pub struct Manager {
 
 impl Manager {
     pub fn new() -> Self {
-        let config = rspotify::Config::default();
+        let config = rspotify::Config {
+            token_refreshing: false,
+            ..Default::default()
+        };
 
         let creds = rspotify::Credentials::new(
             dotenv::var("SPOTIFY_ID")

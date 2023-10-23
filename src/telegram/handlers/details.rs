@@ -59,7 +59,7 @@ pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Re
         return Ok(false);
     };
 
-    let track = state.spotify.read().await.track(track_id).await?;
+    let track = state.spotify.read().await.track(track_id, None).await?;
 
     common(m, bot, state, track).await
 }

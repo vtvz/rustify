@@ -89,7 +89,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .spotify
                 .read()
                 .await
-                .track(TrackId::from_id(&id)?)
+                .track(TrackId::from_id(&id)?, None)
                 .await?;
 
             TrackStatusService::set_status(&state.app.db, &state.user_id, &id, TrackStatus::None)
@@ -118,7 +118,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .spotify
                 .read()
                 .await
-                .track(TrackId::from_id(&id)?)
+                .track(TrackId::from_id(&id)?, None)
                 .await?;
 
             TrackStatusService::set_status(
@@ -149,7 +149,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .spotify
                 .read()
                 .await
-                .track(TrackId::from_id(&id)?)
+                .track(TrackId::from_id(&id)?, None)
                 .await?;
 
             TrackStatusService::set_status(&state.app.db, &state.user_id, &id, TrackStatus::Ignore)
