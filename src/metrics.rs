@@ -8,7 +8,6 @@ use tokio::time::Instant;
 use tracing::Instrument;
 
 use crate::entity::prelude::*;
-use crate::errors::GenericResult;
 use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
@@ -73,7 +72,7 @@ impl Uptime {
     }
 }
 
-pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResult<()> {
+pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Result<()> {
     let disliked =
         TrackStatusService::count_status(&app_state.db, TrackStatus::Disliked, None, None).await?
             as u32;
@@ -129,7 +128,10 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> GenericResu
     Ok(())
 }
 
-pub async fn collect_user_timings(client: &InfluxClient, report: CheckReport) -> GenericResult<()> {
+pub async fn collect_user_timings(
+    client: &InfluxClient,
+    report: CheckReport,
+) -> anyhow::Result<()> {
     let time = Timestamp::Milliseconds(Utc::now().timestamp_millis() as u128);
 
     let timings_stats = TimingsStats {

@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
+use anyhow::Context;
 use isolang::Language;
 use itertools::Itertools;
 use reqwest::Client;
@@ -10,7 +11,6 @@ use serde_json::{from_value, Value};
 use teloxide::utils::markdown;
 use tokio::sync::Mutex;
 
-use crate::errors::{Context, GenericResult};
 use crate::spotify;
 
 fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>
@@ -119,7 +119,7 @@ impl Musixmatch {
             track_name = %spotify::utils::create_track_name(track),
         )
     )]
-    pub async fn search_for_track(&self, track: &FullTrack) -> GenericResult<Option<Lyrics>> {
+    pub async fn search_for_track(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
         let mut url =
             reqwest::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
 

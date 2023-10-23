@@ -1,10 +1,8 @@
-use rspotify::http::HttpError;
-use rspotify::ClientError;
+use anyhow::Context;
 use strum_macros::Display;
 
 use crate::entity::prelude::*;
-use crate::errors::{Context, GenericError, GenericResult};
-use crate::spotify::CurrentlyPlaying;
+use crate::spotify::{CurrentlyPlaying, Error};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::{lyrics, spotify, state};
@@ -23,25 +21,26 @@ pub enum CheckUserResult {
 pub async fn check(
     app_state: &'static state::AppState,
     user_id: &str,
-) -> GenericResult<CheckUserResult> {
+) -> anyhow::Result<CheckUserResult> {
     let res = app_state
         .user_state(user_id)
         .await
         .context("Get user state");
 
     let state = match res {
-        Err(GenericError::RspotifyClientError(ClientError::Http(box HttpError::StatusCode(
-            ref response,
-        )))) => {
+        Err(mut err) => {
+            let Some(response) = Error::extract_response(&mut err) else {
+                return Err(err);
+            };
+
             if let Err(err) =
                 super::errors::handle_too_many_requests(&app_state.db, user_id, response).await
             {
                 tracing::error!(err = ?err, "Something went wrong");
             }
 
-            res?
+            return Err(err);
         },
-        Err(err) => return Err(err),
         Ok(state) => state,
     };
 

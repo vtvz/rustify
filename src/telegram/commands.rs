@@ -1,3 +1,4 @@
+use anyhow::Context;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
@@ -5,7 +6,6 @@ use teloxide::utils::markdown;
 
 use super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
-use crate::errors::{Context, GenericResult};
 use crate::state::UserState;
 use crate::user_service::UserService;
 
@@ -33,7 +33,7 @@ pub enum Command {
     Whitelist(String, String),
 }
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     let text = m.text().context("No text available")?;
 
     if !text.starts_with('/') {

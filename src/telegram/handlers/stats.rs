@@ -3,12 +3,11 @@ use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
 use crate::entity::prelude::*;
-use crate::errors::GenericResult;
 use crate::state::UserState;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     let dislikes = TrackStatusService::count_status(
         &state.app.db,
         TrackStatus::Disliked,

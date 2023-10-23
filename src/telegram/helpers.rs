@@ -8,14 +8,13 @@ use teloxide::types::{
     ReplyMarkup,
 };
 
-use crate::errors::GenericResult;
 use crate::state::UserState;
 
 pub async fn send_register_invite(
     chat_id: ChatId,
     bot: &Bot,
     state: &UserState,
-) -> GenericResult<bool> {
+) -> anyhow::Result<bool> {
     let url = state.app.spotify_manager.get_authorize_url().await?;
     bot.send_message(
         chat_id,

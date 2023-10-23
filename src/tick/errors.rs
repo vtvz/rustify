@@ -1,10 +1,10 @@
+use anyhow::Context;
 use reqwest::{Response, StatusCode};
 use sea_orm::DbConn;
 use teloxide::prelude::*;
 use teloxide::ApiError;
 
 use crate::entity::prelude::*;
-use crate::errors::{Context, GenericResult};
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state;
 use crate::user_service::UserService;
@@ -13,7 +13,7 @@ use crate::user_service::UserService;
 pub async fn telegram(
     state: &state::UserState,
     result: Result<Message, teloxide::RequestError>,
-) -> GenericResult<Message> {
+) -> anyhow::Result<Message> {
     if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::NotFound)) = result {
         UserService::set_status(&state.app.db, &state.user_id, UserStatus::Blocked).await?;
     }
@@ -26,7 +26,7 @@ pub async fn handle_too_many_requests(
     db: &DbConn,
     user_id: &str,
     response: &Response,
-) -> GenericResult<()> {
+) -> anyhow::Result<()> {
     if response.status() != StatusCode::TOO_MANY_REQUESTS {
         return Ok(());
     }

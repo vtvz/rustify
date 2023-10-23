@@ -11,7 +11,6 @@ use sea_orm::{
 };
 
 use crate::entity::prelude::*;
-use crate::errors::GenericResult;
 use crate::utils::Clock;
 
 pub struct UserStatsIncreaseQueryBuilder(UpdateMany<UserEntity>);
@@ -106,7 +105,7 @@ impl UserService {
         db: &impl ConnectionTrait,
         id: &str,
         name: &str,
-    ) -> GenericResult<UpdateResult> {
+    ) -> anyhow::Result<UpdateResult> {
         let query: UpdateMany<_> = UserEntity::update_many();
 
         let update_result: UpdateResult = query
@@ -124,7 +123,7 @@ impl UserService {
         db: &impl ConnectionTrait,
         user_id: &str,
         track_id: &str,
-    ) -> GenericResult<bool> {
+    ) -> anyhow::Result<bool> {
         let query: UpdateMany<_> = UserEntity::update_many();
 
         let update_result: UpdateResult = query
@@ -138,7 +137,7 @@ impl UserService {
         Ok(update_result.rows_affected > 0)
     }
 
-    async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> GenericResult<UserActiveModel> {
+    async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> anyhow::Result<UserActiveModel> {
         let user = Self::query(Some(id), None).one(db).await?;
 
         let user = match user {
@@ -161,7 +160,7 @@ impl UserService {
         db: &impl ConnectionTrait,
         id: &str,
         status: UserStatus,
-    ) -> GenericResult<UserActiveModel> {
+    ) -> anyhow::Result<UserActiveModel> {
         let mut user = Self::obtain_by_id(db, id).await?;
 
         user.status = Set(status);
@@ -176,7 +175,7 @@ impl UserService {
     pub async fn get_stats(
         db: &impl ConnectionTrait,
         id: Option<&str>,
-    ) -> GenericResult<UserStats> {
+    ) -> anyhow::Result<UserStats> {
         let res = Self::query(id, None)
             .select_only()
             .column_as(UserColumn::RemovedCollection.sum(), "removed_collection")

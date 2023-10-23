@@ -1,3 +1,4 @@
+use anyhow::Context;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{
     Context as SpotifyContext,
@@ -10,7 +11,6 @@ use rspotify::model::{
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
-use crate::errors::{Context, GenericResult};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::{spotify, state};
@@ -26,7 +26,7 @@ pub async fn handle(
     state: &state::UserState,
     track: &FullTrack,
     context: Option<&SpotifyContext>,
-) -> GenericResult<()> {
+) -> anyhow::Result<()> {
     if state.is_spotify_premium().await? {
         let spotify = state.spotify.read().await;
 

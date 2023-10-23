@@ -5,7 +5,6 @@ use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
-use crate::errors::GenericResult;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::{lyrics, profanity, spotify, state, telegram};
 
@@ -27,7 +26,7 @@ pub struct CheckBadWordsResult {
 pub async fn check(
     state: &state::UserState,
     track: &FullTrack,
-) -> GenericResult<CheckBadWordsResult> {
+) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
     let Some(hit) = state.app.lyrics.search_for_track(track).await? else {

@@ -3,7 +3,7 @@
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use cached::proc_macro::cached;
 use genius_rs::Genius;
 use isolang::Language;
@@ -16,7 +16,6 @@ use scraper::{Html, Selector};
 use strsim::normalized_damerau_levenshtein;
 use teloxide::utils::markdown;
 
-use crate::errors::{Context, GenericResult};
 use crate::spotify;
 
 pub struct GeniusLocal {
@@ -39,7 +38,10 @@ impl GeniusLocal {
             track_name = %spotify::utils::create_track_name(track),
         )
     )]
-    pub async fn search_for_track(&self, track: &FullTrack) -> GenericResult<Option<SearchResult>> {
+    pub async fn search_for_track(
+        &self,
+        track: &FullTrack,
+    ) -> anyhow::Result<Option<SearchResult>> {
         let res = search_for_track(self, track).await?;
 
         let Some(mut res) = res else { return Ok(None) };
@@ -51,7 +53,7 @@ impl GeniusLocal {
         Ok(Some(res))
     }
 
-    async fn get_lyrics(&self, hit: &SearchResult) -> GenericResult<Vec<String>> {
+    async fn get_lyrics(&self, hit: &SearchResult) -> anyhow::Result<Vec<String>> {
         lazy_static! {
             static ref LYRICS_SELECTOR: Selector = Selector::parse(
                 ".lyrics, [class*=Lyrics__Container], [class*=LyricsPlaceholder__Message]"
@@ -188,7 +190,7 @@ pub fn detect_language(_track: &FullTrack, lyrics: &[String]) -> Language {
 async fn search_for_track(
     genius: &GeniusLocal,
     track: &FullTrack,
-) -> GenericResult<Option<SearchResult>> {
+) -> anyhow::Result<Option<SearchResult>> {
     const THRESHOLD: f64 = 0.45;
 
     let artist = track

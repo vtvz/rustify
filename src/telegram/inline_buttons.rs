@@ -1,6 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
+use anyhow::Context;
 use rspotify::model::TrackId;
 use rspotify::prelude::*;
 use teloxide::prelude::*;
@@ -12,7 +13,6 @@ use teloxide::types::{
 };
 
 use crate::entity::prelude::*;
-use crate::errors::{Context, GenericResult};
 use crate::spotify;
 use crate::state::UserState;
 use crate::track_status_service::TrackStatusService;
@@ -67,7 +67,7 @@ impl Display for InlineButtons {
     }
 }
 
-pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> GenericResult<()> {
+pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
         if let Some(id) = q.inline_message_id {
             bot.answer_callback_query(id)

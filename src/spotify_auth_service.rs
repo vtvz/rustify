@@ -1,3 +1,4 @@
+use anyhow::Context;
 use rspotify::Token;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::Expr;
@@ -5,7 +6,6 @@ use sea_orm::ActiveValue::Set;
 use sea_orm::{ConnectionTrait, IntoActiveModel, QuerySelect, QueryTrait, UpdateResult};
 
 use crate::entity::prelude::*;
-use crate::errors::{Context, GenericResult};
 use crate::user_service::UserService;
 use crate::utils::Clock;
 
@@ -16,7 +16,7 @@ impl SpotifyAuthService {
         db: &impl ConnectionTrait,
         user_id: &str,
         token: Token,
-    ) -> GenericResult<SpotifyAuthActiveModel> {
+    ) -> anyhow::Result<SpotifyAuthActiveModel> {
         let spotify_auth = SpotifyAuthEntity::find()
             .filter(SpotifyAuthColumn::UserId.eq(user_id))
             .one(db)
@@ -46,7 +46,7 @@ impl SpotifyAuthService {
     pub async fn get_token(
         db: &impl ConnectionTrait,
         user_id: &str,
-    ) -> GenericResult<Option<Token>> {
+    ) -> anyhow::Result<Option<Token>> {
         let spotify_auth = SpotifyAuthEntity::find()
             .filter(SpotifyAuthColumn::UserId.eq(user_id))
             .one(db)
@@ -78,7 +78,7 @@ impl SpotifyAuthService {
         db: &impl ConnectionTrait,
         user_ids: &[&str],
         time: chrono::NaiveDateTime,
-    ) -> GenericResult<UpdateResult> {
+    ) -> anyhow::Result<UpdateResult> {
         let update_result: UpdateResult = SpotifyAuthEntity::update_many()
             .col_expr(SpotifyAuthColumn::UpdatedAt, Expr::value(Clock::now()))
             .col_expr(SpotifyAuthColumn::SuspendUntil, Expr::value(time))
@@ -93,13 +93,13 @@ impl SpotifyAuthService {
         db: &impl ConnectionTrait,
         user_ids: &[&str],
         duration: chrono::Duration,
-    ) -> GenericResult<UpdateResult> {
+    ) -> anyhow::Result<UpdateResult> {
         let suspend_until = Clock::now() + duration;
 
         SpotifyAuthService::suspend_until(db, user_ids, suspend_until).await
     }
 
-    pub async fn get_registered(db: &impl ConnectionTrait) -> GenericResult<Vec<String>> {
+    pub async fn get_registered(db: &impl ConnectionTrait) -> anyhow::Result<Vec<String>> {
         let subquery: Select<UserEntity> = UserService::query(None, Some(UserStatus::Active))
             .select_only()
             .column(UserColumn::Id);

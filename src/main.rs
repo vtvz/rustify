@@ -19,12 +19,10 @@ use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::markdown;
 
 use crate::entity::prelude::UserWhitelistStatus;
-use crate::errors::GenericResult;
 use crate::state::{AppState, UserState};
 use crate::user_service::UserService;
 
 mod entity;
-mod errors;
 mod logger;
 mod lyrics;
 mod metrics;
@@ -39,7 +37,7 @@ mod user_service;
 mod utils;
 mod whitelist;
 
-async fn sync_name(state: &UserState, tg_user: Option<&User>) -> GenericResult<()> {
+async fn sync_name(state: &UserState, tg_user: Option<&User>) -> anyhow::Result<()> {
     let spotify_user = state.spotify_user().await?.map(|spotify_user| {
         spotify_user
             .display_name
@@ -75,7 +73,7 @@ async fn sync_name(state: &UserState, tg_user: Option<&User>) -> GenericResult<(
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id))]
-async fn whitelisted(state: &UserState) -> GenericResult<bool> {
+async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
     let res = state
         .app
         .whitelist

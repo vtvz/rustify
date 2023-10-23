@@ -3,13 +3,12 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
-use crate::errors::GenericResult;
 use crate::spotify;
 use crate::spotify::CurrentlyPlaying;
 use crate::state::UserState;
 use crate::track_status_service::TrackStatusService;
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     if !state.is_spotify_authed().await {
         return Ok(false);
     }

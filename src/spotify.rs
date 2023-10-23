@@ -1,7 +1,7 @@
 pub mod errors;
 pub mod utils;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 pub use errors::Error;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
@@ -11,7 +11,6 @@ use sea_orm::{DbConn, TransactionTrait};
 use strum_macros::Display;
 
 use crate::entity::prelude::*;
-use crate::errors::{Context, GenericResult};
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
 
@@ -129,7 +128,7 @@ impl Manager {
         db: &DbConn,
         user_id: &str,
         instance: &AuthCodeSpotify,
-    ) -> GenericResult<()> {
+    ) -> anyhow::Result<()> {
         let should_reauth = instance
             .get_token()
             .lock()
@@ -172,7 +171,7 @@ impl Manager {
         Ok(())
     }
 
-    async fn is_token_valid(mut res: ClientResult<()>) -> GenericResult<bool> {
+    async fn is_token_valid(mut res: ClientResult<()>) -> anyhow::Result<bool> {
         let response = match res {
             Ok(_) => return Ok(true),
             Err(ClientError::Http(box HttpError::StatusCode(ref mut response))) => response,
@@ -187,7 +186,7 @@ impl Manager {
         }
     }
 
-    pub async fn for_user(&self, db: &DbConn, user_id: &str) -> GenericResult<AuthCodeSpotify> {
+    pub async fn for_user(&self, db: &DbConn, user_id: &str) -> anyhow::Result<AuthCodeSpotify> {
         let mut instance = self.spotify.clone();
         instance.token = Default::default();
         let token = SpotifyAuthService::get_token(db, user_id).await?;
@@ -204,7 +203,7 @@ impl Manager {
     }
 
     #[allow(dead_code)]
-    pub async fn get_authorize_url(&self) -> GenericResult<String> {
+    pub async fn get_authorize_url(&self) -> anyhow::Result<String> {
         self.spotify.get_authorize_url(false).context("Get auth")
     }
 }

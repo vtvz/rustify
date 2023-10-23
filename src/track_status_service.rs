@@ -5,7 +5,6 @@ use sea_orm::ActiveValue::Set;
 use sea_orm::{ConnectionTrait, FromQueryResult, IntoActiveModel, QuerySelect, UpdateResult};
 
 use crate::entity::prelude::*;
-use crate::errors::GenericResult;
 use crate::utils::Clock;
 
 pub struct TrackStatusQueryBuilder(Select<TrackStatusEntity>);
@@ -56,7 +55,7 @@ impl TrackStatusService {
         status: TrackStatus,
         user_id: Option<&str>,
         track_id: Option<&str>,
-    ) -> GenericResult<usize> {
+    ) -> anyhow::Result<usize> {
         let res = Self::builder()
             .status(Some(status))
             .user_id(user_id)
@@ -68,7 +67,10 @@ impl TrackStatusService {
         Ok(res as _)
     }
 
-    pub async fn sum_skips(db: &impl ConnectionTrait, user_id: Option<&str>) -> GenericResult<u32> {
+    pub async fn sum_skips(
+        db: &impl ConnectionTrait,
+        user_id: Option<&str>,
+    ) -> anyhow::Result<u32> {
         #[derive(FromQueryResult, Default)]
         struct SkipsCount {
             count: u32,
@@ -92,7 +94,7 @@ impl TrackStatusService {
         user_id: &str,
         track_id: &str,
         status: TrackStatus,
-    ) -> GenericResult<TrackStatusActiveModel> {
+    ) -> anyhow::Result<TrackStatusActiveModel> {
         let track_status = Self::builder()
             .track_id(Some(track_id))
             .user_id(Some(user_id))
@@ -139,7 +141,7 @@ impl TrackStatusService {
         db: &impl ConnectionTrait,
         user_id: &str,
         status: TrackStatus,
-    ) -> GenericResult<Vec<TrackId<'static>>> {
+    ) -> anyhow::Result<Vec<TrackId<'static>>> {
         let tracks: Vec<TrackStatusModel> = Self::builder()
             .status(Some(status))
             .user_id(Some(user_id))
@@ -159,7 +161,7 @@ impl TrackStatusService {
         db: &impl ConnectionTrait,
         user_id: &str,
         track_id: &str,
-    ) -> GenericResult<UpdateResult> {
+    ) -> anyhow::Result<UpdateResult> {
         let update_result: UpdateResult = TrackStatusEntity::update_many()
             .col_expr(
                 TrackStatusColumn::Skips,

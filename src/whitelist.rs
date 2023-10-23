@@ -3,7 +3,6 @@ use sea_orm::ActiveValue::Set;
 use sea_orm::{ConnectionTrait, IntoActiveModel};
 
 use crate::entity::prelude::*;
-use crate::GenericResult;
 
 pub struct Manager {
     enabled: bool,
@@ -33,7 +32,7 @@ impl Manager {
         &self,
         db: &impl ConnectionTrait,
         user_id: &str,
-    ) -> GenericResult<(UserWhitelistModel, bool)> {
+    ) -> anyhow::Result<(UserWhitelistModel, bool)> {
         let model = UserWhitelistEntity::find()
             .filter(UserWhitelistColumn::UserId.eq(user_id))
             .one(db)
@@ -60,7 +59,7 @@ impl Manager {
         &self,
         db: &impl ConnectionTrait,
         user_id: &str,
-    ) -> GenericResult<(UserWhitelistStatus, bool)> {
+    ) -> anyhow::Result<(UserWhitelistStatus, bool)> {
         if !self.enabled || self.admin == user_id {
             return Ok((UserWhitelistStatus::Allowed, false));
         }
@@ -74,7 +73,7 @@ impl Manager {
         &self,
         db: &impl ConnectionTrait,
         user_id: &str,
-    ) -> GenericResult<UserWhitelistActiveModel> {
+    ) -> anyhow::Result<UserWhitelistActiveModel> {
         self.set_status(db, user_id, UserWhitelistStatus::Allowed)
             .await
     }
@@ -83,7 +82,7 @@ impl Manager {
         &self,
         db: &impl ConnectionTrait,
         user_id: &str,
-    ) -> GenericResult<UserWhitelistActiveModel> {
+    ) -> anyhow::Result<UserWhitelistActiveModel> {
         self.set_status(db, user_id, UserWhitelistStatus::Denied)
             .await
     }
@@ -93,7 +92,7 @@ impl Manager {
         db: &impl ConnectionTrait,
         user_id: &str,
         status: UserWhitelistStatus,
-    ) -> GenericResult<UserWhitelistActiveModel> {
+    ) -> anyhow::Result<UserWhitelistActiveModel> {
         let mut model = self
             .get_by_user_id(db, user_id)
             .await?

@@ -6,6 +6,7 @@ mod user;
 use std::sync::Arc;
 use std::time::Duration;
 
+use anyhow::Context;
 use chrono::Timelike;
 use tokio::sync::{broadcast, Semaphore};
 use tokio::time::Instant;
@@ -13,10 +14,9 @@ use tracing::Instrument;
 use user::CheckUserResult;
 
 use crate::entity::prelude::*;
-use crate::errors::Context;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::utils::Clock;
-use crate::{spotify, state, utils, GenericResult, UserService};
+use crate::{spotify, state, utils, UserService};
 
 const CHECK_INTERVAL: u64 = 3;
 const PARALLEL_CHECKS: usize = 2;
@@ -38,7 +38,7 @@ pub struct CheckReport {
 }
 
 #[tracing::instrument(skip_all)]
-async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
+async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
     let start = Instant::now();
 
     let user_ids = SpotifyAuthService::get_registered(&app_state.db)
@@ -61,36 +61,29 @@ async fn process(app_state: &'static state::AppState) -> GenericResult<()> {
             drop(permit);
 
             // TODO Refactor this mess...
-            let checked: GenericResult<_> = match res {
-                Err(err) => {
-                    let (mut original_err, context) = err.unwind();
+            let checked: anyhow::Result<_> = match res {
+                Err(mut err) => {
+                    tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
 
-                    match spotify::Error::from_generic(&mut original_err).await {
-                        Err(err) => {
-                            let err = err.context(context);
+                    match spotify::Error::from_anyhow(&mut err).await {
+                        Err(_) | Ok(None) => {
                             tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
 
                             Err(err)
                         },
-                        Ok(None) => {
-                            let err = original_err.context(context);
-                            tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
+                        Ok(Some(spotify::Error::Regular(serr))) => {
+                            tracing::error!(user_id = %user_id, err = ?serr, "Regular Spotify Error Happened");
 
-                            Err(err)
-                        },
-                        Ok(Some(spotify::Error::Regular(err))) => {
-                            tracing::error!(user_id = %user_id, err = ?err, context = %context, "Regular Spotify Error Happened");
-
-                            if err.error.status == 403 && err.error.message == "Spotify is unavailable in this country" {
+                            if serr.error.status == 403 && serr.error.message == "Spotify is unavailable in this country" {
                                 UserService::set_status(&app_state.db, &user_id, UserStatus::Forbidden).await?;
                             }
 
-                            Err(original_err.context(context))
+                            Err(err)
                         },
-                        Ok(Some(spotify::Error::Auth(err))) => {
-                            tracing::error!(user_id = %user_id, err = ?err, "Auth Spotify Error Happened");
+                        Ok(Some(spotify::Error::Auth(serr))) => {
+                            tracing::error!(user_id = %user_id, err = ?serr, "Auth Spotify Error Happened");
 
-                            Err(original_err.context(context))
+                            Err(err)
                         },
                     }
                 },

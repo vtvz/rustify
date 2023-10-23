@@ -1,11 +1,11 @@
 use std::str::FromStr;
 
+use anyhow::Context;
 use strum_macros::{AsRefStr, EnumString};
 use teloxide::prelude::*;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, ReplyMarkup};
 
 use super::helpers::send_register_invite;
-use crate::errors::{Context, GenericResult};
 use crate::state::UserState;
 
 #[derive(Clone, EnumString, AsRefStr)]
@@ -42,7 +42,7 @@ impl StartKeyboard {
     }
 }
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> GenericResult<bool> {
+pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     if !state.is_spotify_authed().await {
         send_register_invite(m.chat.id, bot, state).await?;
 

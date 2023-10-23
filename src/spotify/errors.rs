@@ -2,8 +2,6 @@ use reqwest::Response;
 use rspotify::http::HttpError;
 use rspotify::ClientError;
 
-use crate::errors::{GenericError, GenericResult};
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub enum AuthErrorType {
     #[serde(rename = "invalid_request")]
@@ -42,18 +40,25 @@ pub enum Error {
 }
 
 impl Error {
-    pub async fn from_generic(err: &mut GenericError) -> GenericResult<Option<Error>> {
-        let GenericError::RspotifyClientError(ClientError::Http(box HttpError::StatusCode(
-            response,
-        ))) = err
-        else {
+    pub fn extract_response(err: &mut anyhow::Error) -> Option<&mut reqwest::Response> {
+        let err = err.downcast_mut::<rspotify::ClientError>()?;
+
+        let ClientError::Http(box HttpError::StatusCode(response)) = err else {
+            return None;
+        };
+
+        Some(response)
+    }
+
+    pub async fn from_anyhow(err: &mut anyhow::Error) -> anyhow::Result<Option<Error>> {
+        let Some(response) = Self::extract_response(err) else {
             return Ok(None);
         };
 
         Self::from_response(response).await.map(Some)
     }
 
-    pub async fn from_response(response: &mut Response) -> GenericResult<Error> {
+    pub async fn from_response(response: &mut Response) -> anyhow::Result<Error> {
         let body = {
             let mut bytes = vec![];
             while let Some(chunk) = response.chunk().await? {

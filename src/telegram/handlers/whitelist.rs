@@ -1,7 +1,6 @@
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
-use crate::errors::GenericResult;
 use crate::state::UserState;
 use crate::telegram::helpers;
 use crate::telegram::keyboards::StartKeyboard;
@@ -12,7 +11,7 @@ pub async fn handle(
     state: &UserState,
     action: String,
     user_id: String,
-) -> GenericResult<bool> {
+) -> anyhow::Result<bool> {
     if !state.app.whitelist.is_admin(&state.user_id) {
         return Ok(false);
     }

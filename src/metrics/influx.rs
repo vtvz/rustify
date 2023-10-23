@@ -2,8 +2,6 @@ use anyhow::anyhow;
 use influxdb::Query;
 use reqwest::{header, Response};
 
-use crate::errors::GenericResult;
-
 pub struct InfluxClient {
     req: reqwest::Client,
     url: reqwest::Url,
@@ -17,7 +15,7 @@ impl InfluxClient {
         org: &str,
         token: &str,
         instance_tag: Option<&str>,
-    ) -> GenericResult<Self> {
+    ) -> anyhow::Result<Self> {
         let headers = {
             let mut headers = header::HeaderMap::new();
 
@@ -69,7 +67,7 @@ impl InfluxClient {
         url
     }
 
-    pub async fn write<I>(&self, queries: I) -> GenericResult<Response>
+    pub async fn write<I>(&self, queries: I) -> anyhow::Result<Response>
     where
         I: Iterator<Item = influxdb::WriteQuery>,
     {
