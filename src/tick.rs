@@ -63,8 +63,6 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
             // TODO Refactor this mess...
             let checked: anyhow::Result<_> = match res {
                 Err(mut err) => {
-                    tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
-
                     match spotify::Error::from_anyhow(&mut err).await {
                         Err(_) | Ok(None) => {
                             tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
@@ -72,7 +70,9 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
                             Err(err)
                         },
                         Ok(Some(spotify::Error::Regular(serr))) => {
-                            tracing::error!(user_id = %user_id, err = ?serr, "Regular Spotify Error Happened");
+                            if serr.error.status < 500 {
+                                tracing::error!(user_id = %user_id, err = ?serr, "Regular Spotify Error Happened");
+                            }
 
                             if serr.error.status == 403 && serr.error.message == "Spotify is unavailable in this country" {
                                 UserService::set_status(&app_state.db, &user_id, UserStatus::Forbidden).await?;
@@ -91,7 +91,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
             };
 
             checked
-        }.in_current_span()));
+        }.instrument(tracing::info_span!("tick_ineration"))));
     }
 
     let mut users_checked = 0;
