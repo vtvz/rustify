@@ -1,0 +1,25 @@
+version: "3"
+services:
+
+  backup:
+    image: restic/restic:{{ restic_version }}
+    volumes:
+      - ./var:/var/backup
+    command: backup -q .
+    working_dir: /var/backup
+    restart: never
+    environment:
+      AWS_ACCESS_KEY_ID: {{ restic_aws_access_key_id }}
+      AWS_SECRET_ACCESS_KEY: {{ restic_aws_secret_access_key }}
+      RESTIC_PASSWORD: {{ restic_restic_password }}
+      RESTIC_REPOSITORY: {{ restic_restic_repository }}
+
+  forget:
+    image: restic/restic:{{ restic_version }}
+    command: forget --keep-within-monthly 1 --prune
+    restart: never
+    environment:
+      AWS_ACCESS_KEY_ID: {{ restic_aws_access_key_id }}
+      AWS_SECRET_ACCESS_KEY: {{ restic_aws_secret_access_key }}
+      RESTIC_PASSWORD: {{ restic_restic_password }}
+      RESTIC_REPOSITORY: {{ restic_restic_repository }}

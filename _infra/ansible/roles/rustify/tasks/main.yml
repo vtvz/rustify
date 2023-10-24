@@ -20,3 +20,27 @@
     build: true
     state: present
     recreate: always
+
+- name: Configure Backups
+  block:
+    - name: Copy Backup Text Files
+      ansible.builtin.template:
+        src: "{{ item.key }}"
+        dest: "{{ rustify_deploy_path }}/{{ item.value }}"
+        mode: 0644
+      with_dict:
+        "docker-compose.backup.yml.j2": docker-compose.backup.yml
+
+    - name: "Cron: Upload backup with restic"
+      ansible.builtin.cron:
+        name: "run restic backup"
+        minute: "10,30,50"
+        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm backup"
+
+    - name: "Cron: Cleanup old backups"
+      ansible.builtin.cron:
+        name: "run restic forget"
+        weekday: "6"
+        hour: "0"
+        minute: "0"
+        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm forget"
