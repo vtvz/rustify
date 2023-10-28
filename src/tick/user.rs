@@ -34,7 +34,7 @@ pub async fn check(
             };
 
             if let Err(err) =
-                super::errors::handle_too_many_requests(&app_state.db, user_id, response).await
+                super::errors::handle_too_many_requests(app_state.db(), user_id, response).await
             {
                 tracing::error!(err = ?err, "Something went wrong");
             }
@@ -57,7 +57,7 @@ pub async fn check(
     };
 
     let status = TrackStatusService::get_status(
-        &state.app.db,
+        state.app.db(),
         &state.user_id,
         &spotify::utils::get_track_id(&track),
     )
@@ -69,7 +69,7 @@ pub async fn check(
         },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
-                &state.app.db,
+                state.app.db(),
                 &state.user_id,
                 &spotify::utils::get_track_id(&track),
             )
@@ -92,7 +92,7 @@ pub async fn check(
                             matches!(res.provider, Some(lyrics::Provider::Genius)) as u32,
                             matches!(res.provider, Some(lyrics::Provider::Musixmatch)) as u32,
                         )
-                        .exec(&state.app.db)
+                        .exec(state.app.db())
                         .await?;
                 },
                 Err(err) => {

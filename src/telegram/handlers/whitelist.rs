@@ -12,7 +12,7 @@ pub async fn handle(
     action: String,
     user_id: String,
 ) -> anyhow::Result<bool> {
-    if !state.app.whitelist.is_admin(&state.user_id) {
+    if !state.app.whitelist().is_admin(&state.user_id) {
         return Ok(false);
     }
 
@@ -26,7 +26,11 @@ pub async fn handle(
 
     match action.as_str() {
         "allow" => {
-            state.app.whitelist.allow(&state.app.db, &user_id).await?;
+            state
+                .app
+                .whitelist()
+                .allow(state.app.db(), &user_id)
+                .await?;
 
             bot.send_message(
                 m.chat.id,
@@ -47,7 +51,7 @@ pub async fn handle(
             helpers::send_register_invite(ChatId(user_id_int), bot, state).await?;
         },
         "deny" => {
-            state.app.whitelist.deny(&state.app.db, &user_id).await?;
+            state.app.whitelist().deny(state.app.db(), &user_id).await?;
 
             bot.send_message(
                 m.chat.id,

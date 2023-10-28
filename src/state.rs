@@ -14,12 +14,38 @@ use crate::metrics::influx::InfluxClient;
 use crate::{lyrics, profanity, spotify, whitelist};
 
 pub struct AppState {
-    pub whitelist: whitelist::Manager,
-    pub spotify_manager: spotify::Manager,
-    pub lyrics: lyrics::Manager,
-    pub bot: Bot,
-    pub db: DatabaseConnection,
-    pub influx: Option<InfluxClient>,
+    whitelist: whitelist::Manager,
+    spotify_manager: spotify::Manager,
+    lyrics: lyrics::Manager,
+    bot: Bot,
+    db: DatabaseConnection,
+    influx: Option<InfluxClient>,
+}
+
+impl AppState {
+    pub fn whitelist(&self) -> &whitelist::Manager {
+        &self.whitelist
+    }
+
+    pub fn spotify_manager(&self) -> &spotify::Manager {
+        &self.spotify_manager
+    }
+
+    pub fn lyrics(&self) -> &lyrics::Manager {
+        &self.lyrics
+    }
+
+    pub fn bot(&self) -> &Bot {
+        &self.bot
+    }
+
+    pub fn db(&self) -> &DatabaseConnection {
+        &self.db
+    }
+
+    pub fn influx(&self) -> &Option<InfluxClient> {
+        &self.influx
+    }
 }
 
 fn influx() -> anyhow::Result<Option<InfluxClient>> {

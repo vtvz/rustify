@@ -67,7 +67,7 @@ async fn sync_name(state: &UserState, tg_user: Option<&User>) -> anyhow::Result<
         .collect::<Vec<_>>()
         .join(" | ");
 
-    UserService::sync_name(&state.app.db, &state.user_id, &name).await?;
+    UserService::sync_name(state.app.db(), &state.user_id, &name).await?;
 
     Ok(())
 }
@@ -76,8 +76,8 @@ async fn sync_name(state: &UserState, tg_user: Option<&User>) -> anyhow::Result<
 async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
     let res = state
         .app
-        .whitelist
-        .get_status(&state.app.db, &state.user_id)
+        .whitelist()
+        .get_status(state.app.db(), &state.user_id)
         .await?;
 
     let chat_id = ChatId(state.user_id.parse()?);
@@ -88,7 +88,7 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
 
             state
                 .app
-                .bot
+                .bot()
                 .send_message(chat_id, "Sorry, your join request was rejected...")
                 .parse_mode(ParseMode::MarkdownV2)
                 .send()
@@ -103,13 +103,13 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                     Admin already notified that you want to join, but you also can contact [admin](tg://user?id={}) and send this message to him\\.
 
                     User Id: `{}`",
-                state.app.whitelist.contact_admin(),
+                state.app.whitelist().contact_admin(),
                 state.user_id,
             );
 
             state
                 .app
-                .bot
+                .bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::MarkdownV2)
                 .send()
@@ -127,9 +127,9 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
 
             state
                 .app
-                .bot
+                .bot()
                 .send_message(
-                    ChatId(state.app.whitelist.contact_admin().parse()?),
+                    ChatId(state.app.whitelist().contact_admin().parse()?),
                     message,
                 )
                 .parse_mode(ParseMode::MarkdownV2)
@@ -147,13 +147,13 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                     Send him this message, this will drastically help\\.
 
                     User Id: `{}`",
-                state.app.whitelist.contact_admin(),
+                state.app.whitelist().contact_admin(),
                 state.user_id,
             );
 
             state
                 .app
-                .bot
+                .bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::MarkdownV2)
                 .send()
@@ -222,7 +222,7 @@ async fn run() {
             },
         ));
 
-    let mut dispatcher = Dispatcher::builder(app_state.bot.clone(), handler).build();
+    let mut dispatcher = Dispatcher::builder(app_state.bot().clone(), handler).build();
 
     let token = dispatcher.shutdown_token();
 

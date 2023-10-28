@@ -92,7 +92,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
 
-            TrackStatusService::set_status(&state.app.db, &state.user_id, &id, TrackStatus::None)
+            TrackStatusService::set_status(state.app.db(), &state.user_id, &id, TrackStatus::None)
                 .await?;
 
             bot.edit_message_text(
@@ -122,7 +122,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .await?;
 
             TrackStatusService::set_status(
-                &state.app.db,
+                state.app.db(),
                 &state.user_id,
                 &id,
                 TrackStatus::Disliked,
@@ -152,8 +152,13 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
 
-            TrackStatusService::set_status(&state.app.db, &state.user_id, &id, TrackStatus::Ignore)
-                .await?;
+            TrackStatusService::set_status(
+                state.app.db(),
+                &state.user_id,
+                &id,
+                TrackStatus::Ignore,
+            )
+            .await?;
 
             bot.edit_message_text(
                 q.from.id,
