@@ -38,7 +38,7 @@ impl SpotifyAuthService {
         spotify_auth.access_token = Set(token.access_token);
         spotify_auth.refresh_token =
             Set(token.refresh_token.context("Refresh token is required")?);
-        spotify_auth.expires_at = Set(token.expires_at);
+        spotify_auth.expires_at = Set(token.expires_at.map(|item| item.naive_utc()));
 
         Ok(spotify_auth.save(db).await?)
     }
@@ -60,7 +60,7 @@ impl SpotifyAuthService {
         Ok(Some(Token {
             access_token: spotify_auth.access_token,
             refresh_token: Some(spotify_auth.refresh_token),
-            expires_at: spotify_auth.expires_at,
+            expires_at: spotify_auth.expires_at.map(|item| item.and_utc()),
             ..Default::default()
         }))
     }

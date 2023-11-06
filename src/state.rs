@@ -5,8 +5,8 @@ use rspotify::clients::OAuthClient;
 use rspotify::model::{PrivateUser, SubscriptionLevel};
 use rspotify::AuthCodeSpotify;
 use rustrict::Replacements;
-use sea_orm::{DatabaseConnection, DbConn, SqlxSqliteConnector};
-use sqlx::sqlite::SqliteConnectOptions;
+use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
+use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
 use tokio::sync::{Mutex, RwLock};
 
@@ -70,11 +70,11 @@ fn influx() -> anyhow::Result<Option<InfluxClient>> {
 async fn db() -> anyhow::Result<DbConn> {
     let database_url = dotenv::var("DATABASE_URL").context("Needs DATABASE_URL")?;
 
-    let options = SqliteConnectOptions::from_str(&database_url)?.create_if_missing(true);
+    let options = PgConnectOptions::from_str(&database_url)?;
 
     // let options = options.pragma("key", "passphrase");
 
-    let pool = sqlx::SqlitePool::connect_with(options)
+    let pool = sqlx::PgPool::connect_with(options)
         .await
         .context("Cannot connect DB")?;
 
@@ -83,7 +83,7 @@ async fn db() -> anyhow::Result<DbConn> {
         .await
         .context("Cannot migrate")?;
 
-    Ok(SqlxSqliteConnector::from_sqlx_sqlite_pool(pool))
+    Ok(SqlxPostgresConnector::from_sqlx_postgres_pool(pool))
 }
 
 fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {

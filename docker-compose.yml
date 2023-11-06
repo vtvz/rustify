@@ -1,5 +1,15 @@
 version: "3.8"
 services:
+  db:
+    image: postgres:16
+    restart: always
+    ports:
+      - 5432:5432
+    # volumes:
+    #   - ./var/postgres:/var/lib/postgresql
+    environment:
+      POSTGRES_PASSWORD: example
+
   app:
     build:
       context: .
