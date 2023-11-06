@@ -74,11 +74,11 @@ impl Uptime {
 
 pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Result<()> {
     let disliked =
-        TrackStatusService::count_status(&app_state.db, TrackStatus::Disliked, None, None).await?
+        TrackStatusService::count_status(app_state.db(), TrackStatus::Disliked, None, None).await?
             as u32;
-    let ignored = TrackStatusService::count_status(&app_state.db, TrackStatus::Ignore, None, None)
+    let ignored = TrackStatusService::count_status(app_state.db(), TrackStatus::Ignore, None, None)
         .await? as u32;
-    let skipped = TrackStatusService::sum_skips(&app_state.db, None).await?;
+    let skipped = TrackStatusService::sum_skips(app_state.db(), None).await?;
 
     let UserStats {
         removed_collection,
@@ -88,7 +88,7 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Res
         lyrics_profane,
         lyrics_genius,
         lyrics_musixmatch,
-    } = UserService::get_stats(&app_state.db, None).await?;
+    } = UserService::get_stats(app_state.db(), None).await?;
 
     let tick_health_status = utils::tick_health().await;
 
@@ -150,7 +150,7 @@ pub async fn collect_user_timings(
 }
 
 pub async fn collect_daemon(app_state: &'static AppState) {
-    let Some(ref client) = app_state.influx else {
+    let Some(ref client) = app_state.influx() else {
         return;
     };
 

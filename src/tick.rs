@@ -41,7 +41,7 @@ pub struct CheckReport {
 async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
     let start = Instant::now();
 
-    let user_ids = SpotifyAuthService::get_registered(&app_state.db)
+    let user_ids = SpotifyAuthService::get_registered(app_state.db())
         .await
         .context("Get users for processing")?;
 
@@ -75,7 +75,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
                             }
 
                             if serr.error.status == 403 && serr.error.message == "Spotify is unavailable in this country" {
-                                UserService::set_status(&app_state.db, &user_id, UserStatus::Forbidden).await?;
+                                UserService::set_status(app_state.db(), &user_id, UserStatus::Forbidden).await?;
                             }
 
                             Err(err)
@@ -118,7 +118,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
         let suspend_until = suspend_until + chrono::Duration::seconds(roundup);
 
         SpotifyAuthService::suspend_until(
-            &app_state.db,
+            app_state.db(),
             &users_to_suspend
                 .iter()
                 .map(AsRef::as_ref)

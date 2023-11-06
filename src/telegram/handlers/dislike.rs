@@ -28,7 +28,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     let track_id = spotify::utils::get_track_id(&track);
 
     TrackStatusService::set_status(
-        &state.app.db,
+        state.app.db(),
         &state.user_id,
         &track_id,
         TrackStatus::Disliked,

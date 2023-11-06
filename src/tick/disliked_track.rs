@@ -36,7 +36,7 @@ pub async fn handle(
             .context("Skip current track")?;
 
         let track_id = spotify::utils::get_track_id(track);
-        TrackStatusService::increase_skips(&state.app.db, &state.user_id, &track_id).await?;
+        TrackStatusService::increase_skips(state.app.db(), &state.user_id, &track_id).await?;
 
         let Some(context) = context else {
             return Ok(());
@@ -59,7 +59,7 @@ pub async fn handle(
                 if res.is_ok() {
                     UserService::increase_stats_query(&state.user_id)
                         .removed_playlists(1)
-                        .exec(&state.app.db)
+                        .exec(state.app.db())
                         .await?;
                 }
             },
@@ -73,7 +73,7 @@ pub async fn handle(
 
                 UserService::increase_stats_query(&state.user_id)
                     .removed_collection(1)
-                    .exec(&state.app.db)
+                    .exec(state.app.db())
                     .await?;
             },
             _ => {},
@@ -89,7 +89,7 @@ pub async fn handle(
 
     let result = state
         .app
-        .bot
+        .bot()
         .send_message(ChatId(state.user_id.parse()?), message)
         .parse_mode(ParseMode::MarkdownV2)
         .send()

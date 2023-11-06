@@ -74,7 +74,8 @@ async fn common(
 
     let track_id = track.id.clone().context("Should be prevalidated")?;
 
-    let status = TrackStatusService::get_status(&state.app.db, &state.user_id, track_id.id()).await;
+    let status =
+        TrackStatusService::get_status(state.app.db(), &state.user_id, track_id.id()).await;
 
     let keyboard = match status {
         TrackStatus::Disliked => {
@@ -112,7 +113,7 @@ async fn common(
     };
 
     let disliked_by = TrackStatusService::count_status(
-        &state.app.db,
+        state.app.db(),
         TrackStatus::Disliked,
         None,
         Some(track_id.id()),
@@ -120,7 +121,7 @@ async fn common(
     .await?;
 
     let ignored_by = TrackStatusService::count_status(
-        &state.app.db,
+        state.app.db(),
         TrackStatus::Ignore,
         None,
         Some(track_id.id()),
@@ -187,7 +188,7 @@ async fn common(
         ignored_by,
     };
 
-    let Some(hit) = state.app.lyrics.search_for_track(&track).await? else {
+    let Some(hit) = state.app.lyrics().search_for_track(&track).await? else {
         bot.send_message(
             m.chat.id,
             formatdoc!(

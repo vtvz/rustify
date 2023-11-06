@@ -29,7 +29,7 @@ pub async fn check(
 ) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
-    let Some(hit) = state.app.lyrics.search_for_track(track).await? else {
+    let Some(hit) = state.app.lyrics().search_for_track(track).await? else {
         return Ok(ret);
     };
 
@@ -92,7 +92,7 @@ pub async fn check(
 
     let result: Result<Message, teloxide::RequestError> = state
         .app
-        .bot
+        .bot()
         .send_message(ChatId(state.user_id.parse()?), message)
         .parse_mode(ParseMode::MarkdownV2)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(

@@ -64,7 +64,7 @@ async fn process_spotify_code(
     };
 
     {
-        let txn = state.app.db.begin().await?;
+        let txn = state.app.db().begin().await?;
 
         SpotifyAuthService::set_token(&txn, &state.user_id, token).await?;
         UserService::set_status(&txn, &state.user_id, UserStatus::Active).await?;
