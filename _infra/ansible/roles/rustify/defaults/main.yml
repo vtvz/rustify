@@ -1,3 +1,6 @@
 rustify_deploy_path: "/srv/rustify"
 rustify_env: {}
 restic_version: 0.16.0
+
+rustify_censor_blacklist: []
+rustify_censor_whitelist: []

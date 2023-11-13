@@ -3,6 +3,9 @@ services:
   app:
     image: "{{ rustify_docker_image }}"
     environment:
+      CENSOR_BLACKLIST: "{{ rustify_censor_blacklist | join(',') }}"
+      CENSOR_WHITELIST: "{{ rustify_censor_whitelist | join(',') }}"
+
 {% for (key, value) in rustify_env.items() %}
       {{ key }}: {{ value | to_json }}
 {% endfor %}
