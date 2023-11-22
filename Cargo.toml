@@ -27,7 +27,7 @@ rustrict = { version = "0.7.12", features = ["customize"] }
 scraper = "0.16.0"
 serde = "1.0.189"
 serde_json = "1.0.107"
-sqlx = { version = "0.6.3", features = ["sqlite"] }
+sqlx = { version = "0.6.3", features = ["postgres"] }
 strsim = "0.10.0"
 strum = "0.24.1"
 strum_macros = "0.24.3"
@@ -40,20 +40,15 @@ tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 url = "2.4.1"
 whatlang = "0.16.3"
 
-[dependencies.libsqlite3-sys]
-version = "0.24"
-features = ["pkg-config", "vcpkg", "bundled", "unlock_notify", "bundled-sqlcipher"]
-
 [dependencies.sea-orm]
 default-features = false
 version = "0.11.3"
-features = ["runtime-tokio-native-tls", "macros", "sqlx-sqlite", "debug-print", "with-chrono"]
+features = ["runtime-tokio-native-tls", "macros", "sqlx-postgres", "debug-print", "with-chrono"]
 
 [dependencies.teloxide]
 version = "0.12.2"
 features = [
     "macros",
-    "sqlite-storage",
     "bincode-serializer"
 ]
 
