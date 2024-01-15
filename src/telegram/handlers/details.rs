@@ -135,7 +135,21 @@ async fn common(
             .filter_map(|artist| artist.id.clone())
             .collect();
 
-        let artists = spotify.artists(artist_ids).await?;
+        // HACK: Why does Spotify send me 403 "Spotify is unavailable in this country" error
+        // server is located in Germany and Spotify account is Turkish
+        let artists = match spotify.artists(artist_ids).await {
+            Err(rspotify::ClientError::Http(box rspotify::http::HttpError::StatusCode(resp))) => {
+                tracing::error!("Resp from artists fetching {:?}", resp.text().await);
+
+                vec![]
+            },
+            Err(err) => {
+                tracing::error!("Err from artists fetching {:?}", err);
+
+                return Err(err.into());
+            },
+            Ok(artists) => artists,
+        };
 
         let search_url = url::Url::parse("https://open.spotify.com/search")?;
 
