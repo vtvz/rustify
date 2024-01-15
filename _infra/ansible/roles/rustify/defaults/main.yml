@@ -4,3 +4,8 @@ restic_version: 0.16.0
 
 rustify_censor_blacklist: []
 rustify_censor_whitelist: []
+
+rustify_docker_registry: false
+rustify_docker_registry_url: "https://index.docker.io/v1/"
+rustify_docker_registry_username: ""
+rustify_docker_registry_password: ""

@@ -1,4 +1,7 @@
-!include .ws/Justfile
+mod? ws '.ws/Justfile'
+
+just := quote(just_executable())
+this := just + " -f " + quote(justfile())
 
 set dotenv-load := true
 set positional-arguments
