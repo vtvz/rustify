@@ -80,7 +80,7 @@ impl InfluxClient {
             .collect();
 
         if queries.is_empty() {
-            return Err(anyhow!("No queries to write").into());
+            return Err(anyhow!("No queries to write"));
         }
 
         let precision = queries[0].get_precision();

@@ -76,7 +76,6 @@ impl CheckResult {
 
                 let bad_chars: Vec<_> = line
                     .chars()
-                    .into_iter()
                     .enumerate()
                     .filter_map(|(i, c)| {
                         if censored.chars().nth(i) != Some(c) {
@@ -120,7 +119,6 @@ impl LineResult {
     pub fn highlighted(&self) -> String {
         self.line
             .chars()
-            .into_iter()
             .enumerate()
             .map(|(i, c)| {
                 match (

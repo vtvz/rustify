@@ -157,7 +157,7 @@ impl Manager {
                 txn.commit().await?;
             }
 
-            return Err(anyhow!("Token is invalid").into());
+            return Err(anyhow!("Token is invalid"));
         };
 
         let token = instance

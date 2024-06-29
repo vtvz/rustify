@@ -6,7 +6,7 @@ create table track_status
   created_at timestamp not null default current_timestamp,
   updated_at timestamp not null default current_timestamp,
 	status     text      not null default 'disliked',
-	skips      int       not null default 0
+	skips      bigint    not null default 0
 );
 
 create index track_status_user_id_index

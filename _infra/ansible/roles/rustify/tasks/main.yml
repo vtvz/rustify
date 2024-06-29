@@ -42,7 +42,9 @@
     - name: "Cron: Upload backup with restic"
       ansible.builtin.cron:
         name: "run restic backup"
-        minute: "10,30,50"
+        day: "*/4"
+        hour: "0"
+        minute: "30"
         job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm backup"
 
     - name: "Cron: Cleanup old backups"

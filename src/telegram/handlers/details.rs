@@ -246,7 +246,7 @@ async fn common(
     let mut lines = lyrics.len();
     let message = loop {
         if lines == 0 {
-            return Err(anyhow!("Issues with lyrics").into());
+            return Err(anyhow!("Issues with lyrics"));
         }
 
         let message = formatdoc!(

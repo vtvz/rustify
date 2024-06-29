@@ -19,7 +19,7 @@ impl EntityName for Entity {
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveModel, DeriveActiveModel)]
 pub struct Model {
-    pub id: i32,
+    pub id: i64,
     pub user_id: String,
     pub status: Status,
     pub created_at: chrono::NaiveDateTime,
@@ -57,7 +57,7 @@ pub enum PrimaryKey {
 }
 
 impl PrimaryKeyTrait for PrimaryKey {
-    type ValueType = i32;
+    type ValueType = i64;
 
     fn auto_increment() -> bool {
         true

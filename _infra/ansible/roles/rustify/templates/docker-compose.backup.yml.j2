@@ -5,7 +5,8 @@ services:
     image: restic/restic:{{ restic_version }}
     volumes:
       - ./var:/var/backup
-    command: backup -q .
+      - restic-cache:/root/.cache/restic
+    command: backup .
     working_dir: /var/backup
     restart: never
     environment:
@@ -23,3 +24,8 @@ services:
       AWS_SECRET_ACCESS_KEY: {{ restic_aws_secret_access_key }}
       RESTIC_PASSWORD: {{ restic_restic_password }}
       RESTIC_REPOSITORY: {{ restic_restic_repository }}
+    volumes:
+      - restic-cache:/root/.cache/restic
+
+volumes:
+  restic-cache:

@@ -83,7 +83,10 @@ impl GeniusLocal {
             });
         });
         if lyrics.is_empty() {
-            return Err(anyhow!("Cannot parse lyrics. For some reason for {}", hit.url).into());
+            return Err(anyhow!(
+                "Cannot parse lyrics. For some reason for {}",
+                hit.url
+            ));
         }
         Ok(lyrics)
     }
@@ -301,5 +304,5 @@ fn get_track_names(name: &str) -> HashSet<String> {
         remove_song_feat(&no_extra),
     ];
 
-    HashSet::from_iter(names.into_iter())
+    HashSet::from_iter(names)
 }

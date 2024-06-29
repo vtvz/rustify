@@ -1,10 +1,8 @@
-mod? ws '.ws/Justfile'
+set dotenv-load := true
+set positional-arguments
 
 just := quote(just_executable())
 this := just + " -f " + quote(justfile())
-
-set dotenv-load := true
-set positional-arguments
 
 server := env_var('DEPLOY_USER') + "@" + env_var('DEPLOY_HOST')
 path := env_var_or_default("DEPLOY_PATH", "/srv/rustify")

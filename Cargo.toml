@@ -23,8 +23,8 @@ rand = "0.8.5"
 regex = { version = "1.10.2", features = ["pattern"] }
 reqwest = "0.11.22"
 rspotify = "0.12.0"
-rustrict = { version = "0.7.12", features = ["customize"] }
-scraper = "0.16.0"
+rustrict = { version = "0.7.25", features = ["customize"] }
+scraper = "0.19.0"
 serde = "1.0.189"
 serde_json = "1.0.107"
 sqlx = { version = "0.6.3", features = ["postgres"] }
@@ -43,14 +43,17 @@ whatlang = "0.16.3"
 [dependencies.sea-orm]
 default-features = false
 version = "0.11.3"
-features = ["runtime-tokio-native-tls", "macros", "sqlx-postgres", "debug-print", "with-chrono"]
+features = [
+    "runtime-tokio-native-tls",
+    "macros",
+    "sqlx-postgres",
+    "debug-print",
+    "with-chrono",
+]
 
 [dependencies.teloxide]
 version = "0.12.2"
-features = [
-    "macros",
-    "bincode-serializer"
-]
+features = ["macros", "bincode-serializer"]
 
 [dependencies.tokio]
 version = "1.33.0"
