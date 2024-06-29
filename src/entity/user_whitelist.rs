@@ -19,7 +19,7 @@ impl EntityName for Entity {
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveModel, DeriveActiveModel)]
 pub struct Model {
-    pub id: i64,
+    pub id: i32,
     pub user_id: String,
     pub status: Status,
     pub created_at: chrono::NaiveDateTime,

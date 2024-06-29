@@ -17,7 +17,7 @@ impl EntityName for Entity {
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveModel, DeriveActiveModel)]
 pub struct Model {
-    pub id: i64,
+    pub id: i32,
     pub user_id: String,
     pub track_id: String,
     pub created_at: chrono::NaiveDateTime,
@@ -70,7 +70,7 @@ impl ColumnTrait for Column {
 
     fn def(&self) -> ColumnDef {
         match self {
-            Self::Id => ColumnType::BigInteger.def(),
+            Self::Id => ColumnType::Integer.def(),
             Self::UserId => ColumnType::String(None).def(),
             Self::TrackId => ColumnType::String(None).def(),
             Self::CreatedAt => ColumnType::DateTime.def(),
