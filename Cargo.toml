@@ -6,7 +6,7 @@ rust-version = "1.75.0"
 
 [dependencies]
 again = "0.1.2"
-anyhow = "1.0.75"
+anyhow = { version = "1.0.86", features = ["backtrace"] }
 cached = "0.43.0"
 chrono = "0.4.31"
 convert_case = "0.6.0"
@@ -36,7 +36,7 @@ thiserror = "1.0.50"
 tokio-util = { version = "0.7.9", features = ["codec"] }
 tracing = "0.1.40"
 tracing-loki = "0.2.4"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3.17", features = ["env-filter", "json"] }
 url = "2.4.1"
 whatlang = "0.16.3"
 
