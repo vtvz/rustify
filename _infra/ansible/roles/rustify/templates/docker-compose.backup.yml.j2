@@ -27,14 +27,31 @@ services:
     volumes:
       - restic-cache:/root/.cache/restic
 
-  pg_dump:
+  pg_dump_data:
     image: postgres:16
     # Required when running on platform other than amd64, like Apple M1/M2:
     # platform: linux/amd64
     command:
       - sh
       - -c
-      - pg_dump --clean --no-owner --no-privileges --if-exists --verbose --file=/var/backup/dump.sql
+      - pg_dump --data-only --no-owner --no-privileges --verbose --file=/var/backup/data.sql
+    volumes:
+      - ./var/backup:/var/backup
+    restart: never
+    environment:
+      PGPASSWORD: "{{ rustify_db_password }}"
+      PGUSER: "{{ rustify_db_username }}"
+      PGDATABASE: "{{ rustify_db_database }}"
+      PGHOST: "{{ rustify_db_host }}"
+
+  pg_dump_schema:
+    image: postgres:16
+    # Required when running on platform other than amd64, like Apple M1/M2:
+    # platform: linux/amd64
+    command:
+      - sh
+      - -c
+      - pg_dump --clean --no-owner --no-privileges --if-exists --verbose --schema-only --file=/var/backup/schema.sql
     volumes:
       - ./var/backup:/var/backup
     restart: never

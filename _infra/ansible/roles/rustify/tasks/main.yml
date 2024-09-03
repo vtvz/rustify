@@ -48,11 +48,17 @@
       with_dict:
         "docker-compose.backup.yml.j2": docker-compose.backup.yml
 
-    - name: "Cron: Dump rustify Postgres database"
+    - name: "Cron: Dump data of rustify Postgres database"
       ansible.builtin.cron:
         name: "dump rustify database"
         minute: "0"
-        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump"
+        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump_data"
+
+    - name: "Cron: Dump schema of rustify Postgres database"
+      ansible.builtin.cron:
+        name: "dump rustify database schema"
+        minute: "0"
+        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump_schema"
 
     - name: "Cron: Upload backup with restic"
       ansible.builtin.cron:
