@@ -29,7 +29,7 @@ impl InlineButtons {
         match self {
             InlineButtons::Cancel(_) => "Cancel ↩",
             InlineButtons::Dislike(_) => "Dislike 👎",
-            InlineButtons::Ignore(_) => "Ignore 🙈",
+            InlineButtons::Ignore(_) => "Ignore text 🙈",
         }
     }
 }

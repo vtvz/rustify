@@ -14,9 +14,9 @@ pub enum StartKeyboard {
     Dislike,
     #[strum(serialize = "📈 Stats")]
     Stats,
-    #[strum(serialize = "🗑 Cleanup")]
+    #[strum(serialize = "🗑 Cleanup your playlists")]
     Cleanup,
-    #[strum(serialize = "🎤 Details")]
+    #[strum(serialize = "🎤 Details of track")]
     Details,
 }
 
