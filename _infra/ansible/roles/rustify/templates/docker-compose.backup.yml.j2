@@ -4,7 +4,7 @@ services:
   backup:
     image: restic/restic:{{ restic_version }}
     volumes:
-      - ./var:/var/backup
+      - ./var/backup:/var/backup
       - restic-cache:/root/.cache/restic
     command: backup .
     working_dir: /var/backup
@@ -17,7 +17,7 @@ services:
 
   forget:
     image: restic/restic:{{ restic_version }}
-    command: forget --keep-within-monthly 1 --prune
+    command: forget --keep-last 350 --prune --group-by ''
     restart: never
     environment:
       AWS_ACCESS_KEY_ID: {{ restic_aws_access_key_id }}
@@ -26,6 +26,28 @@ services:
       RESTIC_REPOSITORY: {{ restic_restic_repository }}
     volumes:
       - restic-cache:/root/.cache/restic
+
+  pg_dump:
+    image: postgres:16
+    # Required when running on platform other than amd64, like Apple M1/M2:
+    # platform: linux/amd64
+    command:
+      - sh
+      - -c
+      - pg_dump --clean --no-owner --no-privileges --if-exists --verbose --file=/var/backup/dump.sql
+    volumes:
+      - ./var/backup:/var/backup
+    restart: never
+    environment:
+      PGPASSWORD: "{{ rustify_db_password }}"
+      PGUSER: "{{ rustify_db_username }}"
+      PGDATABASE: "{{ rustify_db_database }}"
+      PGHOST: "{{ rustify_db_host }}"
+
+networks:
+  default:
+    name: "{{ rustify_docker_network }}"
+    external: true
 
 volumes:
   restic-cache:

@@ -9,3 +9,10 @@ rustify_docker_registry: false
 rustify_docker_registry_url: "https://index.docker.io/v1/"
 rustify_docker_registry_username: ""
 rustify_docker_registry_password: ""
+
+rustify_db_password:
+rustify_db_username:
+rustify_db_database:
+rustify_db_port: 5432
+rustify_db_host: db
+rustify_docker_network: rustify

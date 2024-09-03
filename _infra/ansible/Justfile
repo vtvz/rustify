@@ -4,4 +4,5 @@ deploy docker_image=`echo ghcr.io/vtvz/rustify:$(git describe --abbrev=10 --alwa
     -i inventory/hosts.ini \
     -e rustify_docker_image="{{ docker_image }}" \
     -t project \
+    --diff \
     playbook.yml

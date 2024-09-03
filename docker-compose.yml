@@ -10,23 +10,22 @@ services:
     restart: always
     ports:
       - 5432:5432
-    # volumes:
-    #   - ./var/postgres:/var/lib/postgresql
+    volumes:
+      #   - ./var/postgres:/var/lib/postgresql
+      - .:/pwd
     environment:
       POSTGRES_PASSWORD: example
 
-  # app:
-  #   deploy:
-  #     replicas: 0
-  #   build:
-  #     context: .
-  #     args:
-  #       EXECUTABLE_PATH: "target/x86_64-unknown-linux-gnu/release"
-  #   env_file:
-  #     - .env.deploy
-  #   restart: always
-  #   volumes:
-  #     - ./var:/var/app
-  #   #  - ./proxychains.conf:/etc/proxychains4.conf
-  #   # entrypoint: [proxychains]
-  #   # command: [/usr/local/bin/rustify]
+  app:
+    build:
+      context: .
+      args:
+        EXECUTABLE_PATH: "target/x86_64-unknown-linux-gnu/release"
+    env_file:
+      - .env.deploy
+    restart: always
+    volumes:
+      - ./var:/var/app
+    #  - ./proxychains.conf:/etc/proxychains4.conf
+    # entrypoint: [proxychains]
+    # command: [/usr/local/bin/rustify]
