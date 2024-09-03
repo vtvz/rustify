@@ -1,5 +1,5 @@
 use sea_orm::prelude::*;
-use sea_orm::sea_query::Expr;
+use sea_orm::sea_query::{Alias, Expr};
 use sea_orm::{
     ConnectionTrait,
     FromQueryResult,
@@ -75,13 +75,13 @@ impl UserStatsIncreaseQueryBuilder {
 
 #[derive(FromQueryResult, Default)]
 pub struct UserStats {
-    pub removed_playlists: u32,
-    pub removed_collection: u32,
-    pub lyrics_checked: u32,
-    pub lyrics_found: u32,
-    pub lyrics_profane: u32,
-    pub lyrics_genius: u32,
-    pub lyrics_musixmatch: u32,
+    pub removed_playlists: i64,
+    pub removed_collection: i64,
+    pub lyrics_checked: i64,
+    pub lyrics_found: i64,
+    pub lyrics_profane: i64,
+    pub lyrics_genius: i64,
+    pub lyrics_musixmatch: i64,
 }
 
 pub struct UserService;
@@ -176,18 +176,38 @@ impl UserService {
         db: &impl ConnectionTrait,
         id: Option<&str>,
     ) -> anyhow::Result<UserStats> {
+        let bigint = || Alias::new("bigint");
         let res = Self::query(id, None)
             .select_only()
-            .column_as(UserColumn::RemovedCollection.sum(), "removed_collection")
-            .column_as(UserColumn::RemovedPlaylists.sum(), "removed_playlists")
-            .column_as(UserColumn::LyricsChecked.sum(), "lyrics_checked")
-            .column_as(UserColumn::LyricsProfane.sum(), "lyrics_profane")
-            .column_as(UserColumn::LyricsGenius.sum(), "lyrics_genius")
-            .column_as(UserColumn::LyricsMusixmatch.sum(), "lyrics_musixmatch")
+            .column_as(
+                UserColumn::RemovedCollection.sum().cast_as(bigint()),
+                "removed_collection",
+            )
+            .column_as(
+                UserColumn::RemovedPlaylists.sum().cast_as(bigint()),
+                "removed_playlists",
+            )
+            .column_as(
+                UserColumn::LyricsChecked.sum().cast_as(bigint()),
+                "lyrics_checked",
+            )
+            .column_as(
+                UserColumn::LyricsProfane.sum().cast_as(bigint()),
+                "lyrics_profane",
+            )
+            .column_as(
+                UserColumn::LyricsGenius.sum().cast_as(bigint()),
+                "lyrics_genius",
+            )
+            .column_as(
+                UserColumn::LyricsMusixmatch.sum().cast_as(bigint()),
+                "lyrics_musixmatch",
+            )
             .column_as(
                 UserColumn::LyricsGenius
                     .sum()
-                    .add(UserColumn::LyricsMusixmatch.sum()),
+                    .add(UserColumn::LyricsMusixmatch.sum())
+                    .cast_as(bigint()),
                 "lyrics_found",
             )
             .into_model::<UserStats>()

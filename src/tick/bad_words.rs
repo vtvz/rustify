@@ -72,7 +72,7 @@ pub async fn check(
     let message = loop {
         let message = formatdoc!(
             "
-                Current song \\({track_name}\\) probably has bad words \\(ignore in case of false positive\\):
+                Current song \\({track_name}\\) probably has bad words \\(press 'Ignore text 🙈' in case of false positive\\):
 
                 {bad_lines}
 

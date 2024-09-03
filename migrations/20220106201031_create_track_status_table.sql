@@ -1,16 +1,22 @@
 create table track_status
 (
-	id integer not null
-		constraint track_status_pk
-			primary key autoincrement,
-	user_id text not null,
-	track_id text not null,
-    created_at text default (datetime('now', 'localtime')) not null,
-    updated_at text default (datetime('now', 'localtime')) not null,
-	status text default 'disliked' not null,
-    constraint track_status_ids
-	    unique (track_id, user_id)
+	id         serial    primary key,
+	user_id    text      not null,
+	track_id   text      not null,
+  created_at timestamp not null default current_timestamp,
+  updated_at timestamp not null default current_timestamp,
+	status     text      not null default 'disliked',
+	skips      bigint    not null default 0
 );
 
-create unique index track_status_id_uindex
-	on track_status (id);
+create index track_status_user_id_index
+	on track_status (user_id);
+
+create index track_status_track_id_index
+	on track_status (track_id);
+
+create index track_status_status_index
+	on track_status (status);
+
+create unique index track_status_user_id_track_id_uindex
+	on track_status (user_id, track_id);

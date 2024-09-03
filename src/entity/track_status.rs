@@ -17,12 +17,12 @@ impl EntityName for Entity {
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveModel, DeriveActiveModel)]
 pub struct Model {
-    pub id: u32,
+    pub id: i32,
     pub user_id: String,
     pub track_id: String,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
-    pub skips: u32,
+    pub skips: i64,
     pub status: Status,
 }
 
@@ -58,7 +58,7 @@ pub enum PrimaryKey {
 }
 
 impl PrimaryKeyTrait for PrimaryKey {
-    type ValueType = u32;
+    type ValueType = i64;
 
     fn auto_increment() -> bool {
         true
@@ -70,12 +70,12 @@ impl ColumnTrait for Column {
 
     fn def(&self) -> ColumnDef {
         match self {
-            Self::Id => ColumnType::Unsigned.def(),
+            Self::Id => ColumnType::Integer.def(),
             Self::UserId => ColumnType::String(None).def(),
             Self::TrackId => ColumnType::String(None).def(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),
-            Self::Skips => ColumnType::Unsigned.def(),
+            Self::Skips => ColumnType::BigInteger.def(),
             Self::Status => Status::db_type(),
         }
     }

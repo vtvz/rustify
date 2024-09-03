@@ -1,0 +1,58 @@
+rustify_deploy_path: "/srv/rustify"
+
+restic_aws_access_key_id: ASIAIOSFODNN7EXAMPLE
+restic_aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+restic_restic_password: _pNg-_JNE-VmvZ-WFu2
+restic_restic_repository: s3:https://s3.amazonaws.com/restic-demo
+
+rustify_censor_blacklist:
+  - some rude work of phrase
+  - cocaine
+  - heroin
+
+rustify_censor_whitelist:
+  - some ok work of phrase
+  - hate
+  - hell
+  - ho
+  - tohell
+  - getlost
+  - end your life
+  - wife
+  - lowlife
+  - slave
+  - daddy
+
+rustify_docker_registry_url: ghcr.io
+rustify_docker_registry_username: username
+rustify_docker_registry_password: fvVH-ZLMg-Q2_z-QUbD
+
+rustify_db_password: f9wR-_dSq-XwWD-LNn3
+rustify_db_username: rustify
+rustify_db_database: rustify
+
+rustify_env:
+  SPOTIFY_ID: KcAf52STqKhMixsAYwssNUkXrWrXtsRy
+
+  SPOTIFY_SECRET: 49hCzswxxwQCZYQ7QdrRSpPn2SEeHkVn
+
+  SPOTIFY_REDIRECT_URI: https://vtvz.me/rustify
+
+  TELEGRAM_BOT_TOKEN: 6786328896:ffqgpWwJToFTLNAU9Kemnf_zKqYa3ExbJpK
+  GENIUS_ACCESS_TOKEN: yg72WkRNVLC_ibEAmRjh5UADD9XWVKdvrdqH7brDsLKwvhYijqayZtRvN_nMTeqQ
+  MUSIXMATCH_USER_TOKENS: vKSqqptCqLKpj7ywA_APvJUymop5_5PF3QqJgAtPhmJTRUwZRW2AZS4PTnnF2yTLy7Sz53oTE9cgggaPjaRjmu_XL57KdErQnrWqTnAUWuY4gLbJ2yMEyeSekgVeLrgrSdHVAQbdVHnwig_wRwLwXFNLaEEHR3kuDfDp
+
+  LOKI_URL: https://128497:PCewA2S_TwfFryjwr5XhwQPQDK2Kg9Y3rtkJMpkEHgCqq3rgNDTS_NnxvbpPKtwqVT4doezhwjkboMQw7xcnJVuaaVe_tcX_@logs-prod-eu-west-0.grafana.net/loki/api/v1/push
+  LOKI_INSTANCE: prod
+
+  INFLUX_API_URL: "https://us-east-1-1.aws.cloud2.influxdata.com/api/v2"
+  INFLUX_BUCKET: "bucket"
+  INFLUX_INSTANCE: "prod"
+  INFLUX_ORG: "r7ebsT7fcah_5bSP"
+  INFLUX_TOKEN: "Eet2AZEY7_FZi4m5JuMhPHXKmKF9dMWCHoRWsCsEvxfCXcvgCaTtsrrZHeHn2WoquiHFLVYApUXkTziZZmuE2z3s"
+
+  LOG_LEVEL: warn
+  RUST_BACKTRACE: 1
+
+  WHITELIST_ENABLED: "true"
+  WHITELIST_ADMIN: "9545373432"

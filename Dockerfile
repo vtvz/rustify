@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly as build
+FROM rustlang/rust:nightly-bookworm as build
 
 ARG SCCACHE_VERSTION=0.5.4
 
@@ -43,7 +43,7 @@ RUN \
   --mount=type=cache,target=/var/sccache \
   cargo build --release --target=x86_64-unknown-linux-gnu
 
-FROM debian:11-slim
+FROM debian:bookworm
 
 LABEL org.opencontainers.image.source=https://github.com/vtvz/rustify
 

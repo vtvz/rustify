@@ -1,6 +1,6 @@
 use rspotify::model::TrackId;
 use sea_orm::prelude::*;
-use sea_orm::sea_query::Expr;
+use sea_orm::sea_query::{Alias, Expr};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ConnectionTrait, FromQueryResult, IntoActiveModel, QuerySelect, UpdateResult};
 
@@ -55,7 +55,7 @@ impl TrackStatusService {
         status: TrackStatus,
         user_id: Option<&str>,
         track_id: Option<&str>,
-    ) -> anyhow::Result<usize> {
+    ) -> anyhow::Result<u64> {
         let res = Self::builder()
             .status(Some(status))
             .user_id(user_id)
@@ -64,23 +64,26 @@ impl TrackStatusService {
             .count(db)
             .await?;
 
-        Ok(res as _)
+        Ok(res)
     }
 
     pub async fn sum_skips(
         db: &impl ConnectionTrait,
         user_id: Option<&str>,
-    ) -> anyhow::Result<u32> {
+    ) -> anyhow::Result<i64> {
         #[derive(FromQueryResult, Default)]
         struct SkipsCount {
-            count: u32,
+            count: i64,
         }
 
         let skips: SkipsCount = Self::builder()
             .user_id(user_id)
             .build()
             .select_only()
-            .column_as(TrackStatusColumn::Skips.sum(), "count")
+            .column_as(
+                TrackStatusColumn::Skips.sum().cast_as(Alias::new("bigint")),
+                "count",
+            )
             .into_model::<SkipsCount>()
             .one(db)
             .await?

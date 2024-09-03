@@ -8,19 +8,28 @@
     - "{{ rustify_deploy_path }}"
     - "{{ rustify_deploy_path }}/var"
 
-- name: Login into Container registry
-  docker_login:
-    registry: "{{ rustify_docker_registry_url }}"
-    username: "{{ rustify_docker_registry_username }}"
-    password: "{{ rustify_docker_registry_password }}"
-    reauthorize: yes
-  when: rustify_docker_registry
+- name: Generate Env for rustify
+  ansible.builtin.set_fact:
+    rustify_env_content: |-
+      "DATABASE_URL": "postgresql://{{ rustify_db_username }}:{{ rustify_db_password }}@{{ rustify_db_host }}:{{ rustify_db_port }}/{{ rustify_db_database }}"
+      "CENSOR_BLACKLIST": "{{ rustify_censor_blacklist | join(',') }}"
+      "CENSOR_WHITELIST": "{{ rustify_censor_whitelist | join(',') }}"
+      {% for (key, value) in rustify_env.items() -%}
+         {{ key | to_json }}: {{ value | to_json }}
+      {% endfor %}
 
 - name: Docker Compose
   ansible.builtin.template:
     src: docker-compose.yml.j2
     dest: "{{ rustify_deploy_path }}/docker-compose.yml"
     mode: "0644"
+
+- name: Log into private registry and force re-authorization
+  community.docker.docker_login:
+    registry_url: "{{ rustify_docker_registry_url }}"
+    username: "{{ rustify_docker_registry_username }}"
+    password: "{{ rustify_docker_registry_password }}"
+    reauthorize: true
 
 - name: Docker Compose Up
   community.docker.docker_compose:
@@ -39,10 +48,24 @@
       with_dict:
         "docker-compose.backup.yml.j2": docker-compose.backup.yml
 
+    - name: "Cron: Dump data of rustify Postgres database"
+      ansible.builtin.cron:
+        name: "dump rustify database"
+        minute: "0"
+        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump_data"
+
+    - name: "Cron: Dump schema of rustify Postgres database"
+      ansible.builtin.cron:
+        name: "dump rustify database schema"
+        minute: "0"
+        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump_schema"
+
     - name: "Cron: Upload backup with restic"
       ansible.builtin.cron:
         name: "run restic backup"
-        minute: "10,30,50"
+        day: "*/4"
+        hour: "0"
+        minute: "30"
         job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm backup"
 
     - name: "Cron: Cleanup old backups"

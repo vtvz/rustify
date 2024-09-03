@@ -1,5 +1,21 @@
 version: "3.8"
 services:
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+  db:
+    image: postgres:16
+    restart: always
+    ports:
+      - 5432:5432
+    volumes:
+      #   - ./var/postgres:/var/lib/postgresql
+      - .:/pwd
+    environment:
+      POSTGRES_PASSWORD: example
+
   app:
     build:
       context: .

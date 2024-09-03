@@ -10,13 +10,13 @@ use crate::state::UserState;
 
 #[derive(Clone, EnumString, AsRefStr)]
 pub enum StartKeyboard {
-    #[strum(serialize = "👎 Dislike")]
+    #[strum(serialize = "👎 Dislike playing track")]
     Dislike,
     #[strum(serialize = "📈 Stats")]
     Stats,
-    #[strum(serialize = "🗑 Cleanup")]
+    #[strum(serialize = "🗑 Cleanup your playlists")]
     Cleanup,
-    #[strum(serialize = "🎤 Details")]
+    #[strum(serialize = "🎤 Details of track")]
     Details,
 }
 

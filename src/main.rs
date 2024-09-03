@@ -200,7 +200,6 @@ async fn run() {
 
                 let (m, bot) = clone;
                 if let Err(err) = &result {
-                    let err = err;
                     tracing::error!(err = ?err, "Error on message handling");
                     bot.send_message(
                         m.chat.id,

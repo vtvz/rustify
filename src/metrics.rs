@@ -18,21 +18,21 @@ pub mod influx;
 #[derive(InfluxDbWriteable, Debug)]
 struct TrackStatusStats {
     time: Timestamp,
-    disliked: u32,
-    ignored: u32,
-    skipped: u32,
-    removed_collection: u32,
-    removed_playlists: u32,
+    disliked: u64,
+    ignored: u64,
+    skipped: u64,
+    removed_collection: u64,
+    removed_playlists: u64,
 }
 
 #[derive(InfluxDbWriteable, Debug)]
 struct LyricsStats {
     time: Timestamp,
-    checked: u32,
-    found: u32,
-    profane: u32,
-    genius: u32,
-    musixmatch: u32,
+    checked: u64,
+    found: u64,
+    profane: u64,
+    genius: u64,
+    musixmatch: u64,
 }
 
 #[derive(InfluxDbWriteable, Debug)]
@@ -75,10 +75,10 @@ impl Uptime {
 pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Result<()> {
     let disliked =
         TrackStatusService::count_status(app_state.db(), TrackStatus::Disliked, None, None).await?
-            as u32;
+            as u64;
     let ignored = TrackStatusService::count_status(app_state.db(), TrackStatus::Ignore, None, None)
-        .await? as u32;
-    let skipped = TrackStatusService::sum_skips(app_state.db(), None).await?;
+        .await? as u64;
+    let skipped = TrackStatusService::sum_skips(app_state.db(), None).await? as u64;
 
     let UserStats {
         removed_collection,
@@ -100,17 +100,17 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Res
             disliked,
             ignored,
             skipped,
-            removed_collection,
-            removed_playlists,
+            removed_collection: removed_collection as u64,
+            removed_playlists: removed_playlists as u64,
         }
         .into_query("track_status"),
         LyricsStats {
             time,
-            checked: lyrics_checked,
-            found: lyrics_found,
-            profane: lyrics_profane,
-            genius: lyrics_genius,
-            musixmatch: lyrics_musixmatch,
+            checked: lyrics_checked as u64,
+            found: lyrics_found as u64,
+            profane: lyrics_profane as u64,
+            genius: lyrics_genius as u64,
+            musixmatch: lyrics_musixmatch as u64,
         }
         .into_query("lyrics"),
         TickHealthStats {

@@ -3,12 +3,21 @@ services:
   app:
     image: "{{ rustify_docker_image }}"
     environment:
-      CENSOR_BLACKLIST: "{{ rustify_censor_blacklist | join(',') }}"
-      CENSOR_WHITELIST: "{{ rustify_censor_whitelist | join(',') }}"
+      {{ rustify_env_content | indent(6) }}
+    restart: always
 
-{% for (key, value) in rustify_env.items() %}
-      {{ key }}: {{ value | to_json }}
-{% endfor %}
+  db:
+    image: postgres:16
     restart: always
     volumes:
-      - ./var:/var/app
+      - ./var/postgres:/var/lib/postgresql/data
+      - .:/pwd:ro
+    environment:
+      POSTGRES_PASSWORD: "{{ rustify_db_password }}"
+      POSTGRES_USER: "{{ rustify_db_username }}"
+      POSTGRES_DB: "{{ rustify_db_database }}"
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+networks:
+  default:
+    name: "{{ rustify_docker_network }}"

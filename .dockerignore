@@ -1,5 +1,6 @@
 .env
 target
+Dockerfile
 .dockerignore
 .env*
 .gitignore
@@ -9,3 +10,5 @@ Makefile
 Justfile
 _infra
 var
+.idea
+_infra
