@@ -37,7 +37,7 @@ impl StartKeyboard {
                     Self::Details.into(),
                 ],
             ])
-            .resize_keyboard(true),
+            .resize_keyboard(),
         )
     }
 }

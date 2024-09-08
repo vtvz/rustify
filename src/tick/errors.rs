@@ -14,7 +14,8 @@ pub async fn telegram(
     state: &state::UserState,
     result: Result<Message, teloxide::RequestError>,
 ) -> anyhow::Result<Message> {
-    if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::NotFound)) = result {
+    if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::InvalidToken)) = result
+    {
         UserService::set_status(state.app.db(), &state.user_id, UserStatus::Blocked).await?;
     }
 

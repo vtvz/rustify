@@ -1,5 +1,5 @@
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParameters};
 
 use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
@@ -39,7 +39,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         m.chat.id,
         format!("Disliked {}", spotify::utils::create_track_tg_link(&track)),
     )
-    .reply_to_message_id(m.id)
+    .reply_parameters(ReplyParameters::new(m.id))
     .parse_mode(ParseMode::MarkdownV2)
     .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
         #[rustfmt::skip]

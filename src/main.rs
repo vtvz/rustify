@@ -190,7 +190,7 @@ async fn run() {
                     return Ok(());
                 }
 
-                if let Err(err) = sync_name(&state, m.from()).await {
+                if let Err(err) = sync_name(&state, m.from.as_ref()).await {
                     tracing::error!(err = ?err, user_id = state.user_id.as_str(), "Failed syncing user name");
                 }
 

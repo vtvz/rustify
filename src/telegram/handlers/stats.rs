@@ -1,6 +1,6 @@
 use indoc::formatdoc;
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
+use teloxide::types::{ParseMode, ReplyParameters};
 
 use crate::entity::prelude::*;
 use crate::state::UserState;
@@ -49,7 +49,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     );
 
     bot.send_message(m.chat.id, message)
-        .reply_to_message_id(m.id)
+        .reply_parameters(ReplyParameters::new(m.id))
         .parse_mode(ParseMode::MarkdownV2)
         .send()
         .await?;
