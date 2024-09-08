@@ -7,6 +7,7 @@ use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::{lyrics, spotify, state};
 
+#[allow(dead_code)]
 #[derive(Clone, Display)]
 pub enum CheckUserResult {
     #[strum(serialize = "Skip same track")]

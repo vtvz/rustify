@@ -7,12 +7,14 @@ rust-version = "1.75.0"
 [dependencies]
 again = "0.1.2"
 anyhow = { version = "1.0.86", features = ["backtrace"] }
+# base64 = "0.22.1"
 cached = "0.43.0"
 chrono = "0.4.31"
 convert_case = "0.6.0"
 derive_more = { version = "1.0.0", features = ["full"] }
 dotenv = "0.15.0"
-genius-rs = "0.5.0"
+genius-rust = "0.1.1"
+# hmac = "0.12.1"
 indoc = "2.0.4"
 influxdb = { version = "0.6.0", features = ["derive"] }
 isolang = "2.3.0"
@@ -27,6 +29,7 @@ rustrict = { version = "0.7.26", features = ["customize"] }
 scraper = "0.19.0"
 serde = "1.0.189"
 serde_json = "1.0.107"
+# sha2 = "0.10.8"
 sqlx = { version = "0.6.3", features = ["postgres"] }
 strsim = "0.10.0"
 strum = "0.24.1"

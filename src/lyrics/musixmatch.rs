@@ -240,9 +240,7 @@ impl Musixmatch {
                     return None;
                 };
 
-                let Some(total) = total.as_f64() else {
-                    return None;
-                };
+                let total = total.as_f64()?;
 
                 Some((Duration::from_secs_f64(total), text))
             })
