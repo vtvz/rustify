@@ -97,7 +97,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
 
             bot.edit_message_text(
                 q.from.id,
-                q.message.context("Message is empty")?.id,
+                q.message.context("Message is empty")?.id(),
                 format!(
                     "Dislike cancelled for {}",
                     spotify::utils::create_track_tg_link(&track)
@@ -131,7 +131,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
 
             bot.edit_message_text(
                 q.from.id,
-                q.message.context("Message is empty")?.id,
+                q.message.context("Message is empty")?.id(),
                 format!("Disliked {}", spotify::utils::create_track_tg_link(&track)),
             )
             .parse_mode(ParseMode::MarkdownV2)
@@ -162,7 +162,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
 
             bot.edit_message_text(
                 q.from.id,
-                q.message.context("Message is empty")?.id,
+                q.message.context("Message is empty")?.id(),
                 format!(
                     "Bad words of {} will be forever ignored",
                     spotify::utils::create_track_tg_link(&track)

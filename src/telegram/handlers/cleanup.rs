@@ -3,6 +3,7 @@ use rspotify::clients::OAuthClient;
 use rspotify::model::{Page, PlayableId};
 use rspotify::DEFAULT_PAGINATION_CHUNKS;
 use teloxide::prelude::*;
+use teloxide::types::ReplyParameters;
 
 use crate::entity::prelude::*;
 use crate::state::UserState;
@@ -16,7 +17,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
             m.chat.id,
             "Started cleanup. Please wait, it can take a bit of time 🕐",
         )
-        .reply_to_message_id(m.id)
+        .reply_parameters(ReplyParameters::new(m.id))
         .send()
         .await?;
 

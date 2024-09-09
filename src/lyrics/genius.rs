@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter};
 
 use anyhow::{anyhow, Context};
 use cached::proc_macro::cached;
-use genius_rs::Genius;
+use genius_rust::Genius;
 use isolang::Language;
 use lazy_static::lazy_static;
 use regex::Regex;

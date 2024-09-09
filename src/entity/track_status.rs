@@ -71,8 +71,8 @@ impl ColumnTrait for Column {
     fn def(&self) -> ColumnDef {
         match self {
             Self::Id => ColumnType::Integer.def(),
-            Self::UserId => ColumnType::String(None).def(),
-            Self::TrackId => ColumnType::String(None).def(),
+            Self::UserId => ColumnType::Text.def(),
+            Self::TrackId => ColumnType::Text.def(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),
             Self::Skips => ColumnType::BigInteger.def(),
@@ -91,7 +91,7 @@ impl RelationTrait for Relation {
 }
 
 #[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
-#[sea_orm(rs_type = "String", db_type = "String(None)")]
+#[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum Status {
     #[sea_orm(string_value = "disliked")]
     Disliked,

@@ -1,19 +1,7 @@
-FROM rustlang/rust:nightly-bookworm as build
+FROM rustlang/rust:nightly-bookworm AS builder
 
-ARG SCCACHE_VERSTION=0.5.4
-
-RUN cd /tmp \
-  && curl -fL https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSTION}/sccache-v${SCCACHE_VERSTION}-x86_64-unknown-linux-musl.tar.gz | tar zx \
-  && mv **/sccache /usr/local/bin/ \
-  && rm -rf sccache-* \
-  && mkdir -p /var/sccache
-
-ENV SCCACHE_DIR /var/sccache
-ENV RUSTC_WRAPPER sccache
-
-# create a new empty shell project
-RUN USER=root cargo new --bin rustify
-WORKDIR /rustify
+# Set the working directory inside the container
+WORKDIR /usr/src/rustify
 
 # copy over your manifests
 COPY ./rust-toolchain.toml ./
@@ -21,15 +9,18 @@ COPY ./rust-toolchain.toml ./
 # for installing toolchain
 RUN rustup show
 
-COPY ./Cargo.lock ./Cargo.toml ./build.rs ./
+# Cache dependencies. First, copy the Cargo.toml and Cargo.lock
+COPY Cargo.toml Cargo.lock ./
 
-RUN \
-  --mount=type=cache,target=/usr/local/cargo/registry \
-  --mount=type=cache,target=/var/sccache \
-  cargo build --release --target=x86_64-unknown-linux-gnu
+# Create a dummy main.rs to ensure `cargo build` can succeed for dependencies
+RUN mkdir src && echo "fn main() {}" > src/main.rs
 
-RUN rm -rf /rustify*
+# Fetch dependencies without building the actual project (this will be cached)
 
+RUN cargo fetch
+RUN cargo build --release
+
+# Copy the rest of the source code and build
 COPY . .
 
 ARG GIT_COMMIT_TIMESTAMP
@@ -38,16 +29,10 @@ ENV GIT_COMMIT_TIMESTAMP=${GIT_COMMIT_TIMESTAMP}
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
 
-RUN \
-  --mount=type=cache,target=/usr/local/cargo/registry \
-  --mount=type=cache,target=/var/sccache \
-  cargo build --release --target=x86_64-unknown-linux-gnu
+RUN cargo build --release
 
-FROM debian:bookworm
-
-LABEL org.opencontainers.image.source=https://github.com/vtvz/rustify
-
-ARG EXECUTABLE_PATH
+# Use a minimal base image for the runtime
+FROM debian:bookworm-slim
 
 RUN \
   --mount=type=cache,target=/var/cache/apt \
@@ -55,6 +40,8 @@ RUN \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /rustify/target/x86_64-unknown-linux-gnu/release/rustify /usr/local/bin/
+# Copy the compiled binary from the build stage
+COPY --from=builder /usr/src/rustify/target/release/rustify /usr/local/bin/rustify
 
-CMD ["/usr/local/bin/rustify"]
+# Set the binary as the entry point
+ENTRYPOINT ["/usr/local/bin/rustify"]

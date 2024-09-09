@@ -1,6 +1,6 @@
 env := "main"
 
-deploy docker_image=`echo ghcr.io/vtvz/rustify:$(git describe --abbrev=10 --always)`:
+deploy docker_image:
   ansible-galaxy install -r requirements.yml
   ansible-playbook \
     -i inventory/{{ env }}/hosts.ini \

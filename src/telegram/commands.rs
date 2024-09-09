@@ -29,7 +29,7 @@ pub enum Command {
     #[command(description = "show this help")]
     Help,
 
-    #[command(description = "off")]
+    #[command(hide)]
     Whitelist(String, String),
 }
 

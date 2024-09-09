@@ -9,7 +9,7 @@ use regex::Regex;
 use rspotify::clients::BaseClient;
 use rspotify::model::{FullTrack, Id, Modality, TrackId};
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParameters};
 use teloxide::utils::markdown;
 
 use crate::entity::prelude::*;
@@ -226,8 +226,8 @@ async fn common(
                 genres_line = genres_line,
             ),
         )
+        .reply_parameters(ReplyParameters::new(m.id))
         .parse_mode(ParseMode::MarkdownV2)
-        .reply_to_message_id(m.id)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))
@@ -279,7 +279,7 @@ async fn common(
 
     bot.send_message(m.chat.id, message)
         .parse_mode(ParseMode::MarkdownV2)
-        .reply_to_message_id(m.id)
+        .reply_parameters(ReplyParameters::new(m.id))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))

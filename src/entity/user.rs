@@ -80,15 +80,15 @@ impl ColumnTrait for Column {
 
     fn def(&self) -> ColumnDef {
         match self {
-            Self::Id => ColumnType::String(None).def(),
-            Self::Name => ColumnType::String(None).def(),
+            Self::Id => ColumnType::Text.def(),
+            Self::Name => ColumnType::Text.def(),
             Self::RemovedPlaylists => ColumnType::BigInteger.def(),
             Self::RemovedCollection => ColumnType::BigInteger.def(),
             Self::LyricsChecked => ColumnType::BigInteger.def(),
             Self::LyricsGenius => ColumnType::BigInteger.def(),
             Self::LyricsMusixmatch => ColumnType::BigInteger.def(),
             Self::LyricsProfane => ColumnType::BigInteger.def(),
-            Self::PlayingTrack => ColumnType::String(None).def(),
+            Self::PlayingTrack => ColumnType::Text.def(),
             Self::Status => Status::db_type(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),
@@ -109,7 +109,7 @@ impl Related<super::spotify_auth::Entity> for Entity {
 }
 
 #[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
-#[sea_orm(rs_type = "String", db_type = "String(None)")]
+#[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum Status {
     #[sea_orm(string_value = "active")]
     Active,
