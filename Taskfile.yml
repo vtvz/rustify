@@ -1,0 +1,58 @@
+version: "3"
+
+env:
+  SOPS_AGE_KEY_FILE: "{{ .TASKFILE_DIR }}/.sops-key.txt"
+  SOPS_AGE_RECIPIENTS:
+    sh: "age-keygen -y {{ .SOPS_AGE_KEY_FILE | quote}}"
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list --sort none
+
+  generate:
+    - sea-orm-cli generate entity -o src/entity.example --expanded-format
+
+  docker-build:
+    vars:
+      GIT_COMMIT:
+        sh: git rev-parse --verify HEAD
+      GIT_COMMIT_TIMESTAMP:
+        sh: git show --no-patch --format=%cI
+      GIT_DESCRIBE:
+        sh: git describe --abbrev=10 --always
+      DOCKER_IMAGE_TAG: "ghcr.io/vtvz/rustify:{{ .GIT_DESCRIBE }}"
+
+    cmds:
+      - docker build --progress plain
+        --build-arg GIT_SHA={{ .GIT_COMMIT }}
+        --build-arg GIT_COMMIT_TIMESTAMP={{ .GIT_COMMIT_TIMESTAMP | quote }}
+        --build-arg GIT_DESCRIBE={{ .GIT_DESCRIBE | quote }}
+        -t {{ .DOCKER_IMAGE_TAG | quote }} .
+
+  docker-push:
+    vars:
+      GIT_DESCRIBE:
+        sh: git describe --abbrev=10 --always
+      DOCKER_IMAGE_TAG: "ghcr.io/vtvz/rustify:{{ .GIT_DESCRIBE }}"
+
+    cmds:
+      - docker push {{ .DOCKER_IMAGE_TAG | quote }}
+
+  deploy:
+    dir: "_infra/ansible"
+    vars:
+      GIT_DESCRIBE:
+        sh: git describe --abbrev=10 --always
+      DOCKER_IMAGE_TAG: "ghcr.io/vtvz/rustify:{{ .GIT_DESCRIBE }}"
+      env: main
+
+    cmds:
+      - ansible-galaxy install -r requirements.yml
+      - ansible-playbook
+        -i inventory/{{ .env }}/hosts.ini
+        -e rustify_docker_image={{ .DOCKER_IMAGE_TAG | quote }}
+        -t project
+        --diff
+        playbook.yml

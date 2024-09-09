@@ -20,18 +20,6 @@ fix:
   cargo clippy --fix --allow-dirty --allow-staged
   ansible-lint --write .infra/ansible/playbook.yml
 
-docker-push:
-	docker push "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}"
-
-docker-build:
-	docker build --progress plain \
-	  --build-arg GIT_SHA={{ `git rev-parse --verify HEAD` }} \
-	  --build-arg GIT_COMMIT_TIMESTAMP={{ quote(`git show --no-patch --format=%cI`) }} \
-	  -t "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}" .
-
-deploy:
-  cd _infra/ansible && just deploy "ghcr.io/vtvz/rustify:{{ `git describe --abbrev=10 --always` }}"
-
 get-db:
   scp "{{ server }}:{{ path }}/var/data.db" "var/data.db"
   scp "{{ server }}:{{ path }}/var/data.db-shm" "var/data.db-shm"

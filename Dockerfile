@@ -1,7 +1,7 @@
 FROM rustlang/rust:nightly-bookworm AS builder
 
 # Set the working directory inside the container
-WORKDIR /usr/src/myapp
+WORKDIR /usr/src/rustify
 
 # copy over your manifests
 COPY ./rust-toolchain.toml ./
@@ -41,7 +41,7 @@ RUN \
   && rm -rf /var/lib/apt/lists/*
 
 # Copy the compiled binary from the build stage
-COPY --from=builder /usr/src/myapp/target/release/rustify /usr/local/bin/rustify
+COPY --from=builder /usr/src/rustify/target/release/rustify /usr/local/bin/rustify
 
 # Set the binary as the entry point
 ENTRYPOINT ["/usr/local/bin/rustify"]
