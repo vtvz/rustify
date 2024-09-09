@@ -71,9 +71,9 @@ impl ColumnTrait for Column {
 
     fn def(&self) -> ColumnDef {
         match self {
-            Self::UserId => ColumnType::String(None).def(),
-            Self::AccessToken => ColumnType::String(None).def(),
-            Self::RefreshToken => ColumnType::String(None).def(),
+            Self::UserId => ColumnType::Text.def(),
+            Self::AccessToken => ColumnType::Text.def(),
+            Self::RefreshToken => ColumnType::Text.def(),
             Self::SuspendUntil => ColumnType::DateTime.def(),
             Self::ExpiresAt => ColumnType::DateTime.def(),
             Self::CreatedAt => ColumnType::DateTime.def(),
