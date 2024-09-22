@@ -1,10 +1,25 @@
 version: "3.8"
 services:
-  app:
+  bot:
     image: "{{ rustify_docker_image }}"
     environment:
       {{ rustify_env_content | indent(6) }}
     restart: always
+    entrypoint: /usr/local/bin/rustify-bot
+
+  metrics:
+    image: "{{ rustify_docker_image }}"
+    environment:
+      {{ rustify_env_content | indent(6) }}
+    restart: always
+    entrypoint: /usr/local/bin/rustify-metrics
+
+  track_check:
+    image: "{{ rustify_docker_image }}"
+    environment:
+      {{ rustify_env_content | indent(6) }}
+    restart: always
+    entrypoint: /usr/local/bin/rustify-track-check
 
   db:
     image: postgres:16

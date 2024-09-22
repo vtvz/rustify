@@ -53,6 +53,8 @@ pub async fn check(
         .into_iter()
         .filter(|profanity::LineResult { typ, .. }| !typ.is(Type::SAFE))
         .map(|line: profanity::LineResult| {
+            tracing::info!(line = ?line.line, censored = ?line.censored, typ = %line.typ, "Detected profanity line");
+
             format!(
                 "<code>{}:</code> {}, <code>[{}]</code>",
                 hit.line_index_name(line.no),

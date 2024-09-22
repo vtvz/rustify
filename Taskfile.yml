@@ -1,9 +1,9 @@
 version: "3"
 
-env:
-  SOPS_AGE_KEY_FILE: "{{ .TASKFILE_DIR }}/.sops-key.txt"
-  SOPS_AGE_RECIPIENTS:
-    sh: "age-keygen -y {{ .SOPS_AGE_KEY_FILE | quote}}"
+# env:
+#   SOPS_AGE_KEY_FILE: "{{ .TASKFILE_DIR }}/.sops-key.txt"
+#   SOPS_AGE_RECIPIENTS:
+#     sh: "age-keygen -y {{ .SOPS_AGE_KEY_FILE | quote}}"
 
 tasks:
   default:
