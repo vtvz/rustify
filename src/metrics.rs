@@ -8,10 +8,11 @@ use tokio::time::Instant;
 use tracing::Instrument;
 
 use crate::entity::prelude::*;
+use crate::state::AppState;
 use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
-use crate::{utils, AppState};
+use crate::utils;
 
 pub mod influx;
 
@@ -151,6 +152,8 @@ pub async fn collect_user_timings(
 
 pub async fn collect_daemon(app_state: &'static AppState) {
     let Some(ref client) = app_state.influx() else {
+        tracing::info!("Metrics collection disabled");
+
         return;
     };
 
