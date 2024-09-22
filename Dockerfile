@@ -13,7 +13,10 @@ RUN rustup show
 COPY Cargo.toml Cargo.lock ./
 
 # Create a dummy main.rs to ensure `cargo build` can succeed for dependencies
-RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN mkdir -p src/bin \
+  && echo "fn main() {}" > src/bin/bot.rs \
+  && echo "fn main() {}" > src/bin/metrics.rs \
+  && echo "fn main() {}" > src/bin/track_check.rs
 
 # Fetch dependencies without building the actual project (this will be cached)
 
@@ -41,7 +44,6 @@ RUN \
   && rm -rf /var/lib/apt/lists/*
 
 # Copy the compiled binary from the build stage
-COPY --from=builder /usr/src/rustify/target/release/rustify /usr/local/bin/rustify
-
-# Set the binary as the entry point
-ENTRYPOINT ["/usr/local/bin/rustify"]
+COPY --from=builder /usr/src/rustify/target/release/bot /usr/local/bin/rustify-bot
+COPY --from=builder /usr/src/rustify/target/release/metrics /usr/local/bin/rustify-metrics
+COPY --from=builder /usr/src/rustify/target/release/track_check /usr/local/bin/rustify-track-check

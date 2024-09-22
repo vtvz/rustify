@@ -70,6 +70,7 @@ impl CheckResult {
                         no: index,
                         typ: Type::SAFE.into(),
                         line,
+                        censored,
                         bad_chars: Default::default(),
                     };
                 }
@@ -91,6 +92,7 @@ impl CheckResult {
                     typ: typ.into(),
                     line,
                     bad_chars,
+                    censored,
                 }
             })
             .collect();
@@ -113,6 +115,7 @@ pub struct LineResult {
     pub typ: TypeWrapper,
     pub line: String,
     pub bad_chars: Vec<usize>,
+    pub censored: String,
 }
 
 impl LineResult {
@@ -126,9 +129,9 @@ impl LineResult {
                     self.bad_chars.contains(&i),
                     self.bad_chars.contains(&(i + 1)),
                 ) {
-                    (false, true, false) => format!("||__{}__||", c),
-                    (true, true, false) => format!("{}__||", c),
-                    (false, true, true) => format!("||__{}", c),
+                    (false, true, false) => format!("<tg-spoiler><u>{}</u></tg-spoiler>", c),
+                    (true, true, false) => format!("{}</u></tg-spoiler>", c),
+                    (false, true, true) => format!("<tg-spoiler><u>{}", c),
                     _ => c.into(),
                 }
             })

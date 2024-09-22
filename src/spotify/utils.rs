@@ -15,9 +15,9 @@ pub fn get_track_id(track: &FullTrack) -> String {
 
 pub fn create_track_tg_link(track: &FullTrack) -> String {
     format!(
-        r#"<a href="{}">{}</a>"#,
-        html::escape(create_track_name(track).as_str()),
-        track
+        r#"<a href="{link}">{name}</a>"#,
+        name = html::escape(create_track_name(track).as_str()),
+        link = track
             .external_urls
             .get("spotify")
             .cloned()

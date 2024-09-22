@@ -74,7 +74,7 @@ impl super::SearchResult for Lyrics {
         };
 
         format!(
-            "[{text}]({url})",
+            r#"<a href="{url}">{text}</a>"#,
             text = html::escape(text),
             url = self.backlink_url
         )

@@ -6,6 +6,7 @@ use std::fmt::{Display, Formatter};
 use anyhow::{anyhow, Context};
 use cached::proc_macro::cached;
 use genius_rust::Genius;
+use indoc::formatdoc;
 use isolang::Language;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -122,8 +123,11 @@ impl super::SearchResult for SearchResult {
             "Text truncated. Full lyrics can be found at Genius"
         };
 
-        format!(
-            r#"<a href="{url}">{text} (with {confidence}% confidence)\n{title}</a>"#,
+        formatdoc!(
+            r#"
+                <a href="{url}">{text} (with {confidence}% confidence)
+                {title}</a>
+            "#,
             text = html::escape(text),
             title = html::escape(&self.title),
             confidence = self.confidence,
