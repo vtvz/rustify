@@ -79,6 +79,12 @@ pub struct Manager {
     spotify: AuthCodeSpotify,
 }
 
+impl Default for Manager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Manager {
     pub fn new() -> Self {
         let config = rspotify::Config {

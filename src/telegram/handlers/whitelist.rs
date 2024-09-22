@@ -34,9 +34,12 @@ pub async fn handle(
 
             bot.send_message(
                 m.chat.id,
-                format!("[User](tg://user?id={}) added to whitelist", user_id),
+                format!(
+                    r#"<a href="tg://user?id={}">User</a> added to whitelist"#,
+                    user_id
+                ),
             )
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .send()
             .await?;
 
@@ -55,9 +58,12 @@ pub async fn handle(
 
             bot.send_message(
                 m.chat.id,
-                format!("[User](tg://user?id={}) denied in whitelist", user_id),
+                format!(
+                    r#"<a href="tg://user?id={}">User</a> denied in whitelist"#,
+                    user_id
+                ),
             )
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .send()
             .await?;
 
@@ -72,11 +78,11 @@ pub async fn handle(
             bot.send_message(
                 m.chat.id,
                 format!(
-                    "Cannot recognise `{}` action\\. Only `allow` and `deny` available",
+                    "Cannot recognise <code>{}</code> action\\. Only <code>allow</code> and <code>deny</code> available",
                     action
                 ),
             )
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .send()
             .await?;
         },

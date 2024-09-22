@@ -8,7 +8,7 @@ use reqwest::Client;
 use rspotify::model::FullTrack;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{from_value, Value};
-use teloxide::utils::markdown;
+use teloxide::utils::html;
 use tokio::sync::Mutex;
 
 use crate::spotify;
@@ -75,7 +75,7 @@ impl super::SearchResult for Lyrics {
 
         format!(
             "[{text}]({url})",
-            text = markdown::escape(text),
+            text = html::escape(text),
             url = self.backlink_url
         )
     }
