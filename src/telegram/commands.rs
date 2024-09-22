@@ -2,7 +2,7 @@ use anyhow::Context;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
-use teloxide::utils::markdown;
+use teloxide::utils::html;
 
 use super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
@@ -46,12 +46,12 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         bot.send_message(
             m.chat.id,
             format!(
-                "Command `{}` not found: \n\n{}",
-                markdown::escape(&command),
-                markdown::escape(&Command::descriptions().to_string())
+                "Command <code>{}</code> not found: \n\n{}",
+                html::escape(&command),
+                html::escape(&Command::descriptions().to_string())
             ),
         )
-        .parse_mode(ParseMode::MarkdownV2)
+        .parse_mode(ParseMode::Html)
         .send()
         .await?;
 

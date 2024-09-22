@@ -3,7 +3,7 @@ use std::slice::Iter;
 
 use lazy_static::lazy_static;
 use rustrict::{Trie, Type};
-use teloxide::utils::markdown;
+use teloxide::utils::html;
 
 lazy_static! {
     static ref TYPE_THRESHOLD: Type = Type::ANY & !Type::SPAM;
@@ -58,7 +58,7 @@ impl CheckResult {
             .into_iter()
             .enumerate()
             .map(|(index, line)| {
-                let line = markdown::escape(line);
+                let line = html::escape(line);
 
                 let (censored, typ) = rustrict::Censor::from_str(&line)
                     .with_censor_first_character_threshold(*TYPE_THRESHOLD)

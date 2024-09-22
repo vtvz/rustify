@@ -14,7 +14,7 @@ use rspotify::model::FullTrack;
 use rustrict::is_whitespace;
 use scraper::{Html, Selector};
 use strsim::normalized_damerau_levenshtein;
-use teloxide::utils::markdown;
+use teloxide::utils::html;
 
 use crate::spotify;
 
@@ -123,9 +123,9 @@ impl super::SearchResult for SearchResult {
         };
 
         format!(
-            "[{text} \\(with {confidence}% confidence\\)\n{title}]({url})",
-            text = markdown::escape(text),
-            title = markdown::escape(&self.title),
+            r#"<a href="{url}">{text} (with {confidence}% confidence)\n{title}</a>"#,
+            text = html::escape(text),
+            title = html::escape(&self.title),
             confidence = self.confidence,
             url = self.url
         )

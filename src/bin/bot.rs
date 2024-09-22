@@ -4,7 +4,7 @@ use rustify::state::{AppState, UserState};
 use rustify::user_service::UserService;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode, User};
-use teloxide::utils::markdown;
+use teloxide::utils::html;
 
 async fn sync_name(state: &UserState, tg_user: Option<&User>) -> anyhow::Result<()> {
     let spotify_user = state.spotify_user().await?.map(|spotify_user| {
@@ -59,7 +59,7 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                 .app
                 .bot()
                 .send_message(chat_id, "Sorry, your join request was rejected...")
-                .parse_mode(ParseMode::MarkdownV2)
+                .parse_mode(ParseMode::Html)
                 .send()
                 .await?;
         },
@@ -67,11 +67,11 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
             tracing::info!("New user was sent a request to join");
 
             let message = formatdoc!(
-                "
+                r#"
                     This bot is in whitelist mode\\.
-                    Admin already notified that you want to join, but you also can contact [admin](tg://user?id={}) and send this message to him\\.
+                    Admin already notified that you want to join, but you also can contact <a href="tg://user?id={}">[admin]()</a> and send this message to him\\.
 
-                    User Id: `{}`",
+                    User Id: <code>{}</code>"#,
                 state.app.whitelist().contact_admin(),
                 state.user_id,
             );
@@ -80,17 +80,17 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                 .app
                 .bot()
                 .send_message(chat_id, message)
-                .parse_mode(ParseMode::MarkdownV2)
+                .parse_mode(ParseMode::Html)
                 .send()
                 .await?;
 
             let message = formatdoc!(
-                "
-                    New [user](tg://user?id={user_id}) wants to join\\!
+                r#"
+                    New <a href="tg://user?id={user_id}">user</a> wants to join\\!
 
-                    `/whitelist allow {user_id}`
-                    `/whitelist deny {user_id}`
-                ",
+                    <code>/whitelist allow {user_id}</code>
+                    <code>/whitelist deny {user_id}</code>
+                "#,
                 user_id = state.user_id,
             );
 
@@ -101,7 +101,7 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                     ChatId(state.app.whitelist().contact_admin().parse()?),
                     message,
                 )
-                .parse_mode(ParseMode::MarkdownV2)
+                .parse_mode(ParseMode::Html)
                 .send()
                 .await?;
         },
@@ -109,13 +109,13 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
             tracing::info!("Pending user tried to use bot");
 
             let message = formatdoc!(
-                "
+                r#"
                     This bot is in whitelist mode\\.
                     Your request was already sent, but admin didn't decided yet\\.
-                    You can contact [him](tg://user?id={}) to speedup the process\\.
+                    You can contact <a href="tg://user?id={}">him</a> to speedup the process\\.
                     Send him this message, this will drastically help\\.
 
-                    User Id: `{}`",
+                    User Id: <code>{}</code>"#,
                 state.app.whitelist().contact_admin(),
                 state.user_id,
             );
@@ -124,7 +124,7 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                 .app
                 .bot()
                 .send_message(chat_id, message)
-                .parse_mode(ParseMode::MarkdownV2)
+                .parse_mode(ParseMode::Html)
                 .send()
                 .await?;
         },
@@ -172,9 +172,9 @@ async fn run() {
                     tracing::error!(err = ?err, "Error on message handling");
                     bot.send_message(
                         m.chat.id,
-                        markdown::escape("Sorry, error has happened :("),
+                        html::escape("Sorry, error has happened :("),
                     )
-                        .parse_mode(ParseMode::MarkdownV2)
+                        .parse_mode(ParseMode::Html)
                         .send()
                         .await?;
                 }
