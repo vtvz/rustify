@@ -200,8 +200,6 @@ async fn run() {
         token.shutdown().expect("To be good").await;
     });
 
-    tokio::spawn(rustify::metrics::collect_daemon(app_state));
-
     dispatcher.dispatch().await;
 }
 
