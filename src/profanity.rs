@@ -70,7 +70,7 @@ impl CheckResult {
                         (word, censored, typ)
                     })
                     .fold(
-                        (String::new(), String::new(), Type::SAFE),
+                        (String::new(), String::new(), Type::NONE),
                         |(line, line_censored, acc_type), (word, censored, typ)| {
                             (
                                 format!("{line} {word}"),
