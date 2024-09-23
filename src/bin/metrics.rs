@@ -14,7 +14,6 @@ async fn run() {
     let app_state = AppState::init().await.expect("State to be built");
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
-    tokio::spawn(rustify::metrics::collect_daemon(app_state));
 
     rustify::metrics::collect_daemon(app_state).await;
 }
