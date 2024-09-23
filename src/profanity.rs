@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::slice::Iter;
 
 use lazy_static::lazy_static;
-use rustrict::{Trie, Type};
+use rustrict::{is_whitespace, Trie, Type};
 use teloxide::utils::html;
 
 lazy_static! {
@@ -60,17 +60,32 @@ impl CheckResult {
             .map(|(index, line)| {
                 let line = html::escape(line);
 
-                let (censored, typ) = rustrict::Censor::from_str(&line)
-                    .with_censor_first_character_threshold(*TYPE_THRESHOLD)
-                    .with_censor_threshold(*TYPE_THRESHOLD)
-                    .censor_and_analyze();
+                let (line, censored, typ) = line
+                    .split(is_whitespace)
+                    .map(|word| {
+                        let (censored, typ) = rustrict::Censor::from_str(word)
+                            .with_censor_first_character_threshold(*TYPE_THRESHOLD)
+                            .with_censor_threshold(*TYPE_THRESHOLD)
+                            .censor_and_analyze();
+                        (word, censored, typ)
+                    })
+                    .fold(
+                        (String::new(), String::new(), Type::SAFE),
+                        |(line, line_censored, acc_type), (word, censored, typ)| {
+                            (
+                                format!("{line} {word}"),
+                                format!("{line_censored} {censored}"),
+                                acc_type | typ,
+                            )
+                        },
+                    );
 
                 if typ.isnt(*TYPE_THRESHOLD) {
                     return LineResult {
                         no: index,
                         typ: Type::SAFE.into(),
+                        censored: line.clone(),
                         line,
-                        censored,
                         bad_chars: Default::default(),
                     };
                 }
