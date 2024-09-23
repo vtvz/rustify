@@ -71,11 +71,15 @@ impl CheckResult {
                     })
                     .fold(
                         (String::new(), String::new(), Type::NONE),
-                        |(line, line_censored, acc_type), (word, censored, typ)| {
+                        |(line, line_censored, mut acc_type), (word, censored, typ)| {
+                            if typ.isnt(Type::SAFE) {
+                                acc_type |= typ;
+                            }
+
                             (
                                 format!("{line} {word}"),
                                 format!("{line_censored} {censored}"),
-                                acc_type | typ,
+                                acc_type,
                             )
                         },
                     );
