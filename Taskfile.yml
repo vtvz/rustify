@@ -29,7 +29,13 @@ tasks:
         --build-arg GIT_SHA={{ .GIT_COMMIT }}
         --build-arg GIT_COMMIT_TIMESTAMP={{ .GIT_COMMIT_TIMESTAMP | quote }}
         --build-arg GIT_DESCRIBE={{ .GIT_DESCRIBE | quote }}
-        -t {{ .DOCKER_IMAGE_TAG | quote }} .
+        -t {{ .DOCKER_IMAGE_TAG }} .
+
+      - docker build --progress plain
+        --build-arg GIT_SHA={{ .GIT_COMMIT }}
+        --build-arg GIT_COMMIT_TIMESTAMP={{ .GIT_COMMIT_TIMESTAMP | quote }}
+        --build-arg GIT_DESCRIBE={{ .GIT_DESCRIBE | quote }}
+        -t {{ .DOCKER_IMAGE_TAG }}-genius genius-lyrics-service
 
   docker-push:
     vars:
@@ -38,7 +44,8 @@ tasks:
       DOCKER_IMAGE_TAG: "ghcr.io/vtvz/rustify:{{ .GIT_DESCRIBE }}"
 
     cmds:
-      - docker push {{ .DOCKER_IMAGE_TAG | quote }}
+      - docker push {{ .DOCKER_IMAGE_TAG }}
+      - docker push {{ .DOCKER_IMAGE_TAG }}-genius
 
   deploy:
     dir: "_infra/ansible"
