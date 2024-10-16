@@ -239,6 +239,7 @@ async fn common(
     let typ = checked.typ.to_string();
 
     let mut lines = lyrics.len();
+    // This requires to fit lyrics to tg message
     let message = loop {
         if lines == 0 {
             return Err(anyhow!("Issues with lyrics"));
@@ -254,7 +255,7 @@ async fn common(
                 {genres_line}
                 {lyrics}
 
-                {genius}
+                {lyrics_link}
             ",
             track_name = spotify::utils::create_track_tg_link(&track),
             features = features.trim(),
@@ -262,7 +263,7 @@ async fn common(
             lyrics = &lyrics[0..lines].join("\n"),
             language = hit.language(),
             genres_line = genres_line,
-            genius = hit.tg_link(lines == lyrics.len())
+            lyrics_link = hit.tg_link(lines == lyrics.len())
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {
