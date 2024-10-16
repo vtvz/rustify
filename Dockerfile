@@ -32,7 +32,7 @@ ENV GIT_COMMIT_TIMESTAMP=${GIT_COMMIT_TIMESTAMP}
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
 
-RUN cargo build --release
+RUN find src/bin/ -type f -exec touch {} + && cargo build --release
 
 # Use a minimal base image for the runtime
 FROM debian:bookworm-slim
