@@ -5,29 +5,34 @@ use std::fmt::{Display, Formatter};
 
 use anyhow::{anyhow, Context};
 use cached::proc_macro::cached;
-use genius_rust::Genius;
 use indoc::formatdoc;
 use isolang::Language;
 use lazy_static::lazy_static;
 use regex::Regex;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use rspotify::model::FullTrack;
 use rustrict::is_whitespace;
-use scraper::{Html, Selector};
 use strsim::normalized_damerau_levenshtein;
 use teloxide::utils::html;
 
 use crate::spotify;
 
 pub struct GeniusLocal {
-    genius: Genius,
+    token: String,
+    service_url: String,
     reqwest: Client,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct LyricsResponse {
+    lyrics: String,
+}
+
 impl GeniusLocal {
-    pub fn new(token: String) -> Self {
+    pub fn new(service_url: String, token: String) -> Self {
         Self {
-            genius: Genius::new(token),
+            token,
+            service_url,
             reqwest: Client::new(),
         }
     }
@@ -47,49 +52,37 @@ impl GeniusLocal {
 
         let Some(mut res) = res else { return Ok(None) };
 
-        res.lyrics = self.get_lyrics(&res).await?;
+        let lyrics = self.get_lyrics(&res).await?;
 
+        if lyrics.is_empty() {
+            return Ok(None);
+        }
+
+        res.lyrics = lyrics;
         res.language = detect_language(track, &res.lyrics);
 
         Ok(Some(res))
     }
 
     async fn get_lyrics(&self, hit: &SearchResult) -> anyhow::Result<Vec<String>> {
-        lazy_static! {
-            static ref LYRICS_SELECTOR: Selector = Selector::parse(
-                ".lyrics, [class*=Lyrics__Container], [class*=LyricsPlaceholder__Message]"
-            )
-            .expect("Should be valid");
-        }
-
-        // Test lib provided get_lyrics method
-        if let Ok(lyrics) = self.genius.get_lyrics(hit.id).await {
-            return Ok(lyrics);
-        }
-
         let res = self
             .reqwest
-            .get(hit.url.as_str())
+            .get(format!("{}/{}/lyrics", self.service_url, hit.id))
+            .header("Authorization", &self.token)
             .send()
-            .await?
-            .text()
             .await?;
 
-        let document = Html::parse_document(&res);
-
-        let mut lyrics = vec![];
-        document.select(&LYRICS_SELECTOR).for_each(|elem| {
-            elem.text().for_each(|text| {
-                lyrics.push(text.replace(is_whitespace, " "));
-            });
-        });
-        if lyrics.is_empty() {
-            return Err(anyhow!(
-                "Cannot parse lyrics. For some reason for {}",
-                hit.url
-            ));
+        if res.status() == StatusCode::NOT_FOUND {
+            return Ok(vec![]);
         }
-        Ok(lyrics)
+
+        let res: LyricsResponse = res.error_for_status()?.json().await?;
+
+        if res.lyrics.is_empty() {
+            return Err(anyhow!("Cannot get lyrics, for some reason for {}", hit.id));
+        }
+
+        Ok(res.lyrics.lines().map(String::from).collect())
     }
 }
 
@@ -176,6 +169,23 @@ pub fn detect_language(_track: &FullTrack, lyrics: &[String]) -> Language {
         .unwrap_or_default()
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GeniusArtist {
+    name: String,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GeniusHit {
+    id: u32,
+    url: String,
+    full_title: String,
+    title: String,
+    #[serde(rename = "artist")]
+    primary_artist: GeniusArtist,
+}
+
 /// Returns url to Genius page with some additional information
 #[cached(
     key = "String",
@@ -218,12 +228,20 @@ async fn search_for_track(
     for (name_i, name) in names.into_iter().enumerate() {
         let q = format!("{} {}", name, artist);
 
-        let hits = genius.genius.search(q.as_str()).await?;
+        let hits: Vec<GeniusHit> = genius
+            .reqwest
+            .get(format!("{}/search", genius.service_url))
+            .header("Authorization", &genius.token)
+            .query(&[("q", q)])
+            .send()
+            .await?
+            .error_for_status()?
+            .json()
+            .await?;
 
         hits_count += hits.len();
         for (hit_i, hit) in hits.into_iter().enumerate() {
             let title = hit
-                .result
                 .full_title
                 .replace(is_whitespace, " ")
                 .trim()
@@ -232,12 +250,9 @@ async fn search_for_track(
             let confidence = SearchResultConfidence::new(
                 normalized_damerau_levenshtein(
                     &cmp_artist,
-                    hit.result.primary_artist.name.to_lowercase().as_str(),
+                    hit.primary_artist.name.to_lowercase().as_str(),
                 ),
-                normalized_damerau_levenshtein(
-                    &cmp_title,
-                    hit.result.title.to_lowercase().as_str(),
-                ),
+                normalized_damerau_levenshtein(&cmp_title, hit.title.to_lowercase().as_str()),
             );
 
             if confidence.confident(THRESHOLD) {
@@ -252,8 +267,8 @@ async fn search_for_track(
                 );
 
                 return Ok(Some(SearchResult {
-                    id: hit.result.id,
-                    url: hit.result.url,
+                    id: hit.id,
+                    url: hit.url,
                     title,
                     confidence,
                     lyrics: Default::default(),
