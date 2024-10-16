@@ -2,9 +2,9 @@ use indoc::formatdoc;
 use rustify::entity::prelude::UserWhitelistStatus;
 use rustify::state::{AppState, UserState};
 use rustify::user_service::UserService;
+use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, ParseMode, User};
-use teloxide::utils::html;
+use teloxide::types::{ChatId, LinkPreviewOptions, ParseMode, User};
 
 async fn sync_name(state: &UserState, tg_user: Option<&User>) -> anyhow::Result<()> {
     let spotify_user = state.spotify_user().await?.map(|spotify_user| {
@@ -172,9 +172,24 @@ async fn run() {
                     tracing::error!(err = ?err, "Error on message handling");
                     bot.send_message(
                         m.chat.id,
-                        html::escape("Sorry, error has happened :("),
+                        formatdoc!(
+                            r#"
+                                <b>Sorry, error has happened :(</b>
+
+                                <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
+                            "#
+                        )
                     )
                         .parse_mode(ParseMode::Html)
+                        // TODO: wait for teloxide::sugar::request::RequestLinkPreviewExt to release
+                        // .disable_link_preview()
+                        .link_preview_options(LinkPreviewOptions{
+                            is_disabled: true,
+                            url: None,
+                            prefer_small_media: false,
+                            prefer_large_media: false,
+                            show_above_text: false,
+                        })
                         .send()
                         .await?;
                 }
