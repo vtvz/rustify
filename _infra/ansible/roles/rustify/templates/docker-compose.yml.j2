@@ -1,5 +1,9 @@
 version: "3.8"
 services:
+  genius_lyrics_provider:
+    image: "{{ rustify_docker_image }}-genius"
+    restart: always
+
   bot:
     image: "{{ rustify_docker_image }}"
     environment:
