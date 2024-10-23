@@ -4,7 +4,7 @@ use std::time::Duration;
 use anyhow::Context;
 use isolang::Language;
 use itertools::Itertools;
-use reqwest::Client;
+use reqwest::{Client, ClientBuilder};
 use rspotify::model::FullTrack;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{from_value, Value};
@@ -107,7 +107,10 @@ pub struct Musixmatch {
 impl Musixmatch {
     pub fn new(tokens: impl IntoIterator<Item = String>) -> Self {
         Self {
-            reqwest: Client::new(),
+            reqwest: ClientBuilder::new()
+                .timeout(Duration::from_secs(5))
+                .build()
+                .unwrap(),
             tokens: Mutex::new(tokens.into_iter().collect()),
         }
     }

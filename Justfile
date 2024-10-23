@@ -45,3 +45,6 @@ watch cmd="run":
 
 xwatch cmd="run":
    x-terminal-emulator -e {{ this }} watch {{ cmd }}
+
+restart:
+  ssh "{{ server }}" -- docker-compose --project-directory "{{ path }}" restart bot track_check

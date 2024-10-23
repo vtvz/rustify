@@ -33,8 +33,12 @@ pub struct Manager {
 }
 
 impl Manager {
-    pub fn new(genius_token: String, musixmatch_tokens: impl IntoIterator<Item = String>) -> Self {
-        let genius = GeniusLocal::new(genius_token);
+    pub fn new(
+        genius_service_url: String,
+        genius_token: String,
+        musixmatch_tokens: impl IntoIterator<Item = String>,
+    ) -> Self {
+        let genius = GeniusLocal::new(genius_service_url, genius_token);
         let musixmatch = Musixmatch::new(musixmatch_tokens);
         Self { genius, musixmatch }
     }
@@ -52,7 +56,7 @@ impl Manager {
     ) -> anyhow::Result<Option<Box<dyn SearchResult + Send>>> {
         let musixmatch_result = self.musixmatch.search_for_track(track).await;
 
-        let musixmatch_result = match musixmatch_result {
+        match musixmatch_result {
             Ok(Some(res)) => {
                 return Ok(Some(Box::new(res) as Box<dyn SearchResult + Send>));
             },
@@ -61,20 +65,29 @@ impl Manager {
                     err = ?err,
                     "Error with Musixmatch occurred"
                 );
-
-                Err(err)
             },
             _ => {
                 tracing::debug!("Musixmatch text not found");
-
-                Ok(None)
             },
         };
 
-        if let Some(genius_result) = self.genius.search_for_track(track).await? {
-            Ok(Some(Box::new(genius_result)))
-        } else {
-            musixmatch_result
-        }
+        let genius_result = self.genius.search_for_track(track).await;
+
+        match genius_result {
+            Ok(Some(res)) => {
+                return Ok(Some(Box::new(res) as Box<dyn SearchResult + Send>));
+            },
+            Err(err) => {
+                tracing::error!(
+                    err = ?err,
+                    "Error with Genius occurred"
+                );
+            },
+            _ => {
+                tracing::debug!("Genius text not found");
+            },
+        };
+
+        Ok(None)
     }
 }

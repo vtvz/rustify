@@ -2,6 +2,7 @@
 
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
+use std::time::Duration;
 
 use anyhow::{anyhow, Context};
 use cached::proc_macro::cached;
@@ -9,7 +10,7 @@ use indoc::formatdoc;
 use isolang::Language;
 use lazy_static::lazy_static;
 use regex::Regex;
-use reqwest::{Client, StatusCode};
+use reqwest::{Client, ClientBuilder, StatusCode};
 use rspotify::model::FullTrack;
 use rustrict::is_whitespace;
 use strsim::normalized_damerau_levenshtein;
@@ -33,7 +34,10 @@ impl GeniusLocal {
         Self {
             token,
             service_url,
-            reqwest: Client::new(),
+            reqwest: ClientBuilder::new()
+                .timeout(Duration::from_secs(5))
+                .build()
+                .unwrap(),
         }
     }
 
