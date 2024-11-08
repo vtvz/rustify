@@ -1,18 +1,16 @@
-FROM denoland/deno:alpine-1.46.3
+# use the official Bun image
+# see all versions at https://hub.docker.com/r/oven/bun/tags
+FROM oven/bun:1 AS base
+WORKDIR /usr/src/app
 
-WORKDIR /app
+# copy production dependencies and source code into final image
+FROM base AS release
+COPY package.json bun.lockb .
+RUN bun install --frozen-lockfile --production
 
-# Prefer not to run as root.
-USER deno
-
-# Cache the dependencies as a layer (the following two steps are re-run only when deps.ts is modified).
-# Ideally cache deps.ts will download and compile _all_ external files used in main.ts.
-COPY deps.ts deno.json deno.lock ./
-RUN deno cache --frozen=true deps.ts
-
-# These steps will be re-run upon each file change in your working directory:
 COPY . .
-# Compile the main app so that it doesn't need to be compiled each startup/entry.
-RUN deno cache main.ts
 
-CMD ["run", "--allow-all", "main.ts"]
+# run the app
+USER bun
+EXPOSE 3000/tcp
+ENTRYPOINT [ "bun", "run", "index.ts" ]
