@@ -1,5 +1,5 @@
 use rspotify::model::{FullTrack, Id};
-use teloxide::utils::markdown;
+use teloxide::utils::html;
 
 pub fn artist_names(track: &FullTrack) -> Vec<String> {
     track.artists.iter().map(|art| art.name.clone()).collect()
@@ -15,9 +15,9 @@ pub fn get_track_id(track: &FullTrack) -> String {
 
 pub fn create_track_tg_link(track: &FullTrack) -> String {
     format!(
-        r#"[{}]({})"#,
-        markdown::escape(create_track_name(track).as_str()),
-        track
+        r#"<a href="{link}">{name}</a>"#,
+        name = html::escape(create_track_name(track).as_str()),
+        link = track
             .external_urls
             .get("spotify")
             .cloned()

@@ -103,7 +103,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                     spotify::utils::create_track_tg_link(&track)
                 ),
             )
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
                 #[rustfmt::skip]
                     vec![
@@ -134,7 +134,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 q.message.context("Message is empty")?.id(),
                 format!("Disliked {}", spotify::utils::create_track_tg_link(&track)),
             )
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
                 #[rustfmt::skip]
                     vec![
@@ -168,7 +168,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                     spotify::utils::create_track_tg_link(&track)
                 ),
             )
-            .parse_mode(ParseMode::MarkdownV2)
+            .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
                 #[rustfmt::skip]
                     vec![

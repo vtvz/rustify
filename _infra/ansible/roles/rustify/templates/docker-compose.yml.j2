@@ -1,10 +1,22 @@
 version: "3.8"
 services:
-  app:
+  genius_lyrics_provider:
+    image: "{{ rustify_docker_image }}-genius"
+    restart: always
+
+  bot:
     image: "{{ rustify_docker_image }}"
     environment:
       {{ rustify_env_content | indent(6) }}
     restart: always
+    entrypoint: /usr/local/bin/rustify-bot
+
+  track_check:
+    image: "{{ rustify_docker_image }}"
+    environment:
+      {{ rustify_env_content | indent(6) }}
+    restart: always
+    entrypoint: /usr/local/bin/rustify-track-check
 
   db:
     image: postgres:16

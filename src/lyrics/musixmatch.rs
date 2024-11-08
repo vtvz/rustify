@@ -4,11 +4,11 @@ use std::time::Duration;
 use anyhow::Context;
 use isolang::Language;
 use itertools::Itertools;
-use reqwest::Client;
+use reqwest::{Client, ClientBuilder};
 use rspotify::model::FullTrack;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{from_value, Value};
-use teloxide::utils::markdown;
+use teloxide::utils::html;
 use tokio::sync::Mutex;
 
 use crate::spotify;
@@ -74,8 +74,8 @@ impl super::SearchResult for Lyrics {
         };
 
         format!(
-            "[{text}]({url})",
-            text = markdown::escape(text),
+            r#"<a href="{url}">{text}</a>"#,
+            text = html::escape(text),
             url = self.backlink_url
         )
     }
@@ -107,7 +107,10 @@ pub struct Musixmatch {
 impl Musixmatch {
     pub fn new(tokens: impl IntoIterator<Item = String>) -> Self {
         Self {
-            reqwest: Client::new(),
+            reqwest: ClientBuilder::new()
+                .timeout(Duration::from_secs(5))
+                .build()
+                .unwrap(),
             tokens: Mutex::new(tokens.into_iter().collect()),
         }
     }

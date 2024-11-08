@@ -35,22 +35,22 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     } = UserService::get_stats(state.app.db(), Some(&state.user_id)).await?;
 
     let message = formatdoc!(
-        "
-            📉 **Some nice stats for you** 📈
+        r#"
+            📉 <b>Some nice stats for you</b> 📈
 
-            👎 You disliked `{dislikes}` songs
-            ⏭ I skipped `{skips}` times
-            💔 Removed `{removed_collection}` from liked songs
-            🗑 Removed `{removed_playlists}` from playlists
-            🔬 Checked lyrics `{lyrics_checked}` times
-            🙈 You ignored `{ignored}` tracks lyrics
-            🤬 `{lyrics_profane}` lyrics were considered as profane
-        "
+            👎 You disliked <code>{dislikes}</code> songs
+            ⏭ I skipped <code>{skips}</code> times
+            💔 Removed <code>{removed_collection}</code> from liked songs
+            🗑 Removed <code>{removed_playlists}</code> from playlists
+            🔬 Checked lyrics <code>{lyrics_checked}</code> times
+            🙈 You ignored <code>{ignored}</code> tracks lyrics
+            🤬 <code>{lyrics_profane}</code> lyrics were considered as profane
+        "#
     );
 
     bot.send_message(m.chat.id, message)
         .reply_parameters(ReplyParameters::new(m.id))
-        .parse_mode(ParseMode::MarkdownV2)
+        .parse_mode(ParseMode::Html)
         .send()
         .await?;
 

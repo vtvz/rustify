@@ -102,8 +102,14 @@ fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {
     }
 
     let genius_token = dotenv::var("GENIUS_ACCESS_TOKEN").context("Needs GENIUS_ACCESS_TOKEN")?;
+    let genius_service_url =
+        dotenv::var("GENIUS_SERVICE_URL").context("Needs GENIUS_ACCESS_TOKEN")?;
 
-    Ok(lyrics::Manager::new(genius_token, musixmatch_tokens))
+    Ok(lyrics::Manager::new(
+        genius_service_url,
+        genius_token,
+        musixmatch_tokens,
+    ))
 }
 
 impl AppState {

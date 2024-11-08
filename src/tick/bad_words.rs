@@ -53,8 +53,10 @@ pub async fn check(
         .into_iter()
         .filter(|profanity::LineResult { typ, .. }| !typ.is(Type::SAFE))
         .map(|line: profanity::LineResult| {
+            tracing::info!(line = ?line.line, censored = ?line.censored, typ = %line.typ, "Detected profanity line");
+
             format!(
-                "`{}:` {}, `[{}]`",
+                "<code>{}:</code> {}, <code>[{}]</code>",
                 hit.line_index_name(line.no),
                 line.highlighted(),
                 line.typ
@@ -72,7 +74,7 @@ pub async fn check(
     let message = loop {
         let message = formatdoc!(
             "
-                Current song \\({track_name}\\) probably has bad words \\(press 'Ignore text 🙈' in case of false positive\\):
+                Current song ({track_name}) probably has bad words (press 'Ignore text 🙈' in case of false positive):
 
                 {bad_lines}
 
@@ -94,7 +96,7 @@ pub async fn check(
         .app
         .bot()
         .send_message(ChatId(state.user_id.parse()?), message)
-        .parse_mode(ParseMode::MarkdownV2)
+        .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![

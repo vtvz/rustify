@@ -83,7 +83,7 @@ pub async fn handle(
     }
 
     let message = format!(
-        "Current song \\({track_name}\\) was disliked, but I cannot skip it...",
+        "Current song ({track_name}) was disliked, but I cannot skip it...",
         track_name = spotify::utils::create_track_tg_link(track),
     );
 
@@ -91,7 +91,7 @@ pub async fn handle(
         .app
         .bot()
         .send_message(ChatId(state.user_id.parse()?), message)
-        .parse_mode(ParseMode::MarkdownV2)
+        .parse_mode(ParseMode::Html)
         .send()
         .await;
 

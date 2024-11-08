@@ -2,8 +2,8 @@ use std::fmt::{Display, Formatter};
 use std::slice::Iter;
 
 use lazy_static::lazy_static;
-use rustrict::{Trie, Type};
-use teloxide::utils::markdown;
+use rustrict::{is_whitespace, Trie, Type};
+use teloxide::utils::html;
 
 lazy_static! {
     static ref TYPE_THRESHOLD: Type = Type::ANY & !Type::SPAM;
@@ -58,17 +58,37 @@ impl CheckResult {
             .into_iter()
             .enumerate()
             .map(|(index, line)| {
-                let line = markdown::escape(line);
+                let line = html::escape(line);
 
-                let (censored, typ) = rustrict::Censor::from_str(&line)
-                    .with_censor_first_character_threshold(*TYPE_THRESHOLD)
-                    .with_censor_threshold(*TYPE_THRESHOLD)
-                    .censor_and_analyze();
+                let (line, censored, typ) = line
+                    .split(is_whitespace)
+                    .map(|word| {
+                        let (censored, typ) = rustrict::Censor::from_str(word)
+                            .with_censor_first_character_threshold(*TYPE_THRESHOLD)
+                            .with_censor_threshold(*TYPE_THRESHOLD)
+                            .censor_and_analyze();
+                        (word, censored, typ)
+                    })
+                    .fold(
+                        (String::new(), String::new(), Type::NONE),
+                        |(line, line_censored, mut acc_type), (word, censored, typ)| {
+                            if typ.isnt(Type::SAFE) {
+                                acc_type |= typ;
+                            }
+
+                            (
+                                format!("{line} {word}"),
+                                format!("{line_censored} {censored}"),
+                                acc_type,
+                            )
+                        },
+                    );
 
                 if typ.isnt(*TYPE_THRESHOLD) {
                     return LineResult {
                         no: index,
                         typ: Type::SAFE.into(),
+                        censored: line.clone(),
                         line,
                         bad_chars: Default::default(),
                     };
@@ -91,6 +111,7 @@ impl CheckResult {
                     typ: typ.into(),
                     line,
                     bad_chars,
+                    censored,
                 }
             })
             .collect();
@@ -113,6 +134,7 @@ pub struct LineResult {
     pub typ: TypeWrapper,
     pub line: String,
     pub bad_chars: Vec<usize>,
+    pub censored: String,
 }
 
 impl LineResult {
@@ -126,9 +148,9 @@ impl LineResult {
                     self.bad_chars.contains(&i),
                     self.bad_chars.contains(&(i + 1)),
                 ) {
-                    (false, true, false) => format!("||__{}__||", c),
-                    (true, true, false) => format!("{}__||", c),
-                    (false, true, true) => format!("||__{}", c),
+                    (false, true, false) => format!("<tg-spoiler><u>{}</u></tg-spoiler>", c),
+                    (true, true, false) => format!("{}</u></tg-spoiler>", c),
+                    (false, true, true) => format!("<tg-spoiler><u>{}", c),
                     _ => c.into(),
                 }
             })

@@ -15,8 +15,9 @@ use user::CheckUserResult;
 
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
+use crate::user_service::UserService;
 use crate::utils::Clock;
-use crate::{spotify, state, utils, UserService};
+use crate::{spotify, state, utils};
 
 const CHECK_INTERVAL: u64 = 3;
 const PARALLEL_CHECKS: usize = 2;

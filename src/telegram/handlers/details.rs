@@ -10,7 +10,6 @@ use rspotify::clients::BaseClient;
 use rspotify::model::{FullTrack, Id, Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParameters};
-use teloxide::utils::markdown;
 
 use crate::entity::prelude::*;
 use crate::spotify::CurrentlyPlaying;
@@ -142,15 +141,6 @@ async fn common(
 
                 vec![]
             },
-            // HACK: https://github.com/ramsayleung/rspotify/issues/452
-            Err(rspotify::ClientError::ParseJson(err)) => {
-                tracing::info!(
-                    "Spotify changes API to produce floats instead of ints. Ignore for now {:?}",
-                    err
-                );
-
-                vec![]
-            },
             Err(err) => {
                 tracing::error!("Err from artists fetching {:?}", err);
 
@@ -173,7 +163,12 @@ async fn common(
 
                 (genre.to_case(Case::Title), url)
             })
-            .map(|(genre, url)| format!("[{genre}]({url})", genre = markdown::escape(&genre)))
+            .map(|(genre, url)| {
+                format!(
+                    r#"<a href="{url}">{genre}</a>"#,
+                    genre = teloxide::utils::html::escape(&genre)
+                )
+            })
             .collect()
     };
 
@@ -185,7 +180,7 @@ async fn common(
 
     let features: String = formatdoc! {
         "
-            🎶 `{} {}` ⌛ {:.0} BPM
+            🎶 <code>{} {}</code> ⌛ {:.0} BPM
             🎻 Acoustic {:.0}%
             🕺 Suitable for dancing {:.0}%
             ⚡️ Energetic {:.0}%
@@ -219,7 +214,7 @@ async fn common(
 
                     {features}
                     {genres_line}
-                    `No lyrics found`
+                    <code>No lyrics found</code>
                 ",
                 track_name = spotify::utils::create_track_tg_link(&track),
                 features = features.trim(),
@@ -227,7 +222,7 @@ async fn common(
             ),
         )
         .reply_parameters(ReplyParameters::new(m.id))
-        .parse_mode(ParseMode::MarkdownV2)
+        .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))
@@ -244,6 +239,7 @@ async fn common(
     let typ = checked.typ.to_string();
 
     let mut lines = lyrics.len();
+    // This requires to fit lyrics to tg message
     let message = loop {
         if lines == 0 {
             return Err(anyhow!("Issues with lyrics"));
@@ -254,12 +250,12 @@ async fn common(
                 {track_name}
 
                 {features}
-                🤬 Profanity `{profanity}`
+                🤬 Profanity <code>{profanity}</code>
                 🌐 Language: {language}
                 {genres_line}
                 {lyrics}
 
-                {genius}
+                {lyrics_link}
             ",
             track_name = spotify::utils::create_track_tg_link(&track),
             features = features.trim(),
@@ -267,7 +263,7 @@ async fn common(
             lyrics = &lyrics[0..lines].join("\n"),
             language = hit.language(),
             genres_line = genres_line,
-            genius = hit.tg_link(lines == lyrics.len())
+            lyrics_link = hit.tg_link(lines == lyrics.len())
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {
@@ -278,7 +274,7 @@ async fn common(
     };
 
     bot.send_message(m.chat.id, message)
-        .parse_mode(ParseMode::MarkdownV2)
+        .parse_mode(ParseMode::Html)
         .reply_parameters(ReplyParameters::new(m.id))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
