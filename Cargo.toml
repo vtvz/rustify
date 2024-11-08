@@ -20,7 +20,9 @@ isolang = "2.4.0"
 itertools = "0.10.5"
 lazy_static = "1.5.0"
 log = "0.4.22"
+r2d2 = "0.8.10"
 rand = "0.8.5"
+redis = { version = "0.27.5", features = ["aio", "tokio-comp"] }
 regex = { version = "1.10.6", features = ["pattern"] }
 reqwest = "0.12.7"
 rspotify = "0.13.3"

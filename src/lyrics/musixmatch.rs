@@ -105,14 +105,13 @@ pub struct Musixmatch {
 }
 
 impl Musixmatch {
-    pub fn new(tokens: impl IntoIterator<Item = String>) -> Self {
-        Self {
+    pub fn new(tokens: impl IntoIterator<Item = String>) -> anyhow::Result<Self> {
+        Ok(Self {
             reqwest: ClientBuilder::new()
                 .timeout(Duration::from_secs(5))
-                .build()
-                .unwrap(),
+                .build()?,
             tokens: Mutex::new(tokens.into_iter().collect()),
-        }
+        })
     }
 
     #[tracing::instrument(

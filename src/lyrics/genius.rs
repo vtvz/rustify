@@ -30,15 +30,14 @@ pub struct LyricsResponse {
 }
 
 impl GeniusLocal {
-    pub fn new(service_url: String, token: String) -> Self {
-        Self {
+    pub fn new(service_url: String, token: String) -> anyhow::Result<Self> {
+        Ok(Self {
             token,
             service_url,
             reqwest: ClientBuilder::new()
                 .timeout(Duration::from_secs(5))
-                .build()
-                .unwrap(),
-        }
+                .build()?,
+        })
     }
 
     #[tracing::instrument(

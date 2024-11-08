@@ -37,10 +37,10 @@ impl Manager {
         genius_service_url: String,
         genius_token: String,
         musixmatch_tokens: impl IntoIterator<Item = String>,
-    ) -> Self {
-        let genius = GeniusLocal::new(genius_service_url, genius_token);
-        let musixmatch = Musixmatch::new(musixmatch_tokens);
-        Self { genius, musixmatch }
+    ) -> anyhow::Result<Self> {
+        let genius = GeniusLocal::new(genius_service_url, genius_token)?;
+        let musixmatch = Musixmatch::new(musixmatch_tokens)?;
+        Ok(Self { genius, musixmatch })
     }
 
     #[tracing::instrument(
