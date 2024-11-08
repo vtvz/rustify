@@ -1,7 +1,7 @@
 import Genius, {
   InvalidGeniusKeyError,
   NoResultError,
-} from "npm:genius-lyrics@^4.4.7";
+} from "genius-lyrics";
 import { Application, Context, Router, Status } from "@oak/oak";
 
 const router = new Router();
