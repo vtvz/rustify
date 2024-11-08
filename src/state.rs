@@ -44,8 +44,8 @@ impl AppState {
         &self.db
     }
 
-    pub fn redis(&self) -> &redis::Client {
-        &self.redis
+    pub async fn redis_conn(&self) -> anyhow::Result<redis::aio::MultiplexedConnection> {
+        Ok(self.redis.get_multiplexed_tokio_connection().await?)
     }
 
     pub fn influx(&self) -> &Option<InfluxClient> {
@@ -141,6 +141,11 @@ async fn init_redis() -> anyhow::Result<redis::Client> {
     let redis_url = dotenv::var("REDIS_URL").context("Need REDIS_URL variable")?;
 
     let client = redis::Client::open(redis_url)?;
+
+    client
+        .get_multiplexed_tokio_connection()
+        .await
+        .context("Issue with connection")?;
 
     Ok(client)
 }

@@ -70,7 +70,7 @@ pub async fn check(
         },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
-                state.app.db(),
+                state.app.redis_conn().await?,
                 &state.user_id,
                 &spotify::utils::get_track_id(&track),
             )
