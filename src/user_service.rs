@@ -128,8 +128,12 @@ impl UserService {
         track_id: &str,
     ) -> anyhow::Result<bool> {
         let key = format!("rustify:track_check:{user_id}:{track_id}");
-        let ttl = 3 * 60 * 60; // one hours
-        // let ttl = 60; // one minute
+        // TODO: move somewhere else
+        let default_ttl = 86400; // one full day
+        let ttl: u64 = dotenv::var("LAST_PLAYED_TTL")
+            .unwrap_or(default_ttl.to_string())
+            .parse()
+            .unwrap_or(default_ttl);
 
         let played: bool = redis.exists(&key).await?;
 
