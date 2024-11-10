@@ -40,11 +40,11 @@ logs:
 ssh:
   ssh -t "{{ server }}" "cd {{ path }}; bash --login"
 
-watch cmd="run":
-  cargo watch -c -x {{ cmd }}
-
-xwatch cmd="run":
-   x-terminal-emulator -e {{ this }} watch {{ cmd }}
-
 restart:
   ssh "{{ server }}" -- docker-compose --project-directory "{{ path }}" restart bot track_check
+
+run:
+  parallel --tagstring "[{}]" --line-buffer -j2 --halt now,fail=1 cargo run --bin ::: "bot" "track_check"
+
+watch:
+  cargo watch -s 'proxychains4 -q just run'
