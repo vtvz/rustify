@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use anyhow::Context;
 use cached::proc_macro::io_cached;
-use cached::AsyncRedisCache;
 use isolang::Language;
 use itertools::Itertools;
 use reqwest::{Client, ClientBuilder};
@@ -124,14 +123,11 @@ impl Musixmatch {
         )
     )]
     pub async fn search_for_track(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
-        // required to make `cached` work
-        search_for_track_middleware(&self, track).await
+        // this weird construction required to make `cached` work
+        search_for_track_middleware(self, track).await
     }
 
-    pub async fn search_for_track_internal(
-        &self,
-        track: &FullTrack,
-    ) -> anyhow::Result<Option<Lyrics>> {
+    async fn search_for_track_internal(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
         let mut url =
             reqwest::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
 
@@ -264,6 +260,22 @@ impl Musixmatch {
     }
 }
 
+async fn redis_build() -> cached::AsyncRedisCache<String, Option<Lyrics>> {
+    let default_ttl = chrono::Duration::hours(24).num_seconds() as u64;
+    let ttl: u64 = dotenv::var("LYRICS_CACHE_TTL")
+        .unwrap_or(default_ttl.to_string())
+        .parse()
+        .unwrap_or(default_ttl);
+
+    cached::AsyncRedisCache::new("rustify:lyrics:musixmatch:", ttl)
+        .set_refresh(true)
+        .set_connection_string(&dotenv::var("REDIS_URL").expect("REDIS_URL should be set"))
+        .set_namespace("")
+        .build()
+        .await
+        .expect("error building example redis cache")
+}
+
 #[io_cached(
     map_error = r##"|e| anyhow::Error::from(e) "##,
     convert = r#"{ spotify::utils::get_track_id(track) }"#,
@@ -272,25 +284,9 @@ impl Musixmatch {
         redis_build().await
     } "##
 )]
-pub async fn search_for_track_middleware(
+async fn search_for_track_middleware(
     musixmatch: &Musixmatch,
     track: &FullTrack,
 ) -> anyhow::Result<Option<Lyrics>> {
     Musixmatch::search_for_track_internal(musixmatch, track).await
-}
-
-pub async fn redis_build() -> cached::AsyncRedisCache<String, Option<Lyrics>> {
-    let default_ttl = chrono::Duration::hours(24).num_seconds() as u64;
-    let ttl: u64 = dotenv::var("LYRICS_CACHE_TTL")
-        .unwrap_or(default_ttl.to_string())
-        .parse()
-        .unwrap_or(default_ttl);
-
-    AsyncRedisCache::new("rustify:lyrics:musixmatch:", ttl)
-        .set_refresh(true)
-        .set_connection_string(&dotenv::var("REDIS_URL").unwrap())
-        .set_namespace("")
-        .build()
-        .await
-        .expect("error building example redis cache")
 }

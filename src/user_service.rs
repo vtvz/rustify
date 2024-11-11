@@ -1,5 +1,4 @@
-use std::u64;
-
+use chrono::Duration;
 use redis::AsyncCommands;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr};
@@ -129,7 +128,7 @@ impl UserService {
     ) -> anyhow::Result<bool> {
         let key = format!("rustify:track_check:{user_id}:{track_id}");
         // TODO: move somewhere else
-        let default_ttl = 86400; // one full day
+        let default_ttl = Duration::hours(24).num_seconds() as u64;
         let ttl: u64 = dotenv::var("LAST_PLAYED_TTL")
             .unwrap_or(default_ttl.to_string())
             .parse()
