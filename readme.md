@@ -7,3 +7,5 @@
 - [ ] Alert "IT'S NOT ENGLISH!"
 - [ ] Notification about revoked spotify token
 - [ ] Remember listened songs within last 1 hour to reduce spam
+- [ ] Integrate with https://lrclib.net/docs
+- [ ] Integrate with https://lyrics.github.io/
