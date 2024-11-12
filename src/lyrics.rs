@@ -1,8 +1,12 @@
 use genius::GeniusLocal;
 use isolang::Language;
+use lazy_static::lazy_static;
 use musixmatch::Musixmatch;
 use rspotify::model::FullTrack;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use strum_macros::Display;
+use tokio::sync::RwLock;
 
 use crate::spotify;
 
@@ -89,5 +93,39 @@ impl Manager {
         };
 
         Ok(None)
+    }
+}
+
+#[derive(Debug)]
+pub struct LyricsCacheManager {}
+
+lazy_static! {
+    static ref REDIS_URL: RwLock<String> = RwLock::new(String::new());
+    static ref LYRICS_CACHE_TTL: RwLock<u64> = RwLock::new(24 * 60 * 60);
+}
+
+impl LyricsCacheManager {
+    pub async fn update_globals(redis_url: String, lyrics_cache_ttl: u64) {
+        let mut lock = REDIS_URL.write().await;
+        *lock = redis_url;
+
+        let mut lock = LYRICS_CACHE_TTL.write().await;
+        *lock = lyrics_cache_ttl;
+    }
+
+    pub async fn redis_cache_build<T: Sync + Send + Serialize + DeserializeOwned>(
+        provider: &str,
+    ) -> anyhow::Result<cached::AsyncRedisCache<String, T>> {
+        let res = cached::AsyncRedisCache::new(
+            format!("rustify:lyrics:{provider}:"),
+            *LYRICS_CACHE_TTL.read().await,
+        )
+        .set_refresh(true)
+        .set_connection_string(REDIS_URL.read().await.as_ref())
+        .set_namespace("")
+        .build()
+        .await;
+
+        Ok(res?)
     }
 }

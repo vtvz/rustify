@@ -91,7 +91,7 @@ async fn init_db() -> anyhow::Result<DbConn> {
     Ok(SqlxPostgresConnector::from_sqlx_postgres_pool(pool))
 }
 
-fn init_lyrics_manager() -> anyhow::Result<lyrics::Manager> {
+async fn init_lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manager> {
     let mut musixmatch_tokens: Vec<_> = dotenv::var("MUSIXMATCH_USER_TOKENS")
         .unwrap_or_else(|_| "".into())
         .split(',')
@@ -110,6 +110,12 @@ fn init_lyrics_manager() -> anyhow::Result<lyrics::Manager> {
     let genius_service_url =
         dotenv::var("GENIUS_SERVICE_URL").context("Needs GENIUS_ACCESS_TOKEN")?;
 
+    let default_ttl = chrono::Duration::hours(24).num_seconds() as u64;
+    let lyrics_cache_ttl: u64 = dotenv::var("LYRICS_CACHE_TTL")
+        .unwrap_or(default_ttl.to_string())
+        .parse()?;
+
+    lyrics::LyricsCacheManager::update_globals(redis_url, lyrics_cache_ttl).await;
     lyrics::Manager::new(genius_service_url, genius_token, musixmatch_tokens)
 }
 
@@ -137,9 +143,7 @@ fn init_rustrict() {
     }
 }
 
-async fn init_redis() -> anyhow::Result<redis::Client> {
-    let redis_url = dotenv::var("REDIS_URL").context("Need REDIS_URL variable")?;
-
+async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
     let client = redis::Client::open(redis_url)?;
 
     client
@@ -154,8 +158,10 @@ impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
         log::trace!("Init application");
 
+        let redis_url = dotenv::var("REDIS_URL").context("Need REDIS_URL variable")?;
+        let redis = init_redis(&redis_url).await?;
         let spotify_manager = spotify::Manager::new();
-        let lyrics_manager = init_lyrics_manager()?;
+        let lyrics_manager = init_lyrics_manager(redis_url).await?;
 
         init_rustrict();
 
@@ -164,7 +170,6 @@ impl AppState {
         );
 
         let db = init_db().await?;
-        let redis = init_redis().await?;
 
         let influx = init_influx().context("Cannot configure Influx Client")?;
 

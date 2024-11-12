@@ -296,7 +296,7 @@ async fn redis_build() -> cached::AsyncRedisCache<String, Option<SearchResult>> 
     convert = r#"{ spotify::utils::get_track_id(track) }"#,
     ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
     create = r##" {
-        redis_build().await
+        super::LyricsCacheManager::redis_cache_build("genius").await.expect("Redis cache should build")
     } "##
 )]
 async fn search_for_track_middleware(

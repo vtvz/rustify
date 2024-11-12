@@ -7,42 +7,26 @@ use isolang::Language;
 use itertools::Itertools;
 use reqwest::{Client, ClientBuilder};
 use rspotify::model::FullTrack;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use teloxide::utils::html;
 use tokio::sync::Mutex;
 
+use crate::serde_utils::{bool_from_int, lines_from_string};
 use crate::spotify;
-
-fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    Ok(u8::deserialize(deserializer)? != 0)
-}
-
-fn lines_from_string<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    Ok(String::deserialize(deserializer)?
-        .lines()
-        .map(str::to_owned)
-        .collect())
-}
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct Lyrics {
-    #[serde(deserialize_with = "bool_from_int")]
+    #[serde(with = "bool_from_int")]
     pub verified: bool,
-    #[serde(deserialize_with = "bool_from_int")]
+    #[serde(with = "bool_from_int")]
     pub restricted: bool,
-    #[serde(deserialize_with = "bool_from_int")]
+    #[serde(with = "bool_from_int")]
     pub instrumental: bool,
-    #[serde(deserialize_with = "bool_from_int")]
+    #[serde(with = "bool_from_int")]
     pub explicit: bool,
-    #[serde(deserialize_with = "lines_from_string", rename = "lyrics_body")]
+    #[serde(with = "lines_from_string", rename = "lyrics_body")]
     pub lyrics: Vec<String>,
     #[serde(default)]
     pub subtitle: Option<Vec<(Duration, String)>>,
@@ -260,28 +244,12 @@ impl Musixmatch {
     }
 }
 
-async fn redis_build() -> cached::AsyncRedisCache<String, Option<Lyrics>> {
-    let default_ttl = chrono::Duration::hours(24).num_seconds() as u64;
-    let ttl: u64 = dotenv::var("LYRICS_CACHE_TTL")
-        .unwrap_or(default_ttl.to_string())
-        .parse()
-        .unwrap_or(default_ttl);
-
-    cached::AsyncRedisCache::new("rustify:lyrics:musixmatch:", ttl)
-        .set_refresh(true)
-        .set_connection_string(&dotenv::var("REDIS_URL").expect("REDIS_URL should be set"))
-        .set_namespace("")
-        .build()
-        .await
-        .expect("error building example redis cache")
-}
-
 #[io_cached(
     map_error = r##"|e| anyhow::Error::from(e) "##,
     convert = r#"{ spotify::utils::get_track_id(track) }"#,
     ty = "cached::AsyncRedisCache<String, Option<Lyrics>>",
     create = r##" {
-        redis_build().await
+        super::LyricsCacheManager::redis_cache_build("musixmatch").await.expect("Redis cache should build")
     } "##
 )]
 async fn search_for_track_middleware(
