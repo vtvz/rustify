@@ -105,7 +105,7 @@ lazy_static! {
 }
 
 impl LyricsCacheManager {
-    pub async fn update_globals(redis_url: String, lyrics_cache_ttl: u64) {
+    pub async fn init(redis_url: String, lyrics_cache_ttl: u64) {
         let mut lock = REDIS_URL.write().await;
         *lock = redis_url;
 
