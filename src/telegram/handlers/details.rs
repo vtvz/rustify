@@ -186,7 +186,7 @@ async fn common(
             ⚡️ Energetic {:.0}%
             🤐 Without vocal {:.0}%
             🏟 Performed live {:.0}%
-            🎤 Speech\\-like {:.0}%
+            🎤 Speech-like {:.0}%
             ☺️ Positiveness {:.0}%
             👎 Disliked by {} people
             🙈 Ignored by {} people
