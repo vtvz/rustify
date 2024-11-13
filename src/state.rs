@@ -53,7 +53,7 @@ impl AppState {
     }
 }
 
-fn init_influx() -> anyhow::Result<Option<InfluxClient>> {
+fn influx() -> anyhow::Result<Option<InfluxClient>> {
     let Ok(api_url) = dotenv::var("INFLUX_API_URL") else {
         return Ok(None);
     };
@@ -72,7 +72,7 @@ fn init_influx() -> anyhow::Result<Option<InfluxClient>> {
     Ok(Some(client))
 }
 
-async fn init_db() -> anyhow::Result<DbConn> {
+async fn db() -> anyhow::Result<DbConn> {
     let database_url = dotenv::var("DATABASE_URL").context("Needs DATABASE_URL")?;
 
     let options = PgConnectOptions::from_str(&database_url)?;
@@ -91,7 +91,7 @@ async fn init_db() -> anyhow::Result<DbConn> {
     Ok(SqlxPostgresConnector::from_sqlx_postgres_pool(pool))
 }
 
-async fn init_lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manager> {
+async fn lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manager> {
     let mut musixmatch_tokens: Vec<_> = dotenv::var("MUSIXMATCH_USER_TOKENS")
         .unwrap_or_else(|_| "".into())
         .split(',')
@@ -119,7 +119,7 @@ async fn init_lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manage
     lyrics::Manager::new(genius_service_url, genius_token, musixmatch_tokens)
 }
 
-fn init_rustrict() {
+fn rustrict() {
     dotenv::var("CENSOR_BLACKLIST")
         .unwrap_or_default()
         .split(',')
@@ -143,7 +143,7 @@ fn init_rustrict() {
     }
 }
 
-async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
+async fn redis(redis_url: &str) -> anyhow::Result<redis::Client> {
     let client = redis::Client::open(redis_url)?;
 
     client
@@ -156,22 +156,22 @@ async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
 
 impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
-        log::trace!("Init application");
+        tracing::trace!("Init application");
 
         let redis_url = dotenv::var("REDIS_URL").context("Need REDIS_URL variable")?;
-        let redis = init_redis(&redis_url).await?;
+        let redis = redis(&redis_url).await?;
         let spotify_manager = spotify::Manager::new();
-        let lyrics_manager = init_lyrics_manager(redis_url).await?;
+        let lyrics_manager = lyrics_manager(redis_url).await?;
 
-        init_rustrict();
+        rustrict();
 
         let bot = Bot::new(
             dotenv::var("TELEGRAM_BOT_TOKEN").context("Need TELEGRAM_BOT_TOKEN variable")?,
         );
 
-        let db = init_db().await?;
+        let db = db().await?;
 
-        let influx = init_influx().context("Cannot configure Influx Client")?;
+        let influx = influx().context("Cannot configure Influx Client")?;
 
         // Make state global static variable to prevent hassle with Arc and cloning this mess
         let app_state = Box::new(Self {
