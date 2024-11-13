@@ -2,46 +2,31 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use anyhow::Context;
+use cached::proc_macro::io_cached;
 use isolang::Language;
 use itertools::Itertools;
 use reqwest::{Client, ClientBuilder};
 use rspotify::model::FullTrack;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use teloxide::utils::html;
 use tokio::sync::Mutex;
 
+use crate::serde_utils::{bool_from_int, lines_from_string};
 use crate::spotify;
-
-fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    Ok(u8::deserialize(deserializer)? != 0)
-}
-
-fn lines_from_string<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    Ok(String::deserialize(deserializer)?
-        .lines()
-        .map(str::to_owned)
-        .collect())
-}
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub struct Lyrics {
-    #[serde(deserialize_with = "bool_from_int")]
+    #[serde(with = "bool_from_int")]
     pub verified: bool,
-    #[serde(deserialize_with = "bool_from_int")]
+    #[serde(with = "bool_from_int")]
     pub restricted: bool,
-    #[serde(deserialize_with = "bool_from_int")]
+    #[serde(with = "bool_from_int")]
     pub instrumental: bool,
-    #[serde(deserialize_with = "bool_from_int")]
+    #[serde(with = "bool_from_int")]
     pub explicit: bool,
-    #[serde(deserialize_with = "lines_from_string", rename = "lyrics_body")]
+    #[serde(with = "lines_from_string", rename = "lyrics_body")]
     pub lyrics: Vec<String>,
     #[serde(default)]
     pub subtitle: Option<Vec<(Duration, String)>>,
@@ -105,14 +90,13 @@ pub struct Musixmatch {
 }
 
 impl Musixmatch {
-    pub fn new(tokens: impl IntoIterator<Item = String>) -> Self {
-        Self {
+    pub fn new(tokens: impl IntoIterator<Item = String>) -> anyhow::Result<Self> {
+        Ok(Self {
             reqwest: ClientBuilder::new()
                 .timeout(Duration::from_secs(5))
-                .build()
-                .unwrap(),
+                .build()?,
             tokens: Mutex::new(tokens.into_iter().collect()),
-        }
+        })
     }
 
     #[tracing::instrument(
@@ -123,6 +107,11 @@ impl Musixmatch {
         )
     )]
     pub async fn search_for_track(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
+        // this weird construction required to make `cached` work
+        search_for_track_middleware(self, track).await
+    }
+
+    async fn search_for_track_internal(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
         let mut url =
             reqwest::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
 
@@ -253,4 +242,19 @@ impl Musixmatch {
 
         Ok(Some(lyrics))
     }
+}
+
+#[io_cached(
+    map_error = r##"|e| anyhow::Error::from(e) "##,
+    convert = r#"{ spotify::utils::get_track_id(track) }"#,
+    ty = "cached::AsyncRedisCache<String, Option<Lyrics>>",
+    create = r##" {
+        super::LyricsCacheManager::redis_cache_build("musixmatch").await.expect("Redis cache should build")
+    } "##
+)]
+async fn search_for_track_middleware(
+    musixmatch: &Musixmatch,
+    track: &FullTrack,
+) -> anyhow::Result<Option<Lyrics>> {
+    Musixmatch::search_for_track_internal(musixmatch, track).await
 }

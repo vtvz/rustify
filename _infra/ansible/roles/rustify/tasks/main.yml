@@ -15,6 +15,7 @@
       "CENSOR_BLACKLIST": "{{ rustify_censor_blacklist | join(',') }}"
       "CENSOR_WHITELIST": "{{ rustify_censor_whitelist | join(',') }}"
       "GENIUS_SERVICE_URL": "http://genius_lyrics_provider:8090"
+      "REDIS_URL": "redis://redis:6379/"
       {% for (key, value) in rustify_env.items() -%}
          {{ key | to_json }}: {{ value | to_json }}
       {% endfor %}
@@ -37,7 +38,6 @@
     project_src: "{{ rustify_deploy_path }}"
     build: true
     state: present
-    recreate: always
 
 - name: Configure Backups
   block:

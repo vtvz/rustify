@@ -18,6 +18,7 @@ pub mod logger;
 pub mod lyrics;
 pub mod metrics;
 pub mod profanity;
+pub mod serde_utils;
 pub mod spotify;
 pub mod spotify_auth_service;
 pub mod state;

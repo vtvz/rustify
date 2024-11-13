@@ -20,6 +20,7 @@ pub struct AppState {
     bot: Bot,
     db: DatabaseConnection,
     influx: Option<InfluxClient>,
+    redis: redis::Client,
 }
 
 impl AppState {
@@ -41,6 +42,10 @@ impl AppState {
 
     pub fn db(&self) -> &DatabaseConnection {
         &self.db
+    }
+
+    pub async fn redis_conn(&self) -> anyhow::Result<redis::aio::MultiplexedConnection> {
+        Ok(self.redis.get_multiplexed_tokio_connection().await?)
     }
 
     pub fn influx(&self) -> &Option<InfluxClient> {
@@ -86,7 +91,7 @@ async fn db() -> anyhow::Result<DbConn> {
     Ok(SqlxPostgresConnector::from_sqlx_postgres_pool(pool))
 }
 
-fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {
+async fn lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manager> {
     let mut musixmatch_tokens: Vec<_> = dotenv::var("MUSIXMATCH_USER_TOKENS")
         .unwrap_or_else(|_| "".into())
         .split(',')
@@ -105,42 +110,60 @@ fn lyrics_manager() -> anyhow::Result<lyrics::Manager> {
     let genius_service_url =
         dotenv::var("GENIUS_SERVICE_URL").context("Needs GENIUS_ACCESS_TOKEN")?;
 
-    Ok(lyrics::Manager::new(
-        genius_service_url,
-        genius_token,
-        musixmatch_tokens,
-    ))
+    let default_ttl = chrono::Duration::hours(24).num_seconds() as u64;
+    let lyrics_cache_ttl: u64 = dotenv::var("LYRICS_CACHE_TTL")
+        .unwrap_or(default_ttl.to_string())
+        .parse()?;
+
+    lyrics::LyricsCacheManager::init(redis_url, lyrics_cache_ttl).await;
+    lyrics::Manager::new(genius_service_url, genius_token, musixmatch_tokens)
+}
+
+fn rustrict() {
+    dotenv::var("CENSOR_BLACKLIST")
+        .unwrap_or_default()
+        .split(',')
+        .for_each(profanity::Manager::add_word);
+
+    dotenv::var("CENSOR_WHITELIST")
+        .unwrap_or_default()
+        .split(',')
+        .for_each(profanity::Manager::remove_word);
+
+    let mut r = Replacements::new();
+
+    for b in b'a'..=b'z' {
+        let c = b as char;
+        r.insert(c, c); // still detect lowercased profanity.
+        r.insert(c.to_ascii_uppercase(), c); // still detect capitalized profanity.
+    }
+
+    unsafe {
+        *Replacements::customize_default() = r;
+    }
+}
+
+async fn redis(redis_url: &str) -> anyhow::Result<redis::Client> {
+    let client = redis::Client::open(redis_url)?;
+
+    client
+        .get_multiplexed_tokio_connection()
+        .await
+        .context("Issue with connection")?;
+
+    Ok(client)
 }
 
 impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
-        log::trace!("Init application");
+        tracing::trace!("Init application");
 
+        let redis_url = dotenv::var("REDIS_URL").context("Need REDIS_URL variable")?;
+        let redis = redis(&redis_url).await?;
         let spotify_manager = spotify::Manager::new();
-        let lyrics_manager = lyrics_manager()?;
+        let lyrics_manager = lyrics_manager(redis_url).await?;
 
-        dotenv::var("CENSOR_BLACKLIST")
-            .unwrap_or_default()
-            .split(',')
-            .for_each(profanity::Manager::add_word);
-
-        dotenv::var("CENSOR_WHITELIST")
-            .unwrap_or_default()
-            .split(',')
-            .for_each(profanity::Manager::remove_word);
-
-        {
-            let mut r = Replacements::new();
-            for b in b'a'..=b'z' {
-                let c = b as char;
-                r.insert(c, c); // still detect lowercased profanity.
-                r.insert(c.to_ascii_uppercase(), c); // still detect capitalized profanity.
-            }
-
-            unsafe {
-                *Replacements::customize_default() = r;
-            }
-        }
+        rustrict();
 
         let bot = Bot::new(
             dotenv::var("TELEGRAM_BOT_TOKEN").context("Need TELEGRAM_BOT_TOKEN variable")?,
@@ -158,7 +181,9 @@ impl AppState {
             lyrics: lyrics_manager,
             db,
             influx,
+            redis,
         });
+
         let app_state = &*Box::leak(app_state);
 
         Ok(app_state)

@@ -4,6 +4,7 @@ Dockerfile
 .dockerignore
 .env*
 .gitignore
+.git
 .ws.*
 ws.*
 Makefile

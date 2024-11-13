@@ -1,3 +1,5 @@
+use chrono::Duration;
+use redis::AsyncCommands;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr};
 use sea_orm::{
@@ -120,21 +122,24 @@ impl UserService {
     }
 
     pub async fn sync_current_playing(
-        db: &impl ConnectionTrait,
+        mut redis: redis::aio::MultiplexedConnection,
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<bool> {
-        let query: UpdateMany<_> = UserEntity::update_many();
+        let key = format!("rustify:track_check:{user_id}:{track_id}");
+        // TODO: move somewhere else
+        let default_ttl = Duration::hours(24).num_seconds() as u64;
+        let ttl: u64 = dotenv::var("LAST_PLAYED_TTL")
+            .unwrap_or(default_ttl.to_string())
+            .parse()
+            .unwrap_or(default_ttl);
 
-        let update_result: UpdateResult = query
-            .col_expr(UserColumn::PlayingTrack, Expr::value(track_id))
-            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
-            .filter(UserColumn::Id.eq(user_id))
-            .filter(UserColumn::PlayingTrack.ne(track_id))
-            .exec(db)
-            .await?;
+        let played: bool = redis.exists(&key).await?;
 
-        Ok(update_result.rows_affected > 0)
+        let _: String = redis.set_ex(key, true, ttl as u64).await?;
+
+        // returns true when track new
+        Ok(!played)
     }
 
     async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> anyhow::Result<UserActiveModel> {
