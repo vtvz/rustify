@@ -33,6 +33,9 @@ services:
   redis:
     image: redis:7.4.1
     restart: always
+    command: redis-server --save 60 1
+    volumes:
+      - ./var/redis:/data
 
 networks:
   default:
