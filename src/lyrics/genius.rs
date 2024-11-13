@@ -18,92 +18,6 @@ use teloxide::utils::html;
 
 use crate::spotify;
 
-#[derive(Clone, Serialize, Deserialize)]
-pub struct SearchResult {
-    id: u32,
-    url: String,
-    title: String,
-    confidence: SearchResultConfidence,
-    lyrics: Vec<String>,
-    language: Language,
-}
-
-impl super::SearchResult for SearchResult {
-    fn provider(&self) -> super::Provider {
-        super::Provider::Genius
-    }
-
-    fn lyrics(&self) -> Vec<&str> {
-        self.lyrics.iter().map(String::as_str).collect()
-    }
-
-    fn language(&self) -> Language {
-        self.language
-    }
-
-    fn tg_link(&self, full: bool) -> String {
-        let text = if full {
-            "Genius Source"
-        } else {
-            "Text truncated. Full lyrics can be found at Genius"
-        };
-
-        formatdoc!(
-            r#"
-                <a href="{url}">{text} (with {confidence}% confidence)
-                {title}</a>
-            "#,
-            text = html::escape(text),
-            title = html::escape(&self.title),
-            confidence = self.confidence,
-            url = self.url
-        )
-    }
-}
-
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct SearchResultConfidence {
-    title: f64,
-    artist: f64,
-}
-
-impl SearchResultConfidence {
-    fn new(artist: f64, title: f64) -> Self {
-        Self { title, artist }
-    }
-
-    fn confident(&self, threshold: f64) -> bool {
-        self.artist >= threshold && self.title >= threshold
-    }
-
-    fn avg(&self) -> f64 {
-        (self.title + self.artist) / 2.0
-    }
-}
-
-impl Display for SearchResultConfidence {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:.0}", self.avg() * 100.0)
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct GeniusArtist {
-    name: String,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct GeniusHit {
-    id: u32,
-    url: String,
-    full_title: String,
-    title: String,
-    #[serde(rename = "artist")]
-    primary_artist: GeniusArtist,
-}
-
 pub struct GeniusLocal {
     token: String,
     service_url: String,
@@ -273,6 +187,92 @@ impl GeniusLocal {
 
         Ok(res.lyrics.lines().map(String::from).collect())
     }
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct SearchResult {
+    id: u32,
+    url: String,
+    title: String,
+    confidence: SearchResultConfidence,
+    lyrics: Vec<String>,
+    language: Language,
+}
+
+impl super::SearchResult for SearchResult {
+    fn provider(&self) -> super::Provider {
+        super::Provider::Genius
+    }
+
+    fn lyrics(&self) -> Vec<&str> {
+        self.lyrics.iter().map(String::as_str).collect()
+    }
+
+    fn language(&self) -> Language {
+        self.language
+    }
+
+    fn tg_link(&self, full: bool) -> String {
+        let text = if full {
+            "Genius Source"
+        } else {
+            "Text truncated. Full lyrics can be found at Genius"
+        };
+
+        formatdoc!(
+            r#"
+                <a href="{url}">{text} (with {confidence}% confidence)
+                {title}</a>
+            "#,
+            text = html::escape(text),
+            title = html::escape(&self.title),
+            confidence = self.confidence,
+            url = self.url
+        )
+    }
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct SearchResultConfidence {
+    title: f64,
+    artist: f64,
+}
+
+impl SearchResultConfidence {
+    fn new(artist: f64, title: f64) -> Self {
+        Self { title, artist }
+    }
+
+    fn confident(&self, threshold: f64) -> bool {
+        self.artist >= threshold && self.title >= threshold
+    }
+
+    fn avg(&self) -> f64 {
+        (self.title + self.artist) / 2.0
+    }
+}
+
+impl Display for SearchResultConfidence {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:.0}", self.avg() * 100.0)
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GeniusArtist {
+    name: String,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct GeniusHit {
+    id: u32,
+    url: String,
+    full_title: String,
+    title: String,
+    #[serde(rename = "artist")]
+    primary_artist: GeniusArtist,
 }
 
 async fn redis_build() -> cached::AsyncRedisCache<String, Option<SearchResult>> {
