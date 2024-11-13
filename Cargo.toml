@@ -13,14 +13,10 @@ chrono = "0.4.38"
 convert_case = "0.6.0"
 derive_more = { version = "1.0.0", features = ["full"] }
 dotenv = "0.15.0"
-# hmac = "0.12.1"
 indoc = "2.0.5"
 influxdb = { version = "0.6.0", features = ["derive"] }
 itertools = "0.10.5"
 lazy_static = "1.5.0"
-log = "0.4.22"
-r2d2 = "0.8.10"
-rand = "0.8.5"
 redis = { version = "0.27.5", features = ["aio", "tokio-comp"] }
 regex = { version = "1.10.6", features = ["pattern"] }
 reqwest = "0.12.7"
@@ -28,14 +24,12 @@ rspotify = "0.13.3"
 rustrict = { version = "0.7.28", features = ["customize"] }
 serde = "1.0.210"
 serde_json = "1.0.128"
-# sha2 = "0.10.8"
 sqlx = { version = "0.7.4", features = ["postgres"] }
 strsim = "0.10.0"
 strum = "0.24.1"
 strum_macros = "0.24.3"
-thiserror = "1.0.63"
 # todo try to remove after next teloxide upgrade
-tokio-util = { version = "0.7.12", features = ["codec"] }
+# tokio-util = { version = "0.7.12", features = ["codec"] }
 tracing = "0.1.40"
 tracing-loki = "0.2.5"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }

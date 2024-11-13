@@ -57,12 +57,5 @@ pub async fn init() -> anyhow::Result<()> {
             .with_default(tracing::Level::from_str(&level)?),
     );
 
-    let tracing_init = builder.try_init();
-
-    match &tracing_init {
-        Ok(_) => log::info!("tracing_subscriber::fmt::try_init success"),
-        Err(_) => log::error!("tracing_subscriber::fmt::try_init error"),
-    }
-
-    Ok(tracing_init?)
+    Ok(builder.try_init()?)
 }

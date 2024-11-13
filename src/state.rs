@@ -156,7 +156,7 @@ async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
 
 impl AppState {
     pub async fn init() -> anyhow::Result<&'static Self> {
-        log::trace!("Init application");
+        tracing::trace!("Init application");
 
         let redis_url = dotenv::var("REDIS_URL").context("Need REDIS_URL variable")?;
         let redis = init_redis(&redis_url).await?;
