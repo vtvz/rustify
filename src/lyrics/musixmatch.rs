@@ -106,9 +106,29 @@ impl Musixmatch {
             track_name = %spotify::utils::create_track_name(track),
         )
     )]
-    pub async fn search_for_track(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
-        // this weird construction required to make `cached` work
-        search_for_track_middleware(self, track).await
+    pub async fn search_for_track(
+        &self,
+        track: &FullTrack,
+    ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send>>> {
+        #[io_cached(
+            map_error = r##"|e| anyhow::Error::from(e) "##,
+            convert = r#"{ spotify::utils::get_track_id(track) }"#,
+            ty = "cached::AsyncRedisCache<String, Option<Lyrics>>",
+            create = r##" {
+                let prefix = module_path!().split("::").last().expect("Will be");
+                super::LyricsCacheManager::redis_cache_build(prefix).await.expect("Redis cache should build")
+            } "##
+        )]
+        async fn search_for_track_middleware(
+            musixmatch: &Musixmatch,
+            track: &FullTrack,
+        ) -> anyhow::Result<Option<Lyrics>> {
+            Musixmatch::search_for_track_internal(musixmatch, track).await
+        }
+
+        search_for_track_middleware(self, track)
+            .await
+            .map(|res| res.map(|opt| Box::new(opt) as _))
     }
 
     async fn search_for_track_internal(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
@@ -242,19 +262,4 @@ impl Musixmatch {
 
         Ok(Some(lyrics))
     }
-}
-
-#[io_cached(
-    map_error = r##"|e| anyhow::Error::from(e) "##,
-    convert = r#"{ spotify::utils::get_track_id(track) }"#,
-    ty = "cached::AsyncRedisCache<String, Option<Lyrics>>",
-    create = r##" {
-        super::LyricsCacheManager::redis_cache_build("musixmatch").await.expect("Redis cache should build")
-    } "##
-)]
-async fn search_for_track_middleware(
-    musixmatch: &Musixmatch,
-    track: &FullTrack,
-) -> anyhow::Result<Option<Lyrics>> {
-    Musixmatch::search_for_track_internal(musixmatch, track).await
 }

@@ -35,7 +35,7 @@ tasks:
         --build-arg GIT_SHA={{ .GIT_COMMIT }}
         --build-arg GIT_COMMIT_TIMESTAMP={{ .GIT_COMMIT_TIMESTAMP | quote }}
         --build-arg GIT_DESCRIBE={{ .GIT_DESCRIBE | quote }}
-        -t {{ .DOCKER_IMAGE_TAG }}-genius genius-lyrics-service
+        -t {{ .DOCKER_IMAGE_TAG }}-lyrics-provider lyrics-provider
 
   docker-push:
     vars:

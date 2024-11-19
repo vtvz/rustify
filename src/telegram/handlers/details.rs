@@ -211,12 +211,14 @@ async fn common(
             formatdoc!(
                 "
                     {track_name}
+                    {album_name}
 
                     {features}
                     {genres_line}
                     <code>No lyrics found</code>
                 ",
                 track_name = spotify::utils::create_track_tg_link(&track),
+                album_name = spotify::utils::create_album_tg_link(&track.album),
                 features = features.trim(),
                 genres_line = genres_line,
             ),
@@ -248,6 +250,7 @@ async fn common(
         let message = formatdoc!(
             "
                 {track_name}
+                {album_name}
 
                 {features}
                 🤬 Profanity <code>{profanity}</code>
@@ -258,6 +261,7 @@ async fn common(
                 {lyrics_link}
             ",
             track_name = spotify::utils::create_track_tg_link(&track),
+            album_name = spotify::utils::create_album_tg_link(&track.album),
             features = features.trim(),
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),
