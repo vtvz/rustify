@@ -45,7 +45,7 @@ tasks:
 
     cmds:
       - docker push {{ .DOCKER_IMAGE_TAG }}
-      - docker push {{ .DOCKER_IMAGE_TAG }}-genius
+      - docker push {{ .DOCKER_IMAGE_TAG }}-lyrics-provider
 
   deploy:
     dir: "_infra/ansible"
