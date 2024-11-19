@@ -108,7 +108,10 @@ async fn init_lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manage
 
     let genius_token = dotenv::var("GENIUS_ACCESS_TOKEN").context("Needs GENIUS_ACCESS_TOKEN")?;
     let genius_service_url =
-        dotenv::var("GENIUS_SERVICE_URL").context("Needs GENIUS_ACCESS_TOKEN")?;
+        dotenv::var("GENIUS_SERVICE_URL").context("Needs GENIUS_SERVICE_URL")?;
+
+    let azlyrics_service_url =
+        dotenv::var("AZLYRICS_SERVICE_URL").context("Needs AZLYRICS_SERVICE_URL")?;
 
     let default_ttl = chrono::Duration::hours(24).num_seconds() as u64;
     let lyrics_cache_ttl: u64 = dotenv::var("LYRICS_CACHE_TTL")
@@ -116,7 +119,12 @@ async fn init_lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manage
         .parse()?;
 
     lyrics::LyricsCacheManager::init(redis_url, lyrics_cache_ttl).await;
-    lyrics::Manager::new(genius_service_url, genius_token, musixmatch_tokens)
+    lyrics::Manager::new(
+        genius_service_url,
+        genius_token,
+        musixmatch_tokens,
+        azlyrics_service_url,
+    )
 }
 
 fn init_rustrict() {

@@ -1,3 +1,4 @@
+use azlyrics::AZLyrics;
 use genius::GeniusLocal;
 use isolang::Language;
 use lazy_static::lazy_static;
@@ -11,6 +12,7 @@ use tokio::sync::RwLock;
 
 use crate::spotify;
 
+pub mod azlyrics;
 pub mod genius;
 pub mod lrclib;
 pub mod musixmatch;
@@ -23,6 +25,7 @@ pub enum Provider {
     Musixmatch,
     Genius,
     LrcLib,
+    AZLyrics,
 }
 
 pub trait SearchResult {
@@ -41,6 +44,7 @@ pub struct Manager {
     genius: GeniusLocal,
     musixmatch: Musixmatch,
     lrclib: LrcLib,
+    azlyrics: AZLyrics,
 }
 
 impl Manager {
@@ -48,15 +52,18 @@ impl Manager {
         genius_service_url: String,
         genius_token: String,
         musixmatch_tokens: impl IntoIterator<Item = String>,
+        azlyrics_service_url: String,
     ) -> anyhow::Result<Self> {
         let genius = GeniusLocal::new(genius_service_url, genius_token)?;
         let musixmatch = Musixmatch::new(musixmatch_tokens)?;
         let lrclib = LrcLib::new()?;
+        let azlyrics = AZLyrics::new(azlyrics_service_url)?;
 
         Ok(Self {
             genius,
             musixmatch,
             lrclib,
+            azlyrics,
         })
     }
 
@@ -95,6 +102,7 @@ impl Manager {
 
         handle_provider!("Musixmatch", self.musixmatch);
         handle_provider!("LrcLib", self.lrclib);
+        handle_provider!("AZLyrics", self.azlyrics);
         handle_provider!("Genius", self.genius);
 
         Ok(None)

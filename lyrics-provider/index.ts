@@ -1,3 +1,11 @@
+import {
+  search,
+  // import the result types you want
+  OrganicResult,
+  DictionaryResult,
+  // helpful to import ResultTypes to filter results
+  ResultTypes
+} from 'google-sr';
 import { JSDOM } from "jsdom";
 import Genius, {
   InvalidGeniusKeyError,
@@ -74,13 +82,22 @@ router.get("/genius/search", async (ctx) => {
 router.get("/azlyrics/search", async (ctx) => {
   const query = ctx.request.url.searchParams.get("q");
 
-  let resp = await axios.get("https://search.azlyrics.com/suggest.php", {
-    params: {
-      'q': query
-    }
+  const queryResult = await search({
+    query: `site:www.azlyrics.com ${query} lyrics`,
+    // OrganicResult is the default, however it is recommended to ALWAYS specify the result type
+    resultTypes: [OrganicResult],
+    // to add additional configuration to the request, use the requestConfig option
+    // which accepts a AxiosRequestConfig object
+    // OPTIONAL
+    requestConfig: {
+      params: {
+        // enable "safe mode"
+        safe: 'active'
+      },
+    },
   });
 
-  ctx.response.body = JSON.stringify(resp.data.lyrics);
+  ctx.response.body = JSON.stringify(queryResult);
 
   ctx.response.type = "json";
 });

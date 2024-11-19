@@ -7,24 +7,20 @@ use rspotify::model::FullTrack;
 use serde::{Deserialize, Serialize};
 use strsim::normalized_damerau_levenshtein;
 
-use super::utils::get_track_names;
+use super::utils::{get_track_names, SearchResultConfidence};
 use super::BEST_FIT_THRESHOLD;
-use crate::lyrics::utils::SearchResultConfidence;
 use crate::spotify;
 
-pub struct LrcLib {
+pub struct AZLyrics {
     reqwest: Client,
+    service_url: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Lyrics {
-    pub id: i64,
-    pub track_name: String,
-    pub artist_name: String,
-    pub album_name: String,
-    pub instrumental: bool,
-    pub plain_lyrics: Option<String>,
+pub struct AZLyricsHit {
+    pub title: String,
+    pub link: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -32,13 +28,13 @@ pub struct SearchResult {
     confidence: SearchResultConfidence,
     lyrics: Vec<String>,
     language: Language,
-    artist_name: String,
-    track_name: String,
+    title: String,
+    url: String,
 }
 
 impl super::SearchResult for SearchResult {
     fn provider(&self) -> super::Provider {
-        super::Provider::LrcLib
+        super::Provider::AZLyrics
     }
 
     fn lyrics(&self) -> Vec<&str> {
@@ -47,20 +43,14 @@ impl super::SearchResult for SearchResult {
 
     fn tg_link(&self, full: bool) -> String {
         let text = if full {
-            "LrcLib"
+            "AZLyrics"
         } else {
-            "Text truncated. Full lyrics can be searched at LrcLib"
+            "Text truncated. Full lyrics can be searched at AZLyrics"
         };
-
-        let url = url::Url::parse("https://lrclib.net/search/").expect("If it fails, it fails");
-
-        let url = url
-            .join(&format!("{} {}", self.artist_name, self.track_name))
-            .map(|url| url.to_string())
-            .unwrap_or("https://lrclib.net/".into());
 
         format!(
             r#"<a href="{url}">{text} (with {confidence}% confidence)</a>"#,
+            url = self.url,
             confidence = self.confidence,
         )
     }
@@ -70,9 +60,10 @@ impl super::SearchResult for SearchResult {
     }
 }
 
-impl LrcLib {
-    pub fn new() -> anyhow::Result<Self> {
+impl AZLyrics {
+    pub fn new(service_url: String) -> anyhow::Result<Self> {
         Ok(Self {
+            service_url,
             reqwest: ClientBuilder::new()
                 .timeout(Duration::from_secs(5))
                 .build()?,
@@ -100,10 +91,10 @@ impl LrcLib {
             } "##
         )]
         async fn search_for_track_middleware(
-            lrclib: &LrcLib,
+            azlyrics: &AZLyrics,
             track: &FullTrack,
         ) -> anyhow::Result<Option<SearchResult>> {
-            LrcLib::search_for_track_internal(lrclib, track).await
+            AZLyrics::search_for_track_internal(azlyrics, track).await
         }
 
         // this weird construction required to make `cached` work
@@ -126,7 +117,6 @@ impl LrcLib {
 
         let track_name = &track.name;
         let cmp_track_name = track_name.to_lowercase();
-        let album_name = &track.album.name;
 
         let names = get_track_names(&track.name);
         let names_len = names.len();
@@ -134,38 +124,48 @@ impl LrcLib {
         let mut hits_count = 0;
 
         for (name_i, name) in names.into_iter().enumerate() {
-            let mut url = reqwest::Url::parse("https://lrclib.net/api/search")?;
-            url.query_pairs_mut().extend_pairs(&[
-                ("artist_name", artist_name),
-                ("track_name", track_name),
-                ("album_name", album_name),
-            ]);
+            let q = format!("{} {}", artist_name, track_name);
 
             let res = self
                 .reqwest
-                .get(url)
-                .header("Lrclib-Client", "Rustify (https://github.com/vtvz/rustify)")
+                .get(format!("{}/search", self.service_url))
+                .query(&[("q", q)])
                 .send()
                 .await?
+                .error_for_status()?
                 .text()
                 .await?;
 
-            let hits: Vec<Lyrics> = serde_json::from_str(&res)?;
+            println!("{res}");
+
+            let hits: Vec<AZLyricsHit> = serde_json::from_str(&res)?;
 
             hits_count += hits.len();
 
             for (hit_i, hit) in hits.into_iter().enumerate() {
-                let Some(hit_plain_lyrics) = hit.plain_lyrics else {
-                    continue;
-                };
-
-                let confidence = SearchResultConfidence::new(
-                    normalized_damerau_levenshtein(
-                        &cmp_artist_name,
-                        &hit.artist_name.to_lowercase(),
-                    ),
-                    normalized_damerau_levenshtein(&cmp_track_name, &hit.track_name.to_lowercase()),
+                println!(
+                    "{} {}",
+                    &format!(r#""{cmp_artist_name}" - {cmp_track_name} lyrics"#),
+                    &hit.title
+                        .to_lowercase()
+                        .replace("|", "")
+                        .replace("-", "")
+                        .replace("azlyrics.com", "")
+                        .replace("azlyrics", "")
+                        .trim(),
                 );
+
+                let confidence = normalized_damerau_levenshtein(
+                    &format!(r#""{cmp_artist_name}" - {cmp_track_name} lyrics"#),
+                    &hit.title
+                        .to_lowercase()
+                        .replace("|", "")
+                        .replace("-", "")
+                        .replace("azlyrics.com", "")
+                        .replace("azlyrics", "")
+                        .trim(),
+                );
+                let confidence = SearchResultConfidence::new(confidence, confidence);
 
                 if confidence.confident(BEST_FIT_THRESHOLD) {
                     tracing::debug!(
@@ -178,14 +178,31 @@ impl LrcLib {
                         track_name,
                     );
 
+                    let res = self
+                        .reqwest
+                        .get(format!("{}/lyrics", self.service_url))
+                        .query(&[("url", &hit.link)])
+                        .send()
+                        .await?
+                        .error_for_status()?
+                        .text()
+                        .await?;
+
+                    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+                    #[serde(rename_all = "camelCase")]
+                    pub struct Lyrics {
+                        pub lyrics: String,
+                    }
+                    let Lyrics { lyrics } = serde_json::from_str(&res)?;
+
                     return Ok(Some(SearchResult {
                         confidence,
-                        language: whatlang::detect_lang(&hit_plain_lyrics)
+                        language: whatlang::detect_lang(&lyrics)
                             .and_then(|lang| Language::from_639_3(lang.code()))
                             .unwrap_or_default(),
-                        lyrics: hit_plain_lyrics.lines().map(str::to_string).collect(),
-                        artist_name: artist_name.into(),
-                        track_name: track_name.clone(),
+                        lyrics: lyrics.lines().map(str::to_string).collect(),
+                        title: hit.title,
+                        url: hit.link,
                     }));
                 }
             }

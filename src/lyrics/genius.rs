@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use std::fmt::{Display, Formatter};
 use std::time::Duration;
 
 use anyhow::{anyhow, Context};
@@ -14,6 +13,7 @@ use strsim::normalized_damerau_levenshtein;
 use teloxide::utils::html;
 
 use super::utils::get_track_names;
+use crate::lyrics::utils::SearchResultConfidence;
 use crate::lyrics::BEST_FIT_THRESHOLD;
 use crate::spotify;
 
@@ -57,32 +57,6 @@ impl super::SearchResult for SearchResult {
             confidence = self.confidence,
             url = self.url
         )
-    }
-}
-
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct SearchResultConfidence {
-    title: f64,
-    artist: f64,
-}
-
-impl SearchResultConfidence {
-    fn new(artist: f64, title: f64) -> Self {
-        Self { title, artist }
-    }
-
-    fn confident(&self, threshold: f64) -> bool {
-        self.artist >= threshold && self.title >= threshold
-    }
-
-    fn avg(&self) -> f64 {
-        (self.title + self.artist) / 2.0
-    }
-}
-
-impl Display for SearchResultConfidence {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:.0}", self.avg() * 100.0)
     }
 }
 
