@@ -7,7 +7,7 @@ use rspotify::model::FullTrack;
 use serde::{Deserialize, Serialize};
 use strsim::normalized_damerau_levenshtein;
 
-use super::utils::{get_track_names, SearchResultConfidence};
+use super::utils::SearchResultConfidence;
 use super::BEST_FIT_THRESHOLD;
 use crate::spotify;
 
@@ -118,100 +118,77 @@ impl AZLyrics {
         let track_name = &track.name;
         let cmp_track_name = track_name.to_lowercase();
 
-        let names = get_track_names(&track.name);
-        let names_len = names.len();
+        let q = format!("{} {}", artist_name, track_name);
 
-        let mut hits_count = 0;
+        let res = self
+            .reqwest
+            .get(format!("{}/search", self.service_url))
+            .query(&[("q", q)])
+            .send()
+            .await?
+            .error_for_status()?
+            .text()
+            .await?;
 
-        for (name_i, name) in names.into_iter().enumerate() {
-            let q = format!("{} {}", artist_name, track_name);
+        let hits: Vec<AZLyricsHit> = serde_json::from_str(&res)?;
 
-            let res = self
-                .reqwest
-                .get(format!("{}/search", self.service_url))
-                .query(&[("q", q)])
-                .send()
-                .await?
-                .error_for_status()?
-                .text()
-                .await?;
+        let hits_count = hits.len();
 
-            println!("{res}");
+        for (hit_i, hit) in hits.into_iter().enumerate() {
+            let confidence = normalized_damerau_levenshtein(
+                &format!(r#""{cmp_artist_name}" - {cmp_track_name} lyrics"#),
+                &hit.title
+                    .to_lowercase()
+                    .replace("|", "")
+                    .replace("-", "")
+                    .replace("azlyrics.com", "")
+                    .replace("azlyrics", "")
+                    .trim(),
+            );
+            let confidence = SearchResultConfidence::new(confidence, confidence);
 
-            let hits: Vec<AZLyricsHit> = serde_json::from_str(&res)?;
-
-            hits_count += hits.len();
-
-            for (hit_i, hit) in hits.into_iter().enumerate() {
-                println!(
-                    "{} {}",
-                    &format!(r#""{cmp_artist_name}" - {cmp_track_name} lyrics"#),
-                    &hit.title
-                        .to_lowercase()
-                        .replace("|", "")
-                        .replace("-", "")
-                        .replace("azlyrics.com", "")
-                        .replace("azlyrics", "")
-                        .trim(),
+            if confidence.confident(BEST_FIT_THRESHOLD) {
+                tracing::debug!(
+                    confidence = %confidence,
+                    "Found text at {} hit of {} ({} - {})",
+                    hit_i + 1,
+                    hits_count,
+                    artist_name,
+                    track_name,
                 );
 
-                let confidence = normalized_damerau_levenshtein(
-                    &format!(r#""{cmp_artist_name}" - {cmp_track_name} lyrics"#),
-                    &hit.title
-                        .to_lowercase()
-                        .replace("|", "")
-                        .replace("-", "")
-                        .replace("azlyrics.com", "")
-                        .replace("azlyrics", "")
-                        .trim(),
-                );
-                let confidence = SearchResultConfidence::new(confidence, confidence);
+                let res = self
+                    .reqwest
+                    .get(format!("{}/lyrics", self.service_url))
+                    .query(&[("url", &hit.link)])
+                    .send()
+                    .await?
+                    .error_for_status()?
+                    .text()
+                    .await?;
 
-                if confidence.confident(BEST_FIT_THRESHOLD) {
-                    tracing::debug!(
-                        confidence = %confidence,
-                        "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
-                        hit_i + 1,
-                        name_i + 1,
-                        artist_name,
-                        name,
-                        track_name,
-                    );
-
-                    let res = self
-                        .reqwest
-                        .get(format!("{}/lyrics", self.service_url))
-                        .query(&[("url", &hit.link)])
-                        .send()
-                        .await?
-                        .error_for_status()?
-                        .text()
-                        .await?;
-
-                    #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-                    #[serde(rename_all = "camelCase")]
-                    pub struct Lyrics {
-                        pub lyrics: String,
-                    }
-                    let Lyrics { lyrics } = serde_json::from_str(&res)?;
-
-                    return Ok(Some(SearchResult {
-                        confidence,
-                        language: whatlang::detect_lang(&lyrics)
-                            .and_then(|lang| Language::from_639_3(lang.code()))
-                            .unwrap_or_default(),
-                        lyrics: lyrics.lines().map(str::to_string).collect(),
-                        title: hit.title,
-                        url: hit.link,
-                    }));
+                #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+                #[serde(rename_all = "camelCase")]
+                pub struct Lyrics {
+                    pub lyrics: String,
                 }
+                let Lyrics { lyrics } = serde_json::from_str(&res)?;
+
+                return Ok(Some(SearchResult {
+                    confidence,
+                    language: whatlang::detect_lang(&lyrics)
+                        .and_then(|lang| Language::from_639_3(lang.code()))
+                        .unwrap_or_default(),
+                    lyrics: lyrics.lines().map(str::to_string).collect(),
+                    title: hit.title,
+                    url: hit.link,
+                }));
             }
         }
 
         tracing::info!(
-            "Found no text in {} hits in {} name variants ({} - {})",
+            "Found no text in {} hits ({} - {})",
             hits_count,
-            names_len,
             artist_name,
             track_name,
         );

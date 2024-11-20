@@ -18,7 +18,7 @@ pub mod lrclib;
 pub mod musixmatch;
 pub mod utils;
 
-pub const BEST_FIT_THRESHOLD: f64 = 0.45;
+pub const BEST_FIT_THRESHOLD: f64 = 0.6;
 
 #[derive(Display)]
 pub enum Provider {
