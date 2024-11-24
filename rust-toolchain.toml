@@ -3,4 +3,4 @@
 channel = "nightly-2024-09-08"
 targets = ["x86_64-unknown-linux-gnu"]
 components = ["rust-analyzer"]
-profile = "default"
+profile = "minimal"
