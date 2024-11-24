@@ -1,10 +1,6 @@
 import {
   search,
-  // import the result types you want
   OrganicResult,
-  DictionaryResult,
-  // helpful to import ResultTypes to filter results
-  ResultTypes
 } from 'google-sr';
 import { JSDOM } from "jsdom";
 import Genius, {
@@ -86,9 +82,6 @@ router.get("/azlyrics/search", async (ctx) => {
     query: `site:www.azlyrics.com ${query} lyrics`,
     // OrganicResult is the default, however it is recommended to ALWAYS specify the result type
     resultTypes: [OrganicResult],
-    // to add additional configuration to the request, use the requestConfig option
-    // which accepts a AxiosRequestConfig object
-    // OPTIONAL
     requestConfig: {
       params: {
         // enable "safe mode"

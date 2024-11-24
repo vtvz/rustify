@@ -41,7 +41,11 @@ impl super::SearchResult for SearchResult {
         self.lyrics.iter().map(|lyrics| lyrics.as_str()).collect()
     }
 
-    fn tg_link(&self, full: bool) -> String {
+    fn link(&self) -> String {
+        self.url.clone()
+    }
+
+    fn link_text(&self, full: bool) -> String {
         let text = if full {
             "AZLyrics"
         } else {
@@ -49,8 +53,7 @@ impl super::SearchResult for SearchResult {
         };
 
         format!(
-            r#"<a href="{url}">{text} (with {confidence}% confidence)</a>"#,
-            url = self.url,
+            r#"{text} (with {confidence}% confidence)"#,
             confidence = self.confidence,
         )
     }

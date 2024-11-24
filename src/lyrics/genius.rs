@@ -10,7 +10,6 @@ use reqwest::{Client, ClientBuilder, StatusCode};
 use rspotify::model::FullTrack;
 use rustrict::is_whitespace;
 use strsim::normalized_damerau_levenshtein;
-use teloxide::utils::html;
 
 use super::utils::get_track_names;
 use crate::lyrics::utils::SearchResultConfidence;
@@ -40,7 +39,11 @@ impl super::SearchResult for SearchResult {
         self.language
     }
 
-    fn tg_link(&self, full: bool) -> String {
+    fn link(&self) -> String {
+        self.url.clone()
+    }
+
+    fn link_text(&self, full: bool) -> String {
         let text = if full {
             "Genius Source"
         } else {
@@ -49,13 +52,11 @@ impl super::SearchResult for SearchResult {
 
         formatdoc!(
             r#"
-                <a href="{url}">{text} (with {confidence}% confidence)
-                {title}</a>
+                {text} (with {confidence}% confidence)
+                {title}
             "#,
-            text = html::escape(text),
-            title = html::escape(&self.title),
+            title = &self.title,
             confidence = self.confidence,
-            url = self.url
         )
     }
 }

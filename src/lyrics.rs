@@ -31,7 +31,8 @@ pub enum Provider {
 pub trait SearchResult {
     fn provider(&self) -> Provider;
     fn lyrics(&self) -> Vec<&str>;
-    fn tg_link(&self, full: bool) -> String;
+    fn link(&self) -> String;
+    fn link_text(&self, full: bool) -> String;
 
     fn language(&self) -> Language;
 
@@ -78,6 +79,7 @@ impl Manager {
         &self,
         track: &FullTrack,
     ) -> anyhow::Result<Option<Box<dyn SearchResult + Send>>> {
+        // tired to fight type system to handle this with vec
         macro_rules! handle_provider {
             ($name:expr, $provider:expr) => {
                 let result = $provider.search_for_track(track).await;

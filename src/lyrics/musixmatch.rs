@@ -9,7 +9,6 @@ use reqwest::{Client, ClientBuilder};
 use rspotify::model::FullTrack;
 use serde::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
-use teloxide::utils::html;
 use tokio::sync::Mutex;
 
 use crate::serde_utils::{bool_from_int, lines_from_string};
@@ -51,18 +50,18 @@ impl super::SearchResult for Lyrics {
         }
     }
 
-    fn tg_link(&self, full: bool) -> String {
+    fn link(&self) -> String {
+        self.backlink_url.clone()
+    }
+
+    fn link_text(&self, full: bool) -> String {
         let text = if full {
             "Musixmatch Source"
         } else {
             "Text truncated. Full lyrics can be found at Musixmatch"
         };
 
-        format!(
-            r#"<a href="{url}">{text}</a>"#,
-            text = html::escape(text),
-            url = self.backlink_url
-        )
+        text.into()
     }
 
     fn line_index_name(&self, index: usize) -> String {

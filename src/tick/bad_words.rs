@@ -73,16 +73,17 @@ pub async fn check(
     let mut lines = bad_lines.len();
     let message = loop {
         let message = formatdoc!(
-            "
+            r#"
                 Current song ({track_name}) probably has bad words (press 'Ignore text 🙈' in case of false positive):
 
                 {bad_lines}
 
-                {genius}
-            ",
+                <a href="{lyrics_link}">{lyrics_link_text}</a>
+            "#,
             track_name = spotify::utils::create_track_tg_link(track),
             bad_lines = bad_lines[0..lines].join("\n"),
-            genius = hit.tg_link(true)
+            lyrics_link = hit.link(),
+            lyrics_link_text = hit.link_text(lines == bad_lines.len()),
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {

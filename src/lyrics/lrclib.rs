@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use cached::proc_macro::io_cached;
+use indoc::formatdoc;
 use isolang::Language;
 use reqwest::{Client, ClientBuilder};
 use rspotify::model::FullTrack;
@@ -45,23 +46,29 @@ impl super::SearchResult for SearchResult {
         self.lyrics.iter().map(|lyrics| lyrics.as_str()).collect()
     }
 
-    fn tg_link(&self, full: bool) -> String {
+    fn link(&self) -> String {
+        let url = url::Url::parse("https://lrclib.net/search/").expect("If it fails, it fails");
+
+        url.join(&format!("{} {}", self.artist_name, self.track_name))
+            .map(|url| url.to_string())
+            .unwrap_or("https://lrclib.net/".into())
+    }
+
+    fn link_text(&self, full: bool) -> String {
         let text = if full {
             "LrcLib"
         } else {
             "Text truncated. Full lyrics can be searched at LrcLib"
         };
 
-        let url = url::Url::parse("https://lrclib.net/search/").expect("If it fails, it fails");
-
-        let url = url
-            .join(&format!("{} {}", self.artist_name, self.track_name))
-            .map(|url| url.to_string())
-            .unwrap_or("https://lrclib.net/".into());
-
-        format!(
-            r#"<a href="{url}">{text} (with {confidence}% confidence)</a>"#,
+        formatdoc!(
+            r#"
+                {text} (with {confidence}% confidence)
+                {artist_name} - {track_name}
+            "#,
             confidence = self.confidence,
+            artist_name = self.artist_name,
+            track_name = self.track_name,
         )
     }
 

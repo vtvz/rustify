@@ -248,7 +248,7 @@ async fn common(
         }
 
         let message = formatdoc!(
-            "
+            r#"
                 {track_name}
                 {album_name}
 
@@ -258,8 +258,8 @@ async fn common(
                 {genres_line}
                 {lyrics}
 
-                {lyrics_link}
-            ",
+                <a href="{lyrics_link}">{lyrics_link_text}</a>
+            "#,
             track_name = spotify::utils::create_track_tg_link(&track),
             album_name = spotify::utils::create_album_tg_link(&track.album),
             features = features.trim(),
@@ -267,7 +267,8 @@ async fn common(
             lyrics = &lyrics[0..lines].join("\n"),
             language = hit.language(),
             genres_line = genres_line,
-            lyrics_link = hit.tg_link(lines == lyrics.len())
+            lyrics_link = hit.link(),
+            lyrics_link_text = hit.link_text(lines == lyrics.len()),
         );
 
         if message.len() <= telegram::MESSAGE_MAX_LEN {
