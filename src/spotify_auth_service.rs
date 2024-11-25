@@ -1,8 +1,8 @@
 use anyhow::Context;
 use rspotify::Token;
+use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::Expr;
-use sea_orm::ActiveValue::Set;
 use sea_orm::{ConnectionTrait, IntoActiveModel, QuerySelect, QueryTrait, UpdateResult};
 
 use crate::entity::prelude::*;

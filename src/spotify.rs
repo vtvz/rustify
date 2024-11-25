@@ -1,12 +1,12 @@
 pub mod errors;
 pub mod utils;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 pub use errors::Error;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
 use rspotify::model::{Context as SpotifyContext, FullTrack, PlayableItem};
-use rspotify::{scopes, AuthCodeSpotify, ClientError, ClientResult, Token};
+use rspotify::{AuthCodeSpotify, ClientError, ClientResult, Token, scopes};
 use sea_orm::{DbConn, TransactionTrait};
 use strum_macros::Display;
 

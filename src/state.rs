@@ -1,9 +1,9 @@
 use std::str::FromStr;
 
 use anyhow::Context;
+use rspotify::AuthCodeSpotify;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{PrivateUser, SubscriptionLevel};
-use rspotify::AuthCodeSpotify;
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;

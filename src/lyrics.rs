@@ -5,8 +5,8 @@ use lazy_static::lazy_static;
 use lrclib::LrcLib;
 use musixmatch::Musixmatch;
 use rspotify::model::FullTrack;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use strum_macros::Display;
 use tokio::sync::RwLock;
 

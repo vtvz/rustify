@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use influxdb::Query;
-use reqwest::{header, Response};
+use reqwest::{Response, header};
 
 pub struct InfluxClient {
     req: reqwest::Client,

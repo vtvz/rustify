@@ -1,7 +1,7 @@
 use rspotify::model::TrackId;
+use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr};
-use sea_orm::ActiveValue::Set;
 use sea_orm::{ConnectionTrait, FromQueryResult, IntoActiveModel, QuerySelect, UpdateResult};
 
 use crate::entity::prelude::*;

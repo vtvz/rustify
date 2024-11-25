@@ -1,7 +1,7 @@
 use anyhow::Context;
+use rspotify::DEFAULT_PAGINATION_CHUNKS;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{Page, PlayableId};
-use rspotify::DEFAULT_PAGINATION_CHUNKS;
 use teloxide::prelude::*;
 use teloxide::types::ReplyParameters;
 

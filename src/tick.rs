@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use chrono::Timelike;
-use tokio::sync::{broadcast, Semaphore};
+use tokio::sync::{Semaphore, broadcast};
 use tokio::time::Instant;
 use tracing::Instrument;
 use user::CheckUserResult;

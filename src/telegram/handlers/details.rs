@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use convert_case::{Case, Casing};
 use indoc::formatdoc;
 use itertools::Itertools;

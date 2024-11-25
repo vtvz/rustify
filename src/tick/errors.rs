@@ -1,8 +1,8 @@
 use anyhow::Context;
 use reqwest::{Response, StatusCode};
 use sea_orm::DbConn;
-use teloxide::prelude::*;
 use teloxide::ApiError;
+use teloxide::prelude::*;
 
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;

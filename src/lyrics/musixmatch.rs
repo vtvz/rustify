@@ -8,7 +8,7 @@ use itertools::Itertools;
 use reqwest::{Client, ClientBuilder};
 use rspotify::model::FullTrack;
 use serde::{Deserialize, Serialize};
-use serde_json::{from_value, Value};
+use serde_json::{Value, from_value};
 use tokio::sync::Mutex;
 
 use crate::serde_utils::{bool_from_int, lines_from_string};

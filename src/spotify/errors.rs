@@ -1,6 +1,6 @@
 use reqwest::Response;
-use rspotify::http::HttpError;
 use rspotify::ClientError;
+use rspotify::http::HttpError;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub enum AuthErrorType {

@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use cached::proc_macro::io_cached;
 use indoc::formatdoc;
 use isolang::Language;
@@ -12,8 +12,8 @@ use rustrict::is_whitespace;
 use strsim::normalized_damerau_levenshtein;
 
 use super::utils::get_track_names;
-use crate::lyrics::utils::SearchResultConfidence;
 use crate::lyrics::BEST_FIT_THRESHOLD;
+use crate::lyrics::utils::SearchResultConfidence;
 use crate::spotify;
 
 #[derive(Clone, Serialize, Deserialize)]

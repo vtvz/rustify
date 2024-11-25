@@ -8,8 +8,8 @@ use rspotify::model::FullTrack;
 use serde::{Deserialize, Serialize};
 use strsim::normalized_damerau_levenshtein;
 
-use super::utils::get_track_names;
 use super::BEST_FIT_THRESHOLD;
+use super::utils::get_track_names;
 use crate::lyrics::utils::SearchResultConfidence;
 use crate::spotify;
 

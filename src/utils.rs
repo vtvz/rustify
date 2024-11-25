@@ -4,7 +4,7 @@ use std::time::Duration;
 use again::RetryPolicy;
 use chrono::{NaiveDateTime, SubsecRound, Utc};
 use lazy_static::lazy_static;
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{RwLock, broadcast};
 use tokio::time::Instant;
 
 lazy_static! {

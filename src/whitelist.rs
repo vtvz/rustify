@@ -1,5 +1,5 @@
-use sea_orm::prelude::*;
 use sea_orm::ActiveValue::Set;
+use sea_orm::prelude::*;
 use sea_orm::{ConnectionTrait, IntoActiveModel};
 
 use crate::entity::prelude::*;

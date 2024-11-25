@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 use std::slice::Iter;
 
 use lazy_static::lazy_static;
-use rustrict::{is_whitespace, Trie, Type};
+use rustrict::{Trie, Type, is_whitespace};
 use teloxide::utils::html;
 
 lazy_static! {
