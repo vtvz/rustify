@@ -8,10 +8,10 @@ use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
 
 pub async fn handle(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
 ) -> anyhow::Result<bool> {
     let dislikes = TrackStatusService::count_status(
         app_state.db(),

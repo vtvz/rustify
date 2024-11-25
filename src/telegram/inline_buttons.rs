@@ -68,10 +68,10 @@ impl Display for InlineButtons {
 }
 
 pub async fn handle(
-    q: CallbackQuery,
-    bot: Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: Bot,
+    q: CallbackQuery,
 ) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
         if let Some(id) = q.inline_message_id {

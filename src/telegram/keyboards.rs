@@ -43,13 +43,13 @@ impl StartKeyboard {
 }
 
 pub async fn handle(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
 ) -> anyhow::Result<bool> {
     if !state.is_spotify_authed().await {
-        send_register_invite(m.chat.id, bot, app_state).await?;
+        send_register_invite(app_state, bot, m.chat.id).await?;
 
         return Ok(true);
     }
@@ -65,11 +65,11 @@ pub async fn handle(
     let button = button?;
 
     match button {
-        StartKeyboard::Dislike => super::handlers::dislike::handle(m, bot, app_state, state).await,
-        StartKeyboard::Cleanup => super::handlers::cleanup::handle(m, bot, app_state, state).await,
-        StartKeyboard::Stats => super::handlers::stats::handle(m, bot, app_state, state).await,
+        StartKeyboard::Dislike => super::handlers::dislike::handle(app_state, state, bot, m).await,
+        StartKeyboard::Cleanup => super::handlers::cleanup::handle(app_state, state, bot, m).await,
+        StartKeyboard::Stats => super::handlers::stats::handle(app_state, state, bot, m).await,
         StartKeyboard::Details => {
-            super::handlers::details::handle_current(m, bot, app_state, state).await
+            super::handlers::details::handle_current(app_state, state, bot, m).await
         },
     }
 }

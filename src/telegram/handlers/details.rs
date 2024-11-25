@@ -19,10 +19,10 @@ use crate::track_status_service::TrackStatusService;
 use crate::{profanity, spotify, telegram};
 
 pub async fn handle_current(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
 ) -> anyhow::Result<bool> {
     let spotify = state.spotify().read().await;
     let track = match CurrentlyPlaying::get(&spotify).await {
@@ -37,7 +37,7 @@ pub async fn handle_current(
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    common(m, bot, app_state, state, *track).await
+    common(app_state, state, bot, m, *track).await
 }
 
 fn extract_id(url: &str) -> Option<TrackId> {
@@ -55,10 +55,10 @@ fn extract_id(url: &str) -> Option<TrackId> {
 }
 
 pub async fn handle_url(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
 ) -> anyhow::Result<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
@@ -70,14 +70,14 @@ pub async fn handle_url(
 
     let track = state.spotify().read().await.track(track_id, None).await?;
 
-    common(m, bot, app_state, state, track).await
+    common(app_state, state, bot, m, track).await
 }
 
 async fn common(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
     track: FullTrack,
 ) -> anyhow::Result<bool> {
     let spotify = state.spotify().read().await;

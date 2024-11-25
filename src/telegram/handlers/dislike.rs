@@ -9,10 +9,10 @@ use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 
 pub async fn handle(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
 ) -> anyhow::Result<bool> {
     if !state.is_spotify_authed().await {
         return Ok(false);

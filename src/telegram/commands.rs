@@ -34,10 +34,10 @@ pub enum Command {
 }
 
 pub async fn handle(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
 ) -> anyhow::Result<bool> {
     let text = m.text().context("No text available")?;
 
@@ -76,21 +76,21 @@ pub async fn handle(
                     .send()
                     .await?;
             } else {
-                super::helpers::send_register_invite(m.chat.id, bot, app_state).await?;
+                super::helpers::send_register_invite(app_state, bot, m.chat.id).await?;
             }
         },
         Command::Dislike => {
-            return super::handlers::dislike::handle(m, bot, app_state, state).await;
+            return super::handlers::dislike::handle(app_state, state, bot, m).await;
         },
         Command::Cleanup => {
-            return super::handlers::cleanup::handle(m, bot, app_state, state).await;
+            return super::handlers::cleanup::handle(app_state, state, bot, m).await;
         },
-        Command::Stats => return super::handlers::stats::handle(m, bot, app_state, state).await,
+        Command::Stats => return super::handlers::stats::handle(app_state, state, bot, m).await,
         Command::Details => {
-            return super::handlers::details::handle_current(m, bot, app_state, state).await;
+            return super::handlers::details::handle_current(app_state, state, bot, m).await;
         },
         Command::Register => {
-            return super::helpers::send_register_invite(m.chat.id, bot, app_state).await;
+            return super::helpers::send_register_invite(app_state, bot, m.chat.id).await;
         },
         Command::Help => {
             bot.send_message(m.chat.id, Command::descriptions().to_string())
@@ -98,7 +98,7 @@ pub async fn handle(
                 .await?;
         },
         Command::Whitelist(action, user_id) => {
-            return super::handlers::whitelist::handle(m, bot, app_state, state, action, user_id)
+            return super::handlers::whitelist::handle(app_state, state, bot, m, action, user_id)
                 .await;
         },
     }

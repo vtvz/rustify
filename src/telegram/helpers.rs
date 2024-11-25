@@ -11,9 +11,9 @@ use teloxide::types::{
 use crate::state::AppState;
 
 pub async fn send_register_invite(
-    chat_id: ChatId,
-    bot: &Bot,
     app_state: &'static AppState,
+    bot: &Bot,
+    chat_id: ChatId,
 ) -> anyhow::Result<bool> {
     let url = app_state.spotify_manager().get_authorize_url().await?;
     bot.send_message(

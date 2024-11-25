@@ -164,7 +164,7 @@ async fn run() {
 
                 let clone = (m.clone(), bot.clone());
 
-                let result = rustify::telegram::handle_message(m, bot, app_state, &state).await;
+                let result = rustify::telegram::handle_message(app_state, &state, bot, m).await;
 
                 let (m, bot) = clone;
                 if let Err(err) = &result {
@@ -200,7 +200,7 @@ async fn run() {
             move |q: CallbackQuery, bot: Bot| async {
                 let state = app_state.user_state(&q.from.id.to_string()).await?;
 
-                rustify::telegram::inline_buttons::handle(q, bot, app_state, &state).await
+                rustify::telegram::inline_buttons::handle(app_state, &state, bot, q).await
             },
         ));
 

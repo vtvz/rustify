@@ -6,10 +6,10 @@ use crate::telegram::helpers;
 use crate::telegram::keyboards::StartKeyboard;
 
 pub async fn handle(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
     action: String,
     user_id: String,
 ) -> anyhow::Result<bool> {
@@ -51,7 +51,7 @@ pub async fn handle(
             .send()
             .await?;
 
-            helpers::send_register_invite(ChatId(user_id_int), bot, app_state).await?;
+            helpers::send_register_invite(app_state, bot, ChatId(user_id_int)).await?;
         },
         "deny" => {
             app_state.whitelist().deny(app_state.db(), &user_id).await?;

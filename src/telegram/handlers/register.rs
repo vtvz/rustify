@@ -9,10 +9,10 @@ use crate::state::{AppState, UserState};
 use crate::user_service::UserService;
 
 pub async fn handle(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
 ) -> anyhow::Result<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
@@ -31,14 +31,14 @@ pub async fn handle(
         return Ok(false);
     };
 
-    process_spotify_code(m, bot, app_state, state, code).await
+    process_spotify_code(app_state, state, bot, m, code).await
 }
 
 async fn process_spotify_code(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
     code: String,
 ) -> anyhow::Result<bool> {
     let instance = state.spotify().write().await;

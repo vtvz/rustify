@@ -12,10 +12,10 @@ use crate::user_service::UserService;
 use crate::utils::retry;
 
 pub async fn handle(
-    m: &Message,
-    bot: &Bot,
     app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
 ) -> anyhow::Result<bool> {
     let message = bot
         .send_message(
