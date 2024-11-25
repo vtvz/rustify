@@ -19,7 +19,7 @@ use crate::track_status_service::TrackStatusService;
 use crate::{profanity, spotify, telegram};
 
 pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
-    let spotify = state.spotify.read().await;
+    let spotify = state.spotify().read().await;
     let track = match CurrentlyPlaying::get(&spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
@@ -58,7 +58,7 @@ pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Re
         return Ok(false);
     };
 
-    let track = state.spotify.read().await.track(track_id, None).await?;
+    let track = state.spotify().read().await.track(track_id, None).await?;
 
     common(m, bot, state, track).await
 }
@@ -69,12 +69,12 @@ async fn common(
     state: &UserState,
     track: FullTrack,
 ) -> anyhow::Result<bool> {
-    let spotify = state.spotify.read().await;
+    let spotify = state.spotify().read().await;
 
     let track_id = track.id.clone().context("Should be prevalidated")?;
 
     let status =
-        TrackStatusService::get_status(state.app.db(), &state.user_id, track_id.id()).await;
+        TrackStatusService::get_status(state.app().db(), state.user_id(), track_id.id()).await;
 
     let keyboard = match status {
         TrackStatus::Disliked => {
@@ -112,7 +112,7 @@ async fn common(
     };
 
     let disliked_by = TrackStatusService::count_status(
-        state.app.db(),
+        state.app().db(),
         TrackStatus::Disliked,
         None,
         Some(track_id.id()),
@@ -120,7 +120,7 @@ async fn common(
     .await?;
 
     let ignored_by = TrackStatusService::count_status(
-        state.app.db(),
+        state.app().db(),
         TrackStatus::Ignore,
         None,
         Some(track_id.id()),
@@ -205,7 +205,7 @@ async fn common(
         ignored_by,
     };
 
-    let Some(hit) = state.app.lyrics().search_for_track(&track).await? else {
+    let Some(hit) = state.app().lyrics().search_for_track(&track).await? else {
         bot.send_message(
             m.chat.id,
             formatdoc!(

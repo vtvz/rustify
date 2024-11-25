@@ -36,27 +36,27 @@ async fn sync_name(state: &UserState, tg_user: Option<&User>) -> anyhow::Result<
         .collect::<Vec<_>>()
         .join(" | ");
 
-    UserService::sync_name(state.app.db(), &state.user_id, &name).await?;
+    UserService::sync_name(state.app().db(), state.user_id(), &name).await?;
 
     Ok(())
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
     let res = state
-        .app
+        .app()
         .whitelist()
-        .get_status(state.app.db(), &state.user_id)
+        .get_status(state.app().db(), state.user_id())
         .await?;
 
-    let chat_id = ChatId(state.user_id.parse()?);
+    let chat_id = ChatId(state.user_id().parse()?);
     match res {
         (UserWhitelistStatus::Allowed, _) => return Ok(true),
         (UserWhitelistStatus::Denied, _) => {
             tracing::info!("Denied user tried to use bot");
 
             state
-                .app
+                .app()
                 .bot()
                 .send_message(chat_id, "Sorry, your join request was rejected...")
                 .parse_mode(ParseMode::Html)
@@ -72,12 +72,12 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                     Admin already notified that you want to join, but you also can contact <a href="tg://user?id={}">[admin]()</a> and send this message to him\\.
 
                     User Id: <code>{}</code>"#,
-                state.app.whitelist().contact_admin(),
-                state.user_id,
+                state.app().whitelist().contact_admin(),
+                state.user_id(),
             );
 
             state
-                .app
+                .app()
                 .bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
@@ -91,14 +91,14 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                     <code>/whitelist allow {user_id}</code>
                     <code>/whitelist deny {user_id}</code>
                 "#,
-                user_id = state.user_id,
+                user_id = state.user_id(),
             );
 
             state
-                .app
+                .app()
                 .bot()
                 .send_message(
-                    ChatId(state.app.whitelist().contact_admin().parse()?),
+                    ChatId(state.app().whitelist().contact_admin().parse()?),
                     message,
                 )
                 .parse_mode(ParseMode::Html)
@@ -116,12 +116,12 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                     Send him this message, this will drastically help\\.
 
                     User Id: <code>{}</code>"#,
-                state.app.whitelist().contact_admin(),
-                state.user_id,
+                state.app().whitelist().contact_admin(),
+                state.user_id(),
             );
 
             state
-                .app
+                .app()
                 .bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
@@ -160,7 +160,7 @@ async fn run() {
                 }
 
                 if let Err(err) = sync_name(&state, m.from.as_ref()).await {
-                    tracing::error!(err = ?err, user_id = state.user_id.as_str(), "Failed syncing user name");
+                    tracing::error!(err = ?err, user_id = state.user_id(), "Failed syncing user name");
                 }
 
                 let clone = (m.clone(), bot.clone());

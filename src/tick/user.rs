@@ -1,4 +1,5 @@
 use anyhow::Context;
+use redis::AsyncCommands;
 use strum_macros::Display;
 
 use crate::entity::prelude::*;
@@ -45,7 +46,7 @@ pub async fn check(
         Ok(state) => state,
     };
 
-    let playing = CurrentlyPlaying::get(&*state.spotify.read().await).await;
+    let playing = CurrentlyPlaying::get(&*state.spotify().read().await).await;
 
     let (track, context) = match playing {
         CurrentlyPlaying::Err(err) => {
@@ -58,8 +59,8 @@ pub async fn check(
     };
 
     let status = TrackStatusService::get_status(
-        state.app.db(),
-        &state.user_id,
+        state.app().db(),
+        state.user_id(),
         &spotify::utils::get_track_id(&track),
     )
     .await;
@@ -70,8 +71,8 @@ pub async fn check(
         },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
-                state.app.redis_conn().await?,
-                &state.user_id,
+                state.app().redis_conn().await?,
+                state.user_id(),
                 &spotify::utils::get_track_id(&track),
             )
             .await?;
@@ -79,21 +80,25 @@ pub async fn check(
             if !changed {
                 return Ok(CheckUserResult::SkipSame);
             }
-
-            let res = super::bad_words::check(&state, &track)
+            let _: () = app_state
+                .redis_conn()
+                .await?
+                .lpush("test_check_lyrics_queue", "message")
+                .await?;
+            let res = super::profanity_check::check(&state, &track)
                 .await
                 .context("Check bad words");
 
             match res {
                 Ok(res) => {
-                    UserService::increase_stats_query(&state.user_id)
+                    UserService::increase_stats_query(state.user_id())
                         .lyrics(
                             1,
                             res.profane as u32,
                             matches!(res.provider, Some(lyrics::Provider::Genius)) as u32,
                             matches!(res.provider, Some(lyrics::Provider::Musixmatch)) as u32,
                         )
-                        .exec(state.app.db())
+                        .exec(state.app().db())
                         .await?;
                 },
                 Err(err) => {

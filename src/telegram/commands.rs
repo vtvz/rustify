@@ -63,7 +63,8 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     match command {
         Command::Start | Command::Keyboard => {
             if state.is_spotify_authed().await {
-                UserService::set_status(state.app.db(), &state.user_id, UserStatus::Active).await?;
+                UserService::set_status(state.app().db(), state.user_id(), UserStatus::Active)
+                    .await?;
 
                 bot.send_message(m.chat.id, "Here is your keyboard")
                     .reply_markup(StartKeyboard::markup())

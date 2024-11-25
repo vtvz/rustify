@@ -213,14 +213,26 @@ impl AppState {
 }
 
 pub struct UserState {
-    pub app: &'static AppState,
-    pub spotify: RwLock<AuthCodeSpotify>,
-    pub user_id: String,
+    app: &'static AppState,
+    spotify: RwLock<AuthCodeSpotify>,
+    user_id: String,
 
     spotify_user: Mutex<Option<Option<PrivateUser>>>,
 }
 
 impl UserState {
+    pub fn app(&self) -> &'static AppState {
+        self.app
+    }
+
+    pub fn spotify(&self) -> &RwLock<AuthCodeSpotify> {
+        &self.spotify
+    }
+
+    pub fn user_id(&self) -> &str {
+        &self.user_id
+    }
+
     pub async fn is_spotify_authed(&self) -> bool {
         self.spotify
             .read()

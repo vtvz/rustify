@@ -13,7 +13,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         return Ok(false);
     }
 
-    let track = match CurrentlyPlaying::get(&*state.spotify.read().await).await {
+    let track = match CurrentlyPlaying::get(&*state.spotify().read().await).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             bot.send_message(m.chat.id, message.to_string())
@@ -28,8 +28,8 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     let track_id = spotify::utils::get_track_id(&track);
 
     TrackStatusService::set_status(
-        state.app.db(),
-        &state.user_id,
+        state.app().db(),
+        state.user_id(),
         &track_id,
         TrackStatus::Disliked,
     )

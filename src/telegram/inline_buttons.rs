@@ -86,14 +86,19 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
     match button {
         InlineButtons::Cancel(id) => {
             let track = state
-                .spotify
+                .spotify()
                 .read()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
 
-            TrackStatusService::set_status(state.app.db(), &state.user_id, &id, TrackStatus::None)
-                .await?;
+            TrackStatusService::set_status(
+                state.app().db(),
+                state.user_id(),
+                &id,
+                TrackStatus::None,
+            )
+            .await?;
 
             bot.edit_message_text(
                 q.from.id,
@@ -115,15 +120,15 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
         },
         InlineButtons::Dislike(id) => {
             let track = state
-                .spotify
+                .spotify()
                 .read()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
 
             TrackStatusService::set_status(
-                state.app.db(),
-                &state.user_id,
+                state.app().db(),
+                state.user_id(),
                 &id,
                 TrackStatus::Disliked,
             )
@@ -146,15 +151,15 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
         },
         InlineButtons::Ignore(id) => {
             let track = state
-                .spotify
+                .spotify()
                 .read()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
 
             TrackStatusService::set_status(
-                state.app.db(),
-                &state.user_id,
+                state.app().db(),
+                state.user_id(),
                 &id,
                 TrackStatus::Ignore,
             )

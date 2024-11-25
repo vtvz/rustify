@@ -9,22 +9,22 @@ use crate::user_service::{UserService, UserStats};
 
 pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
     let dislikes = TrackStatusService::count_status(
-        state.app.db(),
+        state.app().db(),
         TrackStatus::Disliked,
-        Some(&state.user_id),
+        Some(state.user_id()),
         None,
     )
     .await?;
 
     let ignored = TrackStatusService::count_status(
-        state.app.db(),
+        state.app().db(),
         TrackStatus::Ignore,
-        Some(&state.user_id),
+        Some(state.user_id()),
         None,
     )
     .await?;
 
-    let skips = TrackStatusService::sum_skips(state.app.db(), Some(&state.user_id)).await?;
+    let skips = TrackStatusService::sum_skips(state.app().db(), Some(state.user_id())).await?;
 
     let UserStats {
         removed_collection,
@@ -32,7 +32,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         lyrics_checked,
         lyrics_profane,
         ..
-    } = UserService::get_stats(state.app.db(), Some(&state.user_id)).await?;
+    } = UserService::get_stats(state.app().db(), Some(state.user_id())).await?;
 
     let message = formatdoc!(
         r#"
