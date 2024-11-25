@@ -1,7 +1,6 @@
 #![allow(clippy::explicit_auto_deref)]
 #![warn(clippy::unwrap_used)]
 #![feature(
-    const_option_ext,
     stmt_expr_attributes,
     box_patterns,
     closure_track_caller,

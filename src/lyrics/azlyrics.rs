@@ -7,8 +7,8 @@ use rspotify::model::FullTrack;
 use serde::{Deserialize, Serialize};
 use strsim::normalized_damerau_levenshtein;
 
-use super::utils::SearchResultConfidence;
 use super::BEST_FIT_THRESHOLD;
+use super::utils::SearchResultConfidence;
 use crate::spotify;
 
 pub struct AZLyrics {
@@ -38,7 +38,7 @@ impl super::SearchResult for SearchResult {
     }
 
     fn lyrics(&self) -> Vec<&str> {
-        self.lyrics.iter().map(|lyrics| lyrics.as_str()).collect()
+        self.lyrics.iter().map(String::as_str).collect()
     }
 
     fn link(&self) -> String {
@@ -140,7 +140,7 @@ impl AZLyrics {
         for (hit_i, hit) in hits.into_iter().enumerate() {
             let confidence = normalized_damerau_levenshtein(
                 &format!(r#""{cmp_artist_name}" - {cmp_track_name} lyrics"#),
-                &hit.title
+                hit.title
                     .to_lowercase()
                     .replace("|", "")
                     .replace("-", "")
