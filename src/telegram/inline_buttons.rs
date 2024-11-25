@@ -92,7 +92,6 @@ pub async fn handle(
         InlineButtons::Cancel(id) => {
             let track = state
                 .spotify()
-                .read()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
@@ -121,7 +120,6 @@ pub async fn handle(
         InlineButtons::Dislike(id) => {
             let track = state
                 .spotify()
-                .read()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
@@ -152,7 +150,6 @@ pub async fn handle(
         InlineButtons::Ignore(id) => {
             let track = state
                 .spotify()
-                .read()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;

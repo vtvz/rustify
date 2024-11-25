@@ -24,7 +24,7 @@ pub async fn handle_current(
     bot: &Bot,
     m: &Message,
 ) -> anyhow::Result<bool> {
-    let spotify = state.spotify().read().await;
+    let spotify = state.spotify().await;
     let track = match CurrentlyPlaying::get(&spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
@@ -68,7 +68,7 @@ pub async fn handle_url(
         return Ok(false);
     };
 
-    let track = state.spotify().read().await.track(track_id, None).await?;
+    let track = state.spotify().await.track(track_id, None).await?;
 
     common(app_state, state, bot, m, track).await
 }
@@ -80,7 +80,7 @@ async fn common(
     m: &Message,
     track: FullTrack,
 ) -> anyhow::Result<bool> {
-    let spotify = state.spotify().read().await;
+    let spotify = state.spotify().await;
 
     let track_id = track.id.clone().context("Should be prevalidated")?;
 

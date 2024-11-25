@@ -46,7 +46,7 @@ pub async fn check(
         Ok(state) => state,
     };
 
-    let playing = CurrentlyPlaying::get(&*state.spotify().read().await).await;
+    let playing = CurrentlyPlaying::get(&*state.spotify().await).await;
 
     let (track, context) = match playing {
         CurrentlyPlaying::Err(err) => {

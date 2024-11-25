@@ -26,7 +26,7 @@ pub async fn handle(
         .send()
         .await?;
 
-    let spotify = state.spotify().read().await;
+    let spotify = state.spotify().await;
 
     let me = state
         .spotify_user()

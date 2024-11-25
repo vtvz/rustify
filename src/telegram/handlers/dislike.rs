@@ -18,7 +18,7 @@ pub async fn handle(
         return Ok(false);
     }
 
-    let track = match CurrentlyPlaying::get(&*state.spotify().read().await).await {
+    let track = match CurrentlyPlaying::get(&*state.spotify().await).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             bot.send_message(m.chat.id, message.to_string())

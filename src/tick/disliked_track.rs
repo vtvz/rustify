@@ -30,7 +30,7 @@ pub async fn handle(
     context: Option<&SpotifyContext>,
 ) -> anyhow::Result<()> {
     if state.is_spotify_premium().await? {
-        let spotify = state.spotify().read().await;
+        let spotify = state.spotify().await;
 
         spotify
             .next_track(None)

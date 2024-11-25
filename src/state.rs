@@ -8,7 +8,7 @@ use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::metrics::influx::InfluxClient;
 use crate::{lyrics, profanity, spotify, whitelist};
@@ -219,8 +219,12 @@ pub struct UserState {
 }
 
 impl UserState {
-    pub fn spotify(&self) -> &RwLock<AuthCodeSpotify> {
-        &self.spotify
+    pub async fn spotify<'a>(&'a self) -> RwLockReadGuard<'a, AuthCodeSpotify> {
+        self.spotify.read().await
+    }
+
+    pub async fn spotify_write<'a>(&'a self) -> RwLockWriteGuard<'a, AuthCodeSpotify> {
+        self.spotify.write().await
     }
 
     pub fn user_id(&self) -> &str {
