@@ -11,9 +11,9 @@ services:
     environment:
       POSTGRES_PASSWORD: example
 
-  genius:
+  lyrics-provider:
     build:
-      context: genius-lyrics-service
+      context: lyrics-provider
     restart: always
     ports:
       - 8090:8090

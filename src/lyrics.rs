@@ -1,6 +1,8 @@
+use azlyrics::AZLyrics;
 use genius::GeniusLocal;
 use isolang::Language;
 use lazy_static::lazy_static;
+use lrclib::LrcLib;
 use musixmatch::Musixmatch;
 use rspotify::model::FullTrack;
 use serde::de::DeserializeOwned;
@@ -10,19 +12,27 @@ use tokio::sync::RwLock;
 
 use crate::spotify;
 
+pub mod azlyrics;
 pub mod genius;
+pub mod lrclib;
 pub mod musixmatch;
+pub mod utils;
+
+pub const BEST_FIT_THRESHOLD: f64 = 0.6;
 
 #[derive(Display)]
 pub enum Provider {
     Musixmatch,
     Genius,
+    LrcLib,
+    AZLyrics,
 }
 
 pub trait SearchResult {
     fn provider(&self) -> Provider;
     fn lyrics(&self) -> Vec<&str>;
-    fn tg_link(&self, full: bool) -> String;
+    fn link(&self) -> String;
+    fn link_text(&self, full: bool) -> String;
 
     fn language(&self) -> Language;
 
@@ -34,6 +44,8 @@ pub trait SearchResult {
 pub struct Manager {
     genius: GeniusLocal,
     musixmatch: Musixmatch,
+    lrclib: LrcLib,
+    azlyrics: AZLyrics,
 }
 
 impl Manager {
@@ -41,10 +53,19 @@ impl Manager {
         genius_service_url: String,
         genius_token: String,
         musixmatch_tokens: impl IntoIterator<Item = String>,
+        azlyrics_service_url: String,
     ) -> anyhow::Result<Self> {
         let genius = GeniusLocal::new(genius_service_url, genius_token)?;
         let musixmatch = Musixmatch::new(musixmatch_tokens)?;
-        Ok(Self { genius, musixmatch })
+        let lrclib = LrcLib::new()?;
+        let azlyrics = AZLyrics::new(azlyrics_service_url)?;
+
+        Ok(Self {
+            genius,
+            musixmatch,
+            lrclib,
+            azlyrics,
+        })
     }
 
     #[tracing::instrument(
@@ -58,39 +79,33 @@ impl Manager {
         &self,
         track: &FullTrack,
     ) -> anyhow::Result<Option<Box<dyn SearchResult + Send>>> {
-        let musixmatch_result = self.musixmatch.search_for_track(track).await;
+        // tired to fight type system to handle this with vec
+        macro_rules! handle_provider {
+            ($name:expr, $provider:expr) => {
+                let result = $provider.search_for_track(track).await;
 
-        match musixmatch_result {
-            Ok(Some(res)) => {
-                return Ok(Some(Box::new(res) as Box<dyn SearchResult + Send>));
-            },
-            Err(err) => {
-                tracing::error!(
-                    err = ?err,
-                    "Error with Musixmatch occurred"
-                );
-            },
-            _ => {
-                tracing::debug!("Musixmatch text not found");
-            },
-        };
+                match result {
+                    Ok(Some(res)) => {
+                        return Ok(Some(res));
+                    },
+                    Err(err) => {
+                        tracing::error!(
+                            err = ?err,
+                            "Error with {} occurred",
+                            $name
+                        );
+                    },
+                    _ => {
+                        tracing::debug!("{} text not found", $name);
+                    },
+                };
+            };
+        }
 
-        let genius_result = self.genius.search_for_track(track).await;
-
-        match genius_result {
-            Ok(Some(res)) => {
-                return Ok(Some(Box::new(res) as Box<dyn SearchResult + Send>));
-            },
-            Err(err) => {
-                tracing::error!(
-                    err = ?err,
-                    "Error with Genius occurred"
-                );
-            },
-            _ => {
-                tracing::debug!("Genius text not found");
-            },
-        };
+        handle_provider!("Musixmatch", self.musixmatch);
+        handle_provider!("LrcLib", self.lrclib);
+        handle_provider!("AZLyrics", self.azlyrics);
+        handle_provider!("Genius", self.genius);
 
         Ok(None)
     }

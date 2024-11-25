@@ -1,21 +1,19 @@
 #![allow(dead_code)]
 
-use std::collections::HashSet;
-use std::fmt::{Display, Formatter};
 use std::time::Duration;
 
 use anyhow::{anyhow, Context};
 use cached::proc_macro::io_cached;
 use indoc::formatdoc;
 use isolang::Language;
-use lazy_static::lazy_static;
-use regex::Regex;
 use reqwest::{Client, ClientBuilder, StatusCode};
 use rspotify::model::FullTrack;
 use rustrict::is_whitespace;
 use strsim::normalized_damerau_levenshtein;
-use teloxide::utils::html;
 
+use super::utils::get_track_names;
+use crate::lyrics::utils::SearchResultConfidence;
+use crate::lyrics::BEST_FIT_THRESHOLD;
 use crate::spotify;
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -41,7 +39,11 @@ impl super::SearchResult for SearchResult {
         self.language
     }
 
-    fn tg_link(&self, full: bool) -> String {
+    fn link(&self) -> String {
+        self.url.clone()
+    }
+
+    fn link_text(&self, full: bool) -> String {
         let text = if full {
             "Genius Source"
         } else {
@@ -50,40 +52,12 @@ impl super::SearchResult for SearchResult {
 
         formatdoc!(
             r#"
-                <a href="{url}">{text} (with {confidence}% confidence)
-                {title}</a>
+                {text} (with {confidence}% confidence)
+                {title}
             "#,
-            text = html::escape(text),
-            title = html::escape(&self.title),
+            title = &self.title,
             confidence = self.confidence,
-            url = self.url
         )
-    }
-}
-
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct SearchResultConfidence {
-    title: f64,
-    artist: f64,
-}
-
-impl SearchResultConfidence {
-    fn new(artist: f64, title: f64) -> Self {
-        Self { title, artist }
-    }
-
-    fn confident(&self, threshold: f64) -> bool {
-        self.artist >= threshold && self.title >= threshold
-    }
-
-    fn avg(&self) -> f64 {
-        (self.title + self.artist) / 2.0
-    }
-}
-
-impl Display for SearchResultConfidence {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:.0}", self.avg() * 100.0)
     }
 }
 
@@ -131,9 +105,27 @@ impl GeniusLocal {
     pub async fn search_for_track(
         &self,
         track: &FullTrack,
-    ) -> anyhow::Result<Option<SearchResult>> {
+    ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
+        #[io_cached(
+            map_error = r##"|e| anyhow::Error::from(e) "##,
+            convert = r#"{ spotify::utils::get_track_id(track) }"#,
+            ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
+            create = r##" {
+                let prefix = module_path!().split("::").last().expect("Will be");
+                super::LyricsCacheManager::redis_cache_build(prefix).await.expect("Redis cache should build")
+            } "##
+        )]
+        async fn search_for_track_middleware(
+            genius: &GeniusLocal,
+            track: &FullTrack,
+        ) -> anyhow::Result<Option<SearchResult>> {
+            GeniusLocal::search_for_track_internal(genius, track).await
+        }
+
         // this weird construction required to make `cached` work
-        search_for_track_middleware(self, track).await
+        search_for_track_middleware(self, track)
+            .await
+            .map(|res| res.map(|opt| Box::new(opt) as _))
     }
 
     async fn search_for_track_internal(
@@ -167,8 +159,6 @@ impl GeniusLocal {
         )
     )]
     async fn find_best_fit_entry(&self, track: &FullTrack) -> anyhow::Result<Option<SearchResult>> {
-        const THRESHOLD: f64 = 0.45;
-
         let artist = track
             .artists
             .iter()
@@ -214,7 +204,7 @@ impl GeniusLocal {
                     normalized_damerau_levenshtein(&cmp_title, hit.title.to_lowercase().as_str()),
                 );
 
-                if confidence.confident(THRESHOLD) {
+                if confidence.confident(BEST_FIT_THRESHOLD) {
                     tracing::debug!(
                         confidence = %confidence,
                         "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
@@ -273,72 +263,4 @@ impl GeniusLocal {
 
         Ok(res.lyrics.lines().map(String::from).collect())
     }
-}
-
-async fn redis_build() -> cached::AsyncRedisCache<String, Option<SearchResult>> {
-    let default_ttl = chrono::Duration::hours(24).num_seconds() as u64;
-    let ttl: u64 = dotenv::var("LYRICS_CACHE_TTL")
-        .unwrap_or(default_ttl.to_string())
-        .parse()
-        .unwrap_or(default_ttl);
-
-    cached::AsyncRedisCache::new("rustify:lyrics:genius:", ttl)
-        .set_refresh(true)
-        .set_connection_string(&dotenv::var("REDIS_URL").expect("REDIS_URL should be set"))
-        .set_namespace("")
-        .build()
-        .await
-        .expect("error building example redis cache")
-}
-
-#[io_cached(
-    map_error = r##"|e| anyhow::Error::from(e) "##,
-    convert = r#"{ spotify::utils::get_track_id(track) }"#,
-    ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
-    create = r##" {
-        super::LyricsCacheManager::redis_cache_build("genius").await.expect("Redis cache should build")
-    } "##
-)]
-async fn search_for_track_middleware(
-    genius: &GeniusLocal,
-    track: &FullTrack,
-) -> anyhow::Result<Option<SearchResult>> {
-    GeniusLocal::search_for_track_internal(genius, track).await
-}
-
-lazy_static! {
-    // https://github.com/khanhas/spicetify-cli/blob/master/CustomApps/lyrics-plus/Utils.js#L50
-    static ref RG_EXTRA_1: Regex = Regex::new(r"\s-\s.*").expect("Should be compilable");
-    static ref RG_EXTRA_2: Regex = Regex::new(r"[^\pL_]+").expect("Should be compilable");
-    // https://github.com/khanhas/spicetify-cli/blob/master/CustomApps/lyrics-plus/Utils.js#L41
-    static ref RG_FEAT_1: Regex =
-        Regex::new(r"(?i)-\s+(feat|with).*").expect("Should be compilable");
-    static ref RG_FEAT_2: Regex =
-        Regex::new(r"(?i)(\(|\[)(feat|with)\.?\s+.*(\)|\])$").expect("Should be compilable");
-}
-
-fn remove_extra_info(name: &str) -> String {
-    name.replace(&*RG_EXTRA_1, "")
-        .replace(&*RG_EXTRA_2, " ")
-        .trim()
-        .to_owned()
-}
-
-fn remove_song_feat(name: &str) -> String {
-    name.replace(&*RG_FEAT_1, "")
-        .replace(&*RG_FEAT_2, "")
-        .trim()
-        .to_owned()
-}
-
-fn get_track_names(name: &str) -> HashSet<String> {
-    let no_extra = remove_extra_info(name);
-    let names = vec![
-        name.to_owned(),
-        no_extra.clone(),
-        remove_song_feat(name),
-        remove_song_feat(&no_extra),
-    ];
-
-    HashSet::from_iter(names)
 }

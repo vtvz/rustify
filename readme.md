@@ -6,6 +6,8 @@
 - [ ] Settings to toggle skipping and lyrics checking
 - [ ] Alert "IT'S NOT ENGLISH!"
 - [ ] Notification about revoked spotify token
-- [ ] Remember listened songs within last 1 hour to reduce spam
-- [ ] Integrate with https://lrclib.net/docs
-- [ ] Integrate with https://lyrics.github.io/
+- [ ] Analyze song lyrics in queue (probably redis)
+- [ ] Remember profane song or not in database
+- [x] Remember listened songs within last 1 hour to reduce spam
+- [x] Integrate with https://lrclib.net/docs
+- [x] Integrate with https://azlyrics.com

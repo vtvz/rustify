@@ -1,8 +1,14 @@
+import {
+  search,
+  OrganicResult,
+} from 'google-sr';
+import { JSDOM } from "jsdom";
 import Genius, {
   InvalidGeniusKeyError,
   NoResultError,
 } from "genius-lyrics";
 import { Application, Context, Router, Status } from "@oak/oak";
+import axios from "axios";
 
 const router = new Router();
 
@@ -16,7 +22,7 @@ function unauthorized(context: Context) {
   context.response.body = { error: "Unauthorized" };
 }
 
-router.get("/:id/lyrics", async (ctx) => {
+router.get("/genius/:id/lyrics", async (ctx) => {
   try {
     const auth = ctx.request.headers.get("Authorization") as string;
     if (!auth) {
@@ -39,7 +45,7 @@ router.get("/:id/lyrics", async (ctx) => {
   }
 });
 
-router.get("/search", async (ctx) => {
+router.get("/genius/search", async (ctx) => {
   try {
     const auth = ctx.request.headers.get("Authorization") as string;
     if (!auth) {
@@ -55,6 +61,53 @@ router.get("/search", async (ctx) => {
       return val instanceof Genius.Client ? undefined : val;
     });
 
+    ctx.response.type = "json";
+  } catch (err) {
+    if (err instanceof NoResultError) {
+      notFound(ctx);
+    } else if (err instanceof InvalidGeniusKeyError) {
+      unauthorized(ctx);
+    } else {
+      console.log(err);
+      throw err;
+    }
+  }
+});
+
+
+router.get("/azlyrics/search", async (ctx) => {
+  const query = ctx.request.url.searchParams.get("q");
+
+  const queryResult = await search({
+    query: `site:www.azlyrics.com ${query} lyrics`,
+    // OrganicResult is the default, however it is recommended to ALWAYS specify the result type
+    resultTypes: [OrganicResult],
+    requestConfig: {
+      params: {
+        // enable "safe mode"
+        safe: 'active'
+      },
+    },
+  });
+
+  ctx.response.body = JSON.stringify(queryResult);
+
+  ctx.response.type = "json";
+});
+
+router.get("/azlyrics/lyrics", async (ctx) => {
+  try {
+    const query = ctx.request.url.searchParams.get("url");
+
+    let resp = await axios.get(query as string);
+
+    const dom = new JSDOM(resp.data);
+    const selected = dom.window.document.querySelector('br + br + div')
+    if (!selected) {
+      return notFound(ctx);
+    }
+
+    ctx.response.body = { lyrics: selected.textContent?.trim() };
     ctx.response.type = "json";
   } catch (err) {
     if (err instanceof NoResultError) {
