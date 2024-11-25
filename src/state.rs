@@ -219,11 +219,11 @@ pub struct UserState {
 }
 
 impl UserState {
-    pub async fn spotify<'a>(&'a self) -> RwLockReadGuard<'a, AuthCodeSpotify> {
+    pub async fn spotify(&self) -> RwLockReadGuard<'_, AuthCodeSpotify> {
         self.spotify.read().await
     }
 
-    pub async fn spotify_write<'a>(&'a self) -> RwLockWriteGuard<'a, AuthCodeSpotify> {
+    pub async fn spotify_write(&self) -> RwLockWriteGuard<'_, AuthCodeSpotify> {
         self.spotify.write().await
     }
 
