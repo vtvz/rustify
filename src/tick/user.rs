@@ -59,7 +59,7 @@ pub async fn check(
     };
 
     let status = TrackStatusService::get_status(
-        state.app().db(),
+        app_state.db(),
         state.user_id(),
         &spotify::utils::get_track_id(&track),
     )
@@ -67,11 +67,11 @@ pub async fn check(
 
     match status {
         TrackStatus::Disliked => {
-            super::disliked_track::handle(&state, &track, context.as_ref()).await?;
+            super::disliked_track::handle(app_state, &state, &track, context.as_ref()).await?;
         },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
-                state.app().redis_conn().await?,
+                app_state.redis_conn().await?,
                 state.user_id(),
                 &spotify::utils::get_track_id(&track),
             )
@@ -85,7 +85,7 @@ pub async fn check(
                 .await?
                 .lpush("test_check_lyrics_queue", "message")
                 .await?;
-            let res = super::profanity_check::check(&state, &track)
+            let res = super::profanity_check::check(app_state, &state, &track)
                 .await
                 .context("Check bad words");
 
@@ -98,7 +98,7 @@ pub async fn check(
                             matches!(res.provider, Some(lyrics::Provider::Genius)) as u32,
                             matches!(res.provider, Some(lyrics::Provider::Musixmatch)) as u32,
                         )
-                        .exec(state.app().db())
+                        .exec(app_state.db())
                         .await?;
                 },
                 Err(err) => {

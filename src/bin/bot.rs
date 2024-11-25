@@ -6,7 +6,11 @@ use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, LinkPreviewOptions, ParseMode, User};
 
-async fn sync_name(state: &UserState, tg_user: Option<&User>) -> anyhow::Result<()> {
+async fn sync_name(
+    app_state: &'static AppState,
+    state: &UserState,
+    tg_user: Option<&User>,
+) -> anyhow::Result<()> {
     let spotify_user = state.spotify_user().await?.map(|spotify_user| {
         spotify_user
             .display_name
@@ -36,17 +40,16 @@ async fn sync_name(state: &UserState, tg_user: Option<&User>) -> anyhow::Result<
         .collect::<Vec<_>>()
         .join(" | ");
 
-    UserService::sync_name(state.app().db(), state.user_id(), &name).await?;
+    UserService::sync_name(app_state.db(), state.user_id(), &name).await?;
 
     Ok(())
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
-async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
-    let res = state
-        .app()
+async fn whitelisted(app_state: &'static AppState, state: &UserState) -> anyhow::Result<bool> {
+    let res = app_state
         .whitelist()
-        .get_status(state.app().db(), state.user_id())
+        .get_status(app_state.db(), state.user_id())
         .await?;
 
     let chat_id = ChatId(state.user_id().parse()?);
@@ -55,8 +58,7 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
         (UserWhitelistStatus::Denied, _) => {
             tracing::info!("Denied user tried to use bot");
 
-            state
-                .app()
+            app_state
                 .bot()
                 .send_message(chat_id, "Sorry, your join request was rejected...")
                 .parse_mode(ParseMode::Html)
@@ -72,12 +74,11 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                     Admin already notified that you want to join, but you also can contact <a href="tg://user?id={}">[admin]()</a> and send this message to him\\.
 
                     User Id: <code>{}</code>"#,
-                state.app().whitelist().contact_admin(),
+                app_state.whitelist().contact_admin(),
                 state.user_id(),
             );
 
-            state
-                .app()
+            app_state
                 .bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
@@ -94,11 +95,10 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                 user_id = state.user_id(),
             );
 
-            state
-                .app()
+            app_state
                 .bot()
                 .send_message(
-                    ChatId(state.app().whitelist().contact_admin().parse()?),
+                    ChatId(app_state.whitelist().contact_admin().parse()?),
                     message,
                 )
                 .parse_mode(ParseMode::Html)
@@ -116,12 +116,11 @@ async fn whitelisted(state: &UserState) -> anyhow::Result<bool> {
                     Send him this message, this will drastically help\\.
 
                     User Id: <code>{}</code>"#,
-                state.app().whitelist().contact_admin(),
+                app_state.whitelist().contact_admin(),
                 state.user_id(),
             );
 
-            state
-                .app()
+            app_state
                 .bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
@@ -155,17 +154,17 @@ async fn run() {
             Update::filter_message().endpoint(move |m: Message, bot: Bot| async {
                 let state = app_state.user_state(&m.chat.id.to_string()).await?;
 
-                if !whitelisted(&state).await? {
+                if !whitelisted(app_state, &state).await? {
                     return Ok(());
                 }
 
-                if let Err(err) = sync_name(&state, m.from.as_ref()).await {
+                if let Err(err) = sync_name(app_state,&state, m.from.as_ref()).await {
                     tracing::error!(err = ?err, user_id = state.user_id(), "Failed syncing user name");
                 }
 
                 let clone = (m.clone(), bot.clone());
 
-                let result = rustify::telegram::handle_message(m, bot, &state).await;
+                let result = rustify::telegram::handle_message(m, bot, app_state, &state).await;
 
                 let (m, bot) = clone;
                 if let Err(err) = &result {
@@ -201,7 +200,7 @@ async fn run() {
             move |q: CallbackQuery, bot: Bot| async {
                 let state = app_state.user_state(&q.from.id.to_string()).await?;
 
-                rustify::telegram::inline_buttons::handle(q, bot, &state).await
+                rustify::telegram::inline_buttons::handle(q, bot, app_state, &state).await
             },
         ));
 

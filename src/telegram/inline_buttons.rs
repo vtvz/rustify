@@ -14,7 +14,7 @@ use teloxide::types::{
 
 use crate::entity::prelude::*;
 use crate::spotify;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -67,7 +67,12 @@ impl Display for InlineButtons {
     }
 }
 
-pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Result<()> {
+pub async fn handle(
+    q: CallbackQuery,
+    bot: Bot,
+    app_state: &'static AppState,
+    state: &UserState,
+) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
         if let Some(id) = q.inline_message_id {
             bot.answer_callback_query(id)
@@ -92,13 +97,8 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
 
-            TrackStatusService::set_status(
-                state.app().db(),
-                state.user_id(),
-                &id,
-                TrackStatus::None,
-            )
-            .await?;
+            TrackStatusService::set_status(app_state.db(), state.user_id(), &id, TrackStatus::None)
+                .await?;
 
             bot.edit_message_text(
                 q.from.id,
@@ -127,7 +127,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .await?;
 
             TrackStatusService::set_status(
-                state.app().db(),
+                app_state.db(),
                 state.user_id(),
                 &id,
                 TrackStatus::Disliked,
@@ -158,7 +158,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 .await?;
 
             TrackStatusService::set_status(
-                state.app().db(),
+                app_state.db(),
                 state.user_id(),
                 &id,
                 TrackStatus::Ignore,

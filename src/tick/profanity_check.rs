@@ -5,6 +5,7 @@ use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
+use crate::state::AppState;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::{lyrics, profanity, spotify, state, telegram};
 
@@ -24,12 +25,13 @@ pub struct CheckBadWordsResult {
     )
 )]
 pub async fn check(
+    app_state: &'static AppState,
     state: &state::UserState,
     track: &FullTrack,
 ) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
-    let Some(hit) = state.app().lyrics().search_for_track(track).await? else {
+    let Some(hit) = app_state.lyrics().search_for_track(track).await? else {
         return Ok(ret);
     };
 
@@ -93,8 +95,7 @@ pub async fn check(
         lines -= 1;
     };
 
-    let result: Result<Message, teloxide::RequestError> = state
-        .app()
+    let result: Result<Message, teloxide::RequestError> = app_state
         .bot()
         .send_message(ChatId(state.user_id().parse()?), message)
         .parse_mode(ParseMode::Html)
@@ -108,5 +109,7 @@ pub async fn check(
         .send()
         .await;
 
-    super::errors::telegram(state, result).await.map(|_| ret)
+    super::errors::telegram(app_state, state, result)
+        .await
+        .map(|_| ret)
 }

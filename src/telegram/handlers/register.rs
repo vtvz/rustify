@@ -5,10 +5,15 @@ use teloxide::prelude::*;
 use super::super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::user_service::UserService;
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle(
+    m: &Message,
+    bot: &Bot,
+    app_state: &'static AppState,
+    state: &UserState,
+) -> anyhow::Result<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
     };
@@ -26,12 +31,13 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         return Ok(false);
     };
 
-    process_spotify_code(m, bot, state, code).await
+    process_spotify_code(m, bot, app_state, state, code).await
 }
 
 async fn process_spotify_code(
     m: &Message,
     bot: &Bot,
+    app_state: &'static AppState,
     state: &UserState,
     code: String,
 ) -> anyhow::Result<bool> {
@@ -64,7 +70,7 @@ async fn process_spotify_code(
     };
 
     {
-        let txn = state.app().db().begin().await?;
+        let txn = app_state.db().begin().await?;
 
         SpotifyAuthService::set_token(&txn, state.user_id(), token).await?;
         UserService::set_status(&txn, state.user_id(), UserStatus::Active).await?;

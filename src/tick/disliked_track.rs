@@ -11,6 +11,7 @@ use rspotify::model::{
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
+use crate::state::AppState;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::{spotify, state};
@@ -23,6 +24,7 @@ use crate::{spotify, state};
     )
 )]
 pub async fn handle(
+    app_state: &'static AppState,
     state: &state::UserState,
     track: &FullTrack,
     context: Option<&SpotifyContext>,
@@ -36,7 +38,7 @@ pub async fn handle(
             .context("Skip current track")?;
 
         let track_id = spotify::utils::get_track_id(track);
-        TrackStatusService::increase_skips(state.app().db(), state.user_id(), &track_id).await?;
+        TrackStatusService::increase_skips(app_state.db(), state.user_id(), &track_id).await?;
 
         let Some(context) = context else {
             return Ok(());
@@ -59,7 +61,7 @@ pub async fn handle(
                 if res.is_ok() {
                     UserService::increase_stats_query(state.user_id())
                         .removed_playlists(1)
-                        .exec(state.app().db())
+                        .exec(app_state.db())
                         .await?;
                 }
             },
@@ -73,7 +75,7 @@ pub async fn handle(
 
                 UserService::increase_stats_query(state.user_id())
                     .removed_collection(1)
-                    .exec(state.app().db())
+                    .exec(app_state.db())
                     .await?;
             },
             _ => {},
@@ -87,13 +89,14 @@ pub async fn handle(
         track_name = spotify::utils::create_track_tg_link(track),
     );
 
-    let result = state
-        .app()
+    let result = app_state
         .bot()
         .send_message(ChatId(state.user_id().parse()?), message)
         .parse_mode(ParseMode::Html)
         .send()
         .await;
 
-    super::errors::telegram(state, result).await.map(|_| ())
+    super::errors::telegram(app_state, state, result)
+        .await
+        .map(|_| ())
 }

@@ -6,12 +6,17 @@ use teloxide::prelude::*;
 use teloxide::types::ReplyParameters;
 
 use crate::entity::prelude::*;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::utils::retry;
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle(
+    m: &Message,
+    bot: &Bot,
+    app_state: &'static AppState,
+    state: &UserState,
+) -> anyhow::Result<bool> {
     let message = bot
         .send_message(
             m.chat.id,
@@ -29,7 +34,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         .context("Spotify user not found")?;
 
     let disliked = TrackStatusService::get_ids_with_status(
-        state.app().db(),
+        app_state.db(),
         state.user_id(),
         TrackStatus::Disliked,
     )
@@ -136,7 +141,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     UserService::increase_stats_query(state.user_id())
         .removed_playlists(removed_playlists)
         .removed_collection(removed_collection)
-        .exec(state.app().db())
+        .exec(app_state.db())
         .await?;
 
     bot.edit_message_text(

@@ -5,10 +5,15 @@ use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
 use crate::spotify;
 use crate::spotify::CurrentlyPlaying;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle(
+    m: &Message,
+    bot: &Bot,
+    app_state: &'static AppState,
+    state: &UserState,
+) -> anyhow::Result<bool> {
     if !state.is_spotify_authed().await {
         return Ok(false);
     }
@@ -28,7 +33,7 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     let track_id = spotify::utils::get_track_id(&track);
 
     TrackStatusService::set_status(
-        state.app().db(),
+        app_state.db(),
         state.user_id(),
         &track_id,
         TrackStatus::Disliked,

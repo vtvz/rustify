@@ -13,12 +13,17 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParamet
 
 use crate::entity::prelude::*;
 use crate::spotify::CurrentlyPlaying;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
 use crate::{profanity, spotify, telegram};
 
-pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle_current(
+    m: &Message,
+    bot: &Bot,
+    app_state: &'static AppState,
+    state: &UserState,
+) -> anyhow::Result<bool> {
     let spotify = state.spotify().read().await;
     let track = match CurrentlyPlaying::get(&spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
@@ -32,7 +37,7 @@ pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    common(m, bot, state, *track).await
+    common(m, bot, app_state, state, *track).await
 }
 
 fn extract_id(url: &str) -> Option<TrackId> {
@@ -49,7 +54,12 @@ fn extract_id(url: &str) -> Option<TrackId> {
     id.ok()
 }
 
-pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle_url(
+    m: &Message,
+    bot: &Bot,
+    app_state: &'static AppState,
+    state: &UserState,
+) -> anyhow::Result<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
     };
@@ -60,12 +70,13 @@ pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Re
 
     let track = state.spotify().read().await.track(track_id, None).await?;
 
-    common(m, bot, state, track).await
+    common(m, bot, app_state, state, track).await
 }
 
 async fn common(
     m: &Message,
     bot: &Bot,
+    app_state: &'static AppState,
     state: &UserState,
     track: FullTrack,
 ) -> anyhow::Result<bool> {
@@ -74,7 +85,7 @@ async fn common(
     let track_id = track.id.clone().context("Should be prevalidated")?;
 
     let status =
-        TrackStatusService::get_status(state.app().db(), state.user_id(), track_id.id()).await;
+        TrackStatusService::get_status(app_state.db(), state.user_id(), track_id.id()).await;
 
     let keyboard = match status {
         TrackStatus::Disliked => {
@@ -112,7 +123,7 @@ async fn common(
     };
 
     let disliked_by = TrackStatusService::count_status(
-        state.app().db(),
+        app_state.db(),
         TrackStatus::Disliked,
         None,
         Some(track_id.id()),
@@ -120,7 +131,7 @@ async fn common(
     .await?;
 
     let ignored_by = TrackStatusService::count_status(
-        state.app().db(),
+        app_state.db(),
         TrackStatus::Ignore,
         None,
         Some(track_id.id()),
@@ -205,7 +216,7 @@ async fn common(
         ignored_by,
     };
 
-    let Some(hit) = state.app().lyrics().search_for_track(&track).await? else {
+    let Some(hit) = app_state.lyrics().search_for_track(&track).await? else {
         bot.send_message(
             m.chat.id,
             formatdoc!(

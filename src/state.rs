@@ -202,7 +202,6 @@ impl AppState {
         let spotify = RwLock::new(spotify);
 
         let state = UserState {
-            app: self,
             spotify,
             spotify_user: Default::default(),
             user_id: user_id.to_string(),
@@ -213,7 +212,6 @@ impl AppState {
 }
 
 pub struct UserState {
-    app: &'static AppState,
     spotify: RwLock<AuthCodeSpotify>,
     user_id: String,
 
@@ -221,10 +219,6 @@ pub struct UserState {
 }
 
 impl UserState {
-    pub fn app(&self) -> &'static AppState {
-        self.app
-    }
-
     pub fn spotify(&self) -> &RwLock<AuthCodeSpotify> {
         &self.spotify
     }
