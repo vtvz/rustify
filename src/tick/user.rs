@@ -1,5 +1,4 @@
 use anyhow::Context;
-use redis::AsyncCommands;
 use strum_macros::Display;
 
 use crate::entity::prelude::*;
@@ -80,11 +79,7 @@ pub async fn check(
             if !changed {
                 return Ok(CheckUserResult::SkipSame);
             }
-            let _: () = app_state
-                .redis_conn()
-                .await?
-                .lpush("test_check_lyrics_queue", "message")
-                .await?;
+
             let res = super::profanity_check::check(app_state, &state, &track)
                 .await
                 .context("Check bad words");
