@@ -60,7 +60,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
             let res = user::check(app_state, &user_id).await;
             drop(permit);
 
-            // TODO Refactor this mess...
+            // TODO: Refactor this mess...
             let checked: anyhow::Result<_> = match res {
                 Err(mut err) => {
                     match spotify::Error::from_anyhow(&mut err).await {

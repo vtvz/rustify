@@ -16,42 +16,61 @@ use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
 
 pub struct ShortTrack {
-    full_track: FullTrack,
+    track_id: String,
+    track_name: String,
+    duration_secs: i64,
+    artist_names: Vec<String>,
+    spotify_url: String,
+    album_name: String,
 }
 
 impl ShortTrack {
     pub fn new(full_track: FullTrack) -> Self {
-        Self { full_track }
+        Self {
+            track_id: full_track
+                .id
+                .as_ref()
+                .map(|track_id| track_id.id().into())
+                .unwrap_or_default(),
+            track_name: full_track.name,
+            duration_secs: full_track.duration.num_seconds(),
+
+            artist_names: full_track
+                .artists
+                .iter()
+                .map(|art| art.name.clone())
+                .collect(),
+
+            spotify_url: full_track
+                .external_urls
+                .get("spotify")
+                .map(|item| item.clone())
+                .unwrap_or("https://vtvz.me/".into()),
+
+            album_name: full_track.album.name,
+        }
     }
 
     pub fn track_id(&self) -> &str {
-        self.full_track
-            .id
-            .as_ref()
-            .map(|track_id| track_id.id())
-            .unwrap_or_default()
+        &self.track_id
     }
 
     pub fn track_full_name(&self) -> String {
         let artists = self.artist_names().join(", ");
 
-        format!(r#"{} — {}"#, &artists, &self.full_track.name)
+        format!(r#"{} — {}"#, artists, self.track_name())
     }
 
     pub fn track_name(&self) -> &str {
-        &self.full_track.name
+        &self.track_name
     }
 
     pub fn duration_secs(&self) -> i64 {
-        self.full_track.duration.num_seconds()
+        self.duration_secs
     }
 
     pub fn artist_names(&self) -> Vec<&str> {
-        self.full_track
-            .artists
-            .iter()
-            .map(|art| art.name.as_str())
-            .collect()
+        self.artist_names.iter().map(|item| item.as_str()).collect()
     }
 
     pub fn first_artist_name(&self) -> &str {
@@ -65,17 +84,12 @@ impl ShortTrack {
         format!(
             r#"<a href="{link}">{name}</a>"#,
             name = html::escape(self.track_full_name().as_str()),
-            link = self
-                .full_track
-                .external_urls
-                .get("spotify")
-                .map(String::as_str)
-                .unwrap_or("https://vtvz.me/")
+            link = self.spotify_url
         )
     }
 
     pub fn album_name(&self) -> &str {
-        &self.full_track.album.name
+        &self.album_name
     }
 }
 
