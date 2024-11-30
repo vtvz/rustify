@@ -12,7 +12,7 @@ use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParameters};
 
 use crate::entity::prelude::*;
-use crate::spotify::CurrentlyPlaying;
+use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::state::{AppState, UserState};
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
@@ -80,6 +80,7 @@ async fn common(
     m: &Message,
     track: FullTrack,
 ) -> anyhow::Result<bool> {
+    let short_track: ShortTrack = track.clone().into();
     let spotify = state.spotify().await;
 
     let track_id = track.id.clone().context("Should be prevalidated")?;
@@ -216,7 +217,7 @@ async fn common(
         ignored_by,
     };
 
-    let Some(hit) = app_state.lyrics().search_for_track(&track).await? else {
+    let Some(hit) = app_state.lyrics().search_for_track(&short_track).await? else {
         bot.send_message(
             m.chat.id,
             formatdoc!(

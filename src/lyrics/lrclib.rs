@@ -4,14 +4,13 @@ use cached::proc_macro::io_cached;
 use indoc::formatdoc;
 use isolang::Language;
 use reqwest::{Client, ClientBuilder};
-use rspotify::model::FullTrack;
 use serde::{Deserialize, Serialize};
 use strsim::normalized_damerau_levenshtein;
 
 use super::BEST_FIT_THRESHOLD;
 use super::utils::get_track_names;
 use crate::lyrics::utils::SearchResultConfidence;
-use crate::spotify;
+use crate::spotify::ShortTrack;
 
 pub struct LrcLib {
     reqwest: Client,
@@ -89,17 +88,17 @@ impl LrcLib {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = %spotify::utils::get_track_id(track),
-            track_name = %spotify::utils::create_track_name(track),
+            track_id = track.track_id(),
+            track_name = track.track_full_name(),
         )
     )]
     pub async fn search_for_track(
         &self,
-        track: &FullTrack,
+        track: &ShortTrack,
     ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ spotify::utils::get_track_id(track) }"#,
+            convert = r#"{ track.track_id().into() }"#,
             ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
             create = r##" {
                 let prefix = module_path!().split("::").last().expect("Will be");
@@ -108,7 +107,7 @@ impl LrcLib {
         )]
         async fn search_for_track_middleware(
             lrclib: &LrcLib,
-            track: &FullTrack,
+            track: &ShortTrack,
         ) -> anyhow::Result<Option<SearchResult>> {
             LrcLib::search_for_track_internal(lrclib, track).await
         }
@@ -121,21 +120,17 @@ impl LrcLib {
 
     async fn search_for_track_internal(
         &self,
-        track: &FullTrack,
+        track: &ShortTrack,
     ) -> anyhow::Result<Option<SearchResult>> {
-        let artist_name = track
-            .artists
-            .first()
-            .map(|artist| artist.name.as_str())
-            .unwrap_or("Unknown");
+        let artist_name = track.first_artist_name();
 
         let cmp_artist_name = artist_name.to_lowercase();
 
-        let track_name = &track.name;
+        let track_name = track.track_name();
         let cmp_track_name = track_name.to_lowercase();
-        let album_name = &track.album.name;
+        let album_name = &track.album_name();
 
-        let names = get_track_names(&track.name);
+        let names = get_track_names(track.track_name());
         let names_len = names.len();
 
         let mut hits_count = 0;
@@ -192,7 +187,7 @@ impl LrcLib {
                             .unwrap_or_default(),
                         lyrics: hit_plain_lyrics.lines().map(str::to_string).collect(),
                         artist_name: artist_name.into(),
-                        track_name: track_name.clone(),
+                        track_name: track_name.into(),
                     }));
                 }
             }

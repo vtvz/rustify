@@ -1,13 +1,13 @@
 use indoc::formatdoc;
 use isolang::Language;
-use rspotify::model::FullTrack;
 use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
+use crate::spotify::ShortTrack;
 use crate::state::AppState;
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::{lyrics, profanity, spotify, state, telegram};
+use crate::{lyrics, profanity, state, telegram};
 
 #[derive(Default)]
 pub struct CheckBadWordsResult {
@@ -20,14 +20,14 @@ pub struct CheckBadWordsResult {
 #[tracing::instrument(
     skip_all,
     fields(
-        track_id = %spotify::utils::get_track_id(track),
-        track_name = %spotify::utils::create_track_name(track),
+        track_id = track.track_id(),
+        track_name = track.track_full_name(),
     )
 )]
 pub async fn check(
     app_state: &'static AppState,
     state: &state::UserState,
-    track: &FullTrack,
+    track: &ShortTrack,
 ) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
@@ -82,7 +82,7 @@ pub async fn check(
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
             "#,
-            track_name = spotify::utils::create_track_tg_link(track),
+            track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
             lyrics_link = hit.link(),
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
@@ -102,8 +102,8 @@ pub async fn check(
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Dislike(spotify::utils::get_track_id(track)).into()],
-                vec![InlineButtons::Ignore(spotify::utils::get_track_id(track)).into()],
+                vec![InlineButtons::Dislike(track.track_id().into()).into()],
+                vec![InlineButtons::Ignore(track.track_id().into()).into()],
             ],
         )))
         .send()

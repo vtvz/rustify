@@ -20,7 +20,7 @@ use crate::user_service::UserService;
     skip_all,
     fields(
         track_id = track.track_id(),
-        track_name = track.track_name(),
+        track_name = track.track_full_name(),
     )
 )]
 pub async fn handle(

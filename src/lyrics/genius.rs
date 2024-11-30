@@ -2,19 +2,18 @@
 
 use std::time::Duration;
 
-use anyhow::{Context, anyhow};
+use anyhow::anyhow;
 use cached::proc_macro::io_cached;
 use indoc::formatdoc;
 use isolang::Language;
 use reqwest::{Client, ClientBuilder, StatusCode};
-use rspotify::model::FullTrack;
 use rustrict::is_whitespace;
 use strsim::normalized_damerau_levenshtein;
 
 use super::utils::get_track_names;
 use crate::lyrics::BEST_FIT_THRESHOLD;
 use crate::lyrics::utils::SearchResultConfidence;
-use crate::spotify;
+use crate::spotify::ShortTrack;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SearchResult {
@@ -98,17 +97,17 @@ impl GeniusLocal {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = %spotify::utils::get_track_id(track),
-            track_name = %spotify::utils::create_track_name(track),
+            track_id = track.track_id(),
+            track_name = track.track_full_name(),
         )
     )]
     pub async fn search_for_track(
         &self,
-        track: &FullTrack,
+        track: &ShortTrack,
     ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ spotify::utils::get_track_id(track) }"#,
+            convert = r#"{ track.track_id().into() }"#,
             ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
             create = r##" {
                 let prefix = module_path!().split("::").last().expect("Will be");
@@ -117,7 +116,7 @@ impl GeniusLocal {
         )]
         async fn search_for_track_middleware(
             genius: &GeniusLocal,
-            track: &FullTrack,
+            track: &ShortTrack,
         ) -> anyhow::Result<Option<SearchResult>> {
             GeniusLocal::search_for_track_internal(genius, track).await
         }
@@ -130,7 +129,7 @@ impl GeniusLocal {
 
     async fn search_for_track_internal(
         &self,
-        track: &FullTrack,
+        track: &ShortTrack,
     ) -> anyhow::Result<Option<SearchResult>> {
         let res = self.find_best_fit_entry(track).await?;
 
@@ -154,23 +153,21 @@ impl GeniusLocal {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = %spotify::utils::get_track_id(track),
-            track_name = %spotify::utils::create_track_name(track),
+            track_id = track.track_id(),
+            track_name = track.track_full_name(),
         )
     )]
-    async fn find_best_fit_entry(&self, track: &FullTrack) -> anyhow::Result<Option<SearchResult>> {
-        let artist = track
-            .artists
-            .iter()
-            .map(|art| -> &str { art.name.as_ref() })
-            .next()
-            .context("Should be at least 1 artist in track")?;
+    async fn find_best_fit_entry(
+        &self,
+        track: &ShortTrack,
+    ) -> anyhow::Result<Option<SearchResult>> {
+        let artist = track.first_artist_name();
 
-        let names = get_track_names(&track.name);
+        let names = get_track_names(&track.track_name());
         let names_len = names.len();
 
         let cmp_artist = artist.to_lowercase();
-        let cmp_title = track.name.to_lowercase();
+        let cmp_title = track.track_name().to_lowercase();
 
         let mut hits_count = 0;
 
@@ -232,7 +229,7 @@ impl GeniusLocal {
             hits_count,
             names_len,
             artist,
-            track.name,
+            track.track_name(),
         );
 
         Ok(None)

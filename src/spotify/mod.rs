@@ -32,24 +32,39 @@ impl ShortTrack {
             .unwrap_or_default()
     }
 
-    pub fn track_name(&self) -> String {
+    pub fn track_full_name(&self) -> String {
         let artists = self.artist_names().join(", ");
 
         format!(r#"{} — {}"#, &artists, &self.full_track.name)
     }
 
-    pub fn artist_names(&self) -> Vec<String> {
+    pub fn track_name(&self) -> &str {
+        &self.full_track.name
+    }
+
+    pub fn duration_secs(&self) -> i64 {
+        self.full_track.duration.num_seconds()
+    }
+
+    pub fn artist_names(&self) -> Vec<&str> {
         self.full_track
             .artists
             .iter()
-            .map(|art| art.name.clone())
+            .map(|art| art.name.as_str())
             .collect()
+    }
+
+    pub fn first_artist_name(&self) -> &str {
+        self.artist_names()
+            .first()
+            .map(|artist| *artist)
+            .unwrap_or_default()
     }
 
     pub fn track_tg_link(&self) -> String {
         format!(
             r#"<a href="{link}">{name}</a>"#,
-            name = html::escape(self.track_name().as_str()),
+            name = html::escape(self.track_full_name().as_str()),
             link = self
                 .full_track
                 .external_urls
@@ -57,6 +72,16 @@ impl ShortTrack {
                 .map(String::as_str)
                 .unwrap_or("https://vtvz.me/")
         )
+    }
+
+    pub fn album_name(&self) -> &str {
+        &self.full_track.album.name
+    }
+}
+
+impl From<FullTrack> for ShortTrack {
+    fn from(value: FullTrack) -> Self {
+        ShortTrack::new(value)
     }
 }
 

@@ -80,7 +80,7 @@ pub async fn check(
                 return Ok(CheckUserResult::SkipSame);
             }
 
-            let res = super::profanity_check::check(app_state, &state, &track)
+            let res = super::profanity_check::check(app_state, &state, &short_track)
                 .await
                 .context("Check bad words");
 
@@ -100,7 +100,7 @@ pub async fn check(
                     tracing::error!(
                         err = ?err,
                         track_id = %short_track.track_id(),
-                        track_name = %short_track.track_name(),
+                        track_name = %short_track.track_full_name(),
                         "Error occurred on checking bad words",
                     )
                 },
