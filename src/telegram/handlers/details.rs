@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 
-use anyhow::{Context, anyhow};
+use anyhow::anyhow;
 use convert_case::{Case, Casing};
 use indoc::formatdoc;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
-use rspotify::model::{FullTrack, Id, Modality, TrackId};
+use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParameters};
 
@@ -16,7 +16,7 @@ use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::state::{AppState, UserState};
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
-use crate::{profanity, spotify, telegram};
+use crate::{profanity, telegram};
 
 pub async fn handle_current(
     app_state: &'static AppState,
@@ -37,7 +37,9 @@ pub async fn handle_current(
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    common(app_state, state, bot, m, *track).await
+    let track: ShortTrack = (*track).clone().into();
+
+    common(app_state, state, bot, m, track).await
 }
 
 fn extract_id(url: &str) -> Option<TrackId> {
@@ -68,7 +70,7 @@ pub async fn handle_url(
         return Ok(false);
     };
 
-    let track = state.spotify().await.track(track_id, None).await?;
+    let track = state.spotify().await.track(track_id, None).await?.into();
 
     common(app_state, state, bot, m, track).await
 }
@@ -78,28 +80,24 @@ async fn common(
     state: &UserState,
     bot: &Bot,
     m: &Message,
-    track: FullTrack,
+    track: ShortTrack,
 ) -> anyhow::Result<bool> {
-    let short_track: ShortTrack = track.clone().into();
     let spotify = state.spotify().await;
 
-    let track_id = track.id.clone().context("Should be prevalidated")?;
+    let track_id = track.track_id();
 
-    let status =
-        TrackStatusService::get_status(app_state.db(), state.user_id(), track_id.id()).await;
+    let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track_id).await;
 
     let keyboard = match status {
         TrackStatus::Disliked => {
-            vec![vec![InlineButtons::Cancel(track_id.id().to_owned()).into()]]
+            vec![vec![InlineButtons::Cancel(track_id.to_owned()).into()]]
         },
         TrackStatus::Ignore | TrackStatus::None => {
-            vec![vec![
-                InlineButtons::Dislike(track_id.id().to_owned()).into(),
-            ]]
+            vec![vec![InlineButtons::Dislike(track_id.to_owned()).into()]]
         },
     };
 
-    let features = spotify.track_features(track_id.clone()).await?;
+    let features = spotify.track_features(track.track_raw_id()?).await?;
 
     let modality = match features.mode {
         Modality::Minor => "Minor",
@@ -127,24 +125,16 @@ async fn common(
         app_state.db(),
         TrackStatus::Disliked,
         None,
-        Some(track_id.id()),
+        Some(track_id),
     )
     .await?;
 
-    let ignored_by = TrackStatusService::count_status(
-        app_state.db(),
-        TrackStatus::Ignore,
-        None,
-        Some(track_id.id()),
-    )
-    .await?;
+    let ignored_by =
+        TrackStatusService::count_status(app_state.db(), TrackStatus::Ignore, None, Some(track_id))
+            .await?;
 
     let genres: HashSet<_> = {
-        let artist_ids: Vec<_> = track
-            .artists
-            .iter()
-            .filter_map(|artist| artist.id.clone())
-            .collect();
+        let artist_ids: Vec<_> = track.artist_raw_ids()?;
 
         let artists = match spotify.artists(artist_ids).await {
             // HACK: 403 "Spotify is unavailable in this country" error
@@ -217,7 +207,7 @@ async fn common(
         ignored_by,
     };
 
-    let Some(hit) = app_state.lyrics().search_for_track(&short_track).await? else {
+    let Some(hit) = app_state.lyrics().search_for_track(&track).await? else {
         bot.send_message(
             m.chat.id,
             formatdoc!(
@@ -229,8 +219,8 @@ async fn common(
                     {genres_line}
                     <code>No lyrics found</code>
                 ",
-                track_name = spotify::utils::create_track_tg_link(&track),
-                album_name = spotify::utils::create_album_tg_link(&track.album),
+                track_name = track.track_tg_link(),
+                album_name = track.album_tg_link(),
                 features = features.trim(),
                 genres_line = genres_line,
             ),
@@ -272,8 +262,8 @@ async fn common(
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
             "#,
-            track_name = spotify::utils::create_track_tg_link(&track),
-            album_name = spotify::utils::create_album_tg_link(&track.album),
+            track_name = track.track_tg_link(),
+            album_name = track.album_tg_link(),
             features = features.trim(),
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),

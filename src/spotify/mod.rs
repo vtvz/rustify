@@ -5,7 +5,15 @@ use anyhow::{Context, anyhow};
 pub use errors::Error;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
-use rspotify::model::{Context as SpotifyContext, FullTrack, Id as _, PlayableItem};
+use rspotify::model::{
+    ArtistId,
+    Context as SpotifyContext,
+    FullTrack,
+    Id,
+    IdError,
+    PlayableItem,
+    TrackId,
+};
 use rspotify::{AuthCodeSpotify, ClientError, ClientResult, Token, scopes};
 use sea_orm::{DbConn, TransactionTrait};
 use strum_macros::Display;
@@ -15,13 +23,16 @@ use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
 
+#[derive(Serialize, Deserialize)]
 pub struct ShortTrack {
     track_id: String,
     track_name: String,
     duration_secs: i64,
     artist_names: Vec<String>,
-    spotify_url: String,
+    artist_ids: Vec<String>,
+    track_url: String,
     album_name: String,
+    album_url: String,
 }
 
 impl ShortTrack {
@@ -41,10 +52,24 @@ impl ShortTrack {
                 .map(|art| art.name.clone())
                 .collect(),
 
-            spotify_url: full_track
+            artist_ids: full_track
+                .artists
+                .iter()
+                .filter_map(|artist| artist.id.clone())
+                .map(|item| item.id().into())
+                .collect(),
+
+            track_url: full_track
                 .external_urls
                 .get("spotify")
                 .map(|item| item.clone())
+                .unwrap_or("https://vtvz.me/".into()),
+
+            album_url: full_track
+                .album
+                .external_urls
+                .get("spotify")
+                .map(String::clone)
                 .unwrap_or("https://vtvz.me/".into()),
 
             album_name: full_track.album.name,
@@ -53,6 +78,11 @@ impl ShortTrack {
 
     pub fn track_id(&self) -> &str {
         &self.track_id
+    }
+
+    pub fn track_raw_id(&self) -> anyhow::Result<TrackId<'_>> {
+        let id = TrackId::from_id_or_uri(self.track_id())?;
+        Ok(id)
     }
 
     pub fn track_full_name(&self) -> String {
@@ -73,6 +103,20 @@ impl ShortTrack {
         self.artist_names.iter().map(|item| item.as_str()).collect()
     }
 
+    pub fn artist_ids(&self) -> Vec<&str> {
+        self.artist_ids.iter().map(|item| item.as_str()).collect()
+    }
+
+    pub fn artist_raw_ids(&self) -> Result<Vec<ArtistId<'_>>, IdError> {
+        let result: Result<Vec<ArtistId>, IdError> = self
+            .artist_ids
+            .iter()
+            .map(|item| ArtistId::from_id_or_uri(item))
+            .collect();
+
+        result
+    }
+
     pub fn first_artist_name(&self) -> &str {
         self.artist_names()
             .first()
@@ -84,12 +128,24 @@ impl ShortTrack {
         format!(
             r#"<a href="{link}">{name}</a>"#,
             name = html::escape(self.track_full_name().as_str()),
-            link = self.spotify_url
+            link = self.track_url
+        )
+    }
+
+    pub fn album_tg_link(&self) -> String {
+        format!(
+            r#"<a href="{link}">{name}</a>"#,
+            name = self.album_name(),
+            link = self.album_url()
         )
     }
 
     pub fn album_name(&self) -> &str {
         &self.album_name
+    }
+
+    pub fn album_url(&self) -> &str {
+        &self.album_url
     }
 }
 
