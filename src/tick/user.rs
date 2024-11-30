@@ -47,7 +47,7 @@ pub async fn check(
 
     let playing = CurrentlyPlaying::get(&*state.spotify().await).await;
 
-    let (track, context) = match playing {
+    let (full_track, context) = match playing {
         CurrentlyPlaying::Err(err) => {
             return Err(err).context("Get currently playing track");
         },
@@ -57,22 +57,20 @@ pub async fn check(
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
 
-    let short_track = ShortTrack::new(*track.clone());
+    let track = ShortTrack::new(*full_track.clone());
 
     let status =
-        TrackStatusService::get_status(app_state.db(), state.user_id(), short_track.track_id())
-            .await;
+        TrackStatusService::get_status(app_state.db(), state.user_id(), track.track_id()).await;
 
     match status {
         TrackStatus::Disliked => {
-            super::disliked_track::handle(app_state, &state, &short_track, context.as_ref())
-                .await?;
+            super::disliked_track::handle(app_state, &state, &track, context.as_ref()).await?;
         },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
                 app_state.redis_conn().await?,
                 state.user_id(),
-                short_track.track_id(),
+                track.track_id(),
             )
             .await?;
 
@@ -80,7 +78,7 @@ pub async fn check(
                 return Ok(CheckUserResult::SkipSame);
             }
 
-            let res = super::profanity_check::check(app_state, &state, &short_track)
+            let res = super::profanity_check::check(app_state, &state, &track)
                 .await
                 .context("Check bad words");
 
@@ -99,8 +97,8 @@ pub async fn check(
                 Err(err) => {
                     tracing::error!(
                         err = ?err,
-                        track_id = %short_track.track_id(),
-                        track_name = %short_track.track_full_name(),
+                        track_id = %track.track_id(),
+                        track_name = %track.track_full_name(),
                         "Error occurred on checking bad words",
                     )
                 },
