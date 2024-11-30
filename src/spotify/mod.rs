@@ -5,14 +5,60 @@ use anyhow::{Context, anyhow};
 pub use errors::Error;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
-use rspotify::model::{Context as SpotifyContext, FullTrack, PlayableItem};
+use rspotify::model::{Context as SpotifyContext, FullTrack, Id as _, PlayableItem};
 use rspotify::{AuthCodeSpotify, ClientError, ClientResult, Token, scopes};
 use sea_orm::{DbConn, TransactionTrait};
 use strum_macros::Display;
+use teloxide::utils::html;
 
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
+
+pub struct ShortTrack {
+    full_track: FullTrack,
+}
+
+impl ShortTrack {
+    pub fn new(full_track: FullTrack) -> Self {
+        Self { full_track }
+    }
+
+    pub fn track_id(&self) -> &str {
+        self.full_track
+            .id
+            .as_ref()
+            .map(|track_id| track_id.id())
+            .unwrap_or_default()
+    }
+
+    pub fn track_name(&self) -> String {
+        let artists = self.artist_names().join(", ");
+
+        format!(r#"{} — {}"#, &artists, &self.full_track.name)
+    }
+
+    pub fn artist_names(&self) -> Vec<String> {
+        self.full_track
+            .artists
+            .iter()
+            .map(|art| art.name.clone())
+            .collect()
+    }
+
+    pub fn track_tg_link(&self) -> String {
+        format!(
+            r#"<a href="{link}">{name}</a>"#,
+            name = html::escape(self.track_name().as_str()),
+            link = self
+                .full_track
+                .external_urls
+                .get("spotify")
+                .map(String::as_str)
+                .unwrap_or("https://vtvz.me/")
+        )
+    }
+}
 
 #[derive(Clone, Display)]
 pub enum CurrentlyPlayingNoneReason {

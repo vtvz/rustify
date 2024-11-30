@@ -2,7 +2,6 @@ use anyhow::Context;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{
     Context as SpotifyContext,
-    FullTrack,
     PlayableId,
     PlaylistId,
     TrackId,
@@ -11,22 +10,23 @@ use rspotify::model::{
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
+use crate::spotify::ShortTrack;
+use crate::state;
 use crate::state::AppState;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
-use crate::{spotify, state};
 
 #[tracing::instrument(
     skip_all,
     fields(
-        track_id = %spotify::utils::get_track_id(track),
-        track_name = %spotify::utils::create_track_name(track),
+        track_id = track.track_id(),
+        track_name = track.track_name(),
     )
 )]
 pub async fn handle(
     app_state: &'static AppState,
     state: &state::UserState,
-    track: &FullTrack,
+    track: &ShortTrack,
     context: Option<&SpotifyContext>,
 ) -> anyhow::Result<()> {
     if state.is_spotify_premium().await? {
@@ -37,8 +37,8 @@ pub async fn handle(
             .await
             .context("Skip current track")?;
 
-        let track_id = spotify::utils::get_track_id(track);
-        TrackStatusService::increase_skips(app_state.db(), state.user_id(), &track_id).await?;
+        let track_id = track.track_id();
+        TrackStatusService::increase_skips(app_state.db(), state.user_id(), track_id).await?;
 
         let Some(context) = context else {
             return Ok(());
@@ -46,7 +46,7 @@ pub async fn handle(
 
         match context._type {
             SpotifyType::Playlist => {
-                let track_id = TrackId::from_id(&track_id)?;
+                let track_id = TrackId::from_id(track_id)?;
                 let hate: Option<PlayableId> = Some(track_id.into());
 
                 let res = spotify
@@ -67,7 +67,7 @@ pub async fn handle(
             },
 
             SpotifyType::Collection => {
-                let track_id = TrackId::from_id(&track_id)?;
+                let track_id = TrackId::from_id(track_id)?;
 
                 spotify
                     .current_user_saved_tracks_delete(Some(track_id))
@@ -86,7 +86,7 @@ pub async fn handle(
 
     let message = format!(
         "Current song ({track_name}) was disliked, but I cannot skip it...",
-        track_name = spotify::utils::create_track_tg_link(track),
+        track_name = track.track_tg_link(),
     );
 
     let result = app_state

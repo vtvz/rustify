@@ -2,7 +2,7 @@ use anyhow::Context;
 use strum_macros::Display;
 
 use crate::entity::prelude::*;
-use crate::spotify::{CurrentlyPlaying, Error};
+use crate::spotify::{CurrentlyPlaying, Error, ShortTrack};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::{lyrics, spotify, state};
@@ -57,22 +57,22 @@ pub async fn check(
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
 
-    let status = TrackStatusService::get_status(
-        app_state.db(),
-        state.user_id(),
-        &spotify::utils::get_track_id(&track),
-    )
-    .await;
+    let short_track = ShortTrack::new(*track.clone());
+
+    let status =
+        TrackStatusService::get_status(app_state.db(), state.user_id(), short_track.track_id())
+            .await;
 
     match status {
         TrackStatus::Disliked => {
-            super::disliked_track::handle(app_state, &state, &track, context.as_ref()).await?;
+            super::disliked_track::handle(app_state, &state, &short_track, context.as_ref())
+                .await?;
         },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
                 app_state.redis_conn().await?,
                 state.user_id(),
-                &spotify::utils::get_track_id(&track),
+                short_track.track_id(),
             )
             .await?;
 
@@ -99,8 +99,8 @@ pub async fn check(
                 Err(err) => {
                     tracing::error!(
                         err = ?err,
-                        track_id = %spotify::utils::get_track_id(&track),
-                        track_name = %spotify::utils::create_track_name(&track),
+                        track_id = %short_track.track_id(),
+                        track_name = %short_track.track_name(),
                         "Error occurred on checking bad words",
                     )
                 },
