@@ -82,16 +82,14 @@ async fn common(
 ) -> anyhow::Result<bool> {
     let spotify = state.spotify().await;
 
-    let track_id = track.id();
-
-    let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track_id).await;
+    let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track.id()).await;
 
     let keyboard = match status {
         TrackStatus::Disliked => {
-            vec![vec![InlineButtons::Cancel(track_id.to_owned()).into()]]
+            vec![vec![InlineButtons::Cancel(track.id().to_owned()).into()]]
         },
         TrackStatus::Ignore | TrackStatus::None => {
-            vec![vec![InlineButtons::Dislike(track_id.to_owned()).into()]]
+            vec![vec![InlineButtons::Dislike(track.id().to_owned()).into()]]
         },
     };
 
@@ -123,13 +121,17 @@ async fn common(
         app_state.db(),
         TrackStatus::Disliked,
         None,
-        Some(track_id),
+        Some(track.id()),
     )
     .await?;
 
-    let ignored_by =
-        TrackStatusService::count_status(app_state.db(), TrackStatus::Ignore, None, Some(track_id))
-            .await?;
+    let ignored_by = TrackStatusService::count_status(
+        app_state.db(),
+        TrackStatus::Ignore,
+        None,
+        Some(track.id()),
+    )
+    .await?;
 
     let genres: HashSet<_> = {
         let artist_ids = track.artist_raw_ids();

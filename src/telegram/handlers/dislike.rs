@@ -29,12 +29,10 @@ pub async fn handle(
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    let track_id = track.id();
-
     TrackStatusService::set_status(
         app_state.db(),
         state.user_id(),
-        track_id,
+        track.id(),
         TrackStatus::Disliked,
     )
     .await?;
@@ -45,7 +43,7 @@ pub async fn handle(
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Cancel(track_id.into()).into()]
+                vec![InlineButtons::Cancel(track.id().into()).into()]
             ],
         )))
         .send()

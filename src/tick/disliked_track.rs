@@ -1,12 +1,6 @@
 use anyhow::Context;
 use rspotify::clients::OAuthClient;
-use rspotify::model::{
-    Context as SpotifyContext,
-    PlayableId,
-    PlaylistId,
-    TrackId,
-    Type as SpotifyType,
-};
+use rspotify::model::{Context as SpotifyContext, PlayableId, PlaylistId, Type as SpotifyType};
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
@@ -37,8 +31,7 @@ pub async fn handle(
             .await
             .context("Skip current track")?;
 
-        let track_id = track.id();
-        TrackStatusService::increase_skips(app_state.db(), state.user_id(), track_id).await?;
+        TrackStatusService::increase_skips(app_state.db(), state.user_id(), track.id()).await?;
 
         let Some(context) = context else {
             return Ok(());
@@ -46,8 +39,7 @@ pub async fn handle(
 
         match context._type {
             SpotifyType::Playlist => {
-                let track_id = TrackId::from_id(track_id)?;
-                let hate: Option<PlayableId> = Some(track_id.into());
+                let hate: Option<PlayableId> = Some(track.raw_id().clone().into());
 
                 let res = spotify
                     .playlist_remove_all_occurrences_of_items(
@@ -67,10 +59,8 @@ pub async fn handle(
             },
 
             SpotifyType::Collection => {
-                let track_id = TrackId::from_id(track_id)?;
-
                 spotify
-                    .current_user_saved_tracks_delete(Some(track_id))
+                    .current_user_saved_tracks_delete(Some(track.raw_id().clone()))
                     .await?;
 
                 UserService::increase_stats_query(state.user_id())
