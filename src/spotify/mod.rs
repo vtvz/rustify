@@ -149,7 +149,7 @@ pub enum CurrentlyPlayingNoneReason {
 pub enum CurrentlyPlaying {
     Err(ClientError),
     None(CurrentlyPlayingNoneReason),
-    Ok(Box<FullTrack>, Option<SpotifyContext>),
+    Ok(Box<ShortTrack>, Option<SpotifyContext>),
 }
 
 impl From<ClientError> for CurrentlyPlaying {
@@ -189,7 +189,7 @@ impl CurrentlyPlaying {
         };
 
         match &track.id {
-            Some(_) => Self::Ok(Box::new(track), context),
+            Some(_) => Self::Ok(Box::new(track.into()), context),
             None => Self::None(CurrentlyPlayingNoneReason::Local),
         }
     }

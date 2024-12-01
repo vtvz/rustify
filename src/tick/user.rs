@@ -2,7 +2,7 @@ use anyhow::Context;
 use strum_macros::Display;
 
 use crate::entity::prelude::*;
-use crate::spotify::{CurrentlyPlaying, Error, ShortTrack};
+use crate::spotify::{CurrentlyPlaying, Error};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::{lyrics, spotify, state};
@@ -47,7 +47,7 @@ pub async fn check(
 
     let playing = CurrentlyPlaying::get(&*state.spotify().await).await;
 
-    let (full_track, context) = match playing {
+    let (track, context) = match playing {
         CurrentlyPlaying::Err(err) => {
             return Err(err).context("Get currently playing track");
         },
@@ -56,8 +56,6 @@ pub async fn check(
         },
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
-
-    let track = ShortTrack::new(*full_track.clone());
 
     let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track.id()).await;
 

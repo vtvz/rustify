@@ -37,9 +37,7 @@ pub async fn handle_current(
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    let track: ShortTrack = (*track).clone().into();
-
-    common(app_state, state, bot, m, track).await
+    common(app_state, state, bot, m, *track).await
 }
 
 fn extract_id(url: &str) -> Option<TrackId> {

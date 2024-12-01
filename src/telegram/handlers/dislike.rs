@@ -3,7 +3,7 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParamet
 
 use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
-use crate::spotify::{CurrentlyPlaying, ShortTrack};
+use crate::spotify::CurrentlyPlaying;
 use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 
@@ -28,8 +28,6 @@ pub async fn handle(
         },
         CurrentlyPlaying::Ok(track, _) => track,
     };
-
-    let track = ShortTrack::new(*track);
 
     let track_id = track.id();
 
