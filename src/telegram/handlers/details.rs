@@ -134,9 +134,9 @@ async fn common(
             .await?;
 
     let genres: HashSet<_> = {
-        let artist_ids: Vec<_> = track.artist_raw_ids()?;
+        let artist_ids = track.artist_raw_ids();
 
-        let artists = match spotify.artists(artist_ids).await {
+        let artists = match spotify.artists(artist_ids.iter().cloned()).await {
             // HACK: 403 "Spotify is unavailable in this country" error
             Err(rspotify::ClientError::Http(box rspotify::http::HttpError::StatusCode(resp))) => {
                 tracing::info!("Resp from artists fetching {:?}", resp.text().await);
