@@ -232,8 +232,7 @@ impl UserState {
     }
 
     pub async fn is_spotify_authed(&self) -> bool {
-        self.spotify
-            .read()
+        self.spotify()
             .await
             .token
             .lock()
@@ -247,7 +246,7 @@ impl UserState {
 
         if lock.is_none() {
             let user = if self.is_spotify_authed().await {
-                let me = self.spotify.read().await.me().await?;
+                let me = self.spotify().await.me().await?;
 
                 Some(me)
             } else {
