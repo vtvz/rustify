@@ -5,15 +5,7 @@ use anyhow::{Context, anyhow};
 pub use errors::Error;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
-use rspotify::model::{
-    ArtistId,
-    Context as SpotifyContext,
-    FullTrack,
-    Id,
-    IdError,
-    PlayableItem,
-    TrackId,
-};
+use rspotify::model::{ArtistId, Context as SpotifyContext, FullTrack, Id, PlayableItem, TrackId};
 use rspotify::{AuthCodeSpotify, ClientError, ClientResult, Token, scopes};
 use sea_orm::{DbConn, TransactionTrait};
 use strum_macros::Display;
@@ -29,7 +21,7 @@ pub struct ShortTrack {
     track_name: String,
     duration_secs: i64,
     artist_names: Vec<String>,
-    artist_ids: Vec<String>,
+    artist_ids: Vec<ArtistId<'static>>,
     track_url: String,
     album_name: String,
     album_url: String,
@@ -56,20 +48,19 @@ impl ShortTrack {
                 .artists
                 .iter()
                 .filter_map(|artist| artist.id.clone())
-                .map(|item| item.id().into())
                 .collect(),
 
             track_url: full_track
                 .external_urls
                 .get("spotify")
-                .map(|item| item.clone())
+                .cloned()
                 .unwrap_or("https://vtvz.me/".into()),
 
             album_url: full_track
                 .album
                 .external_urls
                 .get("spotify")
-                .map(String::clone)
+                .cloned()
                 .unwrap_or("https://vtvz.me/".into()),
 
             album_name: full_track.album.name,
@@ -104,24 +95,15 @@ impl ShortTrack {
     }
 
     pub fn artist_ids(&self) -> Vec<&str> {
-        self.artist_ids.iter().map(|item| item.as_str()).collect()
+        self.artist_ids.iter().map(|artist| artist.id()).collect()
     }
 
-    pub fn artist_raw_ids(&self) -> Result<Vec<ArtistId<'_>>, IdError> {
-        let result: Result<Vec<ArtistId>, IdError> = self
-            .artist_ids
-            .iter()
-            .map(|item| ArtistId::from_id_or_uri(item))
-            .collect();
-
-        result
+    pub fn artist_raw_ids(&self) -> &[ArtistId<'_>] {
+        &self.artist_ids
     }
 
     pub fn first_artist_name(&self) -> &str {
-        self.artist_names()
-            .first()
-            .map(|artist| *artist)
-            .unwrap_or_default()
+        self.artist_names().first().copied().unwrap_or_default()
     }
 
     pub fn track_tg_link(&self) -> String {

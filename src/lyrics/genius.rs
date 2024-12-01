@@ -163,7 +163,7 @@ impl GeniusLocal {
     ) -> anyhow::Result<Option<SearchResult>> {
         let artist = track.first_artist_name();
 
-        let names = get_track_names(&track.track_name());
+        let names = get_track_names(track.track_name());
         let names_len = names.len();
 
         let cmp_artist = artist.to_lowercase();
