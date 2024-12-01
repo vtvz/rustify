@@ -100,7 +100,10 @@ impl ShortTrack {
     }
 
     pub fn first_artist_name(&self) -> &str {
-        self.artist_names().first().copied().unwrap_or_default()
+        self.artist_names()
+            .first()
+            .copied()
+            .unwrap_or("Rick Astley")
     }
 
     pub fn album_name(&self) -> &str {
