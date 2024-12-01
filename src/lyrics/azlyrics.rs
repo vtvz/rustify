@@ -75,8 +75,8 @@ impl AZLyrics {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = track.track_id(),
-            track_name = track.track_full_name(),
+            track_id = track.id(),
+            track_name = track.name_with_artists(),
         )
     )]
     pub async fn search_for_track(
@@ -85,7 +85,7 @@ impl AZLyrics {
     ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.track_id().into() }"#,
+            convert = r#"{ track.id().into() }"#,
             ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
             create = r##" {
                 let prefix = module_path!().split("::").last().expect("Will be");
@@ -113,7 +113,7 @@ impl AZLyrics {
 
         let cmp_artist_name = artist_name.to_lowercase();
 
-        let track_name = track.track_name();
+        let track_name = track.name();
         let cmp_track_name = track_name.to_lowercase();
 
         let q = format!("{} {}", artist_name, track_name);

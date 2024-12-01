@@ -70,8 +70,8 @@ impl Manager {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = track.track_id(),
-            track_name = track.track_full_name(),
+            track_id = track.id(),
+            track_name = track.name_with_artists(),
         )
     )]
     pub async fn search_for_track(

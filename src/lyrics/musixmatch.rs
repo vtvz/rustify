@@ -100,8 +100,8 @@ impl Musixmatch {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = track.track_id(),
-            track_name = track.track_full_name(),
+            track_id = track.id(),
+            track_name = track.name_with_artists(),
         )
     )]
     pub async fn search_for_track(
@@ -110,7 +110,7 @@ impl Musixmatch {
     ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send>>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.track_id().into() }"#,
+            convert = r#"{ track.id().into() }"#,
             ty = "cached::AsyncRedisCache<String, Option<Lyrics>>",
             create = r##" {
                 let prefix = module_path!().split("::").last().expect("Will be");
@@ -161,8 +161,8 @@ impl Musixmatch {
             ("q_album", track.album_name()),
             ("q_artist", track.first_artist_name()),
             ("q_artists", artists.as_str()),
-            ("q_track", track.track_name()),
-            ("track_spotify_id", track.track_id()),
+            ("q_track", track.name()),
+            ("track_spotify_id", track.id()),
             ("q_duration", track.duration_secs().to_string().as_str()),
             (
                 "f_subtitle_length",

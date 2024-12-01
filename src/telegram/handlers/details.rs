@@ -84,7 +84,7 @@ async fn common(
 ) -> anyhow::Result<bool> {
     let spotify = state.spotify().await;
 
-    let track_id = track.track_id();
+    let track_id = track.id();
 
     let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track_id).await;
 
@@ -97,7 +97,7 @@ async fn common(
         },
     };
 
-    let features = spotify.track_features(track.track_raw_id()?).await?;
+    let features = spotify.track_features(track.raw_id().clone()).await?;
 
     let modality = match features.mode {
         Modality::Minor => "Minor",

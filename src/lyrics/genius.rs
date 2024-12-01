@@ -97,8 +97,8 @@ impl GeniusLocal {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = track.track_id(),
-            track_name = track.track_full_name(),
+            track_id = track.id(),
+            track_name = track.name_with_artists(),
         )
     )]
     pub async fn search_for_track(
@@ -107,7 +107,7 @@ impl GeniusLocal {
     ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.track_id().into() }"#,
+            convert = r#"{ track.id().into() }"#,
             ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
             create = r##" {
                 let prefix = module_path!().split("::").last().expect("Will be");
@@ -153,8 +153,8 @@ impl GeniusLocal {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = track.track_id(),
-            track_name = track.track_full_name(),
+            track_id = track.id(),
+            track_name = track.name_with_artists(),
         )
     )]
     async fn find_best_fit_entry(
@@ -163,11 +163,11 @@ impl GeniusLocal {
     ) -> anyhow::Result<Option<SearchResult>> {
         let artist = track.first_artist_name();
 
-        let names = get_track_names(track.track_name());
+        let names = get_track_names(track.name());
         let names_len = names.len();
 
         let cmp_artist = artist.to_lowercase();
-        let cmp_title = track.track_name().to_lowercase();
+        let cmp_title = track.name().to_lowercase();
 
         let mut hits_count = 0;
 
@@ -229,7 +229,7 @@ impl GeniusLocal {
             hits_count,
             names_len,
             artist,
-            track.track_name(),
+            track.name(),
         );
 
         Ok(None)

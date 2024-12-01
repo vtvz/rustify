@@ -88,8 +88,8 @@ impl LrcLib {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = track.track_id(),
-            track_name = track.track_full_name(),
+            track_id = track.id(),
+            track_name = track.name_with_artists(),
         )
     )]
     pub async fn search_for_track(
@@ -98,7 +98,7 @@ impl LrcLib {
     ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.track_id().into() }"#,
+            convert = r#"{ track.id().into() }"#,
             ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
             create = r##" {
                 let prefix = module_path!().split("::").last().expect("Will be");
@@ -126,11 +126,11 @@ impl LrcLib {
 
         let cmp_artist_name = artist_name.to_lowercase();
 
-        let track_name = track.track_name();
+        let track_name = track.name();
         let cmp_track_name = track_name.to_lowercase();
         let album_name = &track.album_name();
 
-        let names = get_track_names(track.track_name());
+        let names = get_track_names(track.name());
         let names_len = names.len();
 
         let mut hits_count = 0;

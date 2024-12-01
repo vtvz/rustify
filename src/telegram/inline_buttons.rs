@@ -13,7 +13,7 @@ use teloxide::types::{
 };
 
 use crate::entity::prelude::*;
-use crate::spotify;
+use crate::spotify::ShortTrack;
 use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 
@@ -95,6 +95,7 @@ pub async fn handle(
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
+            let track = ShortTrack::new(track);
 
             TrackStatusService::set_status(app_state.db(), state.user_id(), &id, TrackStatus::None)
                 .await?;
@@ -102,10 +103,7 @@ pub async fn handle(
             bot.edit_message_text(
                 q.from.id,
                 q.message.context("Message is empty")?.id(),
-                format!(
-                    "Dislike cancelled for {}",
-                    spotify::utils::create_track_tg_link(&track)
-                ),
+                format!("Dislike cancelled for {}", track.track_tg_link()),
             )
             .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
@@ -124,6 +122,8 @@ pub async fn handle(
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
 
+            let track = ShortTrack::new(track);
+
             TrackStatusService::set_status(
                 app_state.db(),
                 state.user_id(),
@@ -135,7 +135,7 @@ pub async fn handle(
             bot.edit_message_text(
                 q.from.id,
                 q.message.context("Message is empty")?.id(),
-                format!("Disliked {}", spotify::utils::create_track_tg_link(&track)),
+                format!("Disliked {}", track.track_tg_link()),
             )
             .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
@@ -153,6 +153,7 @@ pub async fn handle(
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
+            let track = ShortTrack::new(track);
 
             TrackStatusService::set_status(
                 app_state.db(),
@@ -167,7 +168,7 @@ pub async fn handle(
                 q.message.context("Message is empty")?.id(),
                 format!(
                     "Bad words of {} will be forever ignored",
-                    spotify::utils::create_track_tg_link(&track)
+                    track.track_tg_link()
                 ),
             )
             .parse_mode(ParseMode::Html)

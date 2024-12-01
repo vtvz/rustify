@@ -59,8 +59,7 @@ pub async fn check(
 
     let track = ShortTrack::new(*full_track.clone());
 
-    let status =
-        TrackStatusService::get_status(app_state.db(), state.user_id(), track.track_id()).await;
+    let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track.id()).await;
 
     match status {
         TrackStatus::Disliked => {
@@ -70,7 +69,7 @@ pub async fn check(
             let changed = UserService::sync_current_playing(
                 app_state.redis_conn().await?,
                 state.user_id(),
-                track.track_id(),
+                track.id(),
             )
             .await?;
 
@@ -97,8 +96,8 @@ pub async fn check(
                 Err(err) => {
                     tracing::error!(
                         err = ?err,
-                        track_id = %track.track_id(),
-                        track_name = %track.track_full_name(),
+                        track_id = %track.id(),
+                        track_name = %track.name_with_artists(),
                         "Error occurred on checking bad words",
                     )
                 },

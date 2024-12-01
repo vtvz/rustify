@@ -1,5 +1,4 @@
 pub mod errors;
-pub mod utils;
 
 use anyhow::{Context, anyhow};
 pub use errors::Error;
@@ -17,12 +16,12 @@ use crate::user_service::UserService;
 
 #[derive(Serialize, Deserialize)]
 pub struct ShortTrack {
-    track_id: String,
-    track_name: String,
+    id: TrackId<'static>,
+    name: String,
+    url: String,
     duration_secs: i64,
     artist_names: Vec<String>,
     artist_ids: Vec<ArtistId<'static>>,
-    track_url: String,
     album_name: String,
     album_url: String,
 }
@@ -30,12 +29,11 @@ pub struct ShortTrack {
 impl ShortTrack {
     pub fn new(full_track: FullTrack) -> Self {
         Self {
-            track_id: full_track
+            id: full_track
                 .id
-                .as_ref()
-                .map(|track_id| track_id.id().into())
-                .unwrap_or_default(),
-            track_name: full_track.name,
+                .unwrap_or(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8").expect("Valid ID")),
+            name: full_track.name,
+
             duration_secs: full_track.duration.num_seconds(),
 
             artist_names: full_track
@@ -50,7 +48,7 @@ impl ShortTrack {
                 .filter_map(|artist| artist.id.clone())
                 .collect(),
 
-            track_url: full_track
+            url: full_track
                 .external_urls
                 .get("spotify")
                 .cloned()
@@ -67,23 +65,22 @@ impl ShortTrack {
         }
     }
 
-    pub fn track_id(&self) -> &str {
-        &self.track_id
+    pub fn id(&self) -> &str {
+        self.id.id()
     }
 
-    pub fn track_raw_id(&self) -> anyhow::Result<TrackId<'_>> {
-        let id = TrackId::from_id_or_uri(self.track_id())?;
-        Ok(id)
+    pub fn raw_id(&self) -> &TrackId<'_> {
+        &self.id
     }
 
-    pub fn track_full_name(&self) -> String {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn name_with_artists(&self) -> String {
         let artists = self.artist_names().join(", ");
 
-        format!(r#"{} — {}"#, artists, self.track_name())
-    }
-
-    pub fn track_name(&self) -> &str {
-        &self.track_name
+        format!(r#"{} — {}"#, artists, self.name())
     }
 
     pub fn duration_secs(&self) -> i64 {
@@ -106,11 +103,19 @@ impl ShortTrack {
         self.artist_names().first().copied().unwrap_or_default()
     }
 
+    pub fn album_name(&self) -> &str {
+        &self.album_name
+    }
+
+    pub fn album_url(&self) -> &str {
+        &self.album_url
+    }
+
     pub fn track_tg_link(&self) -> String {
         format!(
             r#"<a href="{link}">{name}</a>"#,
-            name = html::escape(self.track_full_name().as_str()),
-            link = self.track_url
+            name = html::escape(self.name_with_artists().as_str()),
+            link = self.url
         )
     }
 
@@ -120,14 +125,6 @@ impl ShortTrack {
             name = self.album_name(),
             link = self.album_url()
         )
-    }
-
-    pub fn album_name(&self) -> &str {
-        &self.album_name
-    }
-
-    pub fn album_url(&self) -> &str {
-        &self.album_url
     }
 }
 

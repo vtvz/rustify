@@ -3,8 +3,7 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParamet
 
 use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
-use crate::spotify;
-use crate::spotify::CurrentlyPlaying;
+use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 
@@ -30,30 +29,29 @@ pub async fn handle(
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    let track_id = spotify::utils::get_track_id(&track);
+    let track = ShortTrack::new(*track);
+
+    let track_id = track.id();
 
     TrackStatusService::set_status(
         app_state.db(),
         state.user_id(),
-        &track_id,
+        track_id,
         TrackStatus::Disliked,
     )
     .await?;
 
-    bot.send_message(
-        m.chat.id,
-        format!("Disliked {}", spotify::utils::create_track_tg_link(&track)),
-    )
-    .reply_parameters(ReplyParameters::new(m.id))
-    .parse_mode(ParseMode::Html)
-    .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-        #[rustfmt::skip]
+    bot.send_message(m.chat.id, format!("Disliked {}", track.track_tg_link()))
+        .reply_parameters(ReplyParameters::new(m.id))
+        .parse_mode(ParseMode::Html)
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Cancel(track_id).into()]
+                vec![InlineButtons::Cancel(track_id.into()).into()]
             ],
-    )))
-    .send()
-    .await?;
+        )))
+        .send()
+        .await?;
 
     Ok(true)
 }
