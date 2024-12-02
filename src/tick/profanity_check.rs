@@ -1,12 +1,13 @@
 use indoc::formatdoc;
 use isolang::Language;
-use rspotify::model::FullTrack;
 use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
+use crate::spotify::ShortTrack;
+use crate::state::AppState;
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::{lyrics, profanity, spotify, state, telegram};
+use crate::{lyrics, profanity, state, telegram};
 
 #[derive(Default)]
 pub struct CheckBadWordsResult {
@@ -19,17 +20,18 @@ pub struct CheckBadWordsResult {
 #[tracing::instrument(
     skip_all,
     fields(
-        track_id = %spotify::utils::get_track_id(track),
-        track_name = %spotify::utils::create_track_name(track),
+        track_id = track.id(),
+        track_name = track.name_with_artists(),
     )
 )]
 pub async fn check(
+    app_state: &'static AppState,
     state: &state::UserState,
-    track: &FullTrack,
+    track: &ShortTrack,
 ) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
-    let Some(hit) = state.app.lyrics().search_for_track(track).await? else {
+    let Some(hit) = app_state.lyrics().search_for_track(track).await? else {
         return Ok(ret);
     };
 
@@ -80,7 +82,7 @@ pub async fn check(
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
             "#,
-            track_name = spotify::utils::create_track_tg_link(track),
+            track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
             lyrics_link = hit.link(),
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
@@ -93,20 +95,21 @@ pub async fn check(
         lines -= 1;
     };
 
-    let result: Result<Message, teloxide::RequestError> = state
-        .app
+    let result: Result<Message, teloxide::RequestError> = app_state
         .bot()
-        .send_message(ChatId(state.user_id.parse()?), message)
+        .send_message(ChatId(state.user_id().parse()?), message)
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Dislike(spotify::utils::get_track_id(track)).into()],
-                vec![InlineButtons::Ignore(spotify::utils::get_track_id(track)).into()],
+                vec![InlineButtons::Dislike(track.id().into()).into()],
+                vec![InlineButtons::Ignore(track.id().into()).into()],
             ],
         )))
         .send()
         .await;
 
-    super::errors::telegram(state, result).await.map(|_| ret)
+    super::errors::telegram(app_state, state, result)
+        .await
+        .map(|_| ret)
 }

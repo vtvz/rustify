@@ -45,7 +45,7 @@ pub async fn check(
         Ok(state) => state,
     };
 
-    let playing = CurrentlyPlaying::get(&*state.spotify.read().await).await;
+    let playing = CurrentlyPlaying::get(&*state.spotify().await).await;
 
     let (track, context) = match playing {
         CurrentlyPlaying::Err(err) => {
@@ -57,22 +57,17 @@ pub async fn check(
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
 
-    let status = TrackStatusService::get_status(
-        state.app.db(),
-        &state.user_id,
-        &spotify::utils::get_track_id(&track),
-    )
-    .await;
+    let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track.id()).await;
 
     match status {
         TrackStatus::Disliked => {
-            super::disliked_track::handle(&state, &track, context.as_ref()).await?;
+            super::disliked_track::handle(app_state, &state, &track, context.as_ref()).await?;
         },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
-                state.app.redis_conn().await?,
-                &state.user_id,
-                &spotify::utils::get_track_id(&track),
+                app_state.redis_conn().await?,
+                state.user_id(),
+                track.id(),
             )
             .await?;
 
@@ -80,27 +75,27 @@ pub async fn check(
                 return Ok(CheckUserResult::SkipSame);
             }
 
-            let res = super::bad_words::check(&state, &track)
+            let res = super::profanity_check::check(app_state, &state, &track)
                 .await
                 .context("Check bad words");
 
             match res {
                 Ok(res) => {
-                    UserService::increase_stats_query(&state.user_id)
+                    UserService::increase_stats_query(state.user_id())
                         .lyrics(
                             1,
                             res.profane as u32,
                             matches!(res.provider, Some(lyrics::Provider::Genius)) as u32,
                             matches!(res.provider, Some(lyrics::Provider::Musixmatch)) as u32,
                         )
-                        .exec(state.app.db())
+                        .exec(app_state.db())
                         .await?;
                 },
                 Err(err) => {
                     tracing::error!(
                         err = ?err,
-                        track_id = %spotify::utils::get_track_id(&track),
-                        track_name = %spotify::utils::create_track_name(&track),
+                        track_id = %track.id(),
+                        track_name = %track.name_with_artists(),
                         "Error occurred on checking bad words",
                     )
                 },

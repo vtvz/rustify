@@ -6,13 +6,12 @@ use cached::proc_macro::io_cached;
 use isolang::Language;
 use itertools::Itertools;
 use reqwest::{Client, ClientBuilder};
-use rspotify::model::FullTrack;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, from_value};
 use tokio::sync::Mutex;
 
 use crate::serde_utils::{bool_from_int, lines_from_string};
-use crate::spotify;
+use crate::spotify::ShortTrack;
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -101,17 +100,17 @@ impl Musixmatch {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = %spotify::utils::get_track_id(track),
-            track_name = %spotify::utils::create_track_name(track),
+            track_id = track.id(),
+            track_name = track.name_with_artists(),
         )
     )]
     pub async fn search_for_track(
         &self,
-        track: &FullTrack,
+        track: &ShortTrack,
     ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send>>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ spotify::utils::get_track_id(track) }"#,
+            convert = r#"{ track.id().into() }"#,
             ty = "cached::AsyncRedisCache<String, Option<Lyrics>>",
             create = r##" {
                 let prefix = module_path!().split("::").last().expect("Will be");
@@ -120,7 +119,7 @@ impl Musixmatch {
         )]
         async fn search_for_track_middleware(
             musixmatch: &Musixmatch,
-            track: &FullTrack,
+            track: &ShortTrack,
         ) -> anyhow::Result<Option<Lyrics>> {
             Musixmatch::search_for_track_internal(musixmatch, track).await
         }
@@ -130,7 +129,10 @@ impl Musixmatch {
             .map(|res| res.map(|opt| Box::new(opt) as _))
     }
 
-    async fn search_for_track_internal(&self, track: &FullTrack) -> anyhow::Result<Option<Lyrics>> {
+    async fn search_for_track_internal(
+        &self,
+        track: &ShortTrack,
+    ) -> anyhow::Result<Option<Lyrics>> {
         let mut url =
             reqwest::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
 
@@ -142,11 +144,7 @@ impl Musixmatch {
             ("app_id", "web-desktop-app-v1.0"),
         ]);
 
-        let artists = track
-            .artists
-            .iter()
-            .map(|artist| artist.name.as_str())
-            .join(",");
+        let artists = track.artist_names().iter().join(",");
 
         let usertoken = {
             let mut tokens = self.tokens.lock().await;
@@ -160,33 +158,15 @@ impl Musixmatch {
 
         // Dynamic
         url.query_pairs_mut().extend_pairs(&[
-            ("q_album", track.album.name.as_str()),
-            (
-                "q_artist",
-                track
-                    .artists
-                    .first()
-                    .map(|artist| artist.name.as_str())
-                    .unwrap_or_default(),
-            ),
+            ("q_album", track.album_name()),
+            ("q_artist", track.first_artist_name()),
             ("q_artists", artists.as_str()),
-            ("q_track", track.name.as_str()),
-            (
-                "track_spotify_id",
-                track
-                    .id
-                    .as_ref()
-                    .map(|id| id.to_string())
-                    .unwrap_or_default()
-                    .as_str(),
-            ),
-            (
-                "q_duration",
-                track.duration.num_seconds().to_string().as_str(),
-            ),
+            ("q_track", track.name()),
+            ("track_spotify_id", track.id()),
+            ("q_duration", track.duration_secs().to_string().as_str()),
             (
                 "f_subtitle_length",
-                track.duration.num_seconds().to_string().as_str(),
+                track.duration_secs().to_string().as_str(),
             ),
             ("usertoken", usertoken.as_str()),
         ]);

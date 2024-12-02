@@ -24,8 +24,8 @@ impl Manager {
         tracing::debug!(word, "Removed custom word");
     }
 
-    pub fn check(lyrics: Vec<&str>) -> CheckResult {
-        CheckResult::perform(lyrics)
+    pub fn check(text: Vec<&str>) -> CheckResult {
+        CheckResult::perform(text)
     }
 }
 

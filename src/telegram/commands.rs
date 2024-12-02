@@ -6,7 +6,7 @@ use teloxide::utils::html;
 
 use super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::user_service::UserService;
 
 #[derive(BotCommands, PartialEq, Eq, Debug)]
@@ -33,7 +33,12 @@ pub enum Command {
     Whitelist(String, String),
 }
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle(
+    app_state: &'static AppState,
+    state: &UserState,
+    bot: &Bot,
+    m: &Message,
+) -> anyhow::Result<bool> {
     let text = m.text().context("No text available")?;
 
     if !text.starts_with('/') {
@@ -63,22 +68,29 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     match command {
         Command::Start | Command::Keyboard => {
             if state.is_spotify_authed().await {
-                UserService::set_status(state.app.db(), &state.user_id, UserStatus::Active).await?;
+                UserService::set_status(app_state.db(), state.user_id(), UserStatus::Active)
+                    .await?;
 
                 bot.send_message(m.chat.id, "Here is your keyboard")
                     .reply_markup(StartKeyboard::markup())
                     .send()
                     .await?;
             } else {
-                super::helpers::send_register_invite(m.chat.id, bot, state).await?;
+                super::helpers::send_register_invite(app_state, bot, m.chat.id).await?;
             }
         },
-        Command::Dislike => return super::handlers::dislike::handle(m, bot, state).await,
-        Command::Cleanup => return super::handlers::cleanup::handle(m, bot, state).await,
-        Command::Stats => return super::handlers::stats::handle(m, bot, state).await,
-        Command::Details => return super::handlers::details::handle_current(m, bot, state).await,
+        Command::Dislike => {
+            return super::handlers::dislike::handle(app_state, state, bot, m).await;
+        },
+        Command::Cleanup => {
+            return super::handlers::cleanup::handle(app_state, state, bot, m).await;
+        },
+        Command::Stats => return super::handlers::stats::handle(app_state, state, bot, m).await,
+        Command::Details => {
+            return super::handlers::details::handle_current(app_state, state, bot, m).await;
+        },
         Command::Register => {
-            return super::helpers::send_register_invite(m.chat.id, bot, state).await;
+            return super::helpers::send_register_invite(app_state, bot, m.chat.id).await;
         },
         Command::Help => {
             bot.send_message(m.chat.id, Command::descriptions().to_string())
@@ -86,7 +98,8 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
                 .await?;
         },
         Command::Whitelist(action, user_id) => {
-            return super::handlers::whitelist::handle(m, bot, state, action, user_id).await;
+            return super::handlers::whitelist::handle(app_state, state, bot, m, action, user_id)
+                .await;
         },
     }
     Ok(true)

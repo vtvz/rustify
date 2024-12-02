@@ -1,25 +1,30 @@
 use std::collections::HashSet;
 
-use anyhow::{Context, anyhow};
+use anyhow::anyhow;
 use convert_case::{Case, Casing};
 use indoc::formatdoc;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
-use rspotify::model::{FullTrack, Id, Modality, TrackId};
+use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParameters};
 
 use crate::entity::prelude::*;
-use crate::spotify::CurrentlyPlaying;
-use crate::state::UserState;
+use crate::spotify::{CurrentlyPlaying, ShortTrack};
+use crate::state::{AppState, UserState};
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
-use crate::{profanity, spotify, telegram};
+use crate::{profanity, telegram};
 
-pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
-    let spotify = state.spotify.read().await;
+pub async fn handle_current(
+    app_state: &'static AppState,
+    state: &UserState,
+    bot: &Bot,
+    m: &Message,
+) -> anyhow::Result<bool> {
+    let spotify = state.spotify().await;
     let track = match CurrentlyPlaying::get(&spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
@@ -32,7 +37,7 @@ pub async fn handle_current(m: &Message, bot: &Bot, state: &UserState) -> anyhow
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    common(m, bot, state, *track).await
+    common(app_state, state, bot, m, *track).await
 }
 
 fn extract_id(url: &str) -> Option<TrackId> {
@@ -49,7 +54,12 @@ fn extract_id(url: &str) -> Option<TrackId> {
     id.ok()
 }
 
-pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle_url(
+    app_state: &'static AppState,
+    state: &UserState,
+    bot: &Bot,
+    m: &Message,
+) -> anyhow::Result<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
     };
@@ -58,36 +68,32 @@ pub async fn handle_url(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Re
         return Ok(false);
     };
 
-    let track = state.spotify.read().await.track(track_id, None).await?;
+    let track = state.spotify().await.track(track_id, None).await?.into();
 
-    common(m, bot, state, track).await
+    common(app_state, state, bot, m, track).await
 }
 
 async fn common(
-    m: &Message,
-    bot: &Bot,
+    app_state: &'static AppState,
     state: &UserState,
-    track: FullTrack,
+    bot: &Bot,
+    m: &Message,
+    track: ShortTrack,
 ) -> anyhow::Result<bool> {
-    let spotify = state.spotify.read().await;
+    let spotify = state.spotify().await;
 
-    let track_id = track.id.clone().context("Should be prevalidated")?;
-
-    let status =
-        TrackStatusService::get_status(state.app.db(), &state.user_id, track_id.id()).await;
+    let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track.id()).await;
 
     let keyboard = match status {
         TrackStatus::Disliked => {
-            vec![vec![InlineButtons::Cancel(track_id.id().to_owned()).into()]]
+            vec![vec![InlineButtons::Cancel(track.id().to_owned()).into()]]
         },
         TrackStatus::Ignore | TrackStatus::None => {
-            vec![vec![
-                InlineButtons::Dislike(track_id.id().to_owned()).into(),
-            ]]
+            vec![vec![InlineButtons::Dislike(track.id().to_owned()).into()]]
         },
     };
 
-    let features = spotify.track_features(track_id.clone()).await?;
+    let features = spotify.track_features(track.raw_id().clone()).await?;
 
     let modality = match features.mode {
         Modality::Minor => "Minor",
@@ -112,29 +118,25 @@ async fn common(
     };
 
     let disliked_by = TrackStatusService::count_status(
-        state.app.db(),
+        app_state.db(),
         TrackStatus::Disliked,
         None,
-        Some(track_id.id()),
+        Some(track.id()),
     )
     .await?;
 
     let ignored_by = TrackStatusService::count_status(
-        state.app.db(),
+        app_state.db(),
         TrackStatus::Ignore,
         None,
-        Some(track_id.id()),
+        Some(track.id()),
     )
     .await?;
 
     let genres: HashSet<_> = {
-        let artist_ids: Vec<_> = track
-            .artists
-            .iter()
-            .filter_map(|artist| artist.id.clone())
-            .collect();
+        let artist_ids = track.artist_raw_ids();
 
-        let artists = match spotify.artists(artist_ids).await {
+        let artists = match spotify.artists(artist_ids.iter().cloned()).await {
             // HACK: 403 "Spotify is unavailable in this country" error
             Err(rspotify::ClientError::Http(box rspotify::http::HttpError::StatusCode(resp))) => {
                 tracing::info!("Resp from artists fetching {:?}", resp.text().await);
@@ -205,7 +207,7 @@ async fn common(
         ignored_by,
     };
 
-    let Some(hit) = state.app.lyrics().search_for_track(&track).await? else {
+    let Some(hit) = app_state.lyrics().search_for_track(&track).await? else {
         bot.send_message(
             m.chat.id,
             formatdoc!(
@@ -217,8 +219,8 @@ async fn common(
                     {genres_line}
                     <code>No lyrics found</code>
                 ",
-                track_name = spotify::utils::create_track_tg_link(&track),
-                album_name = spotify::utils::create_album_tg_link(&track.album),
+                track_name = track.track_tg_link(),
+                album_name = track.album_tg_link(),
                 features = features.trim(),
                 genres_line = genres_line,
             ),
@@ -260,8 +262,8 @@ async fn common(
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
             "#,
-            track_name = spotify::utils::create_track_tg_link(&track),
-            album_name = spotify::utils::create_album_tg_link(&track.album),
+            track_name = track.track_tg_link(),
+            album_name = track.album_tg_link(),
             features = features.trim(),
             profanity = typ,
             lyrics = &lyrics[0..lines].join("\n"),

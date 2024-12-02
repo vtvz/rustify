@@ -7,16 +7,18 @@ use teloxide::prelude::*;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state;
+use crate::state::AppState;
 use crate::user_service::UserService;
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn telegram(
+    app_state: &'static AppState,
     state: &state::UserState,
     result: Result<Message, teloxide::RequestError>,
 ) -> anyhow::Result<Message> {
     if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::InvalidToken)) = result
     {
-        UserService::set_status(state.app.db(), &state.user_id, UserStatus::Blocked).await?;
+        UserService::set_status(app_state.db(), state.user_id(), UserStatus::Blocked).await?;
     }
 
     result.map_err(|err| err.into())

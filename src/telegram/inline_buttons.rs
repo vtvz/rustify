@@ -13,8 +13,8 @@ use teloxide::types::{
 };
 
 use crate::entity::prelude::*;
-use crate::spotify;
-use crate::state::UserState;
+use crate::spotify::ShortTrack;
+use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -67,7 +67,12 @@ impl Display for InlineButtons {
     }
 }
 
-pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Result<()> {
+pub async fn handle(
+    app_state: &'static AppState,
+    state: &UserState,
+    bot: Bot,
+    q: CallbackQuery,
+) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
         if let Some(id) = q.inline_message_id {
             bot.answer_callback_query(id)
@@ -86,22 +91,19 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
     match button {
         InlineButtons::Cancel(id) => {
             let track = state
-                .spotify
-                .read()
+                .spotify()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
+            let track = ShortTrack::new(track);
 
-            TrackStatusService::set_status(state.app.db(), &state.user_id, &id, TrackStatus::None)
+            TrackStatusService::set_status(app_state.db(), state.user_id(), &id, TrackStatus::None)
                 .await?;
 
             bot.edit_message_text(
                 q.from.id,
                 q.message.context("Message is empty")?.id(),
-                format!(
-                    "Dislike cancelled for {}",
-                    spotify::utils::create_track_tg_link(&track)
-                ),
+                format!("Dislike cancelled for {}", track.track_tg_link()),
             )
             .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
@@ -115,15 +117,16 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
         },
         InlineButtons::Dislike(id) => {
             let track = state
-                .spotify
-                .read()
+                .spotify()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
 
+            let track = ShortTrack::new(track);
+
             TrackStatusService::set_status(
-                state.app.db(),
-                &state.user_id,
+                app_state.db(),
+                state.user_id(),
                 &id,
                 TrackStatus::Disliked,
             )
@@ -132,7 +135,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
             bot.edit_message_text(
                 q.from.id,
                 q.message.context("Message is empty")?.id(),
-                format!("Disliked {}", spotify::utils::create_track_tg_link(&track)),
+                format!("Disliked {}", track.track_tg_link()),
             )
             .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
@@ -146,15 +149,15 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
         },
         InlineButtons::Ignore(id) => {
             let track = state
-                .spotify
-                .read()
+                .spotify()
                 .await
                 .track(TrackId::from_id(&id)?, None)
                 .await?;
+            let track = ShortTrack::new(track);
 
             TrackStatusService::set_status(
-                state.app.db(),
-                &state.user_id,
+                app_state.db(),
+                state.user_id(),
                 &id,
                 TrackStatus::Ignore,
             )
@@ -165,7 +168,7 @@ pub async fn handle(q: CallbackQuery, bot: Bot, state: &UserState) -> anyhow::Re
                 q.message.context("Message is empty")?.id(),
                 format!(
                     "Bad words of {} will be forever ignored",
-                    spotify::utils::create_track_tg_link(&track)
+                    track.track_tg_link()
                 ),
             )
             .parse_mode(ParseMode::Html)

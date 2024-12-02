@@ -6,7 +6,7 @@ use teloxide::prelude::*;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, ReplyMarkup};
 
 use super::helpers::send_register_invite;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 
 #[derive(Clone, EnumString, AsRefStr)]
 pub enum StartKeyboard {
@@ -42,9 +42,14 @@ impl StartKeyboard {
     }
 }
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle(
+    app_state: &'static AppState,
+    state: &UserState,
+    bot: &Bot,
+    m: &Message,
+) -> anyhow::Result<bool> {
     if !state.is_spotify_authed().await {
-        send_register_invite(m.chat.id, bot, state).await?;
+        send_register_invite(app_state, bot, m.chat.id).await?;
 
         return Ok(true);
     }
@@ -60,9 +65,11 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
     let button = button?;
 
     match button {
-        StartKeyboard::Dislike => super::handlers::dislike::handle(m, bot, state).await,
-        StartKeyboard::Cleanup => super::handlers::cleanup::handle(m, bot, state).await,
-        StartKeyboard::Stats => super::handlers::stats::handle(m, bot, state).await,
-        StartKeyboard::Details => super::handlers::details::handle_current(m, bot, state).await,
+        StartKeyboard::Dislike => super::handlers::dislike::handle(app_state, state, bot, m).await,
+        StartKeyboard::Cleanup => super::handlers::cleanup::handle(app_state, state, bot, m).await,
+        StartKeyboard::Stats => super::handlers::stats::handle(app_state, state, bot, m).await,
+        StartKeyboard::Details => {
+            super::handlers::details::handle_current(app_state, state, bot, m).await
+        },
     }
 }

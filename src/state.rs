@@ -8,7 +8,7 @@ use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::metrics::influx::InfluxClient;
 use crate::{lyrics, profanity, spotify, whitelist};
@@ -202,7 +202,6 @@ impl AppState {
         let spotify = RwLock::new(spotify);
 
         let state = UserState {
-            app: self,
             spotify,
             spotify_user: Default::default(),
             user_id: user_id.to_string(),
@@ -213,17 +212,27 @@ impl AppState {
 }
 
 pub struct UserState {
-    pub app: &'static AppState,
-    pub spotify: RwLock<AuthCodeSpotify>,
-    pub user_id: String,
+    spotify: RwLock<AuthCodeSpotify>,
+    user_id: String,
 
     spotify_user: Mutex<Option<Option<PrivateUser>>>,
 }
 
 impl UserState {
+    pub async fn spotify(&self) -> RwLockReadGuard<'_, AuthCodeSpotify> {
+        self.spotify.read().await
+    }
+
+    pub async fn spotify_write(&self) -> RwLockWriteGuard<'_, AuthCodeSpotify> {
+        self.spotify.write().await
+    }
+
+    pub fn user_id(&self) -> &str {
+        &self.user_id
+    }
+
     pub async fn is_spotify_authed(&self) -> bool {
-        self.spotify
-            .read()
+        self.spotify()
             .await
             .token
             .lock()
@@ -237,7 +246,7 @@ impl UserState {
 
         if lock.is_none() {
             let user = if self.is_spotify_authed().await {
-                let me = self.spotify.read().await.me().await?;
+                let me = self.spotify().await.me().await?;
 
                 Some(me)
             } else {

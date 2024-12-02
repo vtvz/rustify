@@ -1,13 +1,12 @@
-mod bad_words;
 mod disliked_track;
 mod errors;
+mod profanity_check;
 mod user;
 
 use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
-use chrono::Timelike;
 use tokio::sync::{Semaphore, broadcast};
 use tokio::time::Instant;
 use tracing::Instrument;
@@ -16,11 +15,11 @@ use user::CheckUserResult;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
-use crate::utils::Clock;
 use crate::{spotify, state, utils};
 
-const CHECK_INTERVAL: u64 = 3;
+const CHECK_INTERVAL: Duration = Duration::from_secs(3);
 const PARALLEL_CHECKS: usize = 2;
+const SUSPEND_FOR_ON_IDLE: chrono::Duration = chrono::Duration::seconds(10);
 
 lazy_static::lazy_static! {
     pub static ref PROCESS_TIME_CHANNEL: (
@@ -61,7 +60,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
             let res = user::check(app_state, &user_id).await;
             drop(permit);
 
-            // TODO Refactor this mess...
+            // TODO: Refactor this mess...
             let checked: anyhow::Result<_> = match res {
                 Err(mut err) => {
                     match spotify::Error::from_anyhow(&mut err).await {
@@ -92,7 +91,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
             };
 
             checked
-        }.instrument(tracing::info_span!("tick_ineration"))));
+        }.instrument(tracing::info_span!("tick_iteration"))));
     }
 
     let mut users_checked = 0;
@@ -111,26 +110,19 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
 
     // TODO: Prevent overflow on large amount of users
     if !users_to_suspend.is_empty() {
-        let suspend_until = Clock::now() + chrono::Duration::seconds(6);
-
-        let roundup = suspend_until.second() as i64 % 5;
-        let roundup = if roundup == 0 { 0 } else { 5 - roundup };
-
-        let suspend_until = suspend_until + chrono::Duration::seconds(roundup);
-
-        SpotifyAuthService::suspend_until(
+        SpotifyAuthService::suspend_for(
             app_state.db(),
             &users_to_suspend
                 .iter()
                 .map(AsRef::as_ref)
                 .collect::<Vec<_>>(),
-            suspend_until,
+            SUSPEND_FOR_ON_IDLE,
         )
         .await?;
     }
 
     let report = CheckReport {
-        max_process_time: Duration::from_secs(CHECK_INTERVAL),
+        max_process_time: CHECK_INTERVAL,
         users_process_time: start.elapsed(),
         parallel_count: PARALLEL_CHECKS,
         users_count: user_ids_len,
@@ -144,7 +136,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
 
 #[tracing::instrument(skip_all)]
 pub async fn check_playing(app_state: &'static state::AppState) {
-    utils::tick!(Duration::from_secs(CHECK_INTERVAL), {
+    utils::tick!(CHECK_INTERVAL, {
         if let Err(err) = process(app_state).await {
             tracing::error!(err = ?err, "Something went wrong")
         };

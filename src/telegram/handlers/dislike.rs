@@ -3,17 +3,21 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParamet
 
 use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
-use crate::spotify;
 use crate::spotify::CurrentlyPlaying;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::track_status_service::TrackStatusService;
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle(
+    app_state: &'static AppState,
+    state: &UserState,
+    bot: &Bot,
+    m: &Message,
+) -> anyhow::Result<bool> {
     if !state.is_spotify_authed().await {
         return Ok(false);
     }
 
-    let track = match CurrentlyPlaying::get(&*state.spotify.read().await).await {
+    let track = match CurrentlyPlaying::get(&*state.spotify().await).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             bot.send_message(m.chat.id, message.to_string())
@@ -25,30 +29,25 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    let track_id = spotify::utils::get_track_id(&track);
-
     TrackStatusService::set_status(
-        state.app.db(),
-        &state.user_id,
-        &track_id,
+        app_state.db(),
+        state.user_id(),
+        track.id(),
         TrackStatus::Disliked,
     )
     .await?;
 
-    bot.send_message(
-        m.chat.id,
-        format!("Disliked {}", spotify::utils::create_track_tg_link(&track)),
-    )
-    .reply_parameters(ReplyParameters::new(m.id))
-    .parse_mode(ParseMode::Html)
-    .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-        #[rustfmt::skip]
+    bot.send_message(m.chat.id, format!("Disliked {}", track.track_tg_link()))
+        .reply_parameters(ReplyParameters::new(m.id))
+        .parse_mode(ParseMode::Html)
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Cancel(track_id).into()]
+                vec![InlineButtons::Cancel(track.id().into()).into()]
             ],
-    )))
-    .send()
-    .await?;
+        )))
+        .send()
+        .await?;
 
     Ok(true)
 }

@@ -1,18 +1,19 @@
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::telegram::helpers;
 use crate::telegram::keyboards::StartKeyboard;
 
 pub async fn handle(
-    m: &Message,
-    bot: &Bot,
+    app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
     action: String,
     user_id: String,
 ) -> anyhow::Result<bool> {
-    if !state.app.whitelist().is_admin(&state.user_id) {
+    if !app_state.whitelist().is_admin(state.user_id()) {
         return Ok(false);
     }
 
@@ -26,10 +27,9 @@ pub async fn handle(
 
     match action.as_str() {
         "allow" => {
-            state
-                .app
+            app_state
                 .whitelist()
-                .allow(state.app.db(), &user_id)
+                .allow(app_state.db(), &user_id)
                 .await?;
 
             bot.send_message(
@@ -51,10 +51,10 @@ pub async fn handle(
             .send()
             .await?;
 
-            helpers::send_register_invite(ChatId(user_id_int), bot, state).await?;
+            helpers::send_register_invite(app_state, bot, ChatId(user_id_int)).await?;
         },
         "deny" => {
-            state.app.whitelist().deny(state.app.db(), &user_id).await?;
+            app_state.whitelist().deny(app_state.db(), &user_id).await?;
 
             bot.send_message(
                 m.chat.id,

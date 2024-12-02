@@ -5,10 +5,15 @@ use teloxide::prelude::*;
 use super::super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
-use crate::state::UserState;
+use crate::state::{AppState, UserState};
 use crate::user_service::UserService;
 
-pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result<bool> {
+pub async fn handle(
+    app_state: &'static AppState,
+    state: &UserState,
+    bot: &Bot,
+    m: &Message,
+) -> anyhow::Result<bool> {
     let Some(text) = m.text() else {
         return Ok(false);
     };
@@ -26,16 +31,17 @@ pub async fn handle(m: &Message, bot: &Bot, state: &UserState) -> anyhow::Result
         return Ok(false);
     };
 
-    process_spotify_code(m, bot, state, code).await
+    process_spotify_code(app_state, state, bot, m, code).await
 }
 
 async fn process_spotify_code(
-    m: &Message,
-    bot: &Bot,
+    app_state: &'static AppState,
     state: &UserState,
+    bot: &Bot,
+    m: &Message,
     code: String,
 ) -> anyhow::Result<bool> {
-    let instance = state.spotify.write().await;
+    let instance = state.spotify_write().await;
 
     if let Err(err) = instance.request_token(&code).await {
         bot.send_message(m.chat.id, "Cannot retrieve token. Code is probably broken. Run /register command and try again please")
@@ -64,10 +70,10 @@ async fn process_spotify_code(
     };
 
     {
-        let txn = state.app.db().begin().await?;
+        let txn = app_state.db().begin().await?;
 
-        SpotifyAuthService::set_token(&txn, &state.user_id, token).await?;
-        UserService::set_status(&txn, &state.user_id, UserStatus::Active).await?;
+        SpotifyAuthService::set_token(&txn, state.user_id(), token).await?;
+        UserService::set_status(&txn, state.user_id(), UserStatus::Active).await?;
 
         txn.commit().await?;
     }

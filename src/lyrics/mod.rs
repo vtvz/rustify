@@ -4,13 +4,12 @@ use isolang::Language;
 use lazy_static::lazy_static;
 use lrclib::LrcLib;
 use musixmatch::Musixmatch;
-use rspotify::model::FullTrack;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use strum_macros::Display;
 use tokio::sync::RwLock;
 
-use crate::spotify;
+use crate::spotify::ShortTrack;
 
 pub mod azlyrics;
 pub mod genius;
@@ -71,13 +70,13 @@ impl Manager {
     #[tracing::instrument(
         skip_all,
         fields(
-            track_id = %spotify::utils::get_track_id(track),
-            track_name = %spotify::utils::create_track_name(track),
+            track_id = track.id(),
+            track_name = track.name_with_artists(),
         )
     )]
     pub async fn search_for_track(
         &self,
-        track: &FullTrack,
+        track: &ShortTrack,
     ) -> anyhow::Result<Option<Box<dyn SearchResult + Send>>> {
         // tired to fight type system to handle this with vec
         macro_rules! handle_provider {
