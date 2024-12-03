@@ -102,7 +102,7 @@ impl LrcLib {
             ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
             create = r##" {
                 let prefix = module_path!().split("::").last().expect("Will be");
-                super::LyricsCacheManager::redis_cache_build(prefix).await.expect("Redis cache should build")
+                super::LyricsCacheManager::redis_cached_build(prefix).await.expect("Redis cache should build")
             } "##
         )]
         async fn search_for_track_middleware(

@@ -11,7 +11,7 @@ use teloxide::Bot;
 use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::metrics::influx::InfluxClient;
-use crate::{lyrics, profanity, spotify, whitelist};
+use crate::{cache, lyrics, profanity, spotify, whitelist};
 
 pub struct AppState {
     whitelist: whitelist::Manager,
@@ -118,7 +118,8 @@ async fn init_lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manage
         .unwrap_or(default_ttl.to_string())
         .parse()?;
 
-    lyrics::LyricsCacheManager::init(redis_url, lyrics_cache_ttl).await;
+    cache::CacheManager::init(redis_url).await;
+    lyrics::LyricsCacheManager::init(lyrics_cache_ttl).await;
     lyrics::Manager::new(
         genius_service_url,
         genius_token,
