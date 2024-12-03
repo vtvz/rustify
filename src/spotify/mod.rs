@@ -14,7 +14,7 @@ use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct ShortTrack {
     id: TrackId<'static>,
     name: String,

@@ -136,7 +136,7 @@ impl UserService {
 
         let played: bool = redis.exists(&key).await?;
 
-        let _: String = redis.set_ex(key, true, ttl as u64).await?;
+        let _: () = redis.set_ex(key, true, ttl as u64).await?;
 
         // returns true when track new
         Ok(!played)

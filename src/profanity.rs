@@ -53,8 +53,8 @@ impl CheckResult {
         self.typ.is(*TYPE_TRIGGER)
     }
 
-    fn perform(lyrics: Vec<&str>) -> Self {
-        let checks: Vec<_> = lyrics
+    fn perform(text: Vec<&str>) -> Self {
+        let checks: Vec<_> = text
             .into_iter()
             .enumerate()
             .map(|(index, line)| {
