@@ -1,10 +1,12 @@
 use indoc::formatdoc;
 use rustify::entity::prelude::UserWhitelistStatus;
 use rustify::state::{AppState, UserState};
+use rustify::telegram::commands::Command;
 use rustify::user_service::UserService;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, LinkPreviewOptions, ParseMode, User};
+use teloxide::utils::command::BotCommands as _;
 
 async fn sync_name(
     app_state: &'static AppState,
@@ -146,6 +148,12 @@ async fn run() {
     );
 
     let app_state = AppState::init().await.expect("State to be built");
+
+    app_state
+        .bot()
+        .set_my_commands(Command::bot_commands())
+        .await
+        .expect("update commands should be working");
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
 
