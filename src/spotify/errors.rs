@@ -34,12 +34,12 @@ pub struct RegularErrorContent {
 }
 
 #[derive(From, Debug)]
-pub enum Error {
+pub enum SpotifyError {
     Auth(AuthError),
     Regular(RegularError),
 }
 
-impl Error {
+impl SpotifyError {
     pub fn extract_response(err: &mut anyhow::Error) -> Option<&mut reqwest::Response> {
         let err = err.downcast_mut::<rspotify::ClientError>()?;
 
@@ -50,7 +50,7 @@ impl Error {
         Some(response)
     }
 
-    pub async fn from_anyhow(err: &mut anyhow::Error) -> anyhow::Result<Option<Error>> {
+    pub async fn from_anyhow(err: &mut anyhow::Error) -> anyhow::Result<Option<Self>> {
         let Some(response) = Self::extract_response(err) else {
             return Ok(None);
         };
@@ -58,7 +58,7 @@ impl Error {
         Self::from_response(response).await.map(Some)
     }
 
-    pub async fn from_response(response: &mut Response) -> anyhow::Result<Error> {
+    pub async fn from_response(response: &mut Response) -> anyhow::Result<Self> {
         let body = {
             let mut bytes = vec![];
             while let Some(chunk) = response.chunk().await? {

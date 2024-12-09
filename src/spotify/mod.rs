@@ -1,7 +1,7 @@
 pub mod errors;
 
 use anyhow::{Context, anyhow};
-pub use errors::Error;
+pub use errors::SpotifyError;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
 use rspotify::model::{ArtistId, Context as SpotifyContext, FullTrack, Id, PlayableItem, TrackId};
@@ -310,11 +310,11 @@ impl Manager {
             Err(err) => return Err(err.into()),
         };
 
-        let err = Error::from_response(response).await?;
+        let err = SpotifyError::from_response(response).await?;
 
         match err {
-            Error::Auth(err) => Ok(err.error != errors::AuthErrorType::InvalidGrant),
-            Error::Regular(_) => Ok(true),
+            SpotifyError::Auth(err) => Ok(err.error != errors::AuthErrorType::InvalidGrant),
+            SpotifyError::Regular(_) => Ok(true),
         }
     }
 

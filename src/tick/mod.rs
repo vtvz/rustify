@@ -63,13 +63,13 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
             // TODO: Refactor this mess...
             let checked: anyhow::Result<_> = match res {
                 Err(mut err) => {
-                    match spotify::Error::from_anyhow(&mut err).await {
+                    match spotify::SpotifyError::from_anyhow(&mut err).await {
                         Err(_) | Ok(None) => {
                             tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
 
                             Err(err)
                         },
-                        Ok(Some(spotify::Error::Regular(serr))) => {
+                        Ok(Some(spotify::SpotifyError::Regular(serr))) => {
                             if serr.error.status < 500 {
                                 tracing::error!(user_id = %user_id, err = ?serr, "Regular Spotify Error Happened");
                             }
@@ -80,7 +80,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
 
                             Err(err)
                         },
-                        Ok(Some(spotify::Error::Auth(serr))) => {
+                        Ok(Some(spotify::SpotifyError::Auth(serr))) => {
                             tracing::error!(user_id = %user_id, err = ?serr, "Auth Spotify Error Happened");
 
                             Err(err)

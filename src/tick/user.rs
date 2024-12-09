@@ -2,7 +2,7 @@ use anyhow::Context;
 use strum_macros::Display;
 
 use crate::entity::prelude::*;
-use crate::spotify::{CurrentlyPlaying, Error};
+use crate::spotify::{CurrentlyPlaying, SpotifyError};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::{lyrics, spotify, state};
@@ -30,7 +30,7 @@ pub async fn check(
 
     let state = match res {
         Err(mut err) => {
-            let Some(response) = Error::extract_response(&mut err) else {
+            let Some(response) = SpotifyError::extract_response(&mut err) else {
                 return Err(err);
             };
 
