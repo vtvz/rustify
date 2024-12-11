@@ -77,6 +77,10 @@ impl ShortTrack {
         &self.name
     }
 
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
     pub fn name_with_artists(&self) -> String {
         let artists = self.artist_names().join(", ");
 
@@ -118,7 +122,7 @@ impl ShortTrack {
         format!(
             r#"<a href="{link}">{name}</a>"#,
             name = html::escape(self.name_with_artists().as_str()),
-            link = self.url
+            link = self.url()
         )
     }
 

@@ -6,6 +6,7 @@ use super::super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::{AppState, UserState};
+use crate::telegram::utils::extract_url_from_message;
 use crate::user_service::UserService;
 
 pub async fn handle(
@@ -14,11 +15,7 @@ pub async fn handle(
     bot: &Bot,
     m: &Message,
 ) -> anyhow::Result<bool> {
-    let Some(text) = m.text() else {
-        return Ok(false);
-    };
-
-    let Ok(url) = url::Url::parse(text) else {
+    let Some(url) = extract_url_from_message(m) else {
         return Ok(false);
     };
 

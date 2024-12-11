@@ -8,6 +8,7 @@ mod handlers;
 mod helpers;
 pub mod inline_buttons;
 pub mod keyboards;
+pub mod utils;
 
 pub const MESSAGE_MAX_LEN: usize = 4096;
 

@@ -9,12 +9,19 @@ use regex::Regex;
 use rspotify::clients::BaseClient;
 use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParameters};
+use teloxide::types::{
+    InlineKeyboardMarkup,
+    LinkPreviewOptions,
+    ParseMode,
+    ReplyMarkup,
+    ReplyParameters,
+};
 
 use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::state::{AppState, UserState};
 use crate::telegram::inline_buttons::InlineButtons;
+use crate::telegram::utils::extract_url_from_message;
 use crate::track_status_service::TrackStatusService;
 use crate::{profanity, telegram};
 
@@ -40,12 +47,10 @@ pub async fn handle_current(
     common(app_state, state, bot, m, *track).await
 }
 
-fn extract_id(url: &str) -> Option<TrackId> {
+fn extract_id(url: url::Url) -> Option<TrackId<'static>> {
     lazy_static! {
         static ref RE: Regex = Regex::new("^/track/([a-zA-Z0-9]+)$").expect("Should be compilable");
     }
-
-    let url = url::Url::parse(url).ok()?;
 
     let cap = RE.captures(url.path())?;
 
@@ -60,11 +65,11 @@ pub async fn handle_url(
     bot: &Bot,
     m: &Message,
 ) -> anyhow::Result<bool> {
-    let Some(text) = m.text() else {
+    let Some(url) = extract_url_from_message(m) else {
         return Ok(false);
     };
 
-    let Some(track_id) = extract_id(text) else {
+    let Some(track_id) = extract_id(url) else {
         return Ok(false);
     };
 
@@ -180,9 +185,12 @@ async fn common(
         format!("🎭 Genres: {}\n", genres.iter().join(", "))
     };
 
-    let features: String = formatdoc! {
+    let header: String = formatdoc! {
         "
-            🎶 <code>{} {}</code> ⌛ {:.0} BPM
+            {track_name}
+            Album: {album_name}
+
+            🎶 <code>{key} {modality}</code> ⌛ {:.0} BPM
             🎻 Acoustic {:.0}%
             🕺 Suitable for dancing {:.0}%
             ⚡️ Energetic {:.0}%
@@ -190,11 +198,9 @@ async fn common(
             🏟 Performed live {:.0}%
             🎤 Speech-like {:.0}%
             ☺️ Positiveness {:.0}%
-            👎 Disliked by {} people
-            🙈 Ignored by {} people
+            👎 Disliked by {disliked_by} people
+            🙈 Ignored by {ignored_by} people
         ",
-        key,
-        modality,
         features.tempo,
         features.acousticness * 100.0,
         features.danceability * 100.0,
@@ -203,8 +209,8 @@ async fn common(
         features.liveness * 100.0,
         features.speechiness * 100.0,
         features.valence * 100.0,
-        disliked_by,
-        ignored_by,
+        track_name = track.track_tg_link(),
+        album_name = track.album_tg_link(),
     };
 
     let Some(hit) = app_state.lyrics().search_for_track(&track).await? else {
@@ -212,16 +218,11 @@ async fn common(
             m.chat.id,
             formatdoc!(
                 "
-                    {track_name}
-                    {album_name}
-
-                    {features}
+                    {header}
                     {genres_line}
                     <code>No lyrics found</code>
                 ",
-                track_name = track.track_tg_link(),
-                album_name = track.album_tg_link(),
-                features = features.trim(),
+                header = header.trim(),
                 genres_line = genres_line,
             ),
         )
@@ -251,10 +252,7 @@ async fn common(
 
         let message = formatdoc!(
             r#"
-                {track_name}
-                {album_name}
-
-                {features}
+                {header}
                 🤬 Profanity <code>{profanity}</code>
                 🌐 Language: {language}
                 {genres_line}
@@ -262,13 +260,11 @@ async fn common(
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
             "#,
-            track_name = track.track_tg_link(),
-            album_name = track.album_tg_link(),
-            features = features.trim(),
+            header = header.trim(),
             profanity = typ,
-            lyrics = &lyrics[0..lines].join("\n"),
             language = hit.language(),
             genres_line = genres_line,
+            lyrics = &lyrics[0..lines].join("\n"),
             lyrics_link = hit.link(),
             lyrics_link_text = hit.link_text(lines == lyrics.len()),
         );

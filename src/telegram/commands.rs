@@ -41,29 +41,26 @@ pub async fn handle(
 ) -> anyhow::Result<bool> {
     let text = m.text().context("No text available")?;
 
-    if !text.starts_with('/') {
-        return Ok(false);
-    }
+    let command = match Command::parse(text, "RustifyBot") {
+        Err(ParseError::UnknownCommand(command)) => {
+            bot.send_message(
+                m.chat.id,
+                format!(
+                    "Command <code>{}</code> not found: \n\n{}",
+                    html::escape(&command),
+                    html::escape(&Command::descriptions().to_string())
+                ),
+            )
+            .parse_mode(ParseMode::Html)
+            .send()
+            .await?;
 
-    let command = Command::parse(text, "Something bot name");
-
-    if let Err(ParseError::UnknownCommand(command)) = command {
-        bot.send_message(
-            m.chat.id,
-            format!(
-                "Command <code>{}</code> not found: \n\n{}",
-                html::escape(&command),
-                html::escape(&Command::descriptions().to_string())
-            ),
-        )
-        .parse_mode(ParseMode::Html)
-        .send()
-        .await?;
-
-        return Ok(true);
-    }
-
-    let command = command?;
+            return Ok(true);
+        },
+        Err(ParseError::IncorrectFormat(_)) => return Ok(false),
+        Err(var) => return Err(var.into()),
+        Ok(command) => command,
+    };
 
     match command {
         Command::Start | Command::Keyboard => {
