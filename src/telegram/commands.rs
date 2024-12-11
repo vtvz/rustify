@@ -41,6 +41,10 @@ pub async fn handle(
 ) -> anyhow::Result<bool> {
     let text = m.text().context("No text available")?;
 
+    if !text.starts_with('/') {
+        return Ok(false);
+    }
+
     let command = match Command::parse(text, "RustifyBot") {
         Err(ParseError::UnknownCommand(command)) => {
             bot.send_message(
