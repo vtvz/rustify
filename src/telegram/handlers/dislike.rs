@@ -1,10 +1,11 @@
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup, ReplyParameters};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
 use crate::spotify::CurrentlyPlaying;
 use crate::state::{AppState, UserState};
+use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
 
 pub async fn handle(
@@ -38,7 +39,7 @@ pub async fn handle(
     .await?;
 
     bot.send_message(m.chat.id, format!("Disliked {}", track.track_tg_link()))
-        .reply_parameters(ReplyParameters::new(m.id))
+        .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]

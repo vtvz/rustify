@@ -2,10 +2,11 @@ use indoc::formatdoc;
 use rustify::entity::prelude::UserWhitelistStatus;
 use rustify::state::{AppState, UserState};
 use rustify::telegram::commands::Command;
+use rustify::telegram::utils::link_preview_disabled;
 use rustify::user_service::UserService;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, LinkPreviewOptions, ParseMode, User};
+use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::command::BotCommands as _;
 
 async fn sync_name(
@@ -190,13 +191,7 @@ async fn run() {
                         .parse_mode(ParseMode::Html)
                         // TODO: wait for teloxide::sugar::request::RequestLinkPreviewExt to release
                         // .disable_link_preview()
-                        .link_preview_options(LinkPreviewOptions{
-                            is_disabled: true,
-                            url: None,
-                            prefer_small_media: false,
-                            prefer_large_media: false,
-                            show_above_text: false,
-                        })
+                        .link_preview_options(link_preview_disabled())
                         .send()
                         .await?;
                 }

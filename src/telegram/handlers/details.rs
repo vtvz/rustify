@@ -8,20 +8,15 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
 use rspotify::model::{Modality, TrackId};
+use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
-use teloxide::types::{
-    InlineKeyboardMarkup,
-    LinkPreviewOptions,
-    ParseMode,
-    ReplyMarkup,
-    ReplyParameters,
-};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::state::{AppState, UserState};
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::telegram::utils::extract_url_from_message;
+use crate::telegram::utils::{extract_url_from_message, link_preview_small_top};
 use crate::track_status_service::TrackStatusService;
 use crate::{profanity, telegram};
 
@@ -226,11 +221,11 @@ async fn common(
                 genres_line = genres_line,
             ),
         )
-        .reply_parameters(ReplyParameters::new(m.id))
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))
+        .link_preview_options(link_preview_small_top(track.url()))
         .send()
         .await?;
 
@@ -278,10 +273,10 @@ async fn common(
 
     bot.send_message(m.chat.id, message)
         .parse_mode(ParseMode::Html)
-        .reply_parameters(ReplyParameters::new(m.id))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))
+        .link_preview_options(link_preview_small_top(track.url()))
         .send()
         .await?;
 

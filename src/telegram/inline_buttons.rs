@@ -12,6 +12,7 @@ use teloxide::types::{
     ParseMode,
 };
 
+use super::utils::link_preview_small_top;
 use crate::entity::prelude::*;
 use crate::spotify::ShortTrack;
 use crate::state::{AppState, UserState};
@@ -105,6 +106,7 @@ pub async fn handle(
                 q.message.context("Message is empty")?.id(),
                 format!("Dislike cancelled for {}", track.track_tg_link()),
             )
+            .link_preview_options(link_preview_small_top(track.url()))
             .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
                 #[rustfmt::skip]
@@ -138,6 +140,7 @@ pub async fn handle(
                 format!("Disliked {}", track.track_tg_link()),
             )
             .parse_mode(ParseMode::Html)
+            .link_preview_options(link_preview_small_top(track.url()))
             .reply_markup(InlineKeyboardMarkup::new(
                 #[rustfmt::skip]
                     vec![
@@ -171,6 +174,7 @@ pub async fn handle(
                     track.track_tg_link()
                 ),
             )
+            .link_preview_options(link_preview_small_top(track.url()))
             .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(
                 #[rustfmt::skip]
