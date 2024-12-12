@@ -34,9 +34,8 @@ pub enum Command {
 }
 
 pub async fn handle(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: &Bot,
     m: &Message,
 ) -> anyhow::Result<bool> {
     let text = m.text().context("No text available")?;
@@ -47,17 +46,18 @@ pub async fn handle(
 
     let command = match Command::parse(text, "RustifyBot") {
         Err(ParseError::UnknownCommand(command)) => {
-            bot.send_message(
-                m.chat.id,
-                format!(
-                    "Command <code>{}</code> not found: \n\n{}",
-                    html::escape(&command),
-                    html::escape(&Command::descriptions().to_string())
-                ),
-            )
-            .parse_mode(ParseMode::Html)
-            .send()
-            .await?;
+            app.bot()
+                .send_message(
+                    m.chat.id,
+                    format!(
+                        "Command <code>{}</code> not found: \n\n{}",
+                        html::escape(&command),
+                        html::escape(&Command::descriptions().to_string())
+                    ),
+                )
+                .parse_mode(ParseMode::Html)
+                .send()
+                .await?;
 
             return Ok(true);
         },
@@ -69,38 +69,38 @@ pub async fn handle(
     match command {
         Command::Start | Command::Keyboard => {
             if state.is_spotify_authed().await {
-                UserService::set_status(app_state.db(), state.user_id(), UserStatus::Active)
-                    .await?;
+                UserService::set_status(app.db(), state.user_id(), UserStatus::Active).await?;
 
-                bot.send_message(m.chat.id, "Here is your keyboard")
+                app.bot()
+                    .send_message(m.chat.id, "Here is your keyboard")
                     .reply_markup(StartKeyboard::markup())
                     .send()
                     .await?;
             } else {
-                super::helpers::send_register_invite(app_state, bot, m.chat.id).await?;
+                super::helpers::send_register_invite(app, m.chat.id).await?;
             }
         },
         Command::Dislike => {
-            return super::handlers::dislike::handle(app_state, state, bot, m).await;
+            return super::handlers::dislike::handle(app, state, m).await;
         },
         Command::Cleanup => {
-            return super::handlers::cleanup::handle(app_state, state, bot, m).await;
+            return super::handlers::cleanup::handle(app, state, m).await;
         },
-        Command::Stats => return super::handlers::stats::handle(app_state, state, bot, m).await,
+        Command::Stats => return super::handlers::stats::handle(app, state, m).await,
         Command::Details => {
-            return super::handlers::details::handle_current(app_state, state, bot, m).await;
+            return super::handlers::details::handle_current(app, state, m).await;
         },
         Command::Register => {
-            return super::helpers::send_register_invite(app_state, bot, m.chat.id).await;
+            return super::helpers::send_register_invite(app, m.chat.id).await;
         },
         Command::Help => {
-            bot.send_message(m.chat.id, Command::descriptions().to_string())
+            app.bot()
+                .send_message(m.chat.id, Command::descriptions().to_string())
                 .send()
                 .await?;
         },
         Command::Whitelist(action, user_id) => {
-            return super::handlers::whitelist::handle(app_state, state, bot, m, action, user_id)
-                .await;
+            return super::handlers::whitelist::handle(app, state, m, action, user_id).await;
         },
     }
     Ok(true)

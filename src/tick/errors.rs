@@ -12,13 +12,13 @@ use crate::user_service::UserService;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn telegram(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &state::UserState,
     result: Result<Message, teloxide::RequestError>,
 ) -> anyhow::Result<Message> {
     if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::InvalidToken)) = result
     {
-        UserService::set_status(app_state.db(), state.user_id(), UserStatus::Blocked).await?;
+        UserService::set_status(app.db(), state.user_id(), UserStatus::Blocked).await?;
     }
 
     result.map_err(|err| err.into())

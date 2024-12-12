@@ -10,9 +10,8 @@ use crate::telegram::utils::extract_url_from_message;
 use crate::user_service::UserService;
 
 pub async fn handle(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: &Bot,
     m: &Message,
 ) -> anyhow::Result<bool> {
     let Some(url) = extract_url_from_message(m) else {
@@ -28,20 +27,19 @@ pub async fn handle(
         return Ok(false);
     };
 
-    process_spotify_code(app_state, state, bot, m, code).await
+    process_spotify_code(app, state, m, code).await
 }
 
 async fn process_spotify_code(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: &Bot,
     m: &Message,
     code: String,
 ) -> anyhow::Result<bool> {
     let instance = state.spotify_write().await;
 
     if let Err(err) = instance.request_token(&code).await {
-        bot.send_message(m.chat.id, "Cannot retrieve token. Code is probably broken. Run /register command and try again please")
+        app.bot().send_message(m.chat.id, "Cannot retrieve token. Code is probably broken. Run /register command and try again please")
             .send()
             .await?;
 
@@ -51,7 +49,8 @@ async fn process_spotify_code(
     let token = instance.token.lock().await;
 
     let Ok(token) = token else {
-        bot.send_message(m.chat.id, "Cannot retrieve token. Try again")
+        app.bot()
+            .send_message(m.chat.id, "Cannot retrieve token. Try again")
             .send()
             .await?;
 
@@ -59,7 +58,8 @@ async fn process_spotify_code(
     };
 
     let Some(token) = token.clone() else {
-        bot.send_message(m.chat.id, "Token is not retrieved. Try again")
+        app.bot()
+            .send_message(m.chat.id, "Token is not retrieved. Try again")
             .send()
             .await?;
 
@@ -67,7 +67,7 @@ async fn process_spotify_code(
     };
 
     {
-        let txn = app_state.db().begin().await?;
+        let txn = app.db().begin().await?;
 
         SpotifyAuthService::set_token(&txn, state.user_id(), token).await?;
         UserService::set_status(&txn, state.user_id(), UserStatus::Active).await?;
@@ -75,7 +75,8 @@ async fn process_spotify_code(
         txn.commit().await?;
     }
 
-    bot.send_message(m.chat.id, "Yeah! You registered successfully!")
+    app.bot()
+        .send_message(m.chat.id, "Yeah! You registered successfully!")
         .reply_markup(StartKeyboard::markup())
         .send()
         .await?;

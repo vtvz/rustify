@@ -18,7 +18,7 @@ use crate::user_service::UserService;
     )
 )]
 pub async fn handle(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &state::UserState,
     track: &ShortTrack,
     context: Option<&SpotifyContext>,
@@ -31,7 +31,7 @@ pub async fn handle(
             .await
             .context("Skip current track")?;
 
-        TrackStatusService::increase_skips(app_state.db(), state.user_id(), track.id()).await?;
+        TrackStatusService::increase_skips(app.db(), state.user_id(), track.id()).await?;
 
         let Some(context) = context else {
             return Ok(());
@@ -53,7 +53,7 @@ pub async fn handle(
                 if res.is_ok() {
                     UserService::increase_stats_query(state.user_id())
                         .removed_playlists(1)
-                        .exec(app_state.db())
+                        .exec(app.db())
                         .await?;
                 }
             },
@@ -65,7 +65,7 @@ pub async fn handle(
 
                 UserService::increase_stats_query(state.user_id())
                     .removed_collection(1)
-                    .exec(app_state.db())
+                    .exec(app.db())
                     .await?;
             },
             _ => {},
@@ -79,14 +79,14 @@ pub async fn handle(
         track_name = track.track_tg_link(),
     );
 
-    let result = app_state
+    let result = app
         .bot()
         .send_message(ChatId(state.user_id().parse()?), message)
         .parse_mode(ParseMode::Html)
         .send()
         .await;
 
-    super::errors::telegram(app_state, state, result)
+    super::errors::telegram(app, state, result)
         .await
         .map(|_| ())
 }

@@ -73,13 +73,13 @@ impl Uptime {
     }
 }
 
-pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Result<()> {
+pub async fn collect(client: &InfluxClient, app: &AppState) -> anyhow::Result<()> {
     let disliked =
-        TrackStatusService::count_status(app_state.db(), TrackStatus::Disliked, None, None).await?
+        TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await?
             as u64;
-    let ignored = TrackStatusService::count_status(app_state.db(), TrackStatus::Ignore, None, None)
+    let ignored = TrackStatusService::count_status(app.db(), TrackStatus::Ignore, None, None)
         .await? as u64;
-    let skipped = TrackStatusService::sum_skips(app_state.db(), None).await? as u64;
+    let skipped = TrackStatusService::sum_skips(app.db(), None).await? as u64;
 
     let UserStats {
         removed_collection,
@@ -89,7 +89,7 @@ pub async fn collect(client: &InfluxClient, app_state: &AppState) -> anyhow::Res
         lyrics_profane,
         lyrics_genius,
         lyrics_musixmatch,
-    } = UserService::get_stats(app_state.db(), None).await?;
+    } = UserService::get_stats(app.db(), None).await?;
 
     let tick_health_status = utils::tick_health().await;
 
@@ -150,8 +150,8 @@ pub async fn collect_user_timings(
     Ok(())
 }
 
-pub async fn collect_daemon(app_state: &'static AppState) {
-    let Some(ref client) = app_state.influx() else {
+pub async fn collect_daemon(app: &'static AppState) {
+    let Some(ref client) = app.influx() else {
         tracing::info!("Metrics collection disabled");
 
         return;
@@ -183,7 +183,7 @@ pub async fn collect_daemon(app_state: &'static AppState) {
     }.in_current_span());
 
     utils::tick!(Duration::from_secs(60), {
-        if let Err(err) = collect(client, app_state).await {
+        if let Err(err) = collect(client, app).await {
             tracing::error!(err = ?err, "Something went wrong on metrics collection");
         }
     });

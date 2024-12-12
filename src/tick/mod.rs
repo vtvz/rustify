@@ -38,10 +38,10 @@ pub struct CheckReport {
 }
 
 #[tracing::instrument(skip_all)]
-async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
+async fn process(app: &'static state::AppState) -> anyhow::Result<()> {
     let start = Instant::now();
 
-    let user_ids = SpotifyAuthService::get_registered(app_state.db())
+    let user_ids = SpotifyAuthService::get_registered(app.db())
         .await
         .context("Get users for processing")?;
 
@@ -57,7 +57,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
             .context("Shouldn't fail")?;
 
         join_handles.push(tokio::spawn(async move {
-            let res = user::check(app_state, &user_id).await;
+            let res = user::check(app, &user_id).await;
             drop(permit);
 
             // TODO: Refactor this mess...
@@ -75,7 +75,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
                             }
 
                             if serr.error.status == 403 && serr.error.message == "Spotify is unavailable in this country" {
-                                UserService::set_status(app_state.db(), &user_id, UserStatus::Forbidden).await?;
+                                UserService::set_status(app.db(), &user_id, UserStatus::Forbidden).await?;
                             }
 
                             Err(err)
@@ -111,7 +111,7 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
     // TODO: Prevent overflow on large amount of users
     if !users_to_suspend.is_empty() {
         SpotifyAuthService::suspend_for(
-            app_state.db(),
+            app.db(),
             &users_to_suspend
                 .iter()
                 .map(AsRef::as_ref)
@@ -135,9 +135,9 @@ async fn process(app_state: &'static state::AppState) -> anyhow::Result<()> {
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn check_playing(app_state: &'static state::AppState) {
+pub async fn check_playing(app: &'static state::AppState) {
     utils::tick!(CHECK_INTERVAL, {
-        if let Err(err) = process(app_state).await {
+        if let Err(err) = process(app).await {
             tracing::error!(err = ?err, "Something went wrong")
         };
     });

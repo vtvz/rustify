@@ -25,13 +25,13 @@ pub struct CheckBadWordsResult {
     )
 )]
 pub async fn check(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &state::UserState,
     track: &ShortTrack,
 ) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
-    let Some(hit) = app_state.lyrics().search_for_track(track).await? else {
+    let Some(hit) = app.lyrics().search_for_track(track).await? else {
         return Ok(ret);
     };
 
@@ -93,7 +93,7 @@ pub async fn check(
         lines -= 1;
     };
 
-    let result: Result<Message, teloxide::RequestError> = app_state
+    let result: Result<Message, teloxide::RequestError> = app
         .bot()
         .send_message(ChatId(state.user_id().parse()?), message)
         .parse_mode(ParseMode::Html)
@@ -107,7 +107,7 @@ pub async fn check(
         .send()
         .await;
 
-    super::errors::telegram(app_state, state, result)
+    super::errors::telegram(app, state, result)
         .await
         .map(|_| ret)
 }

@@ -20,10 +20,10 @@ pub enum CheckUserResult {
 
 #[tracing::instrument(skip_all, fields(user_id = %user_id))]
 pub async fn check(
-    app_state: &'static state::AppState,
+    app: &'static state::AppState,
     user_id: &str,
 ) -> anyhow::Result<CheckUserResult> {
-    let res = app_state
+    let res = app
         .user_state(user_id)
         .await
         .context("Get user state");
@@ -35,7 +35,7 @@ pub async fn check(
             };
 
             if let Err(err) =
-                super::errors::handle_too_many_requests(app_state.db(), user_id, response).await
+                super::errors::handle_too_many_requests(app.db(), user_id, response).await
             {
                 tracing::error!(err = ?err, "Something went wrong");
             }
@@ -57,15 +57,15 @@ pub async fn check(
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
 
-    let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track.id()).await;
+    let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
     match status {
         TrackStatus::Disliked => {
-            super::disliked_track::handle(app_state, &state, &track, context.as_ref()).await?;
+            super::disliked_track::handle(app, &state, &track, context.as_ref()).await?;
         },
         TrackStatus::None => {
             let changed = UserService::sync_current_playing(
-                app_state.redis_conn().await?,
+                app.redis_conn().await?,
                 state.user_id(),
                 track.id(),
             )
@@ -75,7 +75,7 @@ pub async fn check(
                 return Ok(CheckUserResult::SkipSame);
             }
 
-            let res = super::profanity_check::check(app_state, &state, &track)
+            let res = super::profanity_check::check(app, &state, &track)
                 .await
                 .context("Check bad words");
 
@@ -88,7 +88,7 @@ pub async fn check(
                             matches!(res.provider, Some(lyrics::Provider::Genius)) as u32,
                             matches!(res.provider, Some(lyrics::Provider::Musixmatch)) as u32,
                         )
-                        .exec(app_state.db())
+                        .exec(app.db())
                         .await?;
                 },
                 Err(err) => {

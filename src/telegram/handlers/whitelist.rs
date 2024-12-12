@@ -6,19 +6,19 @@ use crate::telegram::helpers;
 use crate::telegram::keyboards::StartKeyboard;
 
 pub async fn handle(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: &Bot,
     m: &Message,
     action: String,
     user_id: String,
 ) -> anyhow::Result<bool> {
-    if !app_state.whitelist().is_admin(state.user_id()) {
+    if !app.whitelist().is_admin(state.user_id()) {
         return Ok(false);
     }
 
     let Ok(user_id_int) = user_id.parse::<i64>() else {
-        bot.send_message(m.chat.id, "User Id has wrong format. Should be ID")
+        app.bot()
+            .send_message(m.chat.id, "User Id has wrong format. Should be ID")
             .send()
             .await?;
 
@@ -27,47 +27,47 @@ pub async fn handle(
 
     match action.as_str() {
         "allow" => {
-            app_state
-                .whitelist()
-                .allow(app_state.db(), &user_id)
+            app.whitelist().allow(app.db(), &user_id).await?;
+
+            app.bot()
+                .send_message(
+                    m.chat.id,
+                    format!(
+                        r#"<a href="tg://user?id={}">User</a> added to whitelist"#,
+                        user_id
+                    ),
+                )
+                .parse_mode(ParseMode::Html)
+                .send()
                 .await?;
 
-            bot.send_message(
-                m.chat.id,
-                format!(
-                    r#"<a href="tg://user?id={}">User</a> added to whitelist"#,
-                    user_id
-                ),
-            )
-            .parse_mode(ParseMode::Html)
-            .send()
-            .await?;
+            app.bot()
+                .send_message(
+                    ChatId(user_id_int),
+                    "Welcome! Admin allowed you to join Rustify family! Enjoy 💃",
+                )
+                .reply_markup(StartKeyboard::markup())
+                .send()
+                .await?;
 
-            bot.send_message(
-                ChatId(user_id_int),
-                "Welcome! Admin allowed you to join Rustify family! Enjoy 💃",
-            )
-            .reply_markup(StartKeyboard::markup())
-            .send()
-            .await?;
-
-            helpers::send_register_invite(app_state, bot, ChatId(user_id_int)).await?;
+            helpers::send_register_invite(app, ChatId(user_id_int)).await?;
         },
         "deny" => {
-            app_state.whitelist().deny(app_state.db(), &user_id).await?;
+            app.whitelist().deny(app.db(), &user_id).await?;
 
-            bot.send_message(
-                m.chat.id,
-                format!(
-                    r#"<a href="tg://user?id={}">User</a> denied in whitelist"#,
-                    user_id
-                ),
-            )
-            .parse_mode(ParseMode::Html)
-            .send()
-            .await?;
+            app.bot()
+                .send_message(
+                    m.chat.id,
+                    format!(
+                        r#"<a href="tg://user?id={}">User</a> denied in whitelist"#,
+                        user_id
+                    ),
+                )
+                .parse_mode(ParseMode::Html)
+                .send()
+                .await?;
 
-            bot.send_message(
+            app.bot().send_message(
                 ChatId(user_id_int),
                 "Sorry... Admin decided to deny you joining to Rustify bot... Maybe a bit later",
             )
@@ -75,7 +75,7 @@ pub async fn handle(
             .await?;
         },
         _ => {
-            bot.send_message(
+            app.bot().send_message(
                 m.chat.id,
                 format!(
                     "Cannot recognise <code>{}</code> action\\. Only <code>allow</code> and <code>deny</code> available",

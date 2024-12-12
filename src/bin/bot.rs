@@ -10,7 +10,7 @@ use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::command::BotCommands as _;
 
 async fn sync_name(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
     tg_user: Option<&User>,
 ) -> anyhow::Result<()> {
@@ -43,16 +43,16 @@ async fn sync_name(
         .collect::<Vec<_>>()
         .join(" | ");
 
-    UserService::sync_name(app_state.db(), state.user_id(), &name).await?;
+    UserService::sync_name(app.db(), state.user_id(), &name).await?;
 
     Ok(())
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
-async fn whitelisted(app_state: &'static AppState, state: &UserState) -> anyhow::Result<bool> {
-    let res = app_state
+async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Result<bool> {
+    let res = app
         .whitelist()
-        .get_status(app_state.db(), state.user_id())
+        .get_status(app.db(), state.user_id())
         .await?;
 
     let chat_id = ChatId(state.user_id().parse()?);
@@ -61,8 +61,7 @@ async fn whitelisted(app_state: &'static AppState, state: &UserState) -> anyhow:
         (UserWhitelistStatus::Denied, _) => {
             tracing::info!("Denied user tried to use bot");
 
-            app_state
-                .bot()
+            app.bot()
                 .send_message(chat_id, "Sorry, your join request was rejected...")
                 .parse_mode(ParseMode::Html)
                 .send()
@@ -77,12 +76,11 @@ async fn whitelisted(app_state: &'static AppState, state: &UserState) -> anyhow:
                     Admin already notified that you want to join, but you also can contact <a href="tg://user?id={}">[admin]()</a> and send this message to him\\.
 
                     User Id: <code>{}</code>"#,
-                app_state.whitelist().contact_admin(),
+                app.whitelist().contact_admin(),
                 state.user_id(),
             );
 
-            app_state
-                .bot()
+            app.bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
                 .send()
@@ -98,12 +96,8 @@ async fn whitelisted(app_state: &'static AppState, state: &UserState) -> anyhow:
                 user_id = state.user_id(),
             );
 
-            app_state
-                .bot()
-                .send_message(
-                    ChatId(app_state.whitelist().contact_admin().parse()?),
-                    message,
-                )
+            app.bot()
+                .send_message(ChatId(app.whitelist().contact_admin().parse()?), message)
                 .parse_mode(ParseMode::Html)
                 .send()
                 .await?;
@@ -119,12 +113,11 @@ async fn whitelisted(app_state: &'static AppState, state: &UserState) -> anyhow:
                     Send him this message, this will drastically help\\.
 
                     User Id: <code>{}</code>"#,
-                app_state.whitelist().contact_admin(),
+                app.whitelist().contact_admin(),
                 state.user_id(),
             );
 
-            app_state
-                .bot()
+            app.bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
                 .send()
@@ -148,10 +141,9 @@ async fn run() {
         "Starting Rustify bot..."
     );
 
-    let app_state = AppState::init().await.expect("State to be built");
+    let app = AppState::init().await.expect("State to be built");
 
-    app_state
-        .bot()
+    app.bot()
         .set_my_commands(Command::bot_commands())
         .await
         .expect("update commands should be working");
@@ -160,25 +152,22 @@ async fn run() {
 
     let handler = dptree::entry()
         .branch(
-            Update::filter_message().endpoint(move |m: Message, bot: Bot| async {
-                let state = app_state.user_state(&m.chat.id.to_string()).await?;
+            Update::filter_message().endpoint(move |m: Message| async move {
+                let state = app.user_state(&m.chat.id.to_string()).await?;
 
-                if !whitelisted(app_state, &state).await? {
+                if !whitelisted(app, &state).await? {
                     return Ok(());
                 }
 
-                if let Err(err) = sync_name(app_state, &state, m.from.as_ref()).await {
+                if let Err(err) = sync_name(app, &state, m.from.as_ref()).await {
                     tracing::error!(err = ?err, user_id = state.user_id(), "Failed syncing user name");
                 }
 
-                let clone = (m.clone(), bot.clone());
+                let result = rustify::telegram::handle_message(app, &state, m.clone()).await;
 
-                let result = rustify::telegram::handle_message(app_state, &state, bot, m).await;
-
-                let (m, bot) = clone;
                 if let Err(err) = &result {
                     tracing::error!(err = ?err, "Error on message handling");
-                    bot.send_message(
+                    app.bot().send_message(
                         m.chat.id,
                         formatdoc!(
                             r#"
@@ -200,14 +189,14 @@ async fn run() {
             }),
         )
         .branch(Update::filter_callback_query().endpoint(
-            move |q: CallbackQuery, bot: Bot| async {
-                let state = app_state.user_state(&q.from.id.to_string()).await?;
+            move |q: CallbackQuery| async {
+                let state = app.user_state(&q.from.id.to_string()).await?;
 
-                rustify::telegram::inline_buttons::handle(app_state, &state, bot, q).await
+                rustify::telegram::inline_buttons::handle(app, &state, q).await
             },
         ));
 
-    let mut dispatcher = Dispatcher::builder(app_state.bot().clone(), handler).build();
+    let mut dispatcher = Dispatcher::builder(app.bot().clone(), handler).build();
 
     let token = dispatcher.shutdown_token();
 

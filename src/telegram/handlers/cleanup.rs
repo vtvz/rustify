@@ -12,12 +12,12 @@ use crate::user_service::UserService;
 use crate::utils::retry;
 
 pub async fn handle(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: &Bot,
     m: &Message,
 ) -> anyhow::Result<bool> {
-    let message = bot
+    let message = app
+        .bot()
         .send_message(
             m.chat.id,
             "Started cleanup. Please wait, it can take a bit of time 🕐",
@@ -33,12 +33,9 @@ pub async fn handle(
         .await?
         .context("Spotify user not found")?;
 
-    let disliked = TrackStatusService::get_ids_with_status(
-        app_state.db(),
-        state.user_id(),
-        TrackStatus::Disliked,
-    )
-    .await?;
+    let disliked =
+        TrackStatusService::get_ids_with_status(app.db(), state.user_id(), TrackStatus::Disliked)
+            .await?;
 
     let Page {
         total: liked_before,
@@ -141,19 +138,20 @@ pub async fn handle(
     UserService::increase_stats_query(state.user_id())
         .removed_playlists(removed_playlists)
         .removed_collection(removed_collection)
-        .exec(app_state.db())
+        .exec(app.db())
         .await?;
 
-    bot.edit_message_text(
-        message.chat.id,
-        message.id,
-        format!(
-            "Deleted {} tracks in {} playlists and {} in favorite songs 🗑",
-            removed_playlists, count, removed_collection
-        ),
-    )
-    .send()
-    .await?;
+    app.bot()
+        .edit_message_text(
+            message.chat.id,
+            message.id,
+            format!(
+                "Deleted {} tracks in {} playlists and {} in favorite songs 🗑",
+                removed_playlists, count, removed_collection
+            ),
+        )
+        .send()
+        .await?;
 
     Ok(true)
 }

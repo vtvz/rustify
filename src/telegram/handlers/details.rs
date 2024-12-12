@@ -21,16 +21,16 @@ use crate::track_status_service::TrackStatusService;
 use crate::{profanity, telegram};
 
 pub async fn handle_current(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: &Bot,
     m: &Message,
 ) -> anyhow::Result<bool> {
     let spotify = state.spotify().await;
     let track = match CurrentlyPlaying::get(&spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
-            bot.send_message(m.chat.id, message.to_string())
+            app.bot()
+                .send_message(m.chat.id, message.to_string())
                 .send()
                 .await?;
 
@@ -39,7 +39,7 @@ pub async fn handle_current(
         CurrentlyPlaying::Ok(track, _) => track,
     };
 
-    common(app_state, state, bot, m, *track).await
+    common(app, state, m, *track).await
 }
 
 fn extract_id(url: url::Url) -> Option<TrackId<'static>> {
@@ -55,9 +55,8 @@ fn extract_id(url: url::Url) -> Option<TrackId<'static>> {
 }
 
 pub async fn handle_url(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: &Bot,
     m: &Message,
 ) -> anyhow::Result<bool> {
     let Some(url) = extract_url_from_message(m) else {
@@ -70,19 +69,18 @@ pub async fn handle_url(
 
     let track = state.spotify().await.track(track_id, None).await?.into();
 
-    common(app_state, state, bot, m, track).await
+    common(app, state, m, track).await
 }
 
 async fn common(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: &Bot,
     m: &Message,
     track: ShortTrack,
 ) -> anyhow::Result<bool> {
     let spotify = state.spotify().await;
 
-    let status = TrackStatusService::get_status(app_state.db(), state.user_id(), track.id()).await;
+    let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
     let keyboard = match status {
         TrackStatus::Disliked => {
@@ -117,21 +115,13 @@ async fn common(
         _ => "Unknown",
     };
 
-    let disliked_by = TrackStatusService::count_status(
-        app_state.db(),
-        TrackStatus::Disliked,
-        None,
-        Some(track.id()),
-    )
-    .await?;
+    let disliked_by =
+        TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, Some(track.id()))
+            .await?;
 
-    let ignored_by = TrackStatusService::count_status(
-        app_state.db(),
-        TrackStatus::Ignore,
-        None,
-        Some(track.id()),
-    )
-    .await?;
+    let ignored_by =
+        TrackStatusService::count_status(app.db(), TrackStatus::Ignore, None, Some(track.id()))
+            .await?;
 
     let genres: HashSet<_> = {
         let artist_ids = track.artist_raw_ids();
@@ -208,26 +198,27 @@ async fn common(
         album_name = track.album_tg_link(),
     };
 
-    let Some(hit) = app_state.lyrics().search_for_track(&track).await? else {
-        bot.send_message(
-            m.chat.id,
-            formatdoc!(
-                "
+    let Some(hit) = app.lyrics().search_for_track(&track).await? else {
+        app.bot()
+            .send_message(
+                m.chat.id,
+                formatdoc!(
+                    "
                     {header}
                     {genres_line}
                     <code>No lyrics found</code>
                 ",
-                header = header.trim(),
-                genres_line = genres_line,
-            ),
-        )
-        .parse_mode(ParseMode::Html)
-        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            keyboard,
-        )))
-        .link_preview_options(link_preview_small_top(track.url()))
-        .send()
-        .await?;
+                    header = header.trim(),
+                    genres_line = genres_line,
+                ),
+            )
+            .parse_mode(ParseMode::Html)
+            .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+                keyboard,
+            )))
+            .link_preview_options(link_preview_small_top(track.url()))
+            .send()
+            .await?;
 
         return Ok(true);
     };
@@ -271,7 +262,8 @@ async fn common(
         lines -= 1;
     };
 
-    bot.send_message(m.chat.id, message)
+    app.bot()
+        .send_message(m.chat.id, message)
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,

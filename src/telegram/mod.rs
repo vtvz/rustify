@@ -14,18 +14,18 @@ pub const MESSAGE_MAX_LEN: usize = 4096;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_message(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: Bot,
     m: Message,
 ) -> anyhow::Result<()> {
-    let handled = handlers::register::handle(app_state, state, &bot, &m).await?
-        || handlers::details::handle_url(app_state, state, &bot, &m).await?
-        || commands::handle(app_state, state, &bot, &m).await?
-        || keyboards::handle(app_state, state, &bot, &m).await?;
+    let handled = handlers::register::handle(app, state, &m).await?
+        || handlers::details::handle_url(app, state, &m).await?
+        || commands::handle(app, state, &m).await?
+        || keyboards::handle(app, state, &m).await?;
 
     if !handled {
-        bot.send_message(m.chat.id, "You request was not handled 😔")
+        app.bot()
+            .send_message(m.chat.id, "You request was not handled 😔")
             .reply_markup(StartKeyboard::markup())
             .send()
             .await?;

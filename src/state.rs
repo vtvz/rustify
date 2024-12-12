@@ -183,7 +183,7 @@ impl AppState {
         let influx = init_influx().context("Cannot configure Influx Client")?;
 
         // Make state global static variable to prevent hassle with Arc and cloning this mess
-        let app_state = Box::new(Self {
+        let app = Box::new(Self {
             whitelist: whitelist::Manager::from_env(),
             bot,
             spotify_manager,
@@ -193,9 +193,9 @@ impl AppState {
             redis,
         });
 
-        let app_state = &*Box::leak(app_state);
+        let app = &*Box::leak(app);
 
-        Ok(app_state)
+        Ok(app)
     }
 
     pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {

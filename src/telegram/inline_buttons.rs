@@ -69,14 +69,14 @@ impl Display for InlineButtons {
 }
 
 pub async fn handle(
-    app_state: &'static AppState,
+    app: &'static AppState,
     state: &UserState,
-    bot: Bot,
     q: CallbackQuery,
 ) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
         if let Some(id) = q.inline_message_id {
-            bot.answer_callback_query(id)
+            app.bot()
+                .answer_callback_query(id)
                 .text("You need to register first")
                 .send()
                 .await?;
@@ -98,24 +98,25 @@ pub async fn handle(
                 .await?;
             let track = ShortTrack::new(track);
 
-            TrackStatusService::set_status(app_state.db(), state.user_id(), &id, TrackStatus::None)
+            TrackStatusService::set_status(app.db(), state.user_id(), &id, TrackStatus::None)
                 .await?;
 
-            bot.edit_message_text(
-                q.from.id,
-                q.message.context("Message is empty")?.id(),
-                format!("Dislike cancelled for {}", track.track_tg_link()),
-            )
-            .link_preview_options(link_preview_small_top(track.url()))
-            .parse_mode(ParseMode::Html)
-            .reply_markup(InlineKeyboardMarkup::new(
-                #[rustfmt::skip]
+            app.bot()
+                .edit_message_text(
+                    q.from.id,
+                    q.message.context("Message is empty")?.id(),
+                    format!("Dislike cancelled for {}", track.track_tg_link()),
+                )
+                .link_preview_options(link_preview_small_top(track.url()))
+                .parse_mode(ParseMode::Html)
+                .reply_markup(InlineKeyboardMarkup::new(
+                    #[rustfmt::skip]
                     vec![
                         vec![InlineButtons::Dislike(id).into()]
                     ],
-            ))
-            .send()
-            .await?;
+                ))
+                .send()
+                .await?;
         },
         InlineButtons::Dislike(id) => {
             let track = state
@@ -126,29 +127,25 @@ pub async fn handle(
 
             let track = ShortTrack::new(track);
 
-            TrackStatusService::set_status(
-                app_state.db(),
-                state.user_id(),
-                &id,
-                TrackStatus::Disliked,
-            )
-            .await?;
+            TrackStatusService::set_status(app.db(), state.user_id(), &id, TrackStatus::Disliked)
+                .await?;
 
-            bot.edit_message_text(
-                q.from.id,
-                q.message.context("Message is empty")?.id(),
-                format!("Disliked {}", track.track_tg_link()),
-            )
-            .parse_mode(ParseMode::Html)
-            .link_preview_options(link_preview_small_top(track.url()))
-            .reply_markup(InlineKeyboardMarkup::new(
-                #[rustfmt::skip]
+            app.bot()
+                .edit_message_text(
+                    q.from.id,
+                    q.message.context("Message is empty")?.id(),
+                    format!("Disliked {}", track.track_tg_link()),
+                )
+                .parse_mode(ParseMode::Html)
+                .link_preview_options(link_preview_small_top(track.url()))
+                .reply_markup(InlineKeyboardMarkup::new(
+                    #[rustfmt::skip]
                     vec![
                         vec![InlineButtons::Cancel(id).into()]
                     ],
-            ))
-            .send()
-            .await?;
+                ))
+                .send()
+                .await?;
         },
         InlineButtons::Ignore(id) => {
             let track = state
@@ -158,32 +155,28 @@ pub async fn handle(
                 .await?;
             let track = ShortTrack::new(track);
 
-            TrackStatusService::set_status(
-                app_state.db(),
-                state.user_id(),
-                &id,
-                TrackStatus::Ignore,
-            )
-            .await?;
+            TrackStatusService::set_status(app.db(), state.user_id(), &id, TrackStatus::Ignore)
+                .await?;
 
-            bot.edit_message_text(
-                q.from.id,
-                q.message.context("Message is empty")?.id(),
-                format!(
-                    "Bad words of {} will be forever ignored",
-                    track.track_tg_link()
-                ),
-            )
-            .link_preview_options(link_preview_small_top(track.url()))
-            .parse_mode(ParseMode::Html)
-            .reply_markup(InlineKeyboardMarkup::new(
-                #[rustfmt::skip]
+            app.bot()
+                .edit_message_text(
+                    q.from.id,
+                    q.message.context("Message is empty")?.id(),
+                    format!(
+                        "Bad words of {} will be forever ignored",
+                        track.track_tg_link()
+                    ),
+                )
+                .link_preview_options(link_preview_small_top(track.url()))
+                .parse_mode(ParseMode::Html)
+                .reply_markup(InlineKeyboardMarkup::new(
+                    #[rustfmt::skip]
                     vec![
                         vec![InlineButtons::Cancel(id).into()]
                     ],
-            ))
-            .send()
-            .await?;
+                ))
+                .send()
+                .await?;
         },
     }
 
