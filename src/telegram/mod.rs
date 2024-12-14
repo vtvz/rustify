@@ -18,7 +18,7 @@ pub async fn handle_message(
     state: &UserState,
     m: Message,
 ) -> anyhow::Result<()> {
-    let handled = handlers::raw::handle(app, state, &m).await?
+    let handled = handlers::url::handle(app, state, &m).await?
         || handlers::commands::handle(app, state, &m).await?
         || handlers::keyboards::handle(app, state, &m).await?;
 

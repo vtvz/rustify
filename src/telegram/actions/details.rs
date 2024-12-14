@@ -16,7 +16,7 @@ use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::state::{AppState, UserState};
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::telegram::utils::{extract_url_from_message, link_preview_small_top};
+use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
 use crate::{profanity, telegram};
 
@@ -42,7 +42,7 @@ pub async fn handle_current(
     common(app, state, m, *track).await
 }
 
-fn extract_id(url: url::Url) -> Option<TrackId<'static>> {
+fn extract_id(url: &url::Url) -> Option<TrackId<'static>> {
     lazy_static! {
         static ref RE: Regex = Regex::new("^/track/([a-zA-Z0-9]+)$").expect("Should be compilable");
     }
@@ -57,12 +57,9 @@ fn extract_id(url: url::Url) -> Option<TrackId<'static>> {
 pub async fn handle_url(
     app: &'static AppState,
     state: &UserState,
+    url: &reqwest::Url,
     m: &Message,
 ) -> anyhow::Result<bool> {
-    let Some(url) = extract_url_from_message(m) else {
-        return Ok(false);
-    };
-
     let Some(track_id) = extract_id(url) else {
         return Ok(false);
     };

@@ -14,18 +14,14 @@ use super::super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::{AppState, UserState};
-use crate::telegram::utils::extract_url_from_message;
 use crate::user_service::UserService;
 
 pub async fn handle(
     app: &'static AppState,
     state: &UserState,
+    url: &reqwest::Url,
     m: &Message,
 ) -> anyhow::Result<bool> {
-    let Some(url) = extract_url_from_message(m) else {
-        return Ok(false);
-    };
-
     let value = url
         .query_pairs()
         .find(|(key, _)| key == "code")
