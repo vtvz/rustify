@@ -192,7 +192,7 @@ async fn run() {
             move |q: CallbackQuery| async {
                 let state = app.user_state(&q.from.id.to_string()).await?;
 
-                rustify::telegram::inline_buttons::handle(app, &state, q).await
+                rustify::telegram::handlers::inline_buttons::handle(app, &state, q).await
             },
         ));
 
