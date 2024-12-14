@@ -81,14 +81,14 @@ pub async fn handle(
             }
         },
         Command::Dislike => {
-            return super::handlers::dislike::handle(app, state, m).await;
+            return super::actions::dislike::handle(app, state, m).await;
         },
         Command::Cleanup => {
-            return super::handlers::cleanup::handle(app, state, m).await;
+            return super::actions::cleanup::handle(app, state, m).await;
         },
-        Command::Stats => return super::handlers::stats::handle(app, state, m).await,
+        Command::Stats => return super::actions::stats::handle(app, state, m).await,
         Command::Details => {
-            return super::handlers::details::handle_current(app, state, m).await;
+            return super::actions::details::handle_current(app, state, m).await;
         },
         Command::Register => {
             return super::helpers::send_register_invite(app, m.chat.id).await;
@@ -100,7 +100,7 @@ pub async fn handle(
                 .await?;
         },
         Command::Whitelist(action, user_id) => {
-            return super::handlers::whitelist::handle(app, state, m, action, user_id).await;
+            return super::actions::whitelist::handle(app, state, m, action, user_id).await;
         },
     }
     Ok(true)

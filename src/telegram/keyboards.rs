@@ -64,9 +64,9 @@ pub async fn handle(
     let button = button?;
 
     match button {
-        StartKeyboard::Dislike => super::handlers::dislike::handle(app, state, m).await,
-        StartKeyboard::Cleanup => super::handlers::cleanup::handle(app, state, m).await,
-        StartKeyboard::Stats => super::handlers::stats::handle(app, state, m).await,
-        StartKeyboard::Details => super::handlers::details::handle_current(app, state, m).await,
+        StartKeyboard::Dislike => super::actions::dislike::handle(app, state, m).await,
+        StartKeyboard::Cleanup => super::actions::cleanup::handle(app, state, m).await,
+        StartKeyboard::Stats => super::actions::stats::handle(app, state, m).await,
+        StartKeyboard::Details => super::actions::details::handle_current(app, state, m).await,
     }
 }
