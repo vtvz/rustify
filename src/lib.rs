@@ -1,4 +1,3 @@
-#![allow(clippy::explicit_auto_deref)]
 #![warn(clippy::unwrap_used)]
 #![feature(
     stmt_expr_attributes,

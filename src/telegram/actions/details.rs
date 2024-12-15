@@ -271,3 +271,43 @@ async fn common(
 
     Ok(true)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_id_success() {
+        let never_gonna_give_you_up =
+            "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8?si=b248017abca04ef0";
+
+        let url = url::Url::parse(never_gonna_give_you_up).unwrap();
+        let id = extract_id(&url);
+
+        assert_eq!(
+            id,
+            Some(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8").unwrap())
+        );
+    }
+
+    #[test]
+    fn extract_id_broken() {
+        let gonna_give_you_up =
+            "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8_?si=b248017abca04ef0";
+
+        let url = url::Url::parse(gonna_give_you_up).unwrap();
+        let id = extract_id(&url);
+
+        assert_eq!(id, None);
+    }
+
+    #[test]
+    fn extract_id_wrong() {
+        let gonna_give_you_up = "https://rickastley.co.uk/index.php/tour-dates/";
+
+        let url = url::Url::parse(gonna_give_you_up).unwrap();
+        let id = extract_id(&url);
+
+        assert_eq!(id, None);
+    }
+}
