@@ -1,23 +1,27 @@
 use rspotify::clients::OAuthClient;
 use sea_orm::TransactionTrait;
 use teloxide::prelude::*;
+use teloxide::types::{
+    ChatId,
+    InlineKeyboardButton,
+    InlineKeyboardButtonKind,
+    InlineKeyboardMarkup,
+    ParseMode,
+    ReplyMarkup,
+};
 
 use super::super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::{AppState, UserState};
-use crate::telegram::utils::extract_url_from_message;
 use crate::user_service::UserService;
 
 pub async fn handle(
     app: &'static AppState,
     state: &UserState,
+    url: &reqwest::Url,
     m: &Message,
 ) -> anyhow::Result<bool> {
-    let Some(url) = extract_url_from_message(m) else {
-        return Ok(false);
-    };
-
     let value = url
         .query_pairs()
         .find(|(key, _)| key == "code")
@@ -78,6 +82,29 @@ async fn process_spotify_code(
     app.bot()
         .send_message(m.chat.id, "Yeah! You registered successfully!")
         .reply_markup(StartKeyboard::markup())
+        .send()
+        .await?;
+
+    Ok(true)
+}
+
+pub async fn send_register_invite(app: &'static AppState, chat_id: ChatId) -> anyhow::Result<bool> {
+    let url = app.spotify_manager().get_authorize_url().await?;
+    app.bot()
+        .send_message(
+            chat_id,
+            "Click this button below and after authentication copy URL from browser and send me",
+        )
+        .parse_mode(ParseMode::Html)
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            #[rustfmt::skip]
+            vec![
+                vec![InlineKeyboardButton {
+                    text: "Login with Spotify".into(),
+                    kind: InlineKeyboardButtonKind::Url(url.parse()?),
+                }]
+            ],
+        )))
         .send()
         .await?;
 

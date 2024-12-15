@@ -3,9 +3,9 @@ use teloxide::prelude::*;
 
 use crate::state::{AppState, UserState};
 
+pub mod actions;
 pub mod commands;
-mod handlers;
-mod helpers;
+pub mod handlers;
 pub mod inline_buttons;
 pub mod keyboards;
 pub mod utils;
@@ -18,10 +18,9 @@ pub async fn handle_message(
     state: &UserState,
     m: Message,
 ) -> anyhow::Result<()> {
-    let handled = handlers::register::handle(app, state, &m).await?
-        || handlers::details::handle_url(app, state, &m).await?
-        || commands::handle(app, state, &m).await?
-        || keyboards::handle(app, state, &m).await?;
+    let handled = handlers::url::handle(app, state, &m).await?
+        || handlers::commands::handle(app, state, &m).await?
+        || handlers::keyboards::handle(app, state, &m).await?;
 
     if !handled {
         app.bot()
