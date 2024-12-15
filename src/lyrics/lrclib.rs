@@ -136,7 +136,7 @@ impl LrcLib {
         let mut hits_count = 0;
 
         for (name_i, name) in names.into_iter().enumerate() {
-            let mut url = reqwest::Url::parse("https://lrclib.net/api/search")?;
+            let mut url = url::Url::parse("https://lrclib.net/api/search")?;
             url.query_pairs_mut().extend_pairs(&[
                 ("artist_name", artist_name),
                 ("track_name", track_name),

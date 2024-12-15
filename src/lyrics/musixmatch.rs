@@ -134,7 +134,7 @@ impl Musixmatch {
         track: &ShortTrack,
     ) -> anyhow::Result<Option<Lyrics>> {
         let mut url =
-            reqwest::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
+            url::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
 
         // Static
         url.query_pairs_mut().extend_pairs(&[

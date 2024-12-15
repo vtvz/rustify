@@ -4,7 +4,7 @@ use reqwest::{Response, header};
 
 pub struct InfluxClient {
     req: reqwest::Client,
-    url: reqwest::Url,
+    url: url::Url,
     instance_tag: String,
 }
 
@@ -33,7 +33,7 @@ impl InfluxClient {
             .build()?;
 
         let url = {
-            let mut url = reqwest::Url::parse(api_url)?;
+            let mut url = url::Url::parse(api_url)?;
 
             url.query_pairs_mut()
                 .append_pair("bucket", bucket)
@@ -57,7 +57,7 @@ impl InfluxClient {
         })
     }
 
-    fn write_url(&self) -> reqwest::Url {
+    fn write_url(&self) -> url::Url {
         let mut url = self.url.clone();
 
         url.path_segments_mut()

@@ -19,7 +19,7 @@ use crate::user_service::UserService;
 pub async fn handle(
     app: &'static AppState,
     state: &UserState,
-    url: &reqwest::Url,
+    url: &url::Url,
     m: &Message,
 ) -> anyhow::Result<bool> {
     let value = url

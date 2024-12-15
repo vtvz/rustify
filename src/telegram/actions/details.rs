@@ -57,7 +57,7 @@ fn extract_id(url: &url::Url) -> Option<TrackId<'static>> {
 pub async fn handle_url(
     app: &'static AppState,
     state: &UserState,
-    url: &reqwest::Url,
+    url: &url::Url,
     m: &Message,
 ) -> anyhow::Result<bool> {
     let Some(track_id) = extract_id(url) else {
