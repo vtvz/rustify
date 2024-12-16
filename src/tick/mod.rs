@@ -1,5 +1,4 @@
 mod disliked_track;
-mod errors;
 mod profanity_check;
 mod user;
 

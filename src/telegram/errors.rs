@@ -11,7 +11,7 @@ use crate::state::AppState;
 use crate::user_service::UserService;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
-pub async fn telegram(
+pub async fn handle_blocked_bot(
     app: &'static AppState,
     state: &state::UserState,
     result: Result<Message, teloxide::RequestError>,

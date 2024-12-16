@@ -32,7 +32,7 @@ pub async fn check(
             };
 
             if let Err(err) =
-                super::errors::handle_too_many_requests(app.db(), user_id, response).await
+                crate::telegram::errors::handle_too_many_requests(app.db(), user_id, response).await
             {
                 tracing::error!(err = ?err, "Something went wrong");
             }

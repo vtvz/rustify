@@ -86,7 +86,7 @@ pub async fn handle(
         .send()
         .await;
 
-    super::errors::telegram(app, state, result)
+    crate::telegram::errors::handle_blocked_bot(app, state, result)
         .await
         .map(|_| ())
 }
