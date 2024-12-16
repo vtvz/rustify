@@ -45,50 +45,27 @@ impl UserStatsIncreaseQueryBuilder {
         self
     }
 
-    pub fn lyrics(
-        mut self,
-        checked: u32,
-        profane: u32,
-        provider: Option<lyrics::Provider>,
-    ) -> Self {
+    pub fn checked_lyrics(mut self, profane: bool, provider: Option<lyrics::Provider>) -> Self {
         self.0 = self
             .0
             .col_expr(
                 UserColumn::LyricsChecked,
-                Expr::col(UserColumn::LyricsChecked).add(checked),
+                Expr::col(UserColumn::LyricsChecked).add(1),
             )
             .col_expr(
                 UserColumn::LyricsProfane,
-                Expr::col(UserColumn::LyricsProfane).add(profane),
+                Expr::col(UserColumn::LyricsProfane).add(if profane { 1 } else { 0 }),
             );
 
-        match provider {
-            Some(lyrics::Provider::Genius) => {
-                self.0 = self.0.col_expr(
-                    UserColumn::LyricsGenius,
-                    Expr::col(UserColumn::LyricsGenius).add(1),
-                )
-            },
-            Some(lyrics::Provider::Musixmatch) => {
-                self.0 = self.0.col_expr(
-                    UserColumn::LyricsMusixmatch,
-                    Expr::col(UserColumn::LyricsMusixmatch).add(1),
-                )
-            },
-            Some(lyrics::Provider::LrcLib) => {
-                self.0 = self.0.col_expr(
-                    UserColumn::LyricsLrcLib,
-                    Expr::col(UserColumn::LyricsLrcLib).add(1),
-                )
-            },
-            Some(lyrics::Provider::AZLyrics) => {
-                self.0 = self.0.col_expr(
-                    UserColumn::LyricsAZLyrics,
-                    Expr::col(UserColumn::LyricsAZLyrics).add(1),
-                )
-            },
-            None => {},
-        }
+        let col = match provider {
+            Some(lyrics::Provider::Genius) => UserColumn::LyricsGenius,
+            Some(lyrics::Provider::Musixmatch) => UserColumn::LyricsMusixmatch,
+            Some(lyrics::Provider::LrcLib) => UserColumn::LyricsLrcLib,
+            Some(lyrics::Provider::AZLyrics) => UserColumn::LyricsAZLyrics,
+            None => return self,
+        };
+
+        self.0 = self.0.col_expr(col, Expr::col(col).add(1));
 
         self
     }
