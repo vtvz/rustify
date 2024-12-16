@@ -54,7 +54,9 @@ pub enum Column {
     LyricsChecked,
     LyricsGenius,
     LyricsMusixmatch,
+    #[sea_orm(column_name = "lyrics_lrclib")]
     LyricsLrcLib,
+    #[sea_orm(column_name = "lyrics_azlyrics")]
     LyricsAZLyrics,
     LyricsProfane,
     Status,
