@@ -79,14 +79,7 @@ pub async fn check(
             match res {
                 Ok(res) => {
                     UserService::increase_stats_query(state.user_id())
-                        .lyrics(
-                            1,
-                            res.profane as u32,
-                            matches!(res.provider, Some(lyrics::Provider::Genius)) as u32,
-                            matches!(res.provider, Some(lyrics::Provider::Musixmatch)) as u32,
-                            matches!(res.provider, Some(lyrics::Provider::LrcLib)) as u32,
-                            matches!(res.provider, Some(lyrics::Provider::AZLyrics)) as u32,
-                        )
+                        .lyrics(1, res.profane as u32, res.provider)
                         .exec(app.db())
                         .await?;
                 },
