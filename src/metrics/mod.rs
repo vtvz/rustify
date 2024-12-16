@@ -34,6 +34,8 @@ struct LyricsStats {
     profane: u64,
     genius: u64,
     musixmatch: u64,
+    lrclib: u64,
+    azlyrics: u64,
 }
 
 #[derive(InfluxDbWriteable, Debug)]
@@ -75,10 +77,9 @@ impl Uptime {
 
 pub async fn collect(client: &InfluxClient, app: &AppState) -> anyhow::Result<()> {
     let disliked =
-        TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await?
-            as u64;
-    let ignored = TrackStatusService::count_status(app.db(), TrackStatus::Ignore, None, None)
-        .await? as u64;
+        TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await? as u64;
+    let ignored =
+        TrackStatusService::count_status(app.db(), TrackStatus::Ignore, None, None).await? as u64;
     let skipped = TrackStatusService::sum_skips(app.db(), None).await? as u64;
 
     let UserStats {
@@ -89,6 +90,8 @@ pub async fn collect(client: &InfluxClient, app: &AppState) -> anyhow::Result<()
         lyrics_profane,
         lyrics_genius,
         lyrics_musixmatch,
+        lyrics_lrclib,
+        lyrics_azlyrics,
     } = UserService::get_stats(app.db(), None).await?;
 
     let tick_health_status = utils::tick_health().await;
@@ -112,6 +115,8 @@ pub async fn collect(client: &InfluxClient, app: &AppState) -> anyhow::Result<()
             profane: lyrics_profane as u64,
             genius: lyrics_genius as u64,
             musixmatch: lyrics_musixmatch as u64,
+            lrclib: lyrics_lrclib as u64,
+            azlyrics: lyrics_azlyrics as u64,
         }
         .into_query("lyrics"),
         TickHealthStats {

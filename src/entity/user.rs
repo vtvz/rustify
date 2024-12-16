@@ -54,6 +54,10 @@ pub enum Column {
     LyricsChecked,
     LyricsGenius,
     LyricsMusixmatch,
+    #[sea_orm(column_name = "lyrics_lrclib")]
+    LyricsLrcLib,
+    #[sea_orm(column_name = "lyrics_azlyrics")]
+    LyricsAZLyrics,
     LyricsProfane,
     Status,
     CreatedAt,
@@ -85,6 +89,8 @@ impl ColumnTrait for Column {
             Self::LyricsChecked => ColumnType::BigInteger.def(),
             Self::LyricsGenius => ColumnType::BigInteger.def(),
             Self::LyricsMusixmatch => ColumnType::BigInteger.def(),
+            Self::LyricsLrcLib => ColumnType::BigInteger.def(),
+            Self::LyricsAZLyrics => ColumnType::BigInteger.def(),
             Self::LyricsProfane => ColumnType::BigInteger.def(),
             Self::Status => Status::db_type(),
             Self::CreatedAt => ColumnType::DateTime.def(),

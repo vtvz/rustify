@@ -13,6 +13,7 @@ use sea_orm::{
 };
 
 use crate::entity::prelude::*;
+use crate::lyrics;
 use crate::utils::Clock;
 
 pub struct UserStatsIncreaseQueryBuilder(UpdateMany<UserEntity>);
@@ -44,25 +45,27 @@ impl UserStatsIncreaseQueryBuilder {
         self
     }
 
-    pub fn lyrics(mut self, checked: u32, profane: u32, genius: u32, musixmatch: u32) -> Self {
+    pub fn checked_lyrics(mut self, profane: bool, provider: Option<lyrics::Provider>) -> Self {
         self.0 = self
             .0
             .col_expr(
                 UserColumn::LyricsChecked,
-                Expr::col(UserColumn::LyricsChecked).add(checked),
+                Expr::col(UserColumn::LyricsChecked).add(1),
             )
             .col_expr(
                 UserColumn::LyricsProfane,
-                Expr::col(UserColumn::LyricsProfane).add(profane),
-            )
-            .col_expr(
-                UserColumn::LyricsGenius,
-                Expr::col(UserColumn::LyricsGenius).add(genius),
-            )
-            .col_expr(
-                UserColumn::LyricsMusixmatch,
-                Expr::col(UserColumn::LyricsMusixmatch).add(musixmatch),
+                Expr::col(UserColumn::LyricsProfane).add(if profane { 1 } else { 0 }),
             );
+
+        let col = match provider {
+            Some(lyrics::Provider::Genius) => UserColumn::LyricsGenius,
+            Some(lyrics::Provider::Musixmatch) => UserColumn::LyricsMusixmatch,
+            Some(lyrics::Provider::LrcLib) => UserColumn::LyricsLrcLib,
+            Some(lyrics::Provider::AZLyrics) => UserColumn::LyricsAZLyrics,
+            None => return self,
+        };
+
+        self.0 = self.0.col_expr(col, Expr::col(col).add(1));
 
         self
     }
@@ -84,6 +87,8 @@ pub struct UserStats {
     pub lyrics_profane: i64,
     pub lyrics_genius: i64,
     pub lyrics_musixmatch: i64,
+    pub lyrics_lrclib: i64,
+    pub lyrics_azlyrics: i64,
 }
 
 pub struct UserService;
@@ -207,6 +212,14 @@ impl UserService {
             .column_as(
                 UserColumn::LyricsMusixmatch.sum().cast_as(bigint()),
                 "lyrics_musixmatch",
+            )
+            .column_as(
+                UserColumn::LyricsLrcLib.sum().cast_as(bigint()),
+                "lyrics_lrclib",
+            )
+            .column_as(
+                UserColumn::LyricsAZLyrics.sum().cast_as(bigint()),
+                "lyrics_azlyrics",
             )
             .column_as(
                 UserColumn::LyricsGenius

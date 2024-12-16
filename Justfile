@@ -49,8 +49,11 @@ run-bot:
 run-track-check:
   proxychains4 -q cargo run --bin "track_check"
 
+run-metrics:
+  proxychains4 -q cargo run --bin "metrics"
+
 run:
-  parallel --tagstring "[{}]" --line-buffer -j2 --halt now,fail=1 just ::: "run-bot" "run-track-check"
+  parallel --tagstring "[{}]" --line-buffer -j3 --halt now,fail=1 just ::: "run-bot" "run-track-check" "run-metrics"
 
 watch:
   cargo watch -s 'just run'
