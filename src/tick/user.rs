@@ -23,10 +23,7 @@ pub async fn check(
     app: &'static state::AppState,
     user_id: &str,
 ) -> anyhow::Result<CheckUserResult> {
-    let res = app
-        .user_state(user_id)
-        .await
-        .context("Get user state");
+    let res = app.user_state(user_id).await.context("Get user state");
 
     let state = match res {
         Err(mut err) => {
@@ -87,6 +84,8 @@ pub async fn check(
                             res.profane as u32,
                             matches!(res.provider, Some(lyrics::Provider::Genius)) as u32,
                             matches!(res.provider, Some(lyrics::Provider::Musixmatch)) as u32,
+                            matches!(res.provider, Some(lyrics::Provider::LrcLib)) as u32,
+                            matches!(res.provider, Some(lyrics::Provider::AZLyrics)) as u32,
                         )
                         .exec(app.db())
                         .await?;

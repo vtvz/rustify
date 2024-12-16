@@ -44,7 +44,15 @@ impl UserStatsIncreaseQueryBuilder {
         self
     }
 
-    pub fn lyrics(mut self, checked: u32, profane: u32, genius: u32, musixmatch: u32) -> Self {
+    pub fn lyrics(
+        mut self,
+        checked: u32,
+        profane: u32,
+        genius: u32,
+        musixmatch: u32,
+        lrclib: u32,
+        azlyrics: u32,
+    ) -> Self {
         self.0 = self
             .0
             .col_expr(
@@ -62,6 +70,14 @@ impl UserStatsIncreaseQueryBuilder {
             .col_expr(
                 UserColumn::LyricsMusixmatch,
                 Expr::col(UserColumn::LyricsMusixmatch).add(musixmatch),
+            )
+            .col_expr(
+                UserColumn::LyricsLrcLib,
+                Expr::col(UserColumn::LyricsLrcLib).add(lrclib),
+            )
+            .col_expr(
+                UserColumn::LyricsAZLyrics,
+                Expr::col(UserColumn::LyricsAZLyrics).add(azlyrics),
             );
 
         self
@@ -84,6 +100,8 @@ pub struct UserStats {
     pub lyrics_profane: i64,
     pub lyrics_genius: i64,
     pub lyrics_musixmatch: i64,
+    pub lyrics_lrclib: i64,
+    pub lyrics_azlyrics: i64,
 }
 
 pub struct UserService;
@@ -207,6 +225,14 @@ impl UserService {
             .column_as(
                 UserColumn::LyricsMusixmatch.sum().cast_as(bigint()),
                 "lyrics_musixmatch",
+            )
+            .column_as(
+                UserColumn::LyricsLrcLib.sum().cast_as(bigint()),
+                "lyrics_lrclib",
+            )
+            .column_as(
+                UserColumn::LyricsAZLyrics.sum().cast_as(bigint()),
+                "lyrics_azlyrics",
             )
             .column_as(
                 UserColumn::LyricsGenius
