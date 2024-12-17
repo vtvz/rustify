@@ -41,7 +41,7 @@ ssh:
   ssh -t "{{ server }}" "cd {{ path }}; bash --login"
 
 restart:
-  ssh "{{ server }}" -- docker-compose --project-directory "{{ path }}" restart bot track_check
+  ssh "{{ server }}" -- docker-compose --project-directory "{{ path }}" restart bot track_check queues
 
 run-bot:
   proxychains4 -q cargo run --bin "bot"
@@ -49,11 +49,14 @@ run-bot:
 run-track-check:
   proxychains4 -q cargo run --bin "track_check"
 
+run-queues:
+  proxychains4 -q cargo run --bin "queues"
+
 run-metrics:
   proxychains4 -q cargo run --bin "metrics"
 
 run:
-  parallel --tagstring "[{}]" --line-buffer -j3 --halt now,fail=1 just ::: "run-bot" "run-track-check" "run-metrics"
+  parallel --tagstring "[{}]" --line-buffer -j4 --halt now,fail=1 just ::: "run-bot" "run-track-check" "run-metrics" "run-queues"
 
 watch:
   cargo watch -s 'just run'

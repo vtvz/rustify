@@ -1,5 +1,7 @@
+use anyhow::{Context as _, bail};
 use indoc::formatdoc;
 use isolang::Language;
+use redis::AsyncCommands as _;
 use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
@@ -7,7 +9,68 @@ use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use crate::spotify::ShortTrack;
 use crate::state::AppState;
 use crate::telegram::inline_buttons::InlineButtons;
+use crate::user_service::UserService;
 use crate::{lyrics, profanity, state, telegram};
+
+#[derive(Serialize, Deserialize)]
+pub struct ProfanityCheckQueueTask {
+    track: ShortTrack,
+    user_id: String,
+}
+
+#[tracing::instrument(
+    skip_all,
+    fields(
+        track_id = track.id(),
+        track_name = track.name_with_artists(),
+        user_id,
+    )
+)]
+pub async fn queue(
+    mut redis: redis::aio::MultiplexedConnection,
+    user_id: &str,
+    track: &ShortTrack,
+) -> anyhow::Result<()> {
+    let channel = "rustify:profanity_check".to_string();
+
+    let data = serde_json::to_string(&ProfanityCheckQueueTask {
+        track: track.clone(),
+        user_id: user_id.into(),
+    })?;
+
+    let _: () = redis.lpush(channel, data).await?;
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn consume(
+    app: &'static AppState,
+    mut redis: redis::aio::MultiplexedConnection,
+) -> anyhow::Result<()> {
+    let channel = "rustify:profanity_check".to_string();
+
+    let message: Option<(String, String)> = redis.brpop(channel, 0.0).await?;
+
+    let Some((_channel, message)) = message else {
+        bail!("No message")
+    };
+
+    let data: ProfanityCheckQueueTask = serde_json::from_str(&message)?;
+
+    let user_state = app.user_state(&data.user_id).await?;
+
+    let res = check(app, &user_state, &data.track)
+        .await
+        .context("Check lyrics failed")?;
+
+    UserService::increase_stats_query(user_state.user_id())
+        .checked_lyrics(res.profane, res.provider)
+        .exec(app.db())
+        .await?;
+
+    Ok(())
+}
 
 #[derive(Default)]
 pub struct CheckBadWordsResult {

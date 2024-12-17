@@ -18,6 +18,13 @@ services:
     restart: always
     entrypoint: /usr/local/bin/rustify-track-check
 
+  queues:
+    image: "{{ rustify_docker_image }}"
+    environment:
+      {{ rustify_env_content | indent(6) }}
+    restart: always
+    entrypoint: /usr/local/bin/rustify-queues
+
   db:
     image: postgres:16
     restart: always
