@@ -9,6 +9,7 @@ use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use crate::spotify::ShortTrack;
 use crate::state::AppState;
 use crate::telegram::inline_buttons::InlineButtons;
+use crate::telegram::utils::link_preview_small_top;
 use crate::user_service::UserService;
 use crate::{lyrics, profanity, state, telegram};
 
@@ -160,6 +161,7 @@ pub async fn check(
         .bot()
         .send_message(ChatId(state.user_id().parse()?), message)
         .parse_mode(ParseMode::Html)
+        .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
