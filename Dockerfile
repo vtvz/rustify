@@ -16,7 +16,8 @@ COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p src/bin \
   && echo "fn main() {}" > src/bin/bot.rs \
   && echo "fn main() {}" > src/bin/metrics.rs \
-  && echo "fn main() {}" > src/bin/track_check.rs
+  && echo "fn main() {}" > src/bin/track_check.rs \
+  && echo "fn main() {}" > src/bin/queues.rs
 
 # Fetch dependencies without building the actual project (this will be cached)
 
@@ -47,3 +48,4 @@ RUN \
 COPY --from=builder /usr/src/rustify/target/release/bot /usr/local/bin/rustify-bot
 COPY --from=builder /usr/src/rustify/target/release/metrics /usr/local/bin/rustify-metrics
 COPY --from=builder /usr/src/rustify/target/release/track_check /usr/local/bin/rustify-track-check
+COPY --from=builder /usr/src/rustify/target/release/queues /usr/local/bin/rustify-queues

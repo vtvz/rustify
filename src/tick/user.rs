@@ -5,7 +5,7 @@ use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, SpotifyError};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
-use crate::{spotify, state};
+use crate::{queue, spotify, state};
 
 #[allow(dead_code)]
 #[derive(Clone, Display)]
@@ -72,26 +72,9 @@ pub async fn check(
                 return Ok(CheckUserResult::SkipSame);
             }
 
-            let res = super::profanity_check::check(app, &state, &track)
+            queue::profanity_check::queue(app.redis_conn().await?, state.user_id(), &track)
                 .await
-                .context("Check bad words");
-
-            match res {
-                Ok(res) => {
-                    UserService::increase_stats_query(state.user_id())
-                        .checked_lyrics(res.profane, res.provider)
-                        .exec(app.db())
-                        .await?;
-                },
-                Err(err) => {
-                    tracing::error!(
-                        err = ?err,
-                        track_id = %track.id(),
-                        track_name = %track.name_with_artists(),
-                        "Error occurred on checking bad words",
-                    )
-                },
-            }
+                .context("Check bad words")?;
         },
         TrackStatus::Ignore => {},
     }

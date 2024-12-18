@@ -76,3 +76,6 @@ name = "track_check"
 
 [[bin]]
 name = "metrics"
+
+[[bin]]
+name = "queues"

@@ -1,5 +1,4 @@
 mod disliked_track;
-mod profanity_check;
 mod user;
 
 use std::sync::Arc;
