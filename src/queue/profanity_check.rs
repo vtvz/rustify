@@ -19,6 +19,8 @@ pub struct ProfanityCheckQueueTask {
     user_id: String,
 }
 
+const REDIS_QUEUE_CHANNEL: &str = "rustify:profanity_check";
+
 #[tracing::instrument(
     skip_all,
     fields(
@@ -32,14 +34,12 @@ pub async fn queue(
     user_id: &str,
     track: &ShortTrack,
 ) -> anyhow::Result<()> {
-    let channel = "rustify:profanity_check".to_string();
-
     let data = serde_json::to_string(&ProfanityCheckQueueTask {
         track: track.clone(),
         user_id: user_id.into(),
     })?;
 
-    let _: () = redis.lpush(channel, data).await?;
+    let _: () = redis.lpush(REDIS_QUEUE_CHANNEL, data).await?;
 
     Ok(())
 }
@@ -49,9 +49,7 @@ pub async fn consume(
     app: &'static AppState,
     mut redis: redis::aio::MultiplexedConnection,
 ) -> anyhow::Result<()> {
-    let channel = "rustify:profanity_check".to_string();
-
-    let message: Option<(String, String)> = redis.brpop(channel, 0.0).await?;
+    let message: Option<(String, String)> = redis.brpop(REDIS_QUEUE_CHANNEL, 0.0).await?;
 
     let Some((_channel, message)) = message else {
         bail!("No message")
