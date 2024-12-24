@@ -4,6 +4,7 @@ use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
 use teloxide::utils::html;
 
+use super::HandleStatus;
 use crate::entity::prelude::*;
 use crate::state::{AppState, UserState};
 use crate::telegram::actions;
@@ -15,11 +16,11 @@ pub async fn handle(
     app: &'static AppState,
     state: &UserState,
     m: &Message,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     let text = m.text().context("No text available")?;
 
     if !text.starts_with('/') {
-        return Ok(false);
+        return Ok(HandleStatus::Skipped);
     }
 
     let command = match Command::parse(text, "RustifyBot") {
@@ -37,9 +38,9 @@ pub async fn handle(
                 .send()
                 .await?;
 
-            return Ok(true);
+            return Ok(HandleStatus::Handled);
         },
-        Err(ParseError::IncorrectFormat(_)) => return Ok(false),
+        Err(ParseError::IncorrectFormat(_)) => return Ok(HandleStatus::Skipped),
         Err(var) => return Err(var.into()),
         Ok(command) => command,
     };
@@ -81,5 +82,5 @@ pub async fn handle(
             return actions::whitelist::handle(app, state, m, action, user_id).await;
         },
     }
-    Ok(true)
+    Ok(HandleStatus::Handled)
 }

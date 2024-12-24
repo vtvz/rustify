@@ -7,6 +7,7 @@ use teloxide::types::ReplyParameters;
 
 use crate::entity::prelude::*;
 use crate::state::{AppState, UserState};
+use crate::telegram::handlers::HandleStatus;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
 use crate::utils::retry;
@@ -15,7 +16,7 @@ pub async fn handle(
     app: &'static AppState,
     state: &UserState,
     m: &Message,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     let message = app
         .bot()
         .send_message(
@@ -153,5 +154,5 @@ pub async fn handle(
         .send()
         .await?;
 
-    Ok(true)
+    Ok(HandleStatus::Handled)
 }

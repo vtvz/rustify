@@ -15,6 +15,7 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::state::{AppState, UserState};
+use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
@@ -24,7 +25,7 @@ pub async fn handle_current(
     app: &'static AppState,
     state: &UserState,
     m: &Message,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     let spotify = state.spotify().await;
     let track = match CurrentlyPlaying::get(&spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
@@ -34,7 +35,7 @@ pub async fn handle_current(
                 .send()
                 .await?;
 
-            return Ok(true);
+            return Ok(HandleStatus::Handled);
         },
         CurrentlyPlaying::Ok(track, _) => track,
     };
@@ -59,9 +60,9 @@ pub async fn handle_url(
     state: &UserState,
     url: &url::Url,
     m: &Message,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     let Some(track_id) = extract_id(url) else {
-        return Ok(false);
+        return Ok(HandleStatus::Skipped);
     };
 
     let track = state.spotify().await.track(track_id, None).await?.into();
@@ -74,7 +75,7 @@ async fn common(
     state: &UserState,
     m: &Message,
     track: ShortTrack,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     let spotify = state.spotify().await;
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
@@ -217,7 +218,7 @@ async fn common(
             .send()
             .await?;
 
-        return Ok(true);
+        return Ok(HandleStatus::Handled);
     };
 
     let checked = profanity::Manager::check(hit.lyrics());
@@ -269,7 +270,7 @@ async fn common(
         .send()
         .await?;
 
-    Ok(true)
+    Ok(HandleStatus::Handled)
 }
 
 #[cfg(test)]

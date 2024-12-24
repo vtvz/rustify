@@ -14,6 +14,7 @@ use super::super::keyboards::StartKeyboard;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::state::{AppState, UserState};
+use crate::telegram::handlers::HandleStatus;
 use crate::user_service::UserService;
 
 pub async fn handle(
@@ -21,14 +22,14 @@ pub async fn handle(
     state: &UserState,
     url: &url::Url,
     m: &Message,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     let value = url
         .query_pairs()
         .find(|(key, _)| key == "code")
         .map(|(_, value)| value.to_string());
 
     let Some(code) = value else {
-        return Ok(false);
+        return Ok(HandleStatus::Skipped);
     };
 
     process_spotify_code(app, state, m, code).await
@@ -39,7 +40,7 @@ async fn process_spotify_code(
     state: &UserState,
     m: &Message,
     code: String,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     let instance = state.spotify_write().await;
 
     if let Err(err) = instance.request_token(&code).await {
@@ -58,7 +59,7 @@ async fn process_spotify_code(
             .send()
             .await?;
 
-        return Ok(true);
+        return Ok(HandleStatus::Handled);
     };
 
     let Some(token) = token.clone() else {
@@ -67,7 +68,7 @@ async fn process_spotify_code(
             .send()
             .await?;
 
-        return Ok(true);
+        return Ok(HandleStatus::Handled);
     };
 
     {
@@ -85,10 +86,13 @@ async fn process_spotify_code(
         .send()
         .await?;
 
-    Ok(true)
+    Ok(HandleStatus::Handled)
 }
 
-pub async fn send_register_invite(app: &'static AppState, chat_id: ChatId) -> anyhow::Result<bool> {
+pub async fn send_register_invite(
+    app: &'static AppState,
+    chat_id: ChatId,
+) -> anyhow::Result<HandleStatus> {
     let url = app.spotify_manager().get_authorize_url().await?;
     app.bot()
         .send_message(
@@ -108,5 +112,5 @@ pub async fn send_register_invite(app: &'static AppState, chat_id: ChatId) -> an
         .send()
         .await?;
 
-    Ok(true)
+    Ok(HandleStatus::Handled)
 }
