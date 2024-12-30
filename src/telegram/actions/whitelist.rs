@@ -3,6 +3,7 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::state::{AppState, UserState};
 use crate::telegram::actions;
+use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 
 pub async fn handle(
@@ -11,9 +12,9 @@ pub async fn handle(
     m: &Message,
     action: String,
     user_id: String,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     if !app.whitelist().is_admin(state.user_id()) {
-        return Ok(false);
+        return Ok(HandleStatus::Skipped);
     }
 
     let Ok(user_id_int) = user_id.parse::<i64>() else {
@@ -22,7 +23,7 @@ pub async fn handle(
             .send()
             .await?;
 
-        return Ok(true);
+        return Ok(HandleStatus::Handled);
     };
 
     match action.as_str() {
@@ -88,5 +89,5 @@ pub async fn handle(
         },
     };
 
-    Ok(true)
+    Ok(HandleStatus::Handled)
 }

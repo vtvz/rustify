@@ -3,6 +3,7 @@ use std::str::FromStr;
 use anyhow::Context;
 use teloxide::prelude::*;
 
+use super::HandleStatus;
 use crate::state::{AppState, UserState};
 use crate::telegram::actions;
 use crate::telegram::keyboards::StartKeyboard;
@@ -11,11 +12,11 @@ pub async fn handle(
     app: &'static AppState,
     state: &UserState,
     m: &Message,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
         actions::register::send_register_invite(app, m.chat.id).await?;
 
-        return Ok(true);
+        return Ok(HandleStatus::Handled);
     }
 
     let text = m.text().context("No text available")?;
@@ -23,7 +24,7 @@ pub async fn handle(
     let button = StartKeyboard::from_str(text);
 
     if button.is_err() {
-        return Ok(false);
+        return Ok(HandleStatus::Skipped);
     }
 
     let button = button?;

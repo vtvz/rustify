@@ -185,7 +185,7 @@ async fn run() {
                         .await?;
                 }
 
-                result
+                result.map(|_| ())
             }),
         )
         .branch(Update::filter_callback_query().endpoint(

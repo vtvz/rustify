@@ -5,6 +5,7 @@ use super::super::inline_buttons::InlineButtons;
 use crate::entity::prelude::*;
 use crate::spotify::CurrentlyPlaying;
 use crate::state::{AppState, UserState};
+use crate::telegram::handlers::HandleStatus;
 use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
 
@@ -12,9 +13,9 @@ pub async fn handle(
     app: &'static AppState,
     state: &UserState,
     m: &Message,
-) -> anyhow::Result<bool> {
+) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        return Ok(false);
+        return Ok(HandleStatus::Skipped);
     }
 
     let track = match CurrentlyPlaying::get(&*state.spotify().await).await {
@@ -25,7 +26,7 @@ pub async fn handle(
                 .send()
                 .await?;
 
-            return Ok(true);
+            return Ok(HandleStatus::Handled);
         },
         CurrentlyPlaying::Ok(track, _) => track,
     };
@@ -46,5 +47,5 @@ pub async fn handle(
         .send()
         .await?;
 
-    Ok(true)
+    Ok(HandleStatus::Handled)
 }
