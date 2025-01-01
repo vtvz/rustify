@@ -1,7 +1,7 @@
 use teloxide::utils::command::BotCommands;
 
 #[derive(BotCommands, PartialEq, Eq, Debug)]
-#[command(rename_rule = "lowercase", parse_with = "split")]
+#[command(rename_rule = "snake_case", parse_with = "split")]
 pub enum Command {
     #[command(description = "start")]
     Start,
@@ -17,6 +17,10 @@ pub enum Command {
     Stats,
     #[command(description = "login to spotify")]
     Register,
+    #[command(description = "toggle setting of skipping disliked tracks")]
+    ToggleTrackSkip,
+    #[command(description = "toggle setting of profanity check")]
+    ToggleProfanityCheck,
     #[command(description = "show this help")]
     Help,
 

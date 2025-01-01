@@ -28,6 +28,9 @@ pub struct Model {
     pub status: Status,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
+    pub cfg_check_profanity: bool,
+    pub cfg_skip_tracks: bool,
+    pub cfg_not_english_alert: bool,
 }
 
 #[async_trait]
@@ -62,6 +65,9 @@ pub enum Column {
     Status,
     CreatedAt,
     UpdatedAt,
+    CfgCheckProfanity,
+    CfgSkipTracks,
+    CfgNotEnglishAlert,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -95,6 +101,9 @@ impl ColumnTrait for Column {
             Self::Status => Status::db_type(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),
+            Self::CfgCheckProfanity => ColumnType::Boolean.def(),
+            Self::CfgSkipTracks => ColumnType::Boolean.def(),
+            Self::CfgNotEnglishAlert => ColumnType::Boolean.def(),
         }
     }
 }
