@@ -73,7 +73,7 @@ impl TrackStatusService {
     ) -> anyhow::Result<i64> {
         #[derive(FromQueryResult, Default)]
         struct SkipsCount {
-            count: i64,
+            count: Option<i64>,
         }
 
         let skips: SkipsCount = Self::builder()
@@ -89,7 +89,7 @@ impl TrackStatusService {
             .await?
             .unwrap_or_default();
 
-        Ok(skips.count)
+        Ok(skips.count.unwrap_or_default())
     }
 
     pub async fn set_status(

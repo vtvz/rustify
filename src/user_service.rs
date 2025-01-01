@@ -147,7 +147,7 @@ impl UserService {
         Ok(!played)
     }
 
-    async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> anyhow::Result<UserActiveModel> {
+    pub async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> anyhow::Result<UserModel> {
         let user = Self::query(Some(id), None).one(db).await?;
 
         let user = match user {
@@ -160,8 +160,7 @@ impl UserService {
                 .insert(db)
                 .await?
             },
-        }
-        .into_active_model();
+        };
 
         Ok(user)
     }
@@ -171,7 +170,7 @@ impl UserService {
         id: &str,
         status: UserStatus,
     ) -> anyhow::Result<UserActiveModel> {
-        let mut user = Self::obtain_by_id(db, id).await?;
+        let mut user = Self::obtain_by_id(db, id).await?.into_active_model();
 
         user.status = Set(status);
 

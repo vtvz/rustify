@@ -99,7 +99,7 @@ impl SpotifyAuthService {
         SpotifyAuthService::suspend_until(db, user_ids, suspend_until).await
     }
 
-    pub async fn get_registered(db: &impl ConnectionTrait) -> anyhow::Result<Vec<String>> {
+    pub async fn get_registered_user_ids(db: &impl ConnectionTrait) -> anyhow::Result<Vec<String>> {
         let subquery: Select<UserEntity> = UserService::query(None, Some(UserStatus::Active))
             .select_only()
             .column(UserColumn::Id);

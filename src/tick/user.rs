@@ -56,25 +56,31 @@ pub async fn check(
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
+    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
+
     match status {
         TrackStatus::Disliked => {
-            super::disliked_track::handle(app, &state, &track, context.as_ref()).await?;
+            if user.cfg_skip_tracks {
+                super::disliked_track::handle(app, &state, &track, context.as_ref()).await?;
+            }
         },
         TrackStatus::None => {
-            let changed = UserService::sync_current_playing(
-                app.redis_conn().await?,
-                state.user_id(),
-                track.id(),
-            )
-            .await?;
+            if user.cfg_check_profanity {
+                let changed = UserService::sync_current_playing(
+                    app.redis_conn().await?,
+                    state.user_id(),
+                    track.id(),
+                )
+                .await?;
 
-            if !changed {
-                return Ok(CheckUserResult::SkipSame);
+                if !changed {
+                    return Ok(CheckUserResult::SkipSame);
+                }
+
+                queue::profanity_check::queue(app.redis_conn().await?, state.user_id(), &track)
+                    .await
+                    .context("Check bad words")?;
             }
-
-            queue::profanity_check::queue(app.redis_conn().await?, state.user_id(), &track)
-                .await
-                .context("Check bad words")?;
         },
         TrackStatus::Ignore => {},
     }
