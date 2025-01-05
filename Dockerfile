@@ -1,4 +1,4 @@
-FROM rustlang/rust:nightly-bookworm AS builder
+FROM rust:1.83.0 AS builder
 
 # Set the working directory inside the container
 WORKDIR /usr/src/rustify

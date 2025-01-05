@@ -1,7 +1,9 @@
+use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
 use std::slice::Iter;
 
 use lazy_static::lazy_static;
+use regex::Regex;
 use rustrict::{Trie, Type, is_whitespace};
 use teloxide::utils::html;
 
@@ -53,6 +55,21 @@ impl CheckResult {
         self.typ.is(*TYPE_TRIGGER)
     }
 
+    fn extract_bad_chars(line: &str, censored: &str) -> Vec<usize> {
+        let bad_chars: Vec<_> = line
+            .chars()
+            .enumerate()
+            .filter_map(|(i, c)| {
+                if censored.chars().nth(i) != Some(c) {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        bad_chars
+    }
+
     fn perform(text: Vec<&str>) -> Self {
         let checks: Vec<_> = text
             .into_iter()
@@ -94,17 +111,7 @@ impl CheckResult {
                     };
                 }
 
-                let bad_chars: Vec<_> = line
-                    .chars()
-                    .enumerate()
-                    .filter_map(|(i, c)| {
-                        if censored.chars().nth(i) != Some(c) {
-                            Some(i)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect();
+                let bad_chars = Self::extract_bad_chars(&line, &censored);
 
                 LineResult {
                     no: index,
@@ -129,6 +136,7 @@ impl CheckResult {
     }
 }
 
+#[derive(Default)]
 pub struct LineResult {
     pub no: usize,
     pub typ: TypeWrapper,
@@ -157,9 +165,49 @@ impl LineResult {
             .collect::<Vec<_>>()
             .join("")
     }
+
+    pub fn get_profine_words(&self) -> HashSet<String> {
+        lazy_static! {
+            static ref RG_WRAPPER: Regex =
+                Regex::new(r"<u>(.*?)</u>").expect("Should be compilable");
+        }
+
+        let haystack = &self.highlighted();
+
+        let iter = RG_WRAPPER.captures_iter(haystack).map(|m| {
+            let (_, [word]) = m.extract();
+
+            word.to_lowercase()
+        });
+
+        HashSet::from_iter(iter)
+    }
 }
 
-#[derive(Clone, Copy, Deref, From)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_profine_words() {
+        let line = "good Bad normal worst ok bad".to_owned();
+        let censored = "good *** normal ***** ok ***".to_owned();
+
+        let line = LineResult {
+            bad_chars: CheckResult::extract_bad_chars(&line, &censored),
+            line,
+            ..Default::default()
+        };
+
+        let profine_words = line.get_profine_words();
+        assert_eq!(
+            profine_words,
+            HashSet::from(["bad".to_owned(), "worst".to_owned()])
+        );
+    }
+}
+
+#[derive(Clone, Copy, Deref, From, Default)]
 pub struct TypeWrapper(Type);
 
 impl TypeWrapper {

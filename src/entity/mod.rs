@@ -2,7 +2,8 @@
 
 pub mod prelude;
 
-pub mod spotify_auth;
-pub mod track_status;
-pub mod user;
-pub mod user_whitelist;
+mod spotify_auth;
+mod track_status;
+mod user;
+mod user_whitelist;
+mod user_word_whitelist;
