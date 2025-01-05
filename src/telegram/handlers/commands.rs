@@ -62,6 +62,9 @@ pub async fn handle(
         Command::Dislike => {
             return actions::dislike::handle(app, state, m).await;
         },
+        Command::Like => {
+            return actions::like::handle(app, state, m).await;
+        },
         Command::Cleanup => {
             return actions::cleanup::handle(app, state, m).await;
         },

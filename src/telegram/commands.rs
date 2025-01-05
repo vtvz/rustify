@@ -9,6 +9,8 @@ pub enum Command {
     Keyboard,
     #[command(description = "dislike current track")]
     Dislike,
+    #[command(description = "like current track")]
+    Like,
     #[command(description = "delete disliked tracks from your playlists")]
     Cleanup,
     #[command(description = "show details about currently playing track")]
