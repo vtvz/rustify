@@ -90,6 +90,10 @@ pub async fn handle(
         Command::ToggleProfanityCheck => {
             return actions::settings::handle_toggle_profanity_check(app, state, m.chat.id).await;
         },
+        Command::AddWhitelistWord { word } => {
+            return actions::user_word_whitelist::handle_add_word(app, state, m.chat.id, word)
+                .await;
+        },
     }
     Ok(HandleStatus::Handled)
 }

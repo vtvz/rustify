@@ -1,7 +1,8 @@
 use std::collections::HashSet;
 
 use sea_orm::prelude::*;
-use sea_orm::{ConnectionTrait, FromQueryResult, QuerySelect};
+use sea_orm::sea_query::OnConflict;
+use sea_orm::{ConnectionTrait, FromQueryResult, QuerySelect, Set};
 
 use crate::entity::prelude::*;
 
@@ -29,5 +30,35 @@ impl UserWordWhitelistService {
             .collect();
 
         Ok(ok_words)
+    }
+
+    pub async fn add_ok_word_for_user(
+        db: &impl ConnectionTrait,
+        user_id: String,
+        word: String,
+    ) -> anyhow::Result<()> {
+        let rec = UserWordWhitelistActiveModel {
+            user_id: Set(user_id),
+            word: Set(word.to_lowercase()),
+            ..Default::default()
+        };
+
+        let res = UserWordWhitelistEntity::insert(rec)
+            .on_conflict(
+                OnConflict::columns(vec![
+                    UserWordWhitelistColumn::UserId,
+                    UserWordWhitelistColumn::Word,
+                ])
+                .do_nothing()
+                .to_owned(),
+            )
+            .exec(db)
+            .await;
+
+        if !matches!(res, Err(DbErr::RecordNotInserted)) {
+            res?;
+        }
+
+        Ok(())
     }
 }

@@ -1,4 +1,8 @@
+use async_trait::async_trait;
+use sea_orm::Set;
 use sea_orm::entity::prelude::*;
+
+use crate::utils::Clock;
 
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;
@@ -12,13 +16,32 @@ impl EntityName for Entity {
 #[derive(Clone, Debug, PartialEq, DeriveModel, DeriveActiveModel, Eq)]
 pub struct Model {
     pub id: i32,
+    pub created_at: chrono::NaiveDateTime,
+    pub updated_at: chrono::NaiveDateTime,
     pub user_id: String,
-    pub word: Option<String>,
+    pub word: String,
+}
+
+#[async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    async fn before_save<C>(mut self, _db: &C, insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        self.updated_at = Set(Clock::now());
+        if insert {
+            self.created_at = Set(Clock::now());
+        }
+
+        Ok(self)
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 pub enum Column {
     Id,
+    CreatedAt,
+    UpdatedAt,
     UserId,
     Word,
 }
@@ -47,8 +70,10 @@ impl ColumnTrait for Column {
     fn def(&self) -> ColumnDef {
         match self {
             Self::Id => ColumnType::Integer.def(),
+            Self::CreatedAt => ColumnType::DateTime.def(),
+            Self::UpdatedAt => ColumnType::DateTime.def(),
             Self::UserId => ColumnType::Text.def(),
-            Self::Word => ColumnType::Text.def().null(),
+            Self::Word => ColumnType::Text.def(),
         }
     }
 }
@@ -69,5 +94,3 @@ impl Related<super::user::Entity> for Entity {
         Relation::User.def()
     }
 }
-
-impl ActiveModelBehavior for ActiveModel {}
