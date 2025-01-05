@@ -62,6 +62,9 @@ pub async fn handle(
         Command::Dislike => {
             return actions::dislike::handle(app, state, m).await;
         },
+        Command::Like => {
+            return actions::like::handle(app, state, m).await;
+        },
         Command::Cleanup => {
             return actions::cleanup::handle(app, state, m).await;
         },
@@ -80,6 +83,12 @@ pub async fn handle(
         },
         Command::Whitelist(action, user_id) => {
             return actions::whitelist::handle(app, state, m, action, user_id).await;
+        },
+        Command::ToggleTrackSkip => {
+            return actions::settings::handle_toggle_skip_tracks(app, state, m.chat.id).await;
+        },
+        Command::ToggleProfanityCheck => {
+            return actions::settings::handle_toggle_profanity_check(app, state, m.chat.id).await;
         },
     }
     Ok(HandleStatus::Handled)

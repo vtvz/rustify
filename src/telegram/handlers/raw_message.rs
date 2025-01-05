@@ -18,5 +18,9 @@ pub async fn handle(
         return actions::dislike::handle(app, state, m).await;
     }
 
+    if text == "+" {
+        return actions::like::handle(app, state, m).await;
+    }
+
     Ok(HandleStatus::Skipped)
 }
