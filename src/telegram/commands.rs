@@ -1,3 +1,5 @@
+use std::fmt::Formatter;
+
 use teloxide::utils::command::BotCommands;
 
 #[derive(BotCommands, PartialEq, Eq, Debug)]
@@ -46,4 +48,28 @@ pub enum Command {
 
     #[command(hide)]
     Whitelist(String, String),
+}
+
+impl std::fmt::Display for Command {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let string = match self {
+            Command::Start => "start",
+            Command::Keyboard => "keyboard",
+            Command::Dislike => "dislike",
+            Command::Like => "like",
+            Command::Cleanup => "cleanup",
+            Command::Details => "details",
+            Command::Stats => "stats",
+            Command::Register => "register",
+            Command::ToggleTrackSkip => "toggle_track_skip",
+            Command::ToggleProfanityCheck => "toggle_profanity_check",
+            Command::Help => "help",
+            Command::AddWhitelistWord { .. } => "add_word_to_whitelist",
+            Command::RemoveWhitelistWord { .. } => "remove_word_from_whitelist",
+            Command::ListWhitelistWords => "list_words_in_whitelist",
+            Command::Whitelist(..) => "whitelist",
+        };
+
+        f.write_str(string)
+    }
 }

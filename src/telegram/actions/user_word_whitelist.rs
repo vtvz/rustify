@@ -1,12 +1,26 @@
 use indoc::formatdoc;
 use itertools::Itertools as _;
+use lazy_static::lazy_static;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::state::{AppState, UserState};
+use crate::telegram::commands::Command;
 use crate::telegram::handlers::HandleStatus;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
+
+lazy_static! {
+    static ref ADD_COMMAND: String = Command::AddWhitelistWord {
+        word: String::new()
+    }
+    .to_string();
+    static ref REMOVE_COMMAND: String = Command::RemoveWhitelistWord {
+        word: String::new()
+    }
+    .to_string();
+    static ref LIST_COMMAND: String = Command::ListWhitelistWords.to_string();
+}
 
 pub async fn handle_add_word(
     app: &AppState,
@@ -15,7 +29,10 @@ pub async fn handle_add_word(
     word: String,
 ) -> anyhow::Result<HandleStatus> {
     if word.is_empty() {
-        let message = "Provide word <code>/add_whitelist_word yourword</code>";
+        let message = format!(
+            "Provide word <code>/{command} yourword</code>",
+            command = *ADD_COMMAND
+        );
 
         app.bot()
             .send_message(chat_id, message)
@@ -33,9 +50,23 @@ pub async fn handle_add_word(
     .await?;
 
     let message = if added {
-        format!("Word <code>'{word}'</code> added to whitelist")
+        formatdoc!(
+            "
+                Word <code>'{word}'</code> added to whitelist
+
+                To list all word in whitelist /{command}
+            ",
+            command = *LIST_COMMAND
+        )
     } else {
-        format!("Word <code>'{word}'</code> already in whitelist")
+        formatdoc!(
+            "
+                Word <code>'{word}'</code> already in whitelist
+
+                To list all word in whitelist /{command}
+            ",
+            command = *LIST_COMMAND
+        )
     };
 
     app.bot()
@@ -53,7 +84,10 @@ pub async fn handle_remove_word(
     word: String,
 ) -> anyhow::Result<HandleStatus> {
     if word.is_empty() {
-        let message = "Provide word <code>/remove_whitelist_word yourword</code>";
+        let message = format!(
+            "Provide word <code>/{command} yourword</code>",
+            command = *ADD_COMMAND
+        );
 
         app.bot()
             .send_message(chat_id, message)
@@ -69,7 +103,13 @@ pub async fn handle_remove_word(
     let message = if removed {
         format!("Word <code>'{word}'</code> removed from whitelist")
     } else {
-        format!("Word <code>'{word}'</code> was not added")
+        formatdoc!(
+            "
+                Word <code>'{word}'</code> not in whitelist
+                To list all word in whitelist /{command}
+            ",
+            command = *LIST_COMMAND
+        )
     };
 
     app.bot()
@@ -91,8 +131,10 @@ pub async fn handle_list_words(
         formatdoc!(
             "
                 Your whitelist is empty
-                Add new word with <code>/add_whitelist_word your-word</code>
-            "
+
+                Add new word with <code>/{command} your-word</code>
+            ",
+            command = *ADD_COMMAND
         )
     } else {
         let words = words
@@ -107,8 +149,9 @@ pub async fn handle_list_words(
 
                 {words}
 
-                You can remove word with <code>/remove_whitelist_word your-word</code> command
-            "
+                You can remove word with <code>/{command} your-word</code> command
+            ",
+            command = *REMOVE_COMMAND
         )
     };
 
