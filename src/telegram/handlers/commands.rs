@@ -94,6 +94,13 @@ pub async fn handle(
             return actions::user_word_whitelist::handle_add_word(app, state, m.chat.id, word)
                 .await;
         },
+        Command::RemoveWhitelistWord { word } => {
+            return actions::user_word_whitelist::handle_remove_word(app, state, m.chat.id, word)
+                .await;
+        },
+        Command::ListWhitelistWords => {
+            return actions::user_word_whitelist::handle_list_words(app, state, m.chat.id).await;
+        },
     }
     Ok(HandleStatus::Handled)
 }

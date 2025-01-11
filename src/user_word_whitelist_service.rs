@@ -61,4 +61,18 @@ impl UserWordWhitelistService {
 
         Ok(())
     }
+
+    pub async fn remove_ok_word_for_user(
+        db: &impl ConnectionTrait,
+        user_id: &str,
+        word: &str,
+    ) -> anyhow::Result<()> {
+        UserWordWhitelistEntity::delete_many()
+            .filter(UserWordWhitelistColumn::UserId.eq(user_id))
+            .filter(UserWordWhitelistColumn::Word.eq(word.to_lowercase()))
+            .exec(db)
+            .await?;
+
+        Ok(())
+    }
 }
