@@ -26,11 +26,22 @@ pub enum Command {
     #[command(description = "show this help")]
     Help,
 
-    #[command(description = "add word to whitelist")]
+    #[command(
+        description = "add word to whitelist",
+        rename = "add_word_to_whitelist"
+    )]
     AddWhitelistWord { word: String },
-    #[command(description = "remove word from whitelist")]
+
+    #[command(
+        description = "remove word from whitelist",
+        rename = "remove_word_from_whitelist"
+    )]
     RemoveWhitelistWord { word: String },
-    #[command(description = "list words in whitelist")]
+
+    #[command(
+        description = "list words in whitelist",
+        rename = "list_words_in_whitelist"
+    )]
     ListWhitelistWords,
 
     #[command(hide)]
