@@ -5,6 +5,9 @@ use teloxide::utils::command::BotCommands;
 #[derive(BotCommands, PartialEq, Eq, Debug)]
 #[command(rename_rule = "snake_case", parse_with = "split")]
 pub enum Command {
+    #[command(description = "show this help")]
+    Help,
+
     #[command(description = "start")]
     Start,
     #[command(description = "show keyboard")]
@@ -21,12 +24,11 @@ pub enum Command {
     Stats,
     #[command(description = "login to spotify")]
     Register,
+
     #[command(description = "toggle setting of skipping disliked tracks")]
     ToggleTrackSkip,
     #[command(description = "toggle setting of profanity check")]
     ToggleProfanityCheck,
-    #[command(description = "show this help")]
-    Help,
 
     #[command(
         description = "add word to whitelist",

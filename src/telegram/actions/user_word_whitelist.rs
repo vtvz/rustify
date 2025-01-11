@@ -8,6 +8,7 @@ use teloxide::types::{ChatId, ParseMode};
 use crate::state::{AppState, UserState};
 use crate::telegram::commands::Command;
 use crate::telegram::handlers::HandleStatus;
+use crate::telegram::keyboards::StartKeyboard;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
 
 lazy_static! {
@@ -36,6 +37,7 @@ pub async fn handle_add_word(
 
         app.bot()
             .send_message(chat_id, message)
+            .reply_markup(StartKeyboard::markup())
             .parse_mode(ParseMode::Html)
             .await?;
 
@@ -71,6 +73,7 @@ pub async fn handle_add_word(
 
     app.bot()
         .send_message(chat_id, message)
+        .reply_markup(StartKeyboard::markup())
         .parse_mode(ParseMode::Html)
         .await?;
 
@@ -91,6 +94,7 @@ pub async fn handle_remove_word(
 
         app.bot()
             .send_message(chat_id, message)
+            .reply_markup(StartKeyboard::markup())
             .parse_mode(ParseMode::Html)
             .await?;
 
@@ -114,6 +118,7 @@ pub async fn handle_remove_word(
 
     app.bot()
         .send_message(chat_id, message)
+        .reply_markup(StartKeyboard::markup())
         .parse_mode(ParseMode::Html)
         .await?;
 
@@ -157,6 +162,7 @@ pub async fn handle_list_words(
 
     app.bot()
         .send_message(chat_id, message.trim())
+        .reply_markup(StartKeyboard::markup())
         .parse_mode(ParseMode::Html)
         .await?;
 

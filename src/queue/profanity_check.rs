@@ -145,12 +145,13 @@ pub async fn check(
     let message = loop {
         let message = formatdoc!(
             r#"
-                Current song ({track_name}) probably has bad words (press 'Ignore text 🙈' in case of false positive):
+                Current song ({track_name}) <b>probably</b> has bad words:
 
                 {bad_lines}
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
-            "#,
+
+                Press 'Ignore text 🙈' to never see this notification again"#,
             track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
             lyrics_link = hit.link(),

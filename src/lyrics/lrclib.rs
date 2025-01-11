@@ -63,8 +63,7 @@ impl super::SearchResult for SearchResult {
         formatdoc!(
             r#"
                 {text} (with {confidence}% confidence)
-                {artist_name} - {track_name}
-            "#,
+                {artist_name} - {track_name}"#,
             confidence = self.confidence,
             artist_name = self.artist_name,
             track_name = self.track_name,

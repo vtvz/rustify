@@ -5,6 +5,7 @@ use teloxide::types::ParseMode;
 use crate::spotify::CurrentlyPlaying;
 use crate::state::{AppState, UserState};
 use crate::telegram::handlers::HandleStatus;
+use crate::telegram::keyboards::StartKeyboard;
 use crate::telegram::utils::link_preview_small_top;
 
 pub async fn handle(
@@ -37,6 +38,7 @@ pub async fn handle(
 
     app.bot()
         .send_message(m.chat.id, format!("Liked {}", track.track_tg_link()))
+        .reply_markup(StartKeyboard::markup())
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .send()

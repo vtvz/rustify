@@ -52,8 +52,7 @@ impl super::SearchResult for SearchResult {
         formatdoc!(
             r#"
                 {text} (with {confidence}% confidence)
-                {title}
-            "#,
+                {title}"#,
             title = &self.title,
             confidence = self.confidence,
         )
