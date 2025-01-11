@@ -36,7 +36,7 @@ impl UserWordWhitelistService {
         db: &impl ConnectionTrait,
         user_id: String,
         word: String,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<bool> {
         let rec = UserWordWhitelistActiveModel {
             user_id: Set(user_id),
             word: Set(word.to_lowercase()),
@@ -55,24 +55,24 @@ impl UserWordWhitelistService {
             .exec(db)
             .await;
 
-        if !matches!(res, Err(DbErr::RecordNotInserted)) {
-            res?;
+        match res {
+            Err(DbErr::RecordNotInserted) => Ok(false),
+            Err(err) => Err(err.into()),
+            Ok(_) => Ok(true),
         }
-
-        Ok(())
     }
 
     pub async fn remove_ok_word_for_user(
         db: &impl ConnectionTrait,
         user_id: &str,
         word: &str,
-    ) -> anyhow::Result<()> {
-        UserWordWhitelistEntity::delete_many()
+    ) -> anyhow::Result<bool> {
+        let res = UserWordWhitelistEntity::delete_many()
             .filter(UserWordWhitelistColumn::UserId.eq(user_id))
             .filter(UserWordWhitelistColumn::Word.eq(word.to_lowercase()))
             .exec(db)
             .await?;
 
-        Ok(())
+        Ok(res.rows_affected > 0)
     }
 }
