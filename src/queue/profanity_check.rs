@@ -11,6 +11,7 @@ use crate::state::AppState;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user_service::UserService;
+use crate::user_word_whitelist_service::UserWordWhitelistService;
 use crate::{lyrics, profanity, state, telegram};
 
 #[derive(Serialize, Deserialize)]
@@ -113,9 +114,17 @@ pub async fn check(
         return Ok(ret);
     }
 
+    let ok_words =
+        UserWordWhitelistService::get_ok_words_for_user(app.db(), state.user_id()).await?;
+
     let bad_lines: Vec<_> = check
         .into_iter()
         .filter(|profanity::LineResult { typ, .. }| !typ.is(Type::SAFE))
+        .filter(|line| {
+            let words = line.get_profine_words();
+
+            words.difference(&ok_words).next().is_some()
+        })
         .map(|line: profanity::LineResult| {
             format!(
                 "<code>{}:</code> {}, <code>[{}]</code>",
@@ -136,12 +145,13 @@ pub async fn check(
     let message = loop {
         let message = formatdoc!(
             r#"
-                Current song ({track_name}) probably has bad words (press 'Ignore text 🙈' in case of false positive):
+                Current song ({track_name}) <b>probably</b> has bad words:
 
                 {bad_lines}
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
-            "#,
+
+                Press 'Ignore text 🙈' to never see this notification again"#,
             track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
             lyrics_link = hit.link(),

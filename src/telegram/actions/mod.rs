@@ -5,4 +5,5 @@ pub mod like;
 pub mod register;
 pub mod settings;
 pub mod stats;
+pub mod user_word_whitelist;
 pub mod whitelist;

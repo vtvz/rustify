@@ -26,5 +26,6 @@ pub mod telegram;
 pub mod tick;
 pub mod track_status_service;
 pub mod user_service;
+pub mod user_word_whitelist_service;
 pub mod utils;
 pub mod whitelist;

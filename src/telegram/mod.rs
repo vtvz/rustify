@@ -1,6 +1,8 @@
+use commands::Command;
 use handlers::HandleStatus;
 use keyboards::StartKeyboard;
 use teloxide::prelude::*;
+use teloxide::utils::command::BotCommands;
 
 use crate::state::{AppState, UserState};
 
@@ -36,7 +38,14 @@ pub async fn handle_message(
     return_if_handled!(handlers::raw_message::handle(app, state, &m).await?);
 
     app.bot()
-        .send_message(m.chat.id, "You request was not handled 😔")
+        .send_message(
+            m.chat.id,
+            Command::descriptions()
+                .global_description(
+                    "Your request was not handled 😔\n\nThere are commands available to you:",
+                )
+                .to_string(),
+        )
         .reply_markup(StartKeyboard::markup())
         .send()
         .await?;

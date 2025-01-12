@@ -28,12 +28,11 @@ pub async fn handle(
             app.bot()
                 .send_message(
                     m.chat.id,
-                    format!(
-                        "Command <code>{}</code> not found: \n\n{}",
-                        html::escape(&command),
-                        html::escape(&Command::descriptions().to_string())
-                    ),
+                    Command::descriptions()
+                        .global_description(&format!("Command <code>{command}</code> not found.\n\nThere are commands available to you:"))
+                        .to_string(),
                 )
+                .reply_markup(StartKeyboard::markup())
                 .parse_mode(ParseMode::Html)
                 .send()
                 .await?;
@@ -77,7 +76,13 @@ pub async fn handle(
         },
         Command::Help => {
             app.bot()
-                .send_message(m.chat.id, Command::descriptions().to_string())
+                .send_message(
+                    m.chat.id,
+                    Command::descriptions()
+                        .global_description("Commands available to you")
+                        .to_string(),
+                )
+                .reply_markup(StartKeyboard::markup())
                 .send()
                 .await?;
         },
@@ -89,6 +94,17 @@ pub async fn handle(
         },
         Command::ToggleProfanityCheck => {
             return actions::settings::handle_toggle_profanity_check(app, state, m.chat.id).await;
+        },
+        Command::AddWhitelistWord { word } => {
+            return actions::user_word_whitelist::handle_add_word(app, state, m.chat.id, word)
+                .await;
+        },
+        Command::RemoveWhitelistWord { word } => {
+            return actions::user_word_whitelist::handle_remove_word(app, state, m.chat.id, word)
+                .await;
+        },
+        Command::ListWhitelistWords => {
+            return actions::user_word_whitelist::handle_list_words(app, state, m.chat.id).await;
         },
     }
     Ok(HandleStatus::Handled)
