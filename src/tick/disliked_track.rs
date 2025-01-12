@@ -4,10 +4,10 @@ use rspotify::model::{Context as SpotifyContext, PlayableId, PlaylistId, Type as
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
+use crate::app::App;
 use crate::spotify::ShortTrack;
-use crate::state;
-use crate::state::AppState;
 use crate::track_status_service::TrackStatusService;
+use crate::user::UserState;
 use crate::user_service::UserService;
 
 #[tracing::instrument(
@@ -18,8 +18,8 @@ use crate::user_service::UserService;
     )
 )]
 pub async fn handle(
-    app: &'static AppState,
-    state: &state::UserState,
+    app: &'static App,
+    state: &UserState,
     track: &ShortTrack,
     context: Option<&SpotifyContext>,
 ) -> anyhow::Result<()> {

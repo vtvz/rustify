@@ -1,6 +1,6 @@
 use anyhow::Context as _;
 use rustify::queue::profanity_check;
-use rustify::state::AppState;
+use rustify::app::App;
 use rustify::utils;
 use tokio::task::JoinHandle;
 
@@ -15,7 +15,7 @@ async fn run() {
         "Starting Rustify track checking..."
     );
 
-    let app = AppState::init().await.expect("State to be built");
+    let app = App::init().await.expect("State to be built");
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
 

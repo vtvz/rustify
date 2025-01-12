@@ -1,11 +1,12 @@
 use anyhow::Context;
 use strum_macros::Display;
 
+use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, SpotifyError};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
-use crate::{queue, spotify, state};
+use crate::{queue, spotify};
 
 #[allow(dead_code)]
 #[derive(Clone, Display)]
@@ -19,10 +20,7 @@ pub enum CheckUserResult {
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %user_id))]
-pub async fn check(
-    app: &'static state::AppState,
-    user_id: &str,
-) -> anyhow::Result<CheckUserResult> {
+pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUserResult> {
     let res = app.user_state(user_id).await.context("Get user state");
 
     let state = match res {

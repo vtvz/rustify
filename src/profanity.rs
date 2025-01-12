@@ -46,6 +46,8 @@ impl IntoIterator for CheckResult {
     }
 }
 
+pub struct Checker;
+
 impl CheckResult {
     pub fn iter(&self) -> Iter<LineResult> {
         self.lines.iter()

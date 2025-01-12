@@ -4,12 +4,12 @@ use anyhow::Context;
 use teloxide::prelude::*;
 
 use super::HandleStatus;
-use crate::state::{AppState, UserState};
+use crate::app::App; use crate::user::UserState;
 use crate::telegram::actions;
 use crate::telegram::keyboards::StartKeyboard;
 
 pub async fn handle(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {

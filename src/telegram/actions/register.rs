@@ -11,14 +11,15 @@ use teloxide::types::{
 };
 
 use super::super::keyboards::StartKeyboard;
+use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
-use crate::state::{AppState, UserState};
 use crate::telegram::handlers::HandleStatus;
+use crate::user::UserState;
 use crate::user_service::UserService;
 
 pub async fn handle(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     url: &url::Url,
     m: &Message,
@@ -36,7 +37,7 @@ pub async fn handle(
 }
 
 async fn process_spotify_code(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
     code: String,
@@ -86,7 +87,7 @@ async fn process_spotify_code(
 }
 
 pub async fn send_register_invite(
-    app: &'static AppState,
+    app: &'static App,
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
     let url = app.spotify_manager().get_authorize_url().await?;

@@ -2,15 +2,12 @@ use anyhow::Context;
 use teloxide::dispatching::dialogue::GetChatId as _;
 use teloxide::prelude::*;
 
-use crate::state::{AppState, UserState};
+use crate::app::App;
 use crate::telegram::actions;
 use crate::telegram::inline_buttons::InlineButtons;
+use crate::user::UserState;
 
-pub async fn handle(
-    app: &'static AppState,
-    state: &UserState,
-    q: CallbackQuery,
-) -> anyhow::Result<()> {
+pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
         app.bot()
             .answer_callback_query(&q.id)

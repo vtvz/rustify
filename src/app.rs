@@ -1,19 +1,17 @@
 use std::str::FromStr;
 
 use anyhow::Context;
-use rspotify::AuthCodeSpotify;
-use rspotify::clients::OAuthClient;
-use rspotify::model::{PrivateUser, SubscriptionLevel};
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
-use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use tokio::sync::RwLock;
 
 use crate::metrics::influx::InfluxClient;
+use crate::user::UserState;
 use crate::{cache, lyrics, profanity, spotify, whitelist};
 
-pub struct AppState {
+pub struct App {
     whitelist: whitelist::Manager,
     spotify_manager: spotify::Manager,
     lyrics: lyrics::Manager,
@@ -23,7 +21,7 @@ pub struct AppState {
     redis: redis::Client,
 }
 
-impl AppState {
+impl App {
     pub fn whitelist(&self) -> &whitelist::Manager {
         &self.whitelist
     }
@@ -163,7 +161,7 @@ async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
     Ok(client)
 }
 
-impl AppState {
+impl App {
     pub async fn init() -> anyhow::Result<&'static Self> {
         tracing::trace!("Init application");
 
@@ -209,69 +207,5 @@ impl AppState {
         };
 
         Ok(state)
-    }
-}
-
-pub struct UserState {
-    spotify: RwLock<AuthCodeSpotify>,
-    user_id: String,
-
-    spotify_user: Mutex<Option<Option<PrivateUser>>>,
-}
-
-impl UserState {
-    pub async fn spotify(&self) -> RwLockReadGuard<'_, AuthCodeSpotify> {
-        self.spotify.read().await
-    }
-
-    pub async fn spotify_write(&self) -> RwLockWriteGuard<'_, AuthCodeSpotify> {
-        self.spotify.write().await
-    }
-
-    pub fn user_id(&self) -> &str {
-        &self.user_id
-    }
-
-    pub async fn is_spotify_authed(&self) -> bool {
-        self.spotify()
-            .await
-            .token
-            .lock()
-            .await
-            .expect("Failed to acquire lock")
-            .is_some()
-    }
-
-    pub async fn spotify_user(&self) -> anyhow::Result<Option<PrivateUser>> {
-        let mut lock = self.spotify_user.lock().await;
-
-        if lock.is_none() {
-            let user = if self.is_spotify_authed().await {
-                let me = self.spotify().await.me().await?;
-
-                Some(me)
-            } else {
-                None
-            };
-
-            lock.replace(user);
-        }
-
-        Ok(lock.as_ref().context("Should be initialized")?.clone())
-    }
-
-    pub async fn is_spotify_premium(&self) -> anyhow::Result<bool> {
-        let res = self
-            .spotify_user()
-            .await?
-            .map(|spotify_user| {
-                spotify_user
-                    .product
-                    .map(|product| product == SubscriptionLevel::Premium)
-                    .unwrap_or_default()
-            })
-            .unwrap_or_default();
-
-        Ok(res)
     }
 }

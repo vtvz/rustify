@@ -4,8 +4,6 @@ use keyboards::StartKeyboard;
 use teloxide::prelude::*;
 use teloxide::utils::command::BotCommands;
 
-use crate::state::{AppState, UserState};
-
 pub mod actions;
 pub mod commands;
 pub mod errors;
@@ -26,9 +24,12 @@ macro_rules! return_if_handled {
 
 pub(crate) use return_if_handled;
 
+use crate::app::App;
+use crate::user::UserState;
+
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_message(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: Message,
 ) -> anyhow::Result<HandleStatus> {

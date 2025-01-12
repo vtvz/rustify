@@ -4,15 +4,16 @@ use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
 
 use super::HandleStatus;
+use crate::app::App;
 use crate::entity::prelude::*;
-use crate::state::{AppState, UserState};
 use crate::telegram::actions;
 use crate::telegram::commands::Command;
 use crate::telegram::keyboards::StartKeyboard;
+use crate::user::UserState;
 use crate::user_service::UserService;
 
 pub async fn handle(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {

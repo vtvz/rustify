@@ -5,10 +5,11 @@ use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
 use teloxide::types::{ChatId, ParseMode};
 
-use crate::state::{AppState, UserState};
+use crate::app::App;
 use crate::telegram::commands::Command;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
+use crate::user::UserState;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
 
 lazy_static! {
@@ -24,7 +25,7 @@ lazy_static! {
 }
 
 pub async fn handle_add_word(
-    app: &AppState,
+    app: &App,
     state: &UserState,
     chat_id: ChatId,
     word: String,
@@ -81,7 +82,7 @@ pub async fn handle_add_word(
 }
 
 pub async fn handle_remove_word(
-    app: &AppState,
+    app: &App,
     state: &UserState,
     chat_id: ChatId,
     word: String,
@@ -126,7 +127,7 @@ pub async fn handle_remove_word(
 }
 
 pub async fn handle_list_words(
-    app: &AppState,
+    app: &App,
     state: &UserState,
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {

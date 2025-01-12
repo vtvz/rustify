@@ -12,17 +12,18 @@ use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
+use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
-use crate::state::{AppState, UserState};
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
+use crate::user::UserState;
 use crate::{profanity, telegram};
 
 pub async fn handle_current(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
@@ -55,7 +56,7 @@ fn extract_id(url: &url::Url) -> Option<TrackId<'static>> {
 }
 
 pub async fn handle_url(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     url: &url::Url,
     m: &Message,
@@ -70,7 +71,7 @@ pub async fn handle_url(
 }
 
 async fn common(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
     track: ShortTrack,
@@ -84,14 +85,14 @@ async fn common(
             #[rustfmt::skip]
             vec![
                 vec![InlineButtons::Cancel(track.id().to_owned()).into()],
-                // vec![InlineButtons::Analyze(track.id().to_owned()).into()],
+                vec![InlineButtons::Analyze(track.id().to_owned()).into()],
             ]
         },
         TrackStatus::Ignore | TrackStatus::None => {
             #[rustfmt::skip]
             vec![
                 vec![InlineButtons::Dislike(track.id().to_owned()).into()],
-                // vec![InlineButtons::Analyze(track.id().to_owned()).into()]
+                vec![InlineButtons::Analyze(track.id().to_owned()).into()]
             ]
         },
     };

@@ -1,4 +1,4 @@
-use rustify::state::AppState;
+use rustify::app::App;
 
 async fn run() {
     // profanity::check_cases();
@@ -13,7 +13,7 @@ async fn run() {
         "Starting Rustify track checking..."
     );
 
-    let app = AppState::init().await.expect("State to be built");
+    let app = App::init().await.expect("State to be built");
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
     tokio::spawn(rustify::metrics::collect_daemon(app));

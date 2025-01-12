@@ -8,7 +8,7 @@ use tokio::time::Instant;
 use tracing::Instrument;
 
 use crate::entity::prelude::*;
-use crate::state::AppState;
+use crate::app::App;
 use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
@@ -75,7 +75,7 @@ impl Uptime {
     }
 }
 
-pub async fn collect(client: &InfluxClient, app: &AppState) -> anyhow::Result<()> {
+pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
     let disliked =
         TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await? as u64;
     let ignored =
@@ -155,7 +155,7 @@ pub async fn collect_user_timings(
     Ok(())
 }
 
-pub async fn collect_daemon(app: &'static AppState) {
+pub async fn collect_daemon(app: &'static App) {
     let Some(ref client) = app.influx() else {
         tracing::info!("Metrics collection disabled");
 

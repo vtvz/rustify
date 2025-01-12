@@ -5,15 +5,16 @@ use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use super::super::inline_buttons::InlineButtons;
+use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
-use crate::state::{AppState, UserState};
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
+use crate::user::UserState;
 
 pub async fn handle(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
@@ -52,7 +53,7 @@ pub async fn handle(
 }
 
 pub async fn handle_inline(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     q: CallbackQuery,
     track_id: &str,

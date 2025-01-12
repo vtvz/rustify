@@ -1,13 +1,14 @@
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
-use crate::state::{AppState, UserState};
+use crate::app::App;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
+use crate::user::UserState;
 
 pub async fn handle(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
     action: String,

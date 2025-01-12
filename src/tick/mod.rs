@@ -10,10 +10,11 @@ use tokio::time::Instant;
 use tracing::Instrument;
 use user::CheckUserResult;
 
+use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
-use crate::{spotify, state, utils};
+use crate::{spotify, utils};
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
 const PARALLEL_CHECKS: usize = 2;
@@ -36,7 +37,7 @@ pub struct CheckReport {
 }
 
 #[tracing::instrument(skip_all)]
-async fn process(app: &'static state::AppState) -> anyhow::Result<()> {
+async fn process(app: &'static App) -> anyhow::Result<()> {
     let start = Instant::now();
 
     let user_ids = SpotifyAuthService::get_registered_user_ids(app.db())
@@ -133,7 +134,7 @@ async fn process(app: &'static state::AppState) -> anyhow::Result<()> {
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn check_playing(app: &'static state::AppState) {
+pub async fn check_playing(app: &'static App) {
     utils::tick!(CHECK_INTERVAL, {
         if let Err(err) = process(app).await {
             tracing::error!(err = ?err, "Something went wrong")

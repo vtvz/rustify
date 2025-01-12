@@ -6,13 +6,14 @@ use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
+use crate::app::App;
 use crate::spotify::ShortTrack;
-use crate::state::AppState;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
+use crate::user::UserState;
 use crate::user_service::UserService;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
-use crate::{lyrics, profanity, state, telegram};
+use crate::{lyrics, profanity, telegram};
 
 #[derive(Serialize, Deserialize)]
 pub struct ProfanityCheckQueueTask {
@@ -47,7 +48,7 @@ pub async fn queue(
 
 #[tracing::instrument(skip_all)]
 pub async fn consume(
-    app: &'static AppState,
+    app: &'static App,
     mut redis: redis::aio::MultiplexedConnection,
 ) -> anyhow::Result<()> {
     let message: Option<(String, String)> = redis.brpop(REDIS_QUEUE_CHANNEL, 0.0).await?;
@@ -88,8 +89,8 @@ pub struct CheckBadWordsResult {
     )
 )]
 pub async fn check(
-    app: &'static AppState,
-    state: &state::UserState,
+    app: &'static App,
+    state: &UserState,
     track: &ShortTrack,
 ) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();

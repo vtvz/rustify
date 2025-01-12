@@ -3,12 +3,13 @@ use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
 use teloxide::types::{ChatId, ParseMode};
 
-use crate::state::{AppState, UserState};
+use crate::app::App;
 use crate::telegram::handlers::HandleStatus;
+use crate::user::UserState;
 use crate::user_service::UserService;
 
 pub async fn handle_toggle_profanity_check(
-    app: &AppState,
+    app: &App,
     state: &UserState,
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
@@ -36,7 +37,7 @@ pub async fn handle_toggle_profanity_check(
 }
 
 pub async fn handle_toggle_skip_tracks(
-    app: &AppState,
+    app: &App,
     state: &UserState,
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
