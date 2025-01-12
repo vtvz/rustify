@@ -84,14 +84,14 @@ async fn common(
             #[rustfmt::skip]
             vec![
                 vec![InlineButtons::Cancel(track.id().to_owned()).into()],
-                vec![InlineButtons::Analyze(track.id().to_owned()).into()],
+                // vec![InlineButtons::Analyze(track.id().to_owned()).into()],
             ]
         },
         TrackStatus::Ignore | TrackStatus::None => {
             #[rustfmt::skip]
             vec![
                 vec![InlineButtons::Dislike(track.id().to_owned()).into()],
-                vec![InlineButtons::Analyze(track.id().to_owned()).into()]
+                // vec![InlineButtons::Analyze(track.id().to_owned()).into()]
             ]
         },
     };
