@@ -80,19 +80,17 @@ async fn common(
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
-    let keyboard = match status {
+    let mut keyboard = match status {
         TrackStatus::Disliked => {
             #[rustfmt::skip]
             vec![
                 vec![InlineButtons::Cancel(track.id().to_owned()).into()],
-                vec![InlineButtons::Analyze(track.id().to_owned()).into()],
             ]
         },
         TrackStatus::Ignore | TrackStatus::None => {
             #[rustfmt::skip]
             vec![
                 vec![InlineButtons::Dislike(track.id().to_owned()).into()],
-                vec![InlineButtons::Analyze(track.id().to_owned()).into()]
             ]
         },
     };
@@ -266,6 +264,10 @@ async fn common(
 
         lines -= 1;
     };
+
+    if app.openai().is_some() {
+        keyboard.push(vec![InlineButtons::Analyze(track.id().to_owned()).into()]);
+    }
 
     app.bot()
         .send_message(m.chat.id, message)

@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::Context;
+use async_openai::config::OpenAIConfig;
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
@@ -19,6 +20,7 @@ pub struct App {
     db: DatabaseConnection,
     influx: Option<InfluxClient>,
     redis: redis::Client,
+    openai: Option<async_openai::Client<OpenAIConfig>>,
 }
 
 impl App {
@@ -48,6 +50,10 @@ impl App {
 
     pub fn influx(&self) -> &Option<InfluxClient> {
         &self.influx
+    }
+
+    pub fn openai(&self) -> Option<&async_openai::Client<OpenAIConfig>> {
+        self.openai.as_ref()
     }
 }
 
@@ -161,6 +167,17 @@ async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
     Ok(client)
 }
 
+async fn init_openai() -> anyhow::Result<Option<async_openai::Client<OpenAIConfig>>> {
+    let Ok(api_key) = dotenv::var("OPENAI_API_KEY") else {
+        return Ok(None);
+    };
+
+    let config = OpenAIConfig::new().with_api_key(api_key);
+    let client = async_openai::Client::with_config(config);
+
+    Ok(Some(client))
+}
+
 impl App {
     pub async fn init() -> anyhow::Result<&'static Self> {
         tracing::trace!("Init application");
@@ -169,6 +186,7 @@ impl App {
         let redis = init_redis(&redis_url).await?;
         let spotify_manager = spotify::Manager::new();
         let lyrics_manager = init_lyrics_manager(redis_url).await?;
+        let openai = init_openai().await?;
 
         init_rustrict();
 
@@ -189,6 +207,7 @@ impl App {
             db,
             influx,
             redis,
+            openai,
         });
 
         let app = &*Box::leak(app);

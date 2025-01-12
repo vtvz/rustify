@@ -35,11 +35,8 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         InlineButtons::Ignore(id) => {
             actions::ignore::handle_inline(app, state, q, &id).await?;
         },
-        InlineButtons::Analyze(_) => {
-            app.bot()
-                .answer_callback_query(q.id)
-                .text("Work In Progress")
-                .await?;
+        InlineButtons::Analyze(id) => {
+            actions::analyze::handle_inline(app, state, q, &id).await?;
         },
     }
 
