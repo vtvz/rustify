@@ -1,4 +1,4 @@
-use rustify::state::AppState;
+use rustify::app::App;
 
 async fn run() {
     rustify::logger::init()
@@ -11,7 +11,7 @@ async fn run() {
         "Starting Rustify metrics collection..."
     );
 
-    let app = AppState::init().await.expect("State to be built");
+    let app = App::init().await.expect("State to be built");
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
 

@@ -1,8 +1,9 @@
 use indoc::formatdoc;
+use rustify::app::App;
 use rustify::entity::prelude::UserWhitelistStatus;
-use rustify::state::{AppState, UserState};
 use rustify::telegram::commands::Command;
 use rustify::telegram::utils::link_preview_disabled;
+use rustify::user::UserState;
 use rustify::user_service::UserService;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
@@ -10,7 +11,7 @@ use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::command::BotCommands as _;
 
 async fn sync_name(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     tg_user: Option<&User>,
 ) -> anyhow::Result<()> {
@@ -49,7 +50,7 @@ async fn sync_name(
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
-async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Result<bool> {
+async fn whitelisted(app: &'static App, state: &UserState) -> anyhow::Result<bool> {
     let res = app
         .whitelist()
         .get_status(app.db(), state.user_id())
@@ -64,7 +65,6 @@ async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Resul
             app.bot()
                 .send_message(chat_id, "Sorry, your join request was rejected...")
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
         },
         (UserWhitelistStatus::Pending, true) => {
@@ -83,7 +83,6 @@ async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Resul
             app.bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
 
             let message = formatdoc!(
@@ -99,7 +98,6 @@ async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Resul
             app.bot()
                 .send_message(ChatId(app.whitelist().contact_admin().parse()?), message)
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
         },
         (UserWhitelistStatus::Pending, false) => {
@@ -120,7 +118,6 @@ async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Resul
             app.bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
         },
     };
@@ -141,7 +138,7 @@ async fn run() {
         "Starting Rustify bot..."
     );
 
-    let app = AppState::init().await.expect("State to be built");
+    let app = App::init().await.expect("State to be built");
 
     app.bot()
         .set_my_commands(Command::bot_commands())
@@ -181,7 +178,6 @@ async fn run() {
                         // TODO: wait for teloxide::sugar::request::RequestLinkPreviewExt to release
                         // .disable_link_preview()
                         .link_preview_options(link_preview_disabled())
-                        .send()
                         .await?;
                 }
 

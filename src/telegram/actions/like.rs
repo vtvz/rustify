@@ -2,14 +2,15 @@ use rspotify::prelude::OAuthClient as _;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
+use crate::app::App;
 use crate::spotify::CurrentlyPlaying;
-use crate::state::{AppState, UserState};
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::telegram::utils::link_preview_small_top;
+use crate::user::UserState;
 
 pub async fn handle(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
@@ -22,7 +23,6 @@ pub async fn handle(
         CurrentlyPlaying::None(message) => {
             app.bot()
                 .send_message(m.chat.id, message.to_string())
-                .send()
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -41,7 +41,6 @@ pub async fn handle(
         .reply_markup(StartKeyboard::markup())
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)

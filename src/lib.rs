@@ -11,6 +11,7 @@ extern crate derive_more;
 #[macro_use]
 extern crate serde;
 
+pub mod app;
 pub mod cache;
 pub mod entity;
 pub mod logger;
@@ -21,10 +22,10 @@ pub mod queue;
 pub mod serde_utils;
 pub mod spotify;
 pub mod spotify_auth_service;
-pub mod state;
 pub mod telegram;
 pub mod tick;
 pub mod track_status_service;
+pub mod user;
 pub mod user_service;
 pub mod user_word_whitelist_service;
 pub mod utils;

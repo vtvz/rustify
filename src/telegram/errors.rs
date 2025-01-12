@@ -4,16 +4,16 @@ use sea_orm::DbConn;
 use teloxide::ApiError;
 use teloxide::prelude::*;
 
+use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
-use crate::state;
-use crate::state::AppState;
+use crate::user::UserState;
 use crate::user_service::UserService;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_blocked_bot(
-    app: &'static AppState,
-    state: &state::UserState,
+    app: &'static App,
+    state: &UserState,
     result: Result<Message, teloxide::RequestError>,
 ) -> anyhow::Result<Message> {
     if let Err(teloxide::RequestError::Api(ApiError::BotBlocked | ApiError::InvalidToken)) = result

@@ -2,14 +2,15 @@ use indoc::formatdoc;
 use teloxide::prelude::*;
 use teloxide::types::{ParseMode, ReplyParameters};
 
+use crate::app::App;
 use crate::entity::prelude::*;
-use crate::state::{AppState, UserState};
 use crate::telegram::handlers::HandleStatus;
 use crate::track_status_service::TrackStatusService;
+use crate::user::UserState;
 use crate::user_service::{UserService, UserStats};
 
 pub async fn handle(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
@@ -57,7 +58,6 @@ pub async fn handle(
         .send_message(m.chat.id, message)
         .reply_parameters(ReplyParameters::new(m.id))
         .parse_mode(ParseMode::Html)
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)

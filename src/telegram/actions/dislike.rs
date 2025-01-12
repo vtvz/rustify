@@ -1,16 +1,20 @@
+use anyhow::Context as _;
+use rspotify::model::TrackId;
+use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use super::super::inline_buttons::InlineButtons;
+use crate::app::App;
 use crate::entity::prelude::*;
-use crate::spotify::CurrentlyPlaying;
-use crate::state::{AppState, UserState};
+use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
+use crate::user::UserState;
 
 pub async fn handle(
-    app: &'static AppState,
+    app: &'static App,
     state: &UserState,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
@@ -23,7 +27,6 @@ pub async fn handle(
         CurrentlyPlaying::None(message) => {
             app.bot()
                 .send_message(m.chat.id, message.to_string())
-                .send()
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -44,8 +47,43 @@ pub async fn handle(
                 vec![InlineButtons::Cancel(track.id().into()).into()]
             ],
         )))
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)
+}
+
+pub async fn handle_inline(
+    app: &'static App,
+    state: &UserState,
+    q: CallbackQuery,
+    track_id: &str,
+) -> anyhow::Result<()> {
+    let track = state
+        .spotify()
+        .await
+        .track(TrackId::from_id(track_id)?, None)
+        .await?;
+
+    let track = ShortTrack::new(track);
+
+    TrackStatusService::set_status(app.db(), state.user_id(), track_id, TrackStatus::Disliked)
+        .await?;
+
+    app.bot()
+        .edit_message_text(
+            q.from.id,
+            q.message.context("Message is empty")?.id(),
+            format!("Disliked {}", track.track_tg_link()),
+        )
+        .parse_mode(ParseMode::Html)
+        .link_preview_options(link_preview_small_top(track.url()))
+        .reply_markup(InlineKeyboardMarkup::new(
+            #[rustfmt::skip]
+                    vec![
+                        vec![InlineButtons::Cancel(track.id().into()).into()]
+                    ],
+        ))
+        .await?;
+
+    Ok(())
 }
