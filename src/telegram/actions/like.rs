@@ -22,7 +22,6 @@ pub async fn handle(
         CurrentlyPlaying::None(message) => {
             app.bot()
                 .send_message(m.chat.id, message.to_string())
-                .send()
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -41,7 +40,6 @@ pub async fn handle(
         .reply_markup(StartKeyboard::markup())
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)

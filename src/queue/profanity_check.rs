@@ -177,7 +177,6 @@ pub async fn check(
                 vec![InlineButtons::Ignore(track.id().into()).into()],
             ],
         )))
-        .send()
         .await;
 
     crate::telegram::errors::handle_blocked_bot(app, state, result)

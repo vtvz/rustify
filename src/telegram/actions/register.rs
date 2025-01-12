@@ -45,7 +45,6 @@ async fn process_spotify_code(
 
     if let Err(err) = instance.request_token(&code).await {
         app.bot().send_message(m.chat.id, "Cannot retrieve token. Code is probably broken. Run /register command and try again please")
-            .send()
             .await?;
 
         return Err(err.into());
@@ -56,7 +55,6 @@ async fn process_spotify_code(
     let Ok(token) = token else {
         app.bot()
             .send_message(m.chat.id, "Cannot retrieve token. Try again")
-            .send()
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -65,7 +63,6 @@ async fn process_spotify_code(
     let Some(token) = token.clone() else {
         app.bot()
             .send_message(m.chat.id, "Token is not retrieved. Try again")
-            .send()
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -83,7 +80,6 @@ async fn process_spotify_code(
     app.bot()
         .send_message(m.chat.id, "Yeah! You registered successfully!")
         .reply_markup(StartKeyboard::markup())
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)
@@ -109,7 +105,6 @@ pub async fn send_register_invite(
                 }]
             ],
         )))
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)

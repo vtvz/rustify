@@ -57,7 +57,6 @@ pub async fn handle(
         .send_message(m.chat.id, message)
         .reply_parameters(ReplyParameters::new(m.id))
         .parse_mode(ParseMode::Html)
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)

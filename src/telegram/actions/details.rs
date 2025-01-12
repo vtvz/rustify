@@ -32,7 +32,6 @@ pub async fn handle_current(
         CurrentlyPlaying::None(message) => {
             app.bot()
                 .send_message(m.chat.id, message.to_string())
-                .send()
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -82,10 +81,18 @@ async fn common(
 
     let keyboard = match status {
         TrackStatus::Disliked => {
-            vec![vec![InlineButtons::Cancel(track.id().to_owned()).into()]]
+            #[rustfmt::skip]
+            vec![
+                vec![InlineButtons::Cancel(track.id().to_owned()).into()],
+                vec![InlineButtons::Analyze(track.id().to_owned()).into()],
+            ]
         },
         TrackStatus::Ignore | TrackStatus::None => {
-            vec![vec![InlineButtons::Dislike(track.id().to_owned()).into()]]
+            #[rustfmt::skip]
+            vec![
+                vec![InlineButtons::Dislike(track.id().to_owned()).into()],
+                vec![InlineButtons::Analyze(track.id().to_owned()).into()]
+            ]
         },
     };
 
@@ -215,7 +222,6 @@ async fn common(
                 keyboard,
             )))
             .link_preview_options(link_preview_small_top(track.url()))
-            .send()
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -267,7 +273,6 @@ async fn common(
             keyboard,
         )))
         .link_preview_options(link_preview_small_top(track.url()))
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)

@@ -83,7 +83,6 @@ pub async fn handle(
         .bot()
         .send_message(ChatId(state.user_id().parse()?), message)
         .parse_mode(ParseMode::Html)
-        .send()
         .await;
 
     crate::telegram::errors::handle_blocked_bot(app, state, result)

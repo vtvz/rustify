@@ -64,7 +64,6 @@ async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Resul
             app.bot()
                 .send_message(chat_id, "Sorry, your join request was rejected...")
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
         },
         (UserWhitelistStatus::Pending, true) => {
@@ -83,7 +82,6 @@ async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Resul
             app.bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
 
             let message = formatdoc!(
@@ -99,7 +97,6 @@ async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Resul
             app.bot()
                 .send_message(ChatId(app.whitelist().contact_admin().parse()?), message)
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
         },
         (UserWhitelistStatus::Pending, false) => {
@@ -120,7 +117,6 @@ async fn whitelisted(app: &'static AppState, state: &UserState) -> anyhow::Resul
             app.bot()
                 .send_message(chat_id, message)
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
         },
     };
@@ -181,7 +177,6 @@ async fn run() {
                         // TODO: wait for teloxide::sugar::request::RequestLinkPreviewExt to release
                         // .disable_link_preview()
                         .link_preview_options(link_preview_disabled())
-                        .send()
                         .await?;
                 }
 

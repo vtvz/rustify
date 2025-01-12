@@ -2,7 +2,6 @@ use anyhow::Context;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
-use teloxide::utils::html;
 
 use super::HandleStatus;
 use crate::entity::prelude::*;
@@ -34,7 +33,6 @@ pub async fn handle(
                 )
                 .reply_markup(StartKeyboard::markup())
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -52,7 +50,6 @@ pub async fn handle(
                 app.bot()
                     .send_message(m.chat.id, "Here is your keyboard")
                     .reply_markup(StartKeyboard::markup())
-                    .send()
                     .await?;
             } else {
                 actions::register::send_register_invite(app, m.chat.id).await?;
@@ -83,7 +80,6 @@ pub async fn handle(
                         .to_string(),
                 )
                 .reply_markup(StartKeyboard::markup())
-                .send()
                 .await?;
         },
         Command::Whitelist(action, user_id) => {

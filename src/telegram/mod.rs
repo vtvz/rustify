@@ -47,7 +47,6 @@ pub async fn handle_message(
                 .to_string(),
         )
         .reply_markup(StartKeyboard::markup())
-        .send()
         .await?;
 
     Ok(HandleStatus::Skipped)

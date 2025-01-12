@@ -24,7 +24,6 @@ pub async fn handle(
             "Started cleanup. Please wait, it can take a bit of time 🕐",
         )
         .reply_parameters(ReplyParameters::new(m.id))
-        .send()
         .await?;
 
     let spotify = state.spotify().await;
@@ -151,7 +150,6 @@ pub async fn handle(
                 removed_playlists, count, removed_collection
             ),
         )
-        .send()
         .await?;
 
     Ok(HandleStatus::Handled)

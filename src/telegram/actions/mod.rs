@@ -1,6 +1,8 @@
+pub mod cancel;
 pub mod cleanup;
 pub mod details;
 pub mod dislike;
+pub mod ignore;
 pub mod like;
 pub mod register;
 pub mod settings;

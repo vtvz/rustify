@@ -20,7 +20,6 @@ pub async fn handle(
     let Ok(user_id_int) = user_id.parse::<i64>() else {
         app.bot()
             .send_message(m.chat.id, "User Id has wrong format. Should be ID")
-            .send()
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -39,7 +38,6 @@ pub async fn handle(
                     ),
                 )
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
 
             app.bot()
@@ -48,7 +46,6 @@ pub async fn handle(
                     "Welcome! Admin allowed you to join Rustify family! Enjoy 💃",
                 )
                 .reply_markup(StartKeyboard::markup())
-                .send()
                 .await?;
 
             actions::register::send_register_invite(app, ChatId(user_id_int)).await?;
@@ -65,14 +62,12 @@ pub async fn handle(
                     ),
                 )
                 .parse_mode(ParseMode::Html)
-                .send()
                 .await?;
 
             app.bot().send_message(
                 ChatId(user_id_int),
                 "Sorry... Admin decided to deny you joining to Rustify bot... Maybe a bit later",
             )
-            .send()
             .await?;
         },
         _ => {
@@ -84,7 +79,6 @@ pub async fn handle(
                 ),
             )
             .parse_mode(ParseMode::Html)
-            .send()
             .await?;
         },
     };

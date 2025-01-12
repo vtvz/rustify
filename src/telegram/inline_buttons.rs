@@ -8,6 +8,7 @@ pub enum InlineButtons {
     Cancel(String),
     Dislike(String),
     Ignore(String),
+    Analyze(String),
 }
 
 impl InlineButtons {
@@ -16,6 +17,7 @@ impl InlineButtons {
             InlineButtons::Cancel(_) => "Cancel ↩",
             InlineButtons::Dislike(_) => "Dislike 👎",
             InlineButtons::Ignore(_) => "Ignore text 🙈",
+            InlineButtons::Analyze(_) => "Analyze text 🔍",
         }
     }
 }
