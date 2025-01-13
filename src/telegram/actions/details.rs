@@ -265,7 +265,7 @@ async fn common(
         lines -= 1;
     };
 
-    if app.openai().is_some() {
+    if app.analyze().is_some() {
         keyboard.push(vec![InlineButtons::Analyze(track.id().to_owned()).into()]);
     }
 

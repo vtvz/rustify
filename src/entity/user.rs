@@ -32,6 +32,7 @@ pub struct Model {
     pub cfg_check_profanity: bool,
     pub cfg_skip_tracks: bool,
     pub cfg_not_english_alert: bool,
+    pub cfg_analysis_language: Option<String>,
 }
 
 #[async_trait]
@@ -70,6 +71,7 @@ pub enum Column {
     CfgCheckProfanity,
     CfgSkipTracks,
     CfgNotEnglishAlert,
+    CfgAnalysisLanguage,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -107,6 +109,7 @@ impl ColumnTrait for Column {
             Self::CfgCheckProfanity => ColumnType::Boolean.def(),
             Self::CfgSkipTracks => ColumnType::Boolean.def(),
             Self::CfgNotEnglishAlert => ColumnType::Boolean.def(),
+            Self::CfgAnalysisLanguage => ColumnType::Text.def().null(),
         }
     }
 }

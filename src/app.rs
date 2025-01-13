@@ -21,7 +21,27 @@ pub struct App {
     db: DatabaseConnection,
     influx: Option<InfluxClient>,
     redis: redis::Client,
-    openai: Option<async_openai::Client<OpenAIConfig>>,
+    analyze: Option<AnalyzeConfig>,
+}
+
+pub struct AnalyzeConfig {
+    openai_client: async_openai::Client<OpenAIConfig>,
+    default_language: String,
+    model: String,
+}
+
+impl AnalyzeConfig {
+    pub fn openai_client(&self) -> &async_openai::Client<OpenAIConfig> {
+        &self.openai_client
+    }
+
+    pub fn default_language(&self) -> &str {
+        &self.default_language
+    }
+
+    pub fn model(&self) -> &str {
+        &self.model
+    }
 }
 
 impl App {
@@ -53,8 +73,8 @@ impl App {
         &self.influx
     }
 
-    pub fn openai(&self) -> Option<&async_openai::Client<OpenAIConfig>> {
-        self.openai.as_ref()
+    pub fn analyze(&self) -> Option<&AnalyzeConfig> {
+        self.analyze.as_ref()
     }
 }
 
@@ -168,20 +188,27 @@ async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
     Ok(client)
 }
 
-async fn init_openai() -> anyhow::Result<Option<async_openai::Client<OpenAIConfig>>> {
+async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
     let Ok(api_key) = dotenv::var("OPENAI_API_KEY") else {
         return Ok(None);
     };
 
-    let config = OpenAIConfig::new().with_api_key(api_key);
+    let openai_config = OpenAIConfig::new().with_api_key(api_key);
 
     let http_client = reqwest::ClientBuilder::new()
         .timeout(Duration::from_secs(20))
         .build()?;
 
-    let client = async_openai::Client::with_config(config).with_http_client(http_client);
+    let openai_client =
+        async_openai::Client::with_config(openai_config).with_http_client(http_client);
 
-    Ok(Some(client))
+    let config = AnalyzeConfig {
+        openai_client,
+        default_language: dotenv::var("ANALYZE_DEFAULT_LANGUAGE").unwrap_or("English".into()),
+        model: dotenv::var("OPENAI_API_MODEL").unwrap_or("gpt-4o".into()),
+    };
+
+    Ok(Some(config))
 }
 
 impl App {
@@ -192,7 +219,7 @@ impl App {
         let redis = init_redis(&redis_url).await?;
         let spotify_manager = spotify::Manager::new();
         let lyrics_manager = init_lyrics_manager(redis_url).await?;
-        let openai = init_openai().await?;
+        let analyze = init_analyze().await?;
 
         init_rustrict();
 
@@ -213,7 +240,7 @@ impl App {
             db,
             influx,
             redis,
-            openai,
+            analyze,
         });
 
         let app = &*Box::leak(app);

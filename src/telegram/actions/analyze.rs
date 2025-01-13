@@ -7,7 +7,7 @@ use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters
 use teloxide::prelude::Requester as _;
 use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode, UserId};
 
-use crate::app::App;
+use crate::app::{AnalyzeConfig, App};
 use crate::spotify::ShortTrack;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
@@ -22,7 +22,7 @@ pub async fn handle_inline(
 ) -> anyhow::Result<()> {
     let chat_id = q.from.id;
 
-    let Some(client) = app.openai() else {
+    let Some(config) = app.analyze() else {
         app.bot()
             .answer_callback_query(q.id)
             .text("Analysis is disabled")
@@ -55,9 +55,10 @@ pub async fn handle_inline(
 
     let res = perform(
         app,
+        state,
         chat_id,
         message_id,
-        client,
+        config,
         track,
         hit.lyrics().join("\n"),
     )
@@ -85,18 +86,25 @@ pub async fn handle_inline(
 
 async fn perform(
     app: &App,
+    state: &UserState,
     chat_id: UserId,
     message_id: teloxide::types::MessageId,
-    client: &async_openai::Client<async_openai::config::OpenAIConfig>,
+    config: &AnalyzeConfig,
     track: ShortTrack,
     lyrics: String,
 ) -> Result<(), anyhow::Error> {
     let song_name = track.name_with_artists();
 
-    let lang = "Russian";
+    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
+
+    let lang = user
+        .cfg_analysis_language
+        .clone()
+        .unwrap_or_else(|| config.default_language().to_string());
+    let model = config.model();
 
     let request = CreateChatCompletionRequestArgs::default()
-        .model("gpt-4o")
+        .model(model)
         .messages([
             ChatCompletionRequestUserMessageArgs::default()
                 .content(
@@ -121,7 +129,7 @@ async fn perform(
         ])
         .build()?;
 
-    let response = client.chat().create(request).await?;
+    let response = config.openai_client().chat().create(request).await?;
 
     let choices = response.choices.first();
 
