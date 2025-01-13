@@ -69,7 +69,7 @@ pub async fn handle_inline(
                         Is there any occultism or spiritism in this song?
                         Is there mentions of any form of violence in this song?
 
-                        Reply in {lang} language. Do use telegram-html formatting if required.
+                        Reply in {lang} language. Do use telegram-html formatting if required. Do not use markdown
 
                         ---
 
