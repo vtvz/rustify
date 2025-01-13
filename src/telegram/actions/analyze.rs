@@ -67,6 +67,7 @@ pub async fn handle_inline(
                         Does this have profane or explicit content or phrases and what are these?
                         Does this song have any sexual amorality, actions, or even hints?
                         Is there any occultism or spiritism in this song?
+                        Is there mentions of any form of violence in this song?
 
                         Reply in {lang} language. Do not use telegram-html formatting if required.
 
