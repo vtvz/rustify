@@ -22,6 +22,7 @@ pub struct Model {
     pub removed_playlists: i64,
     pub removed_collection: i64,
     pub lyrics_checked: i64,
+    pub lyrics_analyzed: i64,
     pub lyrics_genius: i64,
     pub lyrics_musixmatch: i64,
     pub lyrics_profane: i64,
@@ -55,6 +56,7 @@ pub enum Column {
     RemovedPlaylists,
     RemovedCollection,
     LyricsChecked,
+    LyricsAnalyzed,
     LyricsGenius,
     LyricsMusixmatch,
     #[sea_orm(column_name = "lyrics_lrclib")]
@@ -93,6 +95,7 @@ impl ColumnTrait for Column {
             Self::RemovedPlaylists => ColumnType::BigInteger.def(),
             Self::RemovedCollection => ColumnType::BigInteger.def(),
             Self::LyricsChecked => ColumnType::BigInteger.def(),
+            Self::LyricsAnalyzed => ColumnType::BigInteger.def(),
             Self::LyricsGenius => ColumnType::BigInteger.def(),
             Self::LyricsMusixmatch => ColumnType::BigInteger.def(),
             Self::LyricsLrcLib => ColumnType::BigInteger.def(),

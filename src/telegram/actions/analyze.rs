@@ -12,6 +12,7 @@ use crate::spotify::ShortTrack;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
+use crate::user_service::UserService;
 
 pub async fn handle_inline(
     app: &'static App,
@@ -61,6 +62,11 @@ pub async fn handle_inline(
         hit.lyrics().join("\n"),
     )
     .await;
+
+    UserService::increase_stats_query(state.user_id())
+        .analyzed_lyrics()
+        .exec(app.db())
+        .await?;
 
     match res {
         Ok(_) => {},

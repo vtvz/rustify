@@ -70,6 +70,15 @@ impl UserStatsIncreaseQueryBuilder {
         self
     }
 
+    pub fn analyzed_lyrics(mut self) -> Self {
+        self.0 = self.0.col_expr(
+            UserColumn::LyricsAnalyzed,
+            Expr::col(UserColumn::LyricsAnalyzed).add(1),
+        );
+
+        self
+    }
+
     pub async fn exec(self, db: &impl ConnectionTrait) -> Result<UpdateResult, DbErr> {
         self.0
             .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))

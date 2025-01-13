@@ -45,6 +45,7 @@ pub struct Manager {
     genius: GeniusLocal,
     musixmatch: Musixmatch,
     lrclib: LrcLib,
+    #[allow(dead_code)]
     azlyrics: AZLyrics,
 }
 
