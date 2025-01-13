@@ -60,7 +60,20 @@ pub async fn handle_inline(
         .messages([
             ChatCompletionRequestUserMessageArgs::default()
                 .content(
-                    format!("Give me a description, meaning, and storyline of the following lyrics of the song \"{song_name}\" and answer these questions: Does this song relate to any religion, and what religion is? Does this have profane or explicit content or phrases and what are these? Does this song have any sexual amorality, actions, or even hints? Is there any occultism or spiritualism in this song? Reply in {lang} language. Do not use any formatting\n\n{lyrics}")
+                    formatdoc!("
+                        Give me a description, meaning, and storyline of the following lyrics of the song \"{song_name}\" and answer these questions:
+
+                        Does this song relate to any religion, and what religion is?
+                        Does this have profane or explicit content or phrases and what are these?
+                        Does this song have any sexual amorality, actions, or even hints?
+                        Is there any occultism or spiritualism in this song?
+
+                        Reply in {lang} language. Do not use any formatting.
+
+                        ---
+
+                        {lyrics}
+                    ")
                 )
                 .build()?
                 .into(),
