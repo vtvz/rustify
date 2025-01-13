@@ -5,7 +5,7 @@ use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters};
 use teloxide::prelude::Requester as _;
-use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode};
+use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode, UserId};
 
 use crate::app::App;
 use crate::spotify::ShortTrack;
@@ -19,6 +19,8 @@ pub async fn handle_inline(
     q: CallbackQuery,
     track_id: &str,
 ) -> anyhow::Result<()> {
+    let chat_id = q.from.id;
+
     let Some(client) = app.openai() else {
         app.bot()
             .answer_callback_query(q.id)
@@ -40,19 +42,51 @@ pub async fn handle_inline(
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
-            .edit_message_text(q.from.id, message_id, "Lyrics not found")
+            .edit_message_text(chat_id, message_id, "Lyrics not found")
             .await?;
 
         return Ok(());
     };
 
     app.bot()
-        .edit_message_text(q.from.id, message_id, "⏳ Wait for analysis to finish...")
+        .edit_message_text(chat_id, message_id, "⏳ Wait for analysis to finish 🔍...")
         .await?;
 
+    let res = perform(
+        app,
+        chat_id,
+        message_id,
+        client,
+        track,
+        hit.lyrics().join("\n"),
+    )
+    .await;
+
+    match res {
+        Ok(_) => {},
+        Err(_) => {
+            app.bot()
+                .edit_message_text(
+                    chat_id,
+                    message_id,
+                    "Analysis failed. This happens from time to time. Try again later 🤷",
+                )
+                .await?;
+        },
+    };
+    Ok(())
+}
+
+async fn perform(
+    app: &App,
+    chat_id: UserId,
+    message_id: teloxide::types::MessageId,
+    client: &async_openai::Client<async_openai::config::OpenAIConfig>,
+    track: ShortTrack,
+    lyrics: String,
+) -> Result<(), anyhow::Error> {
     let song_name = track.name_with_artists();
 
-    let lyrics = hit.lyrics().join("\n");
     let lang = "Russian";
 
     let request = CreateChatCompletionRequestArgs::default()
@@ -69,8 +103,7 @@ pub async fn handle_inline(
                         Is there any occultism or spiritism in this song?
                         Is there mentions of any form of violence in this song?
 
-                        Reply in {lang} language.
-                        Use <b>, <i>, <u>, <s> and <code> html tags if required. Do not use markdown
+                        Reply in {lang} language. Do not use any formatting
 
                         ---
 
@@ -90,7 +123,7 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_message_text(
-            q.from.id,
+            chat_id,
             message_id,
             formatdoc!(
                 "

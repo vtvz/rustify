@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::time::Duration;
 
 use anyhow::Context;
 use async_openai::config::OpenAIConfig;
@@ -173,7 +174,12 @@ async fn init_openai() -> anyhow::Result<Option<async_openai::Client<OpenAIConfi
     };
 
     let config = OpenAIConfig::new().with_api_key(api_key);
-    let client = async_openai::Client::with_config(config);
+
+    let http_client = reqwest::ClientBuilder::new()
+        .timeout(Duration::from_secs(20))
+        .build()?;
+
+    let client = async_openai::Client::with_config(config).with_http_client(http_client);
 
     Ok(Some(client))
 }
