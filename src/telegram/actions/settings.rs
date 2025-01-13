@@ -1,4 +1,3 @@
-use indoc::formatdoc;
 use sea_orm::{ActiveModelTrait as _, IntoActiveModel as _, Set};
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
