@@ -68,7 +68,7 @@ pub async fn handle_inline(
                         Does this song have any sexual amorality, actions, or even hints?
                         Is there any occultism or spiritism in this song?
 
-                        Reply in {lang} language. Do not use any formatting.
+                        Reply in {lang} language. Do not use telegram-html formatting if required.
 
                         ---
 
