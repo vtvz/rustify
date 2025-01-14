@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Context as _;
 use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 use indoc::formatdoc;
@@ -103,7 +105,7 @@ async fn perform(
         .unwrap_or_else(|| config.default_language().to_string());
     let model = config.model();
 
-    let prompt = formatdoc!("
+    let mut prompt = formatdoc!("
         Give me a detailed description, meaning, and storyline of the following lyrics of the song \"{song_name}\" and answer these questions:
 
         Does this song relate to any religion, and what religion is?
@@ -116,6 +118,31 @@ async fn perform(
 
         {lyrics}
     ");
+
+    // temp
+    let http_client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()?;
+
+    let resp: serde_json::Value = http_client
+        .get(dotenv::var("DIRECTUS_API_URL")?)
+        .bearer_auth(dotenv::var("DIRECTUS_API_KEY")?)
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    let test = &resp["data"]["prompt"];
+
+    if let serde_json::Value::String(directus_prompt) = test {
+        prompt = directus_prompt
+            .replace("{song_name}", &song_name)
+            .replace("{lang}", &lang)
+            .replace("{lyrics}", &lyrics);
+
+        println!("{}", prompt);
+    }
+    // temp
 
     let request = CreateChatCompletionRequestArgs::default()
         .model(model)
