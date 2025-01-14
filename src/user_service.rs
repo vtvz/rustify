@@ -98,6 +98,7 @@ pub struct UserStats {
     pub lyrics_musixmatch: i64,
     pub lyrics_lrclib: i64,
     pub lyrics_azlyrics: i64,
+    pub lyrics_analyzed: i64,
 }
 
 pub struct UserService;
@@ -233,8 +234,14 @@ impl UserService {
                 UserColumn::LyricsGenius
                     .sum()
                     .add(UserColumn::LyricsMusixmatch.sum())
+                    .add(UserColumn::LyricsLrcLib.sum())
+                    .add(UserColumn::LyricsAZLyrics.sum())
                     .cast_as(bigint()),
                 "lyrics_found",
+            )
+            .column_as(
+                UserColumn::LyricsAnalyzed.sum().cast_as(bigint()),
+                "lyrics_analyzed",
             )
             .into_model::<UserStats>()
             .one(db)

@@ -7,8 +7,8 @@ use tokio::sync::broadcast::error::RecvError;
 use tokio::time::Instant;
 use tracing::Instrument;
 
-use crate::entity::prelude::*;
 use crate::app::App;
+use crate::entity::prelude::*;
 use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::{UserService, UserStats};
@@ -30,6 +30,7 @@ struct TrackStatusStats {
 struct LyricsStats {
     time: Timestamp,
     checked: u64,
+    analyzed: u64,
     found: u64,
     profane: u64,
     genius: u64,
@@ -92,6 +93,7 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
         lyrics_musixmatch,
         lyrics_lrclib,
         lyrics_azlyrics,
+        lyrics_analyzed,
     } = UserService::get_stats(app.db(), None).await?;
 
     let tick_health_status = utils::tick_health().await;
@@ -111,6 +113,7 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
         LyricsStats {
             time,
             checked: lyrics_checked as u64,
+            analyzed: lyrics_analyzed as u64,
             found: lyrics_found as u64,
             profane: lyrics_profane as u64,
             genius: lyrics_genius as u64,
