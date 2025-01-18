@@ -1,6 +1,5 @@
 use anyhow::{Context as _, bail};
 use indoc::formatdoc;
-use isolang::Language;
 use redis::AsyncCommands as _;
 use rustrict::Type;
 use teloxide::prelude::*;
@@ -102,12 +101,12 @@ pub async fn check(
     ret.provider = Some(hit.provider());
     ret.found = true;
 
-    if hit.language() != Language::Eng {
+    /* if hit.language() != Language::Eng {
         tracing::trace!(language = %hit.language(), provider = %hit.provider(), "Track has non English lyrics");
 
         ret.skipped = true;
         return Ok(ret);
-    }
+    } */
 
     let check = profanity::Manager::check(hit.lyrics());
 
