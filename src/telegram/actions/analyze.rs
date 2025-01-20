@@ -167,6 +167,8 @@ async fn perform(
                     {track_name}
                     Album: {album_name}
 
+                    Reasoning model: <code>{model}</code>
+
                     {content}
                 ",
                 track_name = track.track_tg_link(),
