@@ -139,8 +139,6 @@ async fn perform(
             .replace("{song_name}", &song_name)
             .replace("{lang}", &lang)
             .replace("{lyrics}", &lyrics);
-
-        println!("{}", prompt);
     }
     // temp
 
