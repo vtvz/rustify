@@ -152,6 +152,21 @@ async fn perform(
 
     let response = config.openai_client().chat().create(request).await?;
 
+    let details = if let Some(usage) = response.usage {
+        formatdoc!(
+            "
+                Reasoning model: <code>{model}</code>
+                Tokens: prompt — <code>{}</code>, completion — <code>{}</code>
+            ",
+            usage.prompt_tokens,
+            usage.completion_tokens,
+        )
+        .trim()
+        .to_string()
+    } else {
+        format!("Reasoning model: <code>{model}</code>")
+    };
+
     let choices = response.choices.first();
 
     let Some(choice) = choices else { return Ok(()) };
@@ -165,7 +180,7 @@ async fn perform(
                     {track_name}
                     Album: {album_name}
 
-                    Reasoning model: <code>{model}</code>
+                    {details}
 
                     {content}
                 ",
