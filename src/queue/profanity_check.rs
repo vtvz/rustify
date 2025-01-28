@@ -173,9 +173,9 @@ pub async fn check(
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Analyze(track.id().into()).into()],
                 vec![InlineButtons::Dislike(track.id().into()).into()],
                 vec![InlineButtons::Ignore(track.id().into()).into()],
+                vec![InlineButtons::Analyze(track.id().into()).into()],
             ],
         )))
         .await;
