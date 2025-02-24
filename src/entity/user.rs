@@ -22,6 +22,7 @@ pub struct Model {
     pub removed_playlists: i64,
     pub removed_collection: i64,
     pub lyrics_checked: i64,
+    pub lyrics_analyzed: i64,
     pub lyrics_genius: i64,
     pub lyrics_musixmatch: i64,
     pub lyrics_profane: i64,
@@ -31,6 +32,7 @@ pub struct Model {
     pub cfg_check_profanity: bool,
     pub cfg_skip_tracks: bool,
     pub cfg_not_english_alert: bool,
+    pub cfg_analysis_language: Option<String>,
 }
 
 #[async_trait]
@@ -55,6 +57,7 @@ pub enum Column {
     RemovedPlaylists,
     RemovedCollection,
     LyricsChecked,
+    LyricsAnalyzed,
     LyricsGenius,
     LyricsMusixmatch,
     #[sea_orm(column_name = "lyrics_lrclib")]
@@ -68,6 +71,7 @@ pub enum Column {
     CfgCheckProfanity,
     CfgSkipTracks,
     CfgNotEnglishAlert,
+    CfgAnalysisLanguage,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -93,6 +97,7 @@ impl ColumnTrait for Column {
             Self::RemovedPlaylists => ColumnType::BigInteger.def(),
             Self::RemovedCollection => ColumnType::BigInteger.def(),
             Self::LyricsChecked => ColumnType::BigInteger.def(),
+            Self::LyricsAnalyzed => ColumnType::BigInteger.def(),
             Self::LyricsGenius => ColumnType::BigInteger.def(),
             Self::LyricsMusixmatch => ColumnType::BigInteger.def(),
             Self::LyricsLrcLib => ColumnType::BigInteger.def(),
@@ -104,6 +109,7 @@ impl ColumnTrait for Column {
             Self::CfgCheckProfanity => ColumnType::Boolean.def(),
             Self::CfgSkipTracks => ColumnType::Boolean.def(),
             Self::CfgNotEnglishAlert => ColumnType::Boolean.def(),
+            Self::CfgAnalysisLanguage => ColumnType::Text.def().null(),
         }
     }
 }

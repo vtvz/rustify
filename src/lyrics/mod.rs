@@ -45,6 +45,7 @@ pub struct Manager {
     genius: GeniusLocal,
     musixmatch: Musixmatch,
     lrclib: LrcLib,
+    #[allow(dead_code)]
     azlyrics: AZLyrics,
 }
 
@@ -104,7 +105,7 @@ impl Manager {
 
         handle_provider!("Musixmatch", self.musixmatch);
         handle_provider!("LrcLib", self.lrclib);
-        handle_provider!("AZLyrics", self.azlyrics);
+        // handle_provider!("AZLyrics", self.azlyrics);
         handle_provider!("Genius", self.genius);
 
         Ok(None)

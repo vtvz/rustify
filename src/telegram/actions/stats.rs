@@ -37,6 +37,7 @@ pub async fn handle(
         removed_playlists,
         lyrics_checked,
         lyrics_profane,
+        lyrics_analyzed,
         ..
     } = UserService::get_stats(app.db(), Some(state.user_id())).await?;
 
@@ -49,6 +50,7 @@ pub async fn handle(
             💔 Removed <code>{removed_collection}</code> from liked songs
             🗑 Removed <code>{removed_playlists}</code> from playlists
             🔬 Checked lyrics <code>{lyrics_checked}</code> times
+            🔍 Analyzed lyrics <code>{lyrics_analyzed}</code> time
             🙈 You ignored <code>{ignored}</code> tracks lyrics
             🤬 <code>{lyrics_profane}</code> lyrics were considered as profane
         "#

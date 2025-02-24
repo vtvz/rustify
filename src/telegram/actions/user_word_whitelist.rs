@@ -1,28 +1,19 @@
 use indoc::formatdoc;
 use itertools::Itertools as _;
-use lazy_static::lazy_static;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
-use crate::telegram::commands::Command;
+use crate::telegram::commands::{
+    ADD_WHITELIST_WORD_COMMAND,
+    LIST_WHITELIST_WORDS_COMMAND,
+    REMOVE_WHITELIST_WORD_COMMAND,
+};
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
-
-lazy_static! {
-    static ref ADD_COMMAND: String = Command::AddWhitelistWord {
-        word: String::new()
-    }
-    .to_string();
-    static ref REMOVE_COMMAND: String = Command::RemoveWhitelistWord {
-        word: String::new()
-    }
-    .to_string();
-    static ref LIST_COMMAND: String = Command::ListWhitelistWords.to_string();
-}
 
 pub async fn handle_add_word(
     app: &App,
@@ -33,7 +24,7 @@ pub async fn handle_add_word(
     if word.is_empty() {
         let message = format!(
             "Provide word <code>/{command} yourword</code>",
-            command = *ADD_COMMAND
+            command = *ADD_WHITELIST_WORD_COMMAND
         );
 
         app.bot()
@@ -59,7 +50,7 @@ pub async fn handle_add_word(
 
                 To list all word in whitelist /{command}
             ",
-            command = *LIST_COMMAND
+            command = *LIST_WHITELIST_WORDS_COMMAND
         )
     } else {
         formatdoc!(
@@ -68,7 +59,7 @@ pub async fn handle_add_word(
 
                 To list all word in whitelist /{command}
             ",
-            command = *LIST_COMMAND
+            command = *LIST_WHITELIST_WORDS_COMMAND
         )
     };
 
@@ -90,7 +81,7 @@ pub async fn handle_remove_word(
     if word.is_empty() {
         let message = format!(
             "Provide word <code>/{command} yourword</code>",
-            command = *ADD_COMMAND
+            command = *ADD_WHITELIST_WORD_COMMAND
         );
 
         app.bot()
@@ -113,7 +104,7 @@ pub async fn handle_remove_word(
                 Word <code>'{word}'</code> not in whitelist
                 To list all word in whitelist /{command}
             ",
-            command = *LIST_COMMAND
+            command = *LIST_WHITELIST_WORDS_COMMAND
         )
     };
 
@@ -140,7 +131,7 @@ pub async fn handle_list_words(
 
                 Add new word with <code>/{command} your-word</code>
             ",
-            command = *ADD_COMMAND
+            command = *ADD_WHITELIST_WORD_COMMAND
         )
     } else {
         let words = words
@@ -157,7 +148,7 @@ pub async fn handle_list_words(
 
                 You can remove word with <code>/{command} your-word</code> command
             ",
-            command = *REMOVE_COMMAND
+            command = *REMOVE_WHITELIST_WORD_COMMAND
         )
     };
 

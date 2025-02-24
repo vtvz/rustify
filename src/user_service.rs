@@ -70,6 +70,15 @@ impl UserStatsIncreaseQueryBuilder {
         self
     }
 
+    pub fn analyzed_lyrics(mut self) -> Self {
+        self.0 = self.0.col_expr(
+            UserColumn::LyricsAnalyzed,
+            Expr::col(UserColumn::LyricsAnalyzed).add(1),
+        );
+
+        self
+    }
+
     pub async fn exec(self, db: &impl ConnectionTrait) -> Result<UpdateResult, DbErr> {
         self.0
             .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
@@ -89,6 +98,7 @@ pub struct UserStats {
     pub lyrics_musixmatch: i64,
     pub lyrics_lrclib: i64,
     pub lyrics_azlyrics: i64,
+    pub lyrics_analyzed: i64,
 }
 
 pub struct UserService;
@@ -224,8 +234,14 @@ impl UserService {
                 UserColumn::LyricsGenius
                     .sum()
                     .add(UserColumn::LyricsMusixmatch.sum())
+                    .add(UserColumn::LyricsLrcLib.sum())
+                    .add(UserColumn::LyricsAZLyrics.sum())
                     .cast_as(bigint()),
                 "lyrics_found",
+            )
+            .column_as(
+                UserColumn::LyricsAnalyzed.sum().cast_as(bigint()),
+                "lyrics_analyzed",
             )
             .into_model::<UserStats>()
             .one(db)

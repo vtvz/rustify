@@ -2,6 +2,22 @@ use std::fmt::Formatter;
 
 use teloxide::utils::command::BotCommands;
 
+lazy_static::lazy_static! {
+    pub static ref ADD_WHITELIST_WORD_COMMAND: String = Command::AddWhitelistWord {
+        word: String::new()
+    }
+    .to_string();
+
+    pub static ref REMOVE_WHITELIST_WORD_COMMAND: String = Command::RemoveWhitelistWord {
+        word: String::new()
+    }
+    .to_string();
+
+    pub static ref LIST_WHITELIST_WORDS_COMMAND: String = Command::ListWhitelistWords.to_string();
+
+    pub static ref SET_ANALYSIS_LANGUAGE_COMMAND: String = Command::SetAnalysisLanguage { language: String::new() }.to_string();
+}
+
 #[derive(BotCommands, PartialEq, Eq, Debug)]
 #[command(rename_rule = "snake_case", parse_with = "split")]
 pub enum Command {
@@ -29,6 +45,8 @@ pub enum Command {
     ToggleTrackSkip,
     #[command(description = "toggle setting of profanity check")]
     ToggleProfanityCheck,
+    #[command(description = "set language for analysis results")]
+    SetAnalysisLanguage { language: String },
 
     #[command(
         description = "add word to whitelist",
@@ -65,6 +83,7 @@ impl std::fmt::Display for Command {
             Command::Register => "register",
             Command::ToggleTrackSkip => "toggle_track_skip",
             Command::ToggleProfanityCheck => "toggle_profanity_check",
+            Command::SetAnalysisLanguage { .. } => "set_analysis_language",
             Command::Help => "help",
             Command::AddWhitelistWord { .. } => "add_word_to_whitelist",
             Command::RemoveWhitelistWord { .. } => "remove_word_from_whitelist",
