@@ -105,20 +105,21 @@ async fn perform(
         .unwrap_or_else(|| config.default_language().to_string());
     let model = config.model();
 
-    let mut prompt = formatdoc!("
-        Give me a detailed description, meaning, and storyline of the following lyrics of the song \"{song_name}\" and answer these questions:
+    let prompt = formatdoc!("
+        Provide a detailed description, meaning, and storyline of the following song lyrics: \"{song_name}\" and answer these questions:
 
-        Does this song relate to any religion, and what religion is?
-        Does this have profane or explicit content or phrases and what are these?
-        Does this song have any sexual amorality, actions, or even hints?
-        Is there any occultism or spiritism in this song?
-        Is there mentions of any form of violence in this song?
+	    1.	Does this song relate to any religion, and if so, which religion? Provide details.
+	    2.	Does this song contain profane or explicit content or phrases? If yes, list them.
+	    3.	Does this song include any sexual amorality, actions, or even hints? If yes, specify.
+	    4.	Does this song reference any form of occultism or spiritism? If yes, explain.
+	    5.	Are there any mentions of violence in this song? If yes, describe them.
 
-        Reply in {lang} language. Respond with no formatting. There are lyrics:
+        Reply in {lang} language and {lang} only. Respond with no formatting. There are lyrics:
 
         {lyrics}
     ");
 
+    /*
     // temp
     let http_client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
@@ -141,6 +142,7 @@ async fn perform(
             .replace("{lyrics}", &lyrics);
     }
     // temp
+    */
 
     let request = CreateChatCompletionRequestArgs::default()
         .model(model)
