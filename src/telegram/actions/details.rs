@@ -95,6 +95,8 @@ async fn common(
         },
     };
 
+    // NOTE: It works because I have old token I need to cherish
+    #[allow(deprecated)]
     let features = spotify.track_features(track.raw_id().clone()).await?;
 
     let modality = match features.mode {
