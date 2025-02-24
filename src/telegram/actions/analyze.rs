@@ -155,7 +155,7 @@ async fn perform(
     let details = if let Some(usage) = response.usage {
         formatdoc!(
             "
-                Reasoning model: <code>{model}</code>
+                Model: <code>{model}</code>
                 Tokens: prompt — <code>{}</code>, completion — <code>{}</code>
             ",
             usage.prompt_tokens,
