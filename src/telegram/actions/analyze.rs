@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use anyhow::Context as _;
 use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 use indoc::formatdoc;
@@ -119,7 +117,7 @@ async fn perform(
         {lyrics}
     ");
 
-    /*
+    /* NOTE: Will be removed
     // temp
     let http_client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
