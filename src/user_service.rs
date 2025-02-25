@@ -1,7 +1,7 @@
 use chrono::Duration;
 use redis::AsyncCommands;
 use sea_orm::prelude::*;
-use sea_orm::sea_query::{Alias, Expr};
+use sea_orm::sea_query::{Alias, Expr, Func};
 use sea_orm::{
     ConnectionTrait,
     FromQueryResult,
@@ -198,49 +198,79 @@ impl UserService {
         let bigint = || Alias::new("bigint");
         let res = Self::query(id, None)
             .select_only()
-            .column_as(
-                UserColumn::RemovedCollection.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::RemovedCollection.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "removed_collection",
             )
-            .column_as(
-                UserColumn::RemovedPlaylists.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::RemovedPlaylists.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "removed_playlists",
             )
-            .column_as(
-                UserColumn::LyricsChecked.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::LyricsChecked.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "lyrics_checked",
             )
-            .column_as(
-                UserColumn::LyricsProfane.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::LyricsProfane.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "lyrics_profane",
             )
-            .column_as(
-                UserColumn::LyricsGenius.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::LyricsGenius.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "lyrics_genius",
             )
-            .column_as(
-                UserColumn::LyricsMusixmatch.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::LyricsMusixmatch.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "lyrics_musixmatch",
             )
-            .column_as(
-                UserColumn::LyricsLrcLib.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::LyricsLrcLib.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "lyrics_lrclib",
             )
-            .column_as(
-                UserColumn::LyricsAZLyrics.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::LyricsAZLyrics.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "lyrics_azlyrics",
             )
-            .column_as(
-                UserColumn::LyricsGenius
-                    .sum()
-                    .add(UserColumn::LyricsMusixmatch.sum())
-                    .add(UserColumn::LyricsLrcLib.sum())
-                    .add(UserColumn::LyricsAZLyrics.sum())
-                    .cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::LyricsGenius
+                        .sum()
+                        .add(UserColumn::LyricsMusixmatch.sum())
+                        .add(UserColumn::LyricsLrcLib.sum())
+                        .add(UserColumn::LyricsAZLyrics.sum())
+                        .cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "lyrics_found",
             )
-            .column_as(
-                UserColumn::LyricsAnalyzed.sum().cast_as(bigint()),
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::LyricsAnalyzed.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
                 "lyrics_analyzed",
             )
             .into_model::<UserStats>()
