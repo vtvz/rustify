@@ -191,6 +191,8 @@ pub async fn collect_daemon(app: &'static App) {
     }.in_current_span());
 
     utils::tick!(Duration::from_secs(60), {
+        tracing::debug!("Metrics tick");
+
         if let Err(err) = collect(client, app).await {
             tracing::error!(err = ?err, "Something went wrong on metrics collection");
         }
