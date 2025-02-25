@@ -68,15 +68,3 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 debug = 1
-
-[[bin]]
-name = "bot"
-
-[[bin]]
-name = "track_check"
-
-[[bin]]
-name = "metrics"
-
-[[bin]]
-name = "queues"

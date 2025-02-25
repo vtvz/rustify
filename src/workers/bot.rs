@@ -1,14 +1,15 @@
 use indoc::formatdoc;
-use rustify::app::App;
-use rustify::entity::prelude::UserWhitelistStatus;
-use rustify::telegram::commands::Command;
-use rustify::telegram::utils::link_preview_disabled;
-use rustify::user::UserState;
-use rustify::user_service::UserService;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::command::BotCommands as _;
+
+use crate::app::App;
+use crate::entity::prelude::UserWhitelistStatus;
+use crate::telegram::commands::Command;
+use crate::telegram::utils::link_preview_disabled;
+use crate::user::UserState;
+use crate::user_service::UserService;
 
 async fn sync_name(
     app: &'static App,
@@ -125,12 +126,10 @@ async fn whitelisted(app: &'static App, state: &UserState) -> anyhow::Result<boo
     Ok(false)
 }
 
-async fn run() {
+pub async fn work() {
     // profanity::check_cases();
 
-    rustify::logger::init()
-        .await
-        .expect("Logger should be built");
+    crate::logger::init().await.expect("Logger should be built");
 
     tracing::info!(
         git_commit_timestamp = env!("GIT_COMMIT_TIMESTAMP"),
@@ -145,7 +144,7 @@ async fn run() {
         .await
         .expect("update commands should be working");
 
-    tokio::spawn(rustify::utils::listen_for_ctrl_c());
+    tokio::spawn(crate::utils::listen_for_ctrl_c());
 
     let handler = dptree::entry()
         .branch(
@@ -160,7 +159,7 @@ async fn run() {
                     tracing::error!(err = ?err, user_id = state.user_id(), "Failed syncing user name");
                 }
 
-                let result = rustify::telegram::handle_message(app, &state, m.clone()).await;
+                let result = crate::telegram::handle_message(app, &state, m.clone()).await;
 
                 if let Err(err) = &result {
                     tracing::error!(err = ?err, "Error on message handling");
@@ -188,7 +187,7 @@ async fn run() {
             move |q: CallbackQuery| async {
                 let state = app.user_state(&q.from.id.to_string()).await?;
 
-                rustify::telegram::handlers::inline_buttons::handle(app, &state, q).await
+                crate::telegram::handlers::inline_buttons::handle(app, &state, q).await
             },
         ));
 
@@ -197,15 +196,10 @@ async fn run() {
     let token = dispatcher.shutdown_token();
 
     tokio::spawn(async move {
-        rustify::utils::ctrl_c().await;
+        crate::utils::ctrl_c().await;
 
         token.shutdown().expect("To be good").await;
     });
 
     dispatcher.dispatch().await;
-}
-
-#[tokio::main(worker_threads = 4)]
-async fn main() {
-    run().await;
 }

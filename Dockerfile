@@ -13,11 +13,7 @@ RUN rustup show
 COPY Cargo.toml Cargo.lock ./
 
 # Create a dummy main.rs to ensure `cargo build` can succeed for dependencies
-RUN mkdir -p src/bin \
-  && echo "fn main() {}" > src/bin/bot.rs \
-  && echo "fn main() {}" > src/bin/metrics.rs \
-  && echo "fn main() {}" > src/bin/track_check.rs \
-  && echo "fn main() {}" > src/bin/queues.rs
+RUN mkdir -p src && echo "fn main() {}" > src/main.rs
 
 # Fetch dependencies without building the actual project (this will be cached)
 
@@ -33,7 +29,7 @@ ENV GIT_COMMIT_TIMESTAMP=${GIT_COMMIT_TIMESTAMP}
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
 
-RUN find src/bin/ -type f -exec touch {} + && cargo build --release
+RUN touch src/main.rs && cargo build --release
 
 # Use a minimal base image for the runtime
 FROM debian:bookworm-slim
@@ -45,7 +41,6 @@ RUN \
   && rm -rf /var/lib/apt/lists/*
 
 # Copy the compiled binary from the build stage
-COPY --from=builder /usr/src/rustify/target/release/bot /usr/local/bin/rustify-bot
-COPY --from=builder /usr/src/rustify/target/release/metrics /usr/local/bin/rustify-metrics
-COPY --from=builder /usr/src/rustify/target/release/track_check /usr/local/bin/rustify-track-check
-COPY --from=builder /usr/src/rustify/target/release/queues /usr/local/bin/rustify-queues
+COPY --from=builder /usr/src/rustify/target/release/rustify /usr/local/bin/rustify
+
+ENTRYPOINT [ "/usr/local/bin/rustify" ]

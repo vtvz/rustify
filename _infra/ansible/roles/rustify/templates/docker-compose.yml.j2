@@ -9,21 +9,24 @@ services:
     environment:
       {{ rustify_env_content | indent(6) }}
     restart: always
-    entrypoint: /usr/local/bin/rustify-bot
+    entrypoint: /usr/local/bin/rustify
+    command: bot
 
   track_check:
     image: "{{ rustify_docker_image }}"
     environment:
       {{ rustify_env_content | indent(6) }}
     restart: always
-    entrypoint: /usr/local/bin/rustify-track-check
+    entrypoint: /usr/local/bin/rustify
+    command: track_check
 
   queues:
     image: "{{ rustify_docker_image }}"
     environment:
       {{ rustify_env_content | indent(6) }}
     restart: always
-    entrypoint: /usr/local/bin/rustify-queues
+    entrypoint: /usr/local/bin/rustify
+    command: queues
 
   db:
     image: postgres:16
