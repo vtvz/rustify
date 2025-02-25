@@ -1,8 +1,9 @@
 use teloxide::types::Message;
 
 use super::HandleStatus;
-use crate::app::App; use crate::user::UserState;
+use crate::app::App;
 use crate::telegram::actions;
+use crate::user::UserState;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(

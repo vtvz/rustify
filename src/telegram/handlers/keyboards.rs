@@ -4,9 +4,10 @@ use anyhow::Context;
 use teloxide::prelude::*;
 
 use super::HandleStatus;
-use crate::app::App; use crate::user::UserState;
+use crate::app::App;
 use crate::telegram::actions;
 use crate::telegram::keyboards::StartKeyboard;
+use crate::user::UserState;
 
 pub async fn handle(
     app: &'static App,

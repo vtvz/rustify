@@ -1,6 +1,6 @@
 use anyhow::Context as _;
-use rustify::queue::profanity_check;
 use rustify::app::App;
+use rustify::queue::profanity_check;
 use rustify::utils;
 use tokio::task::JoinHandle;
 

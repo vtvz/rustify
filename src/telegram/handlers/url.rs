@@ -1,9 +1,10 @@
 use teloxide::types::Message;
 
 use super::HandleStatus;
-use crate::app::App; use crate::user::UserState;
+use crate::app::App;
 use crate::telegram::utils::extract_url_from_message;
 use crate::telegram::{actions, return_if_handled};
+use crate::user::UserState;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
