@@ -1,9 +1,13 @@
-use crate::app::App;
+use rustify::app::App;
+
+use crate as rustify;
 
 pub async fn work() {
     // profanity::check_cases();
 
-    crate::logger::init().await.expect("Logger should be built");
+    rustify::logger::init()
+        .await
+        .expect("Logger should be built");
 
     tracing::info!(
         git_commit_timestamp = env!("GIT_COMMIT_TIMESTAMP"),
@@ -13,8 +17,8 @@ pub async fn work() {
 
     let app = App::init().await.expect("State to be built");
 
-    tokio::spawn(crate::utils::listen_for_ctrl_c());
-    tokio::spawn(crate::metrics::collect_daemon(app));
+    tokio::spawn(rustify::utils::listen_for_ctrl_c());
+    tokio::spawn(rustify::metrics::collect_daemon(app));
 
-    crate::tick::check_playing(app).await;
+    rustify::tick::check_playing(app).await;
 }

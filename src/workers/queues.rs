@@ -1,12 +1,15 @@
 use anyhow::Context as _;
+use rustify::app::App;
+use rustify::queue::profanity_check;
+use rustify::utils;
 use tokio::task::JoinHandle;
 
-use crate::app::App;
-use crate::queue::profanity_check;
-use crate::utils;
+use crate as rustify;
 
 pub async fn work() {
-    crate::logger::init().await.expect("Logger should be built");
+    rustify::logger::init()
+        .await
+        .expect("Logger should be built");
 
     tracing::info!(
         git_commit_timestamp = env!("GIT_COMMIT_TIMESTAMP"),
@@ -16,7 +19,7 @@ pub async fn work() {
 
     let app = App::init().await.expect("State to be built");
 
-    tokio::spawn(crate::utils::listen_for_ctrl_c());
+    tokio::spawn(rustify::utils::listen_for_ctrl_c());
 
     let handler: JoinHandle<anyhow::Result<_>> = tokio::spawn(async move {
         loop {
