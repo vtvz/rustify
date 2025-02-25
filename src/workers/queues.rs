@@ -4,7 +4,9 @@ use rustify::queue::profanity_check;
 use rustify::utils;
 use tokio::task::JoinHandle;
 
-async fn run() {
+use crate as rustify;
+
+pub async fn work() {
     rustify::logger::init()
         .await
         .expect("Logger should be built");
@@ -38,9 +40,4 @@ async fn run() {
     });
 
     handler.await.expect("Should work").expect("Should work");
-}
-
-#[tokio::main(worker_threads = 4)]
-async fn main() {
-    run().await;
 }

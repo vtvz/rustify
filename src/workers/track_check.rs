@@ -1,6 +1,8 @@
 use rustify::app::App;
 
-async fn run() {
+use crate as rustify;
+
+pub async fn work() {
     // profanity::check_cases();
 
     rustify::logger::init()
@@ -19,9 +21,4 @@ async fn run() {
     tokio::spawn(rustify::metrics::collect_daemon(app));
 
     rustify::tick::check_playing(app).await;
-}
-
-#[tokio::main(worker_threads = 4)]
-async fn main() {
-    run().await;
 }

@@ -44,19 +44,16 @@ restart:
   ssh "{{ server }}" -- docker-compose --project-directory "{{ path }}" restart bot track_check queues
 
 run-bot:
-  proxychains4 -q cargo run --bin "bot"
+  proxychains4 -q cargo run "bot"
 
 run-track-check:
-  proxychains4 -q cargo run --bin "track_check"
+  proxychains4 -q cargo run "track_check"
 
 run-queues:
-  proxychains4 -q cargo run --bin "queues"
-
-run-metrics:
-  proxychains4 -q cargo run --bin "metrics"
+  proxychains4 -q cargo run "queues"
 
 run:
-  parallel --tagstring "[{}]" --line-buffer -j4 --halt now,fail=1 just ::: "run-bot" "run-track-check" "run-metrics" "run-queues"
+  parallel --tagstring "[{}]" --line-buffer -j4 --halt now,fail=1 just ::: "run-bot" "run-track-check" "run-queues"
 
 watch:
   cargo watch -s 'just run'

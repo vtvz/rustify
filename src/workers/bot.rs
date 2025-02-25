@@ -10,6 +10,8 @@ use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::command::BotCommands as _;
 
+use crate as rustify;
+
 async fn sync_name(
     app: &'static App,
     state: &UserState,
@@ -125,7 +127,7 @@ async fn whitelisted(app: &'static App, state: &UserState) -> anyhow::Result<boo
     Ok(false)
 }
 
-async fn run() {
+pub async fn work() {
     // profanity::check_cases();
 
     rustify::logger::init()
@@ -203,9 +205,4 @@ async fn run() {
     });
 
     dispatcher.dispatch().await;
-}
-
-#[tokio::main(worker_threads = 4)]
-async fn main() {
-    run().await;
 }
