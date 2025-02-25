@@ -15,7 +15,7 @@ pub enum CheckUserResult {
     SkipSame,
     #[strum(serialize = "Complete check")]
     Complete,
-    #[strum(serialize = "Current track is on pause {1}")]
+    #[strum(serialize = "Current track is on pause {0}")]
     None(spotify::CurrentlyPlayingNoneReason),
 }
 
