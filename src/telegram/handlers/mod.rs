@@ -1,3 +1,4 @@
+pub mod admin_commands;
 pub mod commands;
 pub mod inline_buttons;
 pub mod keyboards;

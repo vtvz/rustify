@@ -1,3 +1,4 @@
+pub mod admin_stats;
 pub mod analyze;
 pub mod cancel;
 pub mod cleanup;

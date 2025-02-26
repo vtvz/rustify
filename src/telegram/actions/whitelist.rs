@@ -5,19 +5,13 @@ use crate::app::App;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
-use crate::user::UserState;
 
 pub async fn handle(
     app: &'static App,
-    state: &UserState,
     m: &Message,
     action: String,
     user_id: String,
 ) -> anyhow::Result<HandleStatus> {
-    if !app.whitelist().is_admin(state.user_id()) {
-        return Ok(HandleStatus::Skipped);
-    }
-
     let Ok(user_id_int) = user_id.parse::<i64>() else {
         app.bot()
             .send_message(m.chat.id, "User Id has wrong format. Should be ID")

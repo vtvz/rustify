@@ -83,9 +83,6 @@ pub async fn handle(
                 .reply_markup(StartKeyboard::markup())
                 .await?;
         },
-        Command::Whitelist(action, user_id) => {
-            return actions::whitelist::handle(app, state, m, action, user_id).await;
-        },
         Command::ToggleTrackSkip => {
             return actions::settings::handle_toggle_skip_tracks(app, state, m.chat.id).await;
         },
