@@ -3,6 +3,7 @@ use std::time::Duration;
 
 use anyhow::Context;
 use async_openai::config::OpenAIConfig;
+use indoc::formatdoc;
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
@@ -28,6 +29,7 @@ pub struct AnalyzeConfig {
     openai_client: async_openai::Client<OpenAIConfig>,
     default_language: String,
     model: String,
+    prompt: String,
 }
 
 impl AnalyzeConfig {
@@ -41,6 +43,10 @@ impl AnalyzeConfig {
 
     pub fn model(&self) -> &str {
         &self.model
+    }
+
+    pub fn prompt(&self) -> &str {
+        &self.prompt
     }
 }
 
@@ -206,6 +212,19 @@ async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
         openai_client,
         default_language: dotenv::var("ANALYZE_DEFAULT_LANGUAGE").unwrap_or("English".into()),
         model: dotenv::var("OPENAI_API_MODEL").unwrap_or("gpt-4o".into()),
+        prompt: formatdoc!("
+            Provide a detailed description, meaning, and storyline of the following song lyrics: \"{{song_name}}\" and answer these questions:
+
+            1. Does this song relate to any religion, and if so, which religion? Provide details.
+            2. Does this song contain profane or explicit content or phrases? If yes, list them.
+            3. Does this song include any sexual amorality, actions, or even hints? If yes, specify.
+            4. Does this song reference any form of occultism or spiritism? If yes, explain.
+            5. Are there any mentions of violence in this song? If yes, describe them.
+
+            Reply in {{lang}} language and {{lang}} only. Respond with no formatting. There are lyrics:
+
+            {{lyrics}}
+        ")
     };
 
     Ok(Some(config))

@@ -42,8 +42,19 @@ pub async fn handle(
         AdminCommand::Whitelist(action, user_id) => {
             return actions::whitelist::handle(app, m, action, user_id).await;
         },
-        AdminCommand::AdminStats => {
+        AdminCommand::GlobalStats => {
             return actions::admin_stats::handle(app, state, m).await;
+        },
+        AdminCommand::GetAnalyzePrompt => {
+            app.bot()
+                .send_message(
+                    m.chat.id,
+                    app.analyze()
+                        .map(|config| config.prompt())
+                        .unwrap_or("Analyze did not configured"),
+                )
+                .reply_markup(StartKeyboard::markup())
+                .await?;
         },
     }
 

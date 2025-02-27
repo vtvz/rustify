@@ -101,5 +101,8 @@ pub enum AdminCommand {
     Whitelist(String, String),
 
     #[command(description = "show global statistics")]
-    AdminStats,
+    GlobalStats,
+
+    #[command(description = "get analyze prompt")]
+    GetAnalyzePrompt,
 }
