@@ -35,9 +35,9 @@
     reauthorize: true
 
 - name: Docker Compose Up
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_src: "{{ rustify_deploy_path }}"
-    build: true
+    build: always
     state: present
 
 - name: Configure Backups
@@ -54,13 +54,13 @@
       ansible.builtin.cron:
         name: "dump rustify database"
         minute: "0"
-        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump_data"
+        job: "/usr/bin/docker compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump_data"
 
     - name: "Cron: Dump schema of rustify Postgres database"
       ansible.builtin.cron:
         name: "dump rustify database schema"
         minute: "0"
-        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump_schema"
+        job: "/usr/bin/docker compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm pg_dump_schema"
 
     - name: "Cron: Upload backup with restic"
       ansible.builtin.cron:
@@ -68,7 +68,7 @@
         day: "*/4"
         hour: "0"
         minute: "30"
-        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm backup"
+        job: "/usr/bin/docker compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm backup"
 
     - name: "Cron: Cleanup old backups"
       ansible.builtin.cron:
@@ -76,4 +76,4 @@
         weekday: "6"
         hour: "0"
         minute: "0"
-        job: "/usr/local/bin/docker-compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm forget"
+        job: "/usr/bin/docker compose -f {{ rustify_deploy_path }}/docker-compose.backup.yml -p rustify-backup run --rm forget"
