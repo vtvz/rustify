@@ -40,6 +40,10 @@ pub async fn handle(
     let lyrics_azlyrics_ratio = 100.0 * lyrics_azlyrics as f32 / lyrics_found as f32;
     let lyrics_profane_ratio = 100.0 * lyrics_profane as f32 / lyrics_found as f32;
 
+    let users_count = UserService::count_users(app.db(), None).await?;
+    let users_active = UserService::count_users(app.db(), Some(UserStatus::Active)).await?;
+    let users_active_ratio = 100.0 * users_active as f32 / users_count as f32;
+
     let message = formatdoc!(
         r#"
             📉 <b>Global stats</b> 📈
@@ -53,13 +57,18 @@ pub async fn handle(
             🔍 Analyzed lyrics <code>{lyrics_analyzed}</code> time
             🤬 <code>{lyrics_profane} ({lyrics_profane_ratio:.1}%)</code> lyrics were considered as profane
 
+            🤷<b>Users stats</b>
+
+            • Amount <code>{users_count}</code>
+            • Active <code>{users_active} ({users_active_ratio:.2}%)</code>
+
             <b>Lyrics provider stats</b>
 
-            • Found <code>{lyrics_found} ({lyrics_found_ratio:.1}%)</code>
-            • Genius <code>{lyrics_genius} ({lyrics_genius_ratio:.1}%)</code>
-            • MusixMatch <code>{lyrics_musixmatch} ({lyrics_musixmatch_ratio:.1}%)</code>
-            • LrcLib <code>{lyrics_lrclib} ({lyrics_lrclib_ratio:.1}%)</code>
-            • AZLyrics <code>{lyrics_azlyrics} ({lyrics_azlyrics_ratio:.1}%)</code>
+            • Found <code>{lyrics_found} ({lyrics_found_ratio:.2}%)</code>
+            • Genius <code>{lyrics_genius} ({lyrics_genius_ratio:.2}%)</code>
+            • MusixMatch <code>{lyrics_musixmatch} ({lyrics_musixmatch_ratio:.2}%)</code>
+            • LrcLib <code>{lyrics_lrclib} ({lyrics_lrclib_ratio:.2}%)</code>
+            • AZLyrics <code>{lyrics_azlyrics} ({lyrics_azlyrics_ratio:.2}%)</code>
         "#
     );
 

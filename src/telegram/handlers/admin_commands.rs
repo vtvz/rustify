@@ -43,7 +43,7 @@ pub async fn handle(
             return actions::whitelist::handle(app, m, action, user_id).await;
         },
         AdminCommand::GlobalStats => {
-            return actions::admin_stats::handle(app, state, m).await;
+            return actions::global_stats::handle(app, state, m).await;
         },
         AdminCommand::GetAnalyzePrompt => {
             app.bot()
