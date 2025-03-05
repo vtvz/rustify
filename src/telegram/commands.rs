@@ -65,9 +65,6 @@ pub enum Command {
         rename = "list_words_in_whitelist"
     )]
     ListWhitelistWords,
-
-    #[command(hide)]
-    Whitelist(String, String),
 }
 
 impl std::fmt::Display for Command {
@@ -88,9 +85,24 @@ impl std::fmt::Display for Command {
             Command::AddWhitelistWord { .. } => "add_word_to_whitelist",
             Command::RemoveWhitelistWord { .. } => "remove_word_from_whitelist",
             Command::ListWhitelistWords => "list_words_in_whitelist",
-            Command::Whitelist(..) => "whitelist",
         };
 
         f.write_str(string)
     }
+}
+
+#[derive(BotCommands, PartialEq, Eq, Debug)]
+#[command(rename_rule = "snake_case", parse_with = "split")]
+pub enum AdminCommand {
+    #[command(description = "show this help")]
+    Admin,
+
+    #[command(description = "manage user whitelist")]
+    Whitelist(String, String),
+
+    #[command(description = "show global statistics")]
+    GlobalStats,
+
+    #[command(description = "get analyze prompt")]
+    GetAnalyzePrompt,
 }

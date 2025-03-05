@@ -3,6 +3,7 @@ pub mod cancel;
 pub mod cleanup;
 pub mod details;
 pub mod dislike;
+pub mod global_stats;
 pub mod ignore;
 pub mod like;
 pub mod register;

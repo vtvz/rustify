@@ -191,6 +191,29 @@ impl UserService {
         UserStatsIncreaseQueryBuilder::new(user_id)
     }
 
+    pub async fn count_users(
+        db: &impl ConnectionTrait,
+        status: Option<UserStatus>,
+    ) -> anyhow::Result<i64> {
+        #[derive(FromQueryResult, Default)]
+        struct UsersCount {
+            count: Option<i64>,
+        }
+
+        let mut q = UserEntity::find().select_only().expr_as(
+            UserColumn::Id.count().cast_as(Alias::new("bigint")),
+            "count",
+        );
+
+        if let Some(status) = status {
+            q = q.filter(UserColumn::Status.eq(status));
+        }
+
+        let skips: UsersCount = q.into_model().one(db).await?.unwrap_or_default();
+
+        Ok(skips.count.unwrap_or_default())
+    }
+
     pub async fn get_stats(
         db: &impl ConnectionTrait,
         id: Option<&str>,
