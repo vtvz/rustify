@@ -35,6 +35,7 @@ pub async fn handle_message(
 ) -> anyhow::Result<HandleStatus> {
     return_if_handled!(handlers::url::handle(app, state, &m).await?);
 
+    // TODO: Better way to handle admin permissions
     if app.whitelist().is_admin(state.user_id()) {
         return_if_handled!(handlers::admin_commands::handle(app, state, &m).await?);
     }
