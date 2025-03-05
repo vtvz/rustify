@@ -71,7 +71,7 @@ pub async fn handle_inline(
 
     match res {
         Ok(_) => {},
-        Err(_) => {
+        Err(err) => {
             app.bot()
                 .edit_message_text(
                     chat_id,
@@ -79,6 +79,8 @@ pub async fn handle_inline(
                     "Analysis failed. This happens from time to time. Try again later 🤷",
                 )
                 .await?;
+
+            tracing::warn!(err = ?err, "OpenAI request failed");
         },
     };
     Ok(())
@@ -163,6 +165,8 @@ async fn perform(
 
     let Some(choice) = choices else { return Ok(()) };
 
+    let analysis_result = choice.message.content.clone().unwrap_or_default();
+
     app.bot()
         .edit_message_text(
             chat_id,
@@ -174,11 +178,10 @@ async fn perform(
 
                     {details}
 
-                    {content}
+                    {analysis_result}
                 ",
                 track_name = track.track_tg_link(),
                 album_name = track.album_tg_link(),
-                content = choice.message.content.clone().unwrap_or_default(),
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
