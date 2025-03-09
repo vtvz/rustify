@@ -6,26 +6,26 @@ rust-version = "1.75.0"
 
 [dependencies]
 again = "0.1.2"
-anyhow = { version = "1.0.96", features = ["backtrace"] }
-async-openai = "0.27.2"
+anyhow = { version = "1.0.97", features = ["backtrace"] }
+async-openai = "0.28.0"
 # base64 = "0.22.1"
-cached = { version = "0.54.0", features = ["async", "redis_tokio"] }
-chrono = "0.4.39"
-convert_case = "0.7.1"
+cached = { version = "0.55.1", features = ["async", "redis_tokio"] }
+chrono = "0.4.40"
+convert_case = "0.8.0"
 derive_more = { version = "2.0.1", features = ["full"] }
 dotenv = "0.15.0"
-indoc = "2.0.5"
+indoc = "2.0.6"
 # WARNING: Do not upgrade. It will break metrics
 influxdb = { version = "0.6.0", features = ["derive"] }
 itertools = "0.14.0"
 lazy_static = "1.5.0"
-redis = { version = "0.29.0", features = ["aio", "tokio-comp"] }
+redis = { version = "0.29.1", features = ["aio", "tokio-comp"] }
 regex = { version = "1.11.1", features = ["pattern"] }
 reqwest = "0.12.12"
 rspotify = "0.14.0"
-rustrict = { version = "0.7.33", features = ["customize"] }
+rustrict = { version = "0.7.34", features = ["customize"] }
 serde = "1.0.218"
-serde_json = "1.0.139"
+serde_json = "1.0.140"
 sqlx = { version = "0.8.3", features = ["postgres"] }
 strsim = "0.11.1"
 strum = "0.27.1"
@@ -44,7 +44,7 @@ version = "2.4.0"
 
 [dependencies.sea-orm]
 default-features = false
-version = "1.1.6"
+version = "1.1.7"
 features = [
     "runtime-tokio-native-tls",
     "macros",
@@ -55,7 +55,7 @@ features = [
 
 [dependencies.teloxide]
 version = "0.13.0"
-features = ["macros", "bincode-serializer"]
+features = ["macros", "bincode-serializer", "redis-storage"]
 
 [dependencies.tokio]
 version = "1.43.0"
