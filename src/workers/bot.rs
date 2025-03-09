@@ -1,7 +1,7 @@
 use indoc::formatdoc;
 use rustify::app::App;
 use rustify::entity::prelude::UserWhitelistStatus;
-use rustify::telegram::commands::Command;
+use rustify::telegram::commands::UserCommand;
 use rustify::telegram::utils::link_preview_disabled;
 use rustify::user::UserState;
 use rustify::user_service::UserService;
@@ -143,7 +143,7 @@ pub async fn work() {
     let app = App::init().await.expect("State to be built");
 
     app.bot()
-        .set_my_commands(Command::bot_commands())
+        .set_my_commands(UserCommand::bot_commands())
         .await
         .expect("update commands should be working");
 
@@ -162,7 +162,7 @@ pub async fn work() {
                     tracing::error!(err = ?err, user_id = state.user_id(), "Failed syncing user name");
                 }
 
-                let result = rustify::telegram::handle_message(app, &state, m.clone()).await;
+                let result = rustify::telegram::handlers::message::handle(app, &state, m.clone()).await;
 
                 if let Err(err) = &result {
                     tracing::error!(err = ?err, "Error on message handling");
