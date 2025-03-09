@@ -1,5 +1,5 @@
 use teloxide::prelude::*;
-use teloxide::types::MessageKind;
+use teloxide::types::{MediaKind, MessageCommon, MessageKind};
 use teloxide::utils::command::BotCommands;
 
 use super::{HandleStatus, return_if_handled};
@@ -17,7 +17,11 @@ pub async fn handle(
 ) -> anyhow::Result<HandleStatus> {
     #[allow(clippy::single_match)]
     match m.kind {
-        MessageKind::Common(_) => {
+        // Handle simple text messages
+        MessageKind::Common(MessageCommon {
+            media_kind: MediaKind::Text(_),
+            ..
+        }) => {
             return_if_handled!(handlers::url::handle(app, state, &m).await?);
 
             // TODO: Better way to handle admin permissions
