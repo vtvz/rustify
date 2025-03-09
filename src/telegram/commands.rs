@@ -3,24 +3,24 @@ use std::fmt::Formatter;
 use teloxide::utils::command::BotCommands;
 
 lazy_static::lazy_static! {
-    pub static ref ADD_WHITELIST_WORD_COMMAND: String = Command::AddWhitelistWord {
+    pub static ref ADD_WHITELIST_WORD_COMMAND: String = UserCommand::AddWhitelistWord {
         word: String::new()
     }
     .to_string();
 
-    pub static ref REMOVE_WHITELIST_WORD_COMMAND: String = Command::RemoveWhitelistWord {
+    pub static ref REMOVE_WHITELIST_WORD_COMMAND: String = UserCommand::RemoveWhitelistWord {
         word: String::new()
     }
     .to_string();
 
-    pub static ref LIST_WHITELIST_WORDS_COMMAND: String = Command::ListWhitelistWords.to_string();
+    pub static ref LIST_WHITELIST_WORDS_COMMAND: String = UserCommand::ListWhitelistWords.to_string();
 
-    pub static ref SET_ANALYSIS_LANGUAGE_COMMAND: String = Command::SetAnalysisLanguage { language: String::new() }.to_string();
+    pub static ref SET_ANALYSIS_LANGUAGE_COMMAND: String = UserCommand::SetAnalysisLanguage { language: String::new() }.to_string();
 }
 
 #[derive(BotCommands, PartialEq, Eq, Debug)]
 #[command(rename_rule = "snake_case", parse_with = "split")]
-pub enum Command {
+pub enum UserCommand {
     #[command(description = "show this help")]
     Help,
 
@@ -67,24 +67,24 @@ pub enum Command {
     ListWhitelistWords,
 }
 
-impl std::fmt::Display for Command {
+impl std::fmt::Display for UserCommand {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let string = match self {
-            Command::Start => "start",
-            Command::Keyboard => "keyboard",
-            Command::Dislike => "dislike",
-            Command::Like => "like",
-            Command::Cleanup => "cleanup",
-            Command::Details => "details",
-            Command::Stats => "stats",
-            Command::Register => "register",
-            Command::ToggleTrackSkip => "toggle_track_skip",
-            Command::ToggleProfanityCheck => "toggle_profanity_check",
-            Command::SetAnalysisLanguage { .. } => "set_analysis_language",
-            Command::Help => "help",
-            Command::AddWhitelistWord { .. } => "add_word_to_whitelist",
-            Command::RemoveWhitelistWord { .. } => "remove_word_from_whitelist",
-            Command::ListWhitelistWords => "list_words_in_whitelist",
+            UserCommand::Start => "start",
+            UserCommand::Keyboard => "keyboard",
+            UserCommand::Dislike => "dislike",
+            UserCommand::Like => "like",
+            UserCommand::Cleanup => "cleanup",
+            UserCommand::Details => "details",
+            UserCommand::Stats => "stats",
+            UserCommand::Register => "register",
+            UserCommand::ToggleTrackSkip => "toggle_track_skip",
+            UserCommand::ToggleProfanityCheck => "toggle_profanity_check",
+            UserCommand::SetAnalysisLanguage { .. } => "set_analysis_language",
+            UserCommand::Help => "help",
+            UserCommand::AddWhitelistWord { .. } => "add_word_to_whitelist",
+            UserCommand::RemoveWhitelistWord { .. } => "remove_word_from_whitelist",
+            UserCommand::ListWhitelistWords => "list_words_in_whitelist",
         };
 
         f.write_str(string)

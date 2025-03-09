@@ -1,9 +1,9 @@
 use teloxide::types::Message;
 
-use super::HandleStatus;
+use super::{HandleStatus, return_if_handled};
 use crate::app::App;
+use crate::telegram::actions;
 use crate::telegram::utils::extract_url_from_message;
-use crate::telegram::{actions, return_if_handled};
 use crate::user::UserState;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
