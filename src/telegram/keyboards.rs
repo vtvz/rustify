@@ -7,8 +7,6 @@ pub enum StartKeyboard {
     Dislike,
     #[strum(serialize = "📈 Stats")]
     Stats,
-    #[strum(serialize = "🗑 Cleanup your playlists")]
-    Cleanup,
     #[strum(serialize = "🎤 Details of track")]
     Details,
 }
@@ -26,7 +24,6 @@ impl StartKeyboard {
                 vec![Self::Dislike.into()],
                 vec![
                     Self::Stats.into(),
-                    Self::Cleanup.into(),
                     Self::Details.into(),
                 ],
             ])
