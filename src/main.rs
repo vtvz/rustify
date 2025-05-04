@@ -21,6 +21,7 @@ pub mod lyrics;
 pub mod metrics;
 pub mod profanity;
 pub mod queue;
+pub mod rickroll;
 pub mod serde_utils;
 pub mod spotify;
 pub mod spotify_auth_service;

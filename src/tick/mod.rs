@@ -14,7 +14,7 @@ use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
-use crate::{spotify, utils};
+use crate::{rickroll, spotify, utils};
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
 const PARALLEL_CHECKS: usize = 2;
@@ -57,6 +57,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
 
         join_handles.push(tokio::spawn(async move {
             let res = user::check(app, &user_id).await;
+            rickroll::queue(app, &user_id).await.ok();
             drop(permit);
 
             // TODO: Refactor this mess...
