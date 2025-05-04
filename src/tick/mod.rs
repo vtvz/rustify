@@ -57,7 +57,9 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
 
         join_handles.push(tokio::spawn(async move {
             let res = user::check(app, &user_id).await;
-            rickroll::queue(app, &user_id).await.ok();
+            let rickroll_res = rickroll::queue(app, &user_id).await;
+            tracing::debug!(res = ?rickroll_res, "Rickroll result");
+
             drop(permit);
 
             // TODO: Refactor this mess...
