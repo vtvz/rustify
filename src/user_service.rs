@@ -149,12 +149,12 @@ impl UserService {
             .parse()
             .unwrap_or(default_ttl);
 
-        let played: u8 = redis.exists(&key).await?;
+        let played: bool = redis.exists(&key).await?;
 
         let _: () = redis.set_ex(key, true, ttl as u64).await?;
 
         // returns true when track new
-        Ok(played == 0)
+        Ok(!played)
     }
 
     pub async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> anyhow::Result<UserModel> {
