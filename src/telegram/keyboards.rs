@@ -22,10 +22,7 @@ impl StartKeyboard {
         ReplyMarkup::Keyboard(
             KeyboardMarkup::new(vec![
                 vec![Self::Dislike.into()],
-                vec![
-                    Self::Stats.into(),
-                    Self::Details.into(),
-                ],
+                vec![Self::Stats.into(), Self::Details.into()],
             ])
             .resize_keyboard(),
         )
