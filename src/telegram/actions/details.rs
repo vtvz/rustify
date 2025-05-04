@@ -8,9 +8,8 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient;
 use rspotify::model::{Modality, TrackId};
-use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -25,22 +24,22 @@ use crate::{profanity, telegram};
 pub async fn handle_current(
     app: &'static App,
     state: &UserState,
-    m: &Message,
+    chat_id: &ChatId,
 ) -> anyhow::Result<HandleStatus> {
     let spotify = state.spotify().await;
     let track = match CurrentlyPlaying::get(&spotify).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             app.bot()
-                .send_message(m.chat.id, message.to_string())
+                .send_message(*chat_id, message.to_string())
                 .await?;
 
             return Ok(HandleStatus::Handled);
         },
-        CurrentlyPlaying::Ok(track, _) => track,
+        CurrentlyPlaying::Ok(track, _) => *track,
     };
 
-    common(app, state, m, *track).await
+    common(app, state, chat_id, track).await
 }
 
 fn extract_id(url: &url::Url) -> Option<TrackId<'static>> {
@@ -67,33 +66,25 @@ pub async fn handle_url(
 
     let track = state.spotify().await.track(track_id, None).await?.into();
 
-    common(app, state, m, track).await
+    common(app, state, &m.chat.id, track).await
 }
 
 async fn common(
     app: &'static App,
     state: &UserState,
-    m: &Message,
+    chat_id: &ChatId,
     track: ShortTrack,
 ) -> anyhow::Result<HandleStatus> {
+    let m = app
+        .bot()
+        .send_message(*chat_id, "⏳ Collecting information about track 🔍...")
+        .await?;
+
     let spotify = state.spotify().await;
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
-    let mut keyboard = match status {
-        TrackStatus::Disliked => {
-            #[rustfmt::skip]
-            vec![
-                vec![InlineButtons::Cancel(track.id().to_owned()).into()],
-            ]
-        },
-        TrackStatus::Ignore | TrackStatus::None => {
-            #[rustfmt::skip]
-            vec![
-                vec![InlineButtons::Dislike(track.id().to_owned()).into()],
-            ]
-        },
-    };
+    let mut keyboard = InlineButtons::from_track_status(status, track.id());
 
     // NOTE: It works because I have old token I need to cherish
     #[allow(deprecated)]
@@ -206,8 +197,9 @@ async fn common(
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
-            .send_message(
-                m.chat.id,
+            .edit_message_text(
+                *chat_id,
+                m.id,
                 formatdoc!(
                     "
                     {header}
@@ -219,9 +211,7 @@ async fn common(
                 ),
             )
             .parse_mode(ParseMode::Html)
-            .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-                keyboard,
-            )))
+            .reply_markup(InlineKeyboardMarkup::new(keyboard))
             .link_preview_options(link_preview_small_top(track.url()))
             .await?;
 
@@ -272,11 +262,9 @@ async fn common(
     }
 
     app.bot()
-        .send_message(m.chat.id, message)
+        .edit_message_text(*chat_id, m.id, message)
         .parse_mode(ParseMode::Html)
-        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            keyboard,
-        )))
+        .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .link_preview_options(link_preview_small_top(track.url()))
         .await?;
 

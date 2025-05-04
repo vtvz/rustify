@@ -153,7 +153,7 @@ pub async fn check(
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
 
-                Press 'Ignore text 🙈' to never see this notification again"#,
+                Press 'Ignore text 🙈' to never see this notification for <b>this song</b> again"#,
             track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
             lyrics_link = hit.link(),

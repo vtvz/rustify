@@ -3,9 +3,10 @@ use std::str::FromStr;
 
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 
+use crate::entity::prelude::TrackStatus;
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum InlineButtons {
-    Cancel(String),
     Dislike(String),
     Ignore(String),
     Analyze(String),
@@ -14,10 +15,38 @@ pub enum InlineButtons {
 impl InlineButtons {
     pub fn label(&self) -> &str {
         match self {
-            InlineButtons::Cancel(_) => "Cancel ↩",
             InlineButtons::Dislike(_) => "Dislike 👎",
             InlineButtons::Ignore(_) => "Ignore text 🙈",
             InlineButtons::Analyze(_) => "Analyze text 🔍",
+        }
+    }
+}
+
+impl InlineButtons {
+    pub fn from_track_status(
+        status: TrackStatus,
+        track_id: &str,
+    ) -> Vec<Vec<InlineKeyboardButton>> {
+        match status {
+            TrackStatus::None => {
+                #[rustfmt::skip]
+                vec![
+                    vec![Self::Dislike(track_id.to_owned()).into()],
+                    vec![Self::Ignore(track_id.to_owned()).into()],
+                ]
+            },
+            TrackStatus::Disliked => {
+                #[rustfmt::skip]
+                vec![
+                    vec![Self::Ignore(track_id.to_owned()).into()],
+                ]
+            },
+            TrackStatus::Ignore => {
+                #[rustfmt::skip]
+                vec![
+                    vec![Self::Dislike(track_id.to_owned()).into()],
+                ]
+            },
         }
     }
 }

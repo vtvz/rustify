@@ -1,4 +1,5 @@
 use anyhow::Context as _;
+use indoc::formatdoc;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
@@ -28,23 +29,26 @@ pub async fn handle_inline(
     TrackStatusService::set_status(app.db(), state.user_id(), track_id, TrackStatus::Ignore)
         .await?;
 
+    let keyboard = InlineButtons::from_track_status(TrackStatus::Ignore, track.id());
+
     app.bot()
         .edit_message_text(
             q.from.id,
             q.message.context("Message is empty")?.id(),
-            format!(
-                "Bad words of {} will be forever ignored",
+            formatdoc!(
+                "
+                    Bad words of {} will be forever ignored
+
+                    If you change your mind press 'Dislike 👎'
+
+                    Do not forget you can send link to song to find current status
+                ",
                 track.track_tg_link()
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
-        .reply_markup(InlineKeyboardMarkup::new(
-            #[rustfmt::skip]
-                    vec![
-                        vec![InlineButtons::Cancel(track_id.to_string()).into()]
-                    ],
-        ))
+        .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .await?;
 
     Ok(())

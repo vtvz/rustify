@@ -11,6 +11,7 @@ use crate::app::{AnalyzeConfig, App};
 use crate::spotify::ShortTrack;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
+use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 use crate::user_service::UserService;
 
@@ -64,13 +65,13 @@ pub async fn handle_inline(
     )
     .await;
 
-    UserService::increase_stats_query(state.user_id())
-        .analyzed_lyrics()
-        .exec(app.db())
-        .await?;
-
     match res {
-        Ok(_) => {},
+        Ok(_) => {
+            UserService::increase_stats_query(state.user_id())
+                .analyzed_lyrics()
+                .exec(app.db())
+                .await?;
+        },
         Err(err) => {
             app.bot()
                 .edit_message_text(
@@ -167,6 +168,9 @@ async fn perform(
 
     let analysis_result = choice.message.content.clone().unwrap_or_default();
 
+    let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
+    let keyboard = InlineButtons::from_track_status(status, track.id());
+
     app.bot()
         .edit_message_text(
             chat_id,
@@ -186,12 +190,7 @@ async fn perform(
         )
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
-        .reply_markup(InlineKeyboardMarkup::new(
-            #[rustfmt::skip]
-            vec![
-                vec![InlineButtons::Dislike(track.id().into()).into()]
-            ],
-        ))
+        .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .await?;
 
     Ok(())

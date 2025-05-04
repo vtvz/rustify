@@ -33,6 +33,6 @@ pub async fn handle(
     match button {
         StartKeyboard::Dislike => actions::dislike::handle(app, state, m).await,
         StartKeyboard::Stats => actions::stats::handle(app, state, m).await,
-        StartKeyboard::Details => actions::details::handle_current(app, state, m).await,
+        StartKeyboard::Details => actions::details::handle_current(app, state, &m.chat.id).await,
     }
 }
