@@ -29,7 +29,7 @@ pub async fn queue(app: &'static App, user_id: &str) -> anyhow::Result<()> {
 
     let rickrolled: bool = redis.exists(&key).await?;
 
-    if !rickrolled {
+    if rickrolled {
         return Ok(());
     }
 
