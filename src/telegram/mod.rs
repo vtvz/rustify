@@ -1,6 +1,5 @@
 pub mod actions;
 pub mod commands;
-pub mod errors;
 pub mod handlers;
 pub mod inline_buttons;
 pub mod keyboards;

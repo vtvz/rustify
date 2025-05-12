@@ -16,6 +16,7 @@ extern crate serde;
 pub mod app;
 pub mod cache;
 pub mod entity;
+pub mod error_handler;
 pub mod logger;
 pub mod lyrics;
 pub mod metrics;

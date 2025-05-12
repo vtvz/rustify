@@ -224,7 +224,7 @@ impl GeniusLocal {
             }
         }
 
-        tracing::info!(
+        tracing::debug!(
             "Found no text in {} hits in {} name variants ({} - {})",
             hits_count,
             names_len,

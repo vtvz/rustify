@@ -5,6 +5,7 @@ use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
+use crate::error_handler;
 use crate::spotify::ShortTrack;
 use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
@@ -85,7 +86,12 @@ pub async fn handle(
         .parse_mode(ParseMode::Html)
         .await;
 
-    crate::telegram::errors::handle_blocked_bot(app, state, result)
-        .await
-        .map(|_| ())
+    match result {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            let mut err = err.into();
+            error_handler::handle(&mut err, app, state.user_id()).await;
+            Err(err)
+        },
+    }
 }

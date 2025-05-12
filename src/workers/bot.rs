@@ -10,7 +10,7 @@ use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::command::BotCommands as _;
 
-use crate as rustify;
+use crate::{self as rustify, error_handler};
 
 async fn sync_name(
     app: &'static App,
@@ -164,26 +164,28 @@ pub async fn work() {
 
                 let result = rustify::telegram::handlers::message::handle(app, &state, m.clone()).await;
 
-                if let Err(err) = &result {
-                    tracing::error!(err = ?err, "Error on message handling");
-                    app.bot().send_message(
-                        m.chat.id,
-                        formatdoc!(
-                            r#"
-                                <b>Sorry, error has happened :(</b>
+                if let Err(mut err) = result {
+                    let res = error_handler::handle(&mut err, app, state.user_id()).await;
+                    if !res.user_notified {
+                        app.bot().send_message(
+                            m.chat.id,
+                            formatdoc!(
+                                r#"
+                                    <b>Sorry, error has happened :(</b>
 
-                                <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
-                            "#
+                                    <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
+                                "#
+                            )
                         )
-                    )
-                        .parse_mode(ParseMode::Html)
-                        // TODO: wait for teloxide::sugar::request::RequestLinkPreviewExt to release
-                        // .disable_link_preview()
-                        .link_preview_options(link_preview_disabled())
-                        .await?;
+                            .parse_mode(ParseMode::Html)
+                            // TODO: wait for teloxide::sugar::request::RequestLinkPreviewExt to release
+                            // .disable_link_preview()
+                            .link_preview_options(link_preview_disabled())
+                            .await?;
+                    };
                 }
 
-                result.map(|_| ())
+                Ok(())
             }),
         )
         .branch(Update::filter_callback_query().endpoint(
