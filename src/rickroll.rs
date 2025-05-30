@@ -25,7 +25,7 @@ pub async fn queue(app: &'static App, user_id: &str) -> anyhow::Result<()> {
 
     let key = format!("rustify:rickroll:{user_id}");
     let mut redis = app.redis_conn().await?;
-    let ttl = Duration::days(2).num_seconds() as u64;
+    let ttl = Duration::days(30).num_seconds() as u64;
 
     let rickrolled: bool = redis.exists(&key).await?;
 
