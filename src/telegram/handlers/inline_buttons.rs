@@ -26,9 +26,6 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
     let button: InlineButtons = data.parse()?;
 
     match button {
-        InlineButtons::Cancel(id) => {
-            actions::cancel::handle_inline(app, state, q, &id).await?;
-        },
         InlineButtons::Dislike(id) => {
             actions::dislike::handle_inline(app, state, q, &id).await?;
         },

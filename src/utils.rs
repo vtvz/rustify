@@ -45,51 +45,53 @@ pub async fn tick_health() -> TickHealthStatus {
 
 macro_rules! tick {
     ($period:expr, $code:block) => {
-        let __period = $period;
-        let __health_check_key = (concat!(module_path!(), ":", line!()), __period);
-        let mut __interval = ::tokio::time::interval(__period);
-        let mut __iteration: u64 = 0;
+        let period = $period;
+        let instance_key = concat!(module_path!(), ":", line!());
+        let health_check_key = (instance_key, period);
+        let mut interval = ::tokio::time::interval(period);
+        let mut iteration: u64 = 0;
         loop {
             use ::tracing::Instrument;
 
             ::tokio::select! {
-                _ = __interval.tick() => {},
+                _ = interval.tick() => {},
                 _ = $crate::utils::ctrl_c() => {
-                    ::tracing::debug!(tick_iteration = __iteration, "Received terminate signal. Stop processing");
+                    ::tracing::debug!(tick_iteration = iteration, instance = instance_key, "Received terminate signal. Stop processing");
                     $crate::utils::TICK_STATUS
                         .write()
                         .await
-                        .remove(&__health_check_key);
+                        .remove(&health_check_key);
                     break;
                 },
             }
 
-            // __interval.tick() can lag behind
-            let __start = ::tokio::time::Instant::now();
+            // interval.tick() can lag behind
+            let start = ::tokio::time::Instant::now();
 
             {
                 $crate::utils::TICK_STATUS
                     .write()
                     .await
-                    .insert(__health_check_key, __start);
+                    .insert(health_check_key, start);
             }
 
             async { $code }
-                .instrument(tracing::info_span!("tick", tick_iteration = __iteration))
+                .instrument(tracing::info_span!("tick", tick_iteration = iteration, instance = instance_key))
                 .await;
 
-            let __diff = __start.elapsed();
+            let diff = start.elapsed();
 
-            if (__diff > __period) {
+            if (diff > period) {
                 ::tracing::warn!(
-                    tick_iteration = __iteration,
-                    diff = (__diff - __period).as_secs_f64(),
+                    tick_iteration = iteration,
+                    diff = (diff - period).as_secs_f64(),
                     unit = "s",
+                    instance = instance_key,
                     "Task took a bit more time than allowed"
                 );
             }
 
-            __iteration += 1;
+            iteration += 1;
         }
     };
 }

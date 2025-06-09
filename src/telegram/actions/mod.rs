@@ -1,5 +1,4 @@
 pub mod analyze;
-pub mod cancel;
 pub mod cleanup;
 pub mod details;
 pub mod dislike;

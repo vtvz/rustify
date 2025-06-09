@@ -59,6 +59,7 @@ impl SpotifyError {
     }
 
     pub async fn from_response(response: &mut Response) -> anyhow::Result<Self> {
+        // NOTE: `text` and `bytes` take ownership
         let body = {
             let mut bytes = vec![];
             while let Some(chunk) = response.chunk().await? {
@@ -73,7 +74,11 @@ impl SpotifyError {
         match (auth, regular) {
             (Ok(err), _) => Ok(err.into()),
             (_, Ok(err)) => Ok(err.into()),
-            (Err(err), _) => Err(err.into()),
+            (Err(err), _) => Err(anyhow::anyhow!(
+                "Issue with parcing spotify error: {:?}\n{}",
+                err,
+                String::from_utf8(body)?
+            )),
         }
     }
 }

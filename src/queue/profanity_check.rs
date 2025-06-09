@@ -12,7 +12,7 @@ use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::user_service::UserService;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
-use crate::{lyrics, profanity, telegram};
+use crate::{error_handler, lyrics, profanity, telegram};
 
 #[derive(Serialize, Deserialize)]
 pub struct ProfanityCheckQueueTask {
@@ -58,16 +58,29 @@ pub async fn consume(
 
     let data: ProfanityCheckQueueTask = serde_json::from_str(&message)?;
 
-    let user_state = app.user_state(&data.user_id).await?;
+    let err_wrap = || async {
+        let user_state = app.user_state(&data.user_id).await?;
 
-    let res = check(app, &user_state, &data.track)
-        .await
-        .context("Check lyrics failed")?;
+        let res = check(app, &user_state, &data.track)
+            .await
+            .context("Check lyrics failed")?;
 
-    UserService::increase_stats_query(user_state.user_id())
-        .checked_lyrics(res.profane, res.provider)
-        .exec(app.db())
-        .await?;
+        UserService::increase_stats_query(user_state.user_id())
+            .checked_lyrics(res.profane, res.provider)
+            .exec(app.db())
+            .await?;
+
+        Ok::<(), anyhow::Error>(())
+    };
+
+    let res = err_wrap().await;
+
+    match res {
+        Ok(_) => {},
+        Err(mut err) => {
+            error_handler::handle(&mut err, app, &data.user_id).await;
+        },
+    }
 
     Ok(())
 }
@@ -153,7 +166,7 @@ pub async fn check(
 
                 <a href="{lyrics_link}">{lyrics_link_text}</a>
 
-                Press 'Ignore text 🙈' to never see this notification again"#,
+                Press 'Ignore text 🙈' to never see this notification for <b>this song</b> again"#,
             track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
             lyrics_link = hit.link(),
@@ -182,7 +195,12 @@ pub async fn check(
         )))
         .await;
 
-    crate::telegram::errors::handle_blocked_bot(app, state, result)
-        .await
-        .map(|_| ret)
+    match result {
+        Ok(_) => Ok(ret),
+        Err(err) => {
+            let mut err = err.into();
+            error_handler::handle(&mut err, app, state.user_id()).await;
+            Err(err)
+        },
+    }
 }

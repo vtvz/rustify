@@ -11,10 +11,8 @@ use tracing::Instrument;
 use user::CheckUserResult;
 
 use crate::app::App;
-use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
-use crate::user_service::UserService;
-use crate::{spotify, utils};
+use crate::{error_handler, rickroll, utils};
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
 const PARALLEL_CHECKS: usize = 2;
@@ -55,42 +53,26 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
             .await
             .context("Shouldn't fail")?;
 
-        join_handles.push(tokio::spawn(async move {
-            let res = user::check(app, &user_id).await;
-            drop(permit);
+        join_handles.push(tokio::spawn(
+            async move {
+                let res = user::check(app, &user_id).await;
+                rickroll::queue(app, &user_id).await.ok();
 
-            // TODO: Refactor this mess...
-            let checked: anyhow::Result<_> = match res {
-                Err(mut err) => {
-                    match spotify::SpotifyError::from_anyhow(&mut err).await {
-                        Err(_) | Ok(None) => {
-                            tracing::error!(user_id = %user_id, err = ?err, "Something went wrong");
+                drop(permit);
 
-                            Err(err)
-                        },
-                        Ok(Some(spotify::SpotifyError::Regular(serr))) => {
-                            if serr.error.status < 500 {
-                                tracing::error!(user_id = %user_id, err = ?serr, "Regular Spotify Error Happened");
-                            }
+                let checked: anyhow::Result<_> = match res {
+                    Err(mut err) => {
+                        error_handler::handle(&mut err, app, &user_id).await;
 
-                            if serr.error.status == 403 && serr.error.message == "Spotify is unavailable in this country" {
-                                UserService::set_status(app.db(), &user_id, UserStatus::Forbidden).await?;
-                            }
+                        Err(err)
+                    },
+                    Ok(res) => Ok((user_id, res)),
+                };
 
-                            Err(err)
-                        },
-                        Ok(Some(spotify::SpotifyError::Auth(serr))) => {
-                            tracing::error!(user_id = %user_id, err = ?serr, "Auth Spotify Error Happened");
-
-                            Err(err)
-                        },
-                    }
-                },
-                Ok(res) => Ok((user_id, res)),
-            };
-
-            checked
-        }.instrument(tracing::info_span!("tick_iteration"))));
+                checked
+            }
+            .instrument(tracing::info_span!("tick_iteration")),
+        ));
     }
 
     let mut users_checked = 0;

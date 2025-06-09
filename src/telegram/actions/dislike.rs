@@ -1,4 +1,5 @@
 use anyhow::Context as _;
+use indoc::formatdoc;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
@@ -37,15 +38,14 @@ pub async fn handle(
     TrackStatusService::set_status(app.db(), state.user_id(), track.id(), TrackStatus::Disliked)
         .await?;
 
+    let keyboard = InlineButtons::from_track_status(TrackStatus::Disliked, track.id());
+
     app.bot()
-        .send_message(m.chat.id, format!("Disliked {}", track.track_tg_link()))
+        .send_message(m.chat.id, compose_message(&track))
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            #[rustfmt::skip]
-            vec![
-                vec![InlineButtons::Cancel(track.id().into()).into()]
-            ],
+            keyboard,
         )))
         .await?;
 
@@ -69,21 +69,31 @@ pub async fn handle_inline(
     TrackStatusService::set_status(app.db(), state.user_id(), track_id, TrackStatus::Disliked)
         .await?;
 
+    let keyboard = InlineButtons::from_track_status(TrackStatus::Disliked, track.id());
+
     app.bot()
         .edit_message_text(
             q.from.id,
             q.message.context("Message is empty")?.id(),
-            format!("Disliked {}", track.track_tg_link()),
+            compose_message(&track),
         )
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
-        .reply_markup(InlineKeyboardMarkup::new(
-            #[rustfmt::skip]
-                    vec![
-                        vec![InlineButtons::Cancel(track.id().into()).into()]
-                    ],
-        ))
+        .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .await?;
 
     Ok(())
+}
+
+fn compose_message(track: &ShortTrack) -> String {
+    formatdoc!(
+        "
+            Disliked {}
+
+            If you change your mind press 'Ignore text 🙈'
+
+            Do not forget you can send link to song to find current status
+        ",
+        track.track_tg_link()
+    )
 }

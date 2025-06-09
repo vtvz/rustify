@@ -3,10 +3,10 @@ use strum_macros::Display;
 
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::spotify::{CurrentlyPlaying, SpotifyError};
+use crate::spotify::CurrentlyPlaying;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
-use crate::{queue, spotify};
+use crate::{error_handler, queue, spotify};
 
 #[allow(dead_code)]
 #[derive(Clone, Display)]
@@ -25,15 +25,7 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
 
     let state = match res {
         Err(mut err) => {
-            let Some(response) = SpotifyError::extract_response(&mut err) else {
-                return Err(err);
-            };
-
-            if let Err(err) =
-                crate::telegram::errors::handle_too_many_requests(app.db(), user_id, response).await
-            {
-                tracing::error!(err = ?err, "Something went wrong");
-            }
+            error_handler::handle(&mut err, app, user_id).await;
 
             return Err(err);
         },

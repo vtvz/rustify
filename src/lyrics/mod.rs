@@ -103,10 +103,24 @@ impl Manager {
             };
         }
 
-        handle_provider!("Musixmatch", self.musixmatch);
-        handle_provider!("LrcLib", self.lrclib);
-        // handle_provider!("AZLyrics", self.azlyrics);
-        handle_provider!("Genius", self.genius);
+        let priority = [Provider::LrcLib, Provider::Genius, Provider::Musixmatch];
+
+        for provider in priority {
+            match provider {
+                Provider::Musixmatch => {
+                    handle_provider!("Musixmatch", self.musixmatch);
+                },
+                Provider::Genius => {
+                    handle_provider!("Genius", self.genius);
+                },
+                Provider::LrcLib => {
+                    handle_provider!("LrcLib", self.lrclib);
+                },
+                Provider::AZLyrics => {
+                    handle_provider!("AZLyrics", self.azlyrics);
+                },
+            }
+        }
 
         Ok(None)
     }

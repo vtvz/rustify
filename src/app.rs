@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
@@ -8,6 +9,8 @@ use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
+use teloxide::dispatching::dialogue::RedisStorage;
+use teloxide::dispatching::dialogue::serializer::Bincode;
 use tokio::sync::RwLock;
 
 use crate::metrics::influx::InfluxClient;
@@ -23,6 +26,7 @@ pub struct App {
     influx: Option<InfluxClient>,
     redis: redis::Client,
     analyze: Option<AnalyzeConfig>,
+    dialogue_storage: Arc<RedisStorage<Bincode>>,
 }
 
 pub struct AnalyzeConfig {
@@ -82,6 +86,10 @@ impl App {
     pub fn analyze(&self) -> Option<&AnalyzeConfig> {
         self.analyze.as_ref()
     }
+
+    pub fn dialogue_storage(&self) -> &RedisStorage<Bincode> {
+        &self.dialogue_storage
+    }
 }
 
 fn init_influx() -> anyhow::Result<Option<InfluxClient>> {
@@ -122,7 +130,7 @@ async fn init_db() -> anyhow::Result<DbConn> {
     Ok(SqlxPostgresConnector::from_sqlx_postgres_pool(pool))
 }
 
-async fn init_lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manager> {
+async fn init_lyrics_manager(redis_url: &str) -> anyhow::Result<lyrics::Manager> {
     let mut musixmatch_tokens: Vec<_> = dotenv::var("MUSIXMATCH_USER_TOKENS")
         .unwrap_or_else(|_| "".into())
         .split(',')
@@ -149,7 +157,7 @@ async fn init_lyrics_manager(redis_url: String) -> anyhow::Result<lyrics::Manage
         .unwrap_or(default_ttl.to_string())
         .parse()?;
 
-    cache::CacheManager::init(redis_url).await;
+    cache::CacheManager::init(redis_url.to_owned()).await;
     lyrics::LyricsCacheManager::init(lyrics_cache_ttl).await;
     lyrics::Manager::new(
         genius_service_url,
@@ -237,7 +245,7 @@ impl App {
         let redis_url = dotenv::var("REDIS_URL").context("Need REDIS_URL variable")?;
         let redis = init_redis(&redis_url).await?;
         let spotify_manager = spotify::Manager::new();
-        let lyrics_manager = init_lyrics_manager(redis_url).await?;
+        let lyrics_manager = init_lyrics_manager(&redis_url).await?;
         let analyze = init_analyze().await?;
 
         init_rustrict();
@@ -260,6 +268,7 @@ impl App {
             influx,
             redis,
             analyze,
+            dialogue_storage: RedisStorage::open(&redis_url, Bincode).await?,
         });
 
         let app = &*Box::leak(app);
