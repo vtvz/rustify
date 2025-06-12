@@ -36,10 +36,7 @@ pub async fn queue(app: &'static App, user_id: &str) -> anyhow::Result<()> {
     state
         .spotify()
         .await
-        .add_item_to_queue(
-            rspotify::model::PlayableId::Track(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8")?),
-            None,
-        )
+        .add_item_to_queue(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8")?.into(), None)
         .await?;
 
     tracing::debug!(user_id = user_id, "The victim of Rickroll");

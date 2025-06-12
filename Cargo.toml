@@ -14,11 +14,13 @@ chrono = "0.4.40"
 convert_case = "0.8.0"
 derive_more = { version = "2.0.1", features = ["full"] }
 dotenv = "0.15.0"
+futures = "0.3.31"
 indoc = "2.0.6"
 # WARNING: Do not upgrade. It will break metrics
 influxdb = { version = "0.6.0", features = ["derive"] }
 itertools = "0.14.0"
 lazy_static = "1.5.0"
+rand = "0.9.1"
 redis = { version = "0.29.1", features = ["aio", "tokio-comp"] }
 regex = { version = "1.11.1", features = ["pattern"] }
 reqwest = "0.12.12"

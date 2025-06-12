@@ -5,6 +5,7 @@ pub mod dislike;
 pub mod global_stats;
 pub mod ignore;
 pub mod like;
+pub mod magic;
 pub mod register;
 pub mod settings;
 pub mod stats;
