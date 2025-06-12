@@ -4,7 +4,17 @@ use anyhow::{Context, anyhow};
 pub use errors::SpotifyError;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
-use rspotify::model::{ArtistId, Context as SpotifyContext, FullTrack, Id, PlayableItem, TrackId};
+use rspotify::model::{
+    ArtistId,
+    Context as SpotifyContext,
+    FullPlaylist,
+    FullTrack,
+    Id,
+    PlayableItem,
+    PlaylistId,
+    SimplifiedPlaylist,
+    TrackId,
+};
 use rspotify::{AuthCodeSpotify, ClientError, ClientResult, Token, scopes};
 use sea_orm::{DbConn, TransactionTrait};
 use strum_macros::Display;
@@ -13,6 +23,33 @@ use teloxide::utils::html;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
+
+pub struct ShortPlaylist {
+    pub id: PlaylistId<'static>,
+    pub url: String,
+}
+
+impl From<FullPlaylist> for ShortPlaylist {
+    fn from(value: FullPlaylist) -> Self {
+        Self {
+            id: value.id,
+            url: value.external_urls.get("spotify").cloned().unwrap_or(
+                "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b".into(),
+            ),
+        }
+    }
+}
+
+impl From<SimplifiedPlaylist> for ShortPlaylist {
+    fn from(value: SimplifiedPlaylist) -> Self {
+        Self {
+            id: value.id,
+            url: value.external_urls.get("spotify").cloned().unwrap_or(
+                "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b".into(),
+            ),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ShortTrack {

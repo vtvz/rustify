@@ -11,37 +11,14 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::{UserColumn, UserEntity};
+use crate::spotify::ShortPlaylist;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
 
-struct Playlist {
-    pub id: PlaylistId<'static>,
-    pub url: String,
-}
-
-impl From<FullPlaylist> for Playlist {
-    fn from(value: FullPlaylist) -> Self {
-        Self {
-            id: value.id,
-            url: value.external_urls.get("spotify").cloned().unwrap_or(
-                "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b".into(),
-            ),
-        }
-    }
-}
-
-impl From<SimplifiedPlaylist> for Playlist {
-    fn from(value: SimplifiedPlaylist) -> Self {
-        Self {
-            id: value.id,
-            url: value.external_urls.get("spotify").cloned().unwrap_or(
-                "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b".into(),
-            ),
-        }
-    }
-}
-
-async fn get_playlist(state: &UserState, user_id: UserId<'static>) -> anyhow::Result<Playlist> {
+async fn get_playlist(
+    state: &UserState,
+    user_id: UserId<'static>,
+) -> anyhow::Result<ShortPlaylist> {
     let playlist_name = "Rustify Magic Playlist";
 
     let spotify = state.spotify().await;
