@@ -5,6 +5,7 @@ use rspotify::AuthCodeSpotify;
 use rspotify::clients::pagination::Paginator;
 use rspotify::model::{FullPlaylist, PlayableId, PlaylistId, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
+use teloxide::payloads::EditMessageTextSetters;
 use teloxide::prelude::Requester;
 use teloxide::types::{ChatId, ParseMode};
 
