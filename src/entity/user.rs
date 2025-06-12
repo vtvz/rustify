@@ -33,7 +33,7 @@ pub struct Model {
     pub cfg_skip_tracks: bool,
     pub cfg_not_english_alert: bool,
     pub cfg_analysis_language: Option<String>,
-    pub magic_playlst: Option<String>,
+    pub magic_playlist: Option<String>,
 }
 
 #[async_trait]
@@ -73,7 +73,7 @@ pub enum Column {
     CfgSkipTracks,
     CfgNotEnglishAlert,
     CfgAnalysisLanguage,
-    MagicPlaylst,
+    MagicPlaylist,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -112,7 +112,7 @@ impl ColumnTrait for Column {
             Self::CfgSkipTracks => ColumnType::Boolean.def(),
             Self::CfgNotEnglishAlert => ColumnType::Boolean.def(),
             Self::CfgAnalysisLanguage => ColumnType::Text.def().null(),
-            Self::MagicPlaylst => ColumnType::Text.def().null(),
+            Self::MagicPlaylist => ColumnType::Text.def().null(),
         }
     }
 }

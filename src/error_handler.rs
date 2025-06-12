@@ -151,7 +151,7 @@ pub async fn spotify_resp_error(
     };
 }
 
-#[tracing::instrument(skip_all, fields(user_id,))]
+#[tracing::instrument(skip_all, fields(user_id))]
 pub async fn spotify_client_error(
     err: &mut anyhow::Error,
     app: &App,
