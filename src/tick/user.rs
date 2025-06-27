@@ -6,7 +6,7 @@ use crate::entity::prelude::*;
 use crate::spotify::CurrentlyPlaying;
 use crate::track_status_service::TrackStatusService;
 use crate::user_service::UserService;
-use crate::{error_handler, queue, spotify};
+use crate::{error_handler, queue, rickroll, spotify};
 
 #[allow(dead_code)]
 #[derive(Clone, Display)]
@@ -43,6 +43,11 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
         },
         CurrentlyPlaying::Ok(track, context) => (track, context),
     };
+
+    rickroll::queue(app, &state).await.ok();
+    super::magic::handle(app, &state, &track, context.as_ref())
+        .await
+        .ok();
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 

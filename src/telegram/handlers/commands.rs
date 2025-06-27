@@ -106,6 +106,9 @@ pub async fn handle(
         UserCommand::ListWhitelistWords => {
             return actions::user_word_whitelist::handle_list_words(app, state, m.chat.id).await;
         },
+        UserCommand::Magic => {
+            return actions::magic::handle(app, state, m.chat.id).await;
+        },
     }
     Ok(HandleStatus::Handled)
 }

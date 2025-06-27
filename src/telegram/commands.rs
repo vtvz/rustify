@@ -48,6 +48,9 @@ pub enum UserCommand {
     #[command(description = "set language for analysis results")]
     SetAnalysisLanguage { language: String },
 
+    #[command(description = "create or refresh Magic playlist")]
+    Magic,
+
     #[command(
         description = "add word to whitelist",
         rename = "add_word_to_whitelist"
@@ -85,6 +88,7 @@ impl std::fmt::Display for UserCommand {
             UserCommand::AddWhitelistWord { .. } => "add_word_to_whitelist",
             UserCommand::RemoveWhitelistWord { .. } => "remove_word_from_whitelist",
             UserCommand::ListWhitelistWords => "list_words_in_whitelist",
+            UserCommand::Magic => "magic",
         };
 
         f.write_str(string)

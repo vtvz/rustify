@@ -83,10 +83,8 @@ pub async fn handle(
 
             for chunk in disliked.chunks(100) {
                 retry(|| {
-                    let hate: Vec<PlayableId> = chunk
-                        .iter()
-                        .map(|item| PlayableId::Track(item.clone()))
-                        .collect();
+                    let hate: Vec<PlayableId> =
+                        chunk.iter().map(|item| item.clone().into()).collect();
 
                     spotify.playlist_remove_all_occurrences_of_items(
                         playlist.id.clone(),

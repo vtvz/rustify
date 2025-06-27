@@ -1,4 +1,5 @@
 mod disliked_track;
+pub mod magic;
 mod user;
 
 use std::sync::Arc;
@@ -12,7 +13,7 @@ use user::CheckUserResult;
 
 use crate::app::App;
 use crate::spotify_auth_service::SpotifyAuthService;
-use crate::{error_handler, rickroll, utils};
+use crate::{error_handler, utils};
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
 const PARALLEL_CHECKS: usize = 2;
@@ -56,7 +57,6 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
         join_handles.push(tokio::spawn(
             async move {
                 let res = user::check(app, &user_id).await;
-                rickroll::queue(app, &user_id).await.ok();
 
                 drop(permit);
 

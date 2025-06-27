@@ -6,11 +6,10 @@ use rspotify::prelude::OAuthClient;
 
 use crate::app::App;
 use crate::spotify::CurrentlyPlaying;
+use crate::user::UserState;
 
-#[tracing::instrument(skip_all, fields(user_id = %user_id))]
-pub async fn queue(app: &'static App, user_id: &str) -> anyhow::Result<()> {
-    let state = app.user_state(user_id).await.context("Get user state")?;
-
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+pub async fn queue(app: &'static App, state: &UserState) -> anyhow::Result<()> {
     let playing = CurrentlyPlaying::get(&*state.spotify().await).await;
 
     match playing {
@@ -23,7 +22,7 @@ pub async fn queue(app: &'static App, user_id: &str) -> anyhow::Result<()> {
         CurrentlyPlaying::Ok(..) => (),
     };
 
-    let key = format!("rustify:rickroll:{user_id}");
+    let key = format!("rustify:rickroll:{user_id}", user_id = state.user_id());
     let mut redis = app.redis_conn().await?;
     let ttl = Duration::days(30).num_seconds() as u64;
 
@@ -36,13 +35,10 @@ pub async fn queue(app: &'static App, user_id: &str) -> anyhow::Result<()> {
     state
         .spotify()
         .await
-        .add_item_to_queue(
-            rspotify::model::PlayableId::Track(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8")?),
-            None,
-        )
+        .add_item_to_queue(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8")?.into(), None)
         .await?;
 
-    tracing::debug!(user_id = user_id, "The victim of Rickroll");
+    tracing::debug!(user_id = state.user_id(), "The victim of Rickroll");
 
     let _: () = redis.set_ex(key, true, ttl).await?;
 
