@@ -1,7 +1,7 @@
 use futures::StreamExt;
 use indoc::formatdoc;
 use rand::seq::SliceRandom;
-use rspotify::model::{FullPlaylist, Id, PlaylistId, SimplifiedPlaylist, UserId};
+use rspotify::model::{Id, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
 use sea_orm::prelude::Expr;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};

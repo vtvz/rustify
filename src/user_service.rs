@@ -187,6 +187,23 @@ impl UserService {
         Ok(user.save(db).await?)
     }
 
+    pub async fn set_cfg_skippage_secs(
+        db: &impl ConnectionTrait,
+        id: &str,
+        duration: chrono::Duration,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(
+                UserColumn::CfgSkippageSecs,
+                Expr::value(duration.num_seconds()),
+            )
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
     pub fn increase_stats_query(user_id: &str) -> UserStatsIncreaseQueryBuilder {
         UserStatsIncreaseQueryBuilder::new(user_id)
     }

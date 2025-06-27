@@ -33,6 +33,7 @@ pub struct Model {
     pub cfg_skip_tracks: bool,
     pub cfg_not_english_alert: bool,
     pub cfg_analysis_language: Option<String>,
+    pub cfg_skippage_secs: i64,
     pub magic_playlist: Option<String>,
 }
 
@@ -73,6 +74,7 @@ pub enum Column {
     CfgSkipTracks,
     CfgNotEnglishAlert,
     CfgAnalysisLanguage,
+    CfgSkippageSecs,
     MagicPlaylist,
 }
 
@@ -112,6 +114,7 @@ impl ColumnTrait for Column {
             Self::CfgSkipTracks => ColumnType::Boolean.def(),
             Self::CfgNotEnglishAlert => ColumnType::Boolean.def(),
             Self::CfgAnalysisLanguage => ColumnType::Text.def().null(),
+            Self::CfgSkippageSecs => ColumnType::BigInteger.def(),
             Self::MagicPlaylist => ColumnType::Text.def().null(),
         }
     }

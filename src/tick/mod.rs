@@ -1,5 +1,6 @@
 mod disliked_track;
-pub mod magic;
+mod magic;
+mod skippage;
 mod user;
 
 use std::sync::Arc;

@@ -24,6 +24,7 @@ pub mod profanity;
 pub mod queue;
 pub mod rickroll;
 pub mod serde_utils;
+pub mod skippage_service;
 pub mod spotify;
 pub mod spotify_auth_service;
 pub mod telegram;

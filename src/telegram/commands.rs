@@ -68,6 +68,11 @@ pub enum UserCommand {
         rename = "list_words_in_whitelist"
     )]
     ListWhitelistWords,
+
+    #[command(
+        description = "allows you to skip tracks you've already listened. Pass days to remember"
+    )]
+    Skippage { days: String },
 }
 
 impl std::fmt::Display for UserCommand {
@@ -89,6 +94,7 @@ impl std::fmt::Display for UserCommand {
             UserCommand::RemoveWhitelistWord { .. } => "remove_word_from_whitelist",
             UserCommand::ListWhitelistWords => "list_words_in_whitelist",
             UserCommand::Magic => "magic",
+            UserCommand::Skippage { .. } => "skippage",
         };
 
         f.write_str(string)
