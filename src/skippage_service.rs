@@ -9,7 +9,7 @@ impl SkippageService {
         redis_conn: &mut MultiplexedConnection,
         user_id: &str,
     ) -> anyhow::Result<String> {
-        let playing_key = format!("rustify:skipage:{}:playing", user_id);
+        let playing_key = format!("rustify:skippage:{}:playing", user_id);
 
         let current_playing: Option<String> = redis_conn.get(&playing_key).await?;
         let current_playing = current_playing.unwrap_or_else(|| String::from("nothing"));
@@ -23,7 +23,7 @@ impl SkippageService {
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<()> {
-        let playing_key = format!("rustify:skipage:{}:playing", user_id);
+        let playing_key = format!("rustify:skippage:{}:playing", user_id);
         let _: () = redis_conn.set(&playing_key, track_id).await?;
 
         Ok(())
@@ -36,7 +36,9 @@ impl SkippageService {
         track_id: &str,
         skippage_secs: u64,
     ) -> anyhow::Result<()> {
-        let track_key = format!("rustify:skipage:{}:{}", user_id, track_id);
+        let track_key = format!("rustify:skippage:{}:{}", user_id, track_id);
+
+        tracing::debug!("skippage secs {} {}", skippage_secs, track_key);
 
         let _: () = redis_conn.set_ex(&track_key, 1, skippage_secs).await?;
         Ok(())
@@ -48,7 +50,7 @@ impl SkippageService {
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<bool> {
-        let track_key = format!("rustify:skipage:{}:{}", user_id, track_id);
+        let track_key = format!("rustify:skippage:{}:{}", user_id, track_id);
 
         let track_exists: bool = redis_conn.exists(&track_key).await?;
 
@@ -56,14 +58,14 @@ impl SkippageService {
     }
 
     #[tracing::instrument(skip_all, fields(user_id))]
-    pub async fn delete_skipage_entries(
+    pub async fn update_skippage_entries_ttl(
         redis_conn: &mut MultiplexedConnection,
         user_id: &str,
-    ) -> anyhow::Result<u64> {
-        // Use SCAN to find all keys matching the pattern
-        let pattern = format!("rustify:skipage:{user_id}:*");
+        skippage_duration: chrono::Duration,
+    ) -> anyhow::Result<()> {
+        let skippage_secs = skippage_duration.num_seconds();
+        let pattern = format!("rustify:skippage:{user_id}:*");
         let mut cursor = 0;
-        let mut total_deleted = 0u64;
 
         loop {
             // SCAN with pattern matching
@@ -77,8 +79,15 @@ impl SkippageService {
             .await?;
 
             if !keys.is_empty() {
-                let deleted: u64 = redis_conn.del(&keys).await?;
-                total_deleted += deleted;
+                for key in &keys {
+                    let ttl: i64 = redis_conn.ttl(key).await?;
+
+                    tracing::debug!("update {} {}", skippage_secs, key);
+
+                    if ttl > skippage_secs {
+                        let _: () = redis_conn.expire(key, skippage_secs).await?;
+                    }
+                }
             }
 
             cursor = new_cursor;
@@ -88,12 +97,6 @@ impl SkippageService {
             }
         }
 
-        tracing::info!(
-            total_deleted = total_deleted,
-            user_id = user_id,
-            "Completed deletion of skipage entries"
-        );
-
-        Ok(total_deleted)
+        Ok(())
     }
 }

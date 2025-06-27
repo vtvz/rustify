@@ -1,11 +1,14 @@
 use chrono::Duration;
 use indoc::formatdoc;
+use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::Requester;
-use teloxide::types::ChatId;
+use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
 use crate::skippage_service::SkippageService;
+use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
+use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
 use crate::user_service::UserService;
 
@@ -36,15 +39,20 @@ pub async fn handle(
                 chat_id,
                 formatdoc!(
                     "
-                        Pass number of days to remember played tracks.
-                        Pass zero to disable this function.
+                        Pass number of days to remember played tracks like that:
+                        <code>/{} 7</code>
+                        Pass zero to disable this function:
+                        <code>/{} 0</code>
                         Number should be 365 or less.
-                        Changing days will clear remembered songs.
                         Current setting: {}
                     ",
-                    days_fmt
+                    UserCommandDisplay::Skippage,
+                    UserCommandDisplay::Skippage,
+                    days_fmt,
                 ),
             )
+            .reply_markup(StartKeyboard::markup())
+            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -62,14 +70,19 @@ pub async fn handle(
 
     UserService::set_cfg_skippage_secs(app.db(), state.user_id(), duration).await?;
 
-    let deleted =
-        SkippageService::delete_skipage_entries(&mut app.redis_conn().await?, state.user_id())
-            .await?;
+    if days > 0 {
+        SkippageService::update_skippage_entries_ttl(
+            &mut app.redis_conn().await?,
+            state.user_id(),
+            duration,
+        )
+        .await?;
+    }
 
     app.bot()
         .send_message(
             chat_id,
-            format!("All tracks you've listened within {days} days will be skipped.\nAll listen history were deleted ({deleted} entries)"),
+            format!("All tracks you've listened within {days} days will be skipped"),
         )
         .await?;
 
