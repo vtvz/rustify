@@ -133,6 +133,7 @@ pub async fn handle_list_words(
         let words = words
             .into_iter()
             .map(|word| format!("• <code>{word}</code>"))
+            .sorted()
             .collect_vec()
             .join("\n");
 
