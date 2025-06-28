@@ -9,7 +9,7 @@ impl SkippageService {
         redis_conn: &mut MultiplexedConnection,
         user_id: &str,
     ) -> anyhow::Result<String> {
-        let playing_key = format!("rustify:skippage:{}:playing", user_id);
+        let playing_key = format!("rustify:skippage:{user_id}:playing");
 
         let current_playing: Option<String> = redis_conn.get(&playing_key).await?;
         let current_playing = current_playing.unwrap_or_else(|| String::from("nothing"));
@@ -23,7 +23,7 @@ impl SkippageService {
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<()> {
-        let playing_key = format!("rustify:skippage:{}:playing", user_id);
+        let playing_key = format!("rustify:skippage:{user_id}:playing");
         let _: () = redis_conn.set(&playing_key, track_id).await?;
 
         Ok(())
@@ -36,9 +36,7 @@ impl SkippageService {
         track_id: &str,
         skippage_secs: u64,
     ) -> anyhow::Result<()> {
-        let track_key = format!("rustify:skippage:{}:{}", user_id, track_id);
-
-        tracing::debug!("skippage secs {} {}", skippage_secs, track_key);
+        let track_key = format!("rustify:skippage:{user_id}:{track_id}");
 
         let _: () = redis_conn.set_ex(&track_key, 1, skippage_secs).await?;
         Ok(())
@@ -50,7 +48,7 @@ impl SkippageService {
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<bool> {
-        let track_key = format!("rustify:skippage:{}:{}", user_id, track_id);
+        let track_key = format!("rustify:skippage:{user_id}:{track_id}");
 
         let track_exists: bool = redis_conn.exists(&track_key).await?;
 
@@ -61,10 +59,11 @@ impl SkippageService {
     pub async fn update_skippage_entries_ttl(
         redis_conn: &mut MultiplexedConnection,
         user_id: &str,
-        skippage_duration: chrono::Duration,
+        old_skippage_secs: i64,
+        new_skippage_secs: i64,
     ) -> anyhow::Result<()> {
-        let skippage_secs = skippage_duration.num_seconds();
         let pattern = format!("rustify:skippage:{user_id}:*");
+        let playing_key = format!("rustify:skippage:{user_id}:playing");
         let mut cursor = 0;
 
         loop {
@@ -80,13 +79,14 @@ impl SkippageService {
 
             if !keys.is_empty() {
                 for key in &keys {
+                    if key == &playing_key {
+                        continue;
+                    }
                     let ttl: i64 = redis_conn.ttl(key).await?;
 
-                    tracing::debug!("update {} {}", skippage_secs, key);
+                    let ttl_diff = old_skippage_secs - new_skippage_secs;
 
-                    if ttl > skippage_secs {
-                        let _: () = redis_conn.expire(key, skippage_secs).await?;
-                    }
+                    let _: () = redis_conn.expire(key, ttl - ttl_diff).await?;
                 }
             }
 

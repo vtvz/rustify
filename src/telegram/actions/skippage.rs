@@ -23,10 +23,9 @@ pub async fn handle(
     }
 
     let days = days.parse::<i64>();
+    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
 
     let Ok(days) = days else {
-        let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
-
         let days = Duration::seconds(user.cfg_skippage_secs).num_days();
         let days_fmt = match days {
             0 => "disabled".to_owned(),
@@ -74,7 +73,8 @@ pub async fn handle(
         SkippageService::update_skippage_entries_ttl(
             &mut app.redis_conn().await?,
             state.user_id(),
-            duration,
+            user.cfg_skippage_secs,
+            duration.num_seconds(),
         )
         .await?;
     }
