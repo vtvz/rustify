@@ -26,19 +26,10 @@ async fn get_playlist(
     let spotify = state.spotify().await;
 
     let mut playlists_stream = spotify.user_playlists(user_id.clone());
-    let mut playlists = vec![];
 
     while let Some(playlist) = playlists_stream.next().await {
         let playlist = playlist?;
         if playlist.id.id() == magic_playlist_id {
-            return Ok(playlist.into());
-        }
-
-        playlists.push(playlist);
-    }
-
-    for playlist in playlists {
-        if playlist.name == playlist_name {
             spotify
                 .playlist_replace_items(playlist.id.clone(), [])
                 .await?;
