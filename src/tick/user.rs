@@ -1,6 +1,7 @@
 use anyhow::Context;
 use strum_macros::Display;
 
+use super::skippage;
 use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify::CurrentlyPlaying;
@@ -45,13 +46,20 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
     };
 
     rickroll::queue(app, &state).await.ok();
-    super::magic::handle(app, &state, &track, context.as_ref())
+
+    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
+
+    let skippage_skipped = skippage::handle(app, &state, &track, &user).await?;
+
+    if skippage_skipped {
+        return Ok(CheckUserResult::Complete);
+    }
+
+    super::magic::handle(app, &state, &track, context.as_ref(), &user)
         .await
         .ok();
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
-
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
 
     match status {
         TrackStatus::Disliked => {

@@ -1,27 +1,13 @@
-use anyhow::Context;
 use chrono::Duration;
 use redis::AsyncCommands;
 use rspotify::model::TrackId;
 use rspotify::prelude::OAuthClient;
 
 use crate::app::App;
-use crate::spotify::CurrentlyPlaying;
 use crate::user::UserState;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn queue(app: &'static App, state: &UserState) -> anyhow::Result<()> {
-    let playing = CurrentlyPlaying::get(&*state.spotify().await).await;
-
-    match playing {
-        CurrentlyPlaying::Err(err) => {
-            return Err(err).context("Get currently playing track");
-        },
-        CurrentlyPlaying::None(_) => {
-            return Ok(());
-        },
-        CurrentlyPlaying::Ok(..) => (),
-    };
-
     let key = format!("rustify:rickroll:{user_id}", user_id = state.user_id());
     let mut redis = app.redis_conn().await?;
     let ttl = Duration::days(30).num_seconds() as u64;

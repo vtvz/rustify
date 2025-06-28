@@ -4,7 +4,7 @@ use teloxide::prelude::Requester as _;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
-use crate::telegram::commands::SET_ANALYSIS_LANGUAGE_COMMAND;
+use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
@@ -76,7 +76,7 @@ pub async fn handle_set_analysis_language(
         if language.is_empty() {
             return Some(format!(
                 "Provide word <code>/{command} yourword</code>",
-                command = *SET_ANALYSIS_LANGUAGE_COMMAND
+                command = UserCommandDisplay::SetAnalysisLanguage,
             ));
         }
 
