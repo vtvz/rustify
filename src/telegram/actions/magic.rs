@@ -14,19 +14,30 @@ use crate::entity::prelude::{UserColumn, UserEntity};
 use crate::spotify::ShortPlaylist;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
+use crate::user_service::UserService;
 
 async fn get_playlist(
     state: &UserState,
     user_id: UserId<'static>,
+    magic_playlist_id: String,
 ) -> anyhow::Result<ShortPlaylist> {
-    let playlist_name = "Rustify Magic Playlist";
+    let playlist_name = "Magic✨";
 
     let spotify = state.spotify().await;
 
-    let mut playlists = spotify.user_playlists(user_id.clone());
+    let mut playlists_stream = spotify.user_playlists(user_id.clone());
+    let mut playlists = vec![];
 
-    while let Some(playlist) = playlists.next().await {
+    while let Some(playlist) = playlists_stream.next().await {
         let playlist = playlist?;
+        if playlist.id.id() == magic_playlist_id {
+            return Ok(playlist.into());
+        }
+
+        playlists.push(playlist);
+    }
+
+    for playlist in playlists {
         if playlist.name == playlist_name {
             spotify
                 .playlist_replace_items(playlist.id.clone(), [])
@@ -79,7 +90,13 @@ pub async fn handle(
 
     track_ids.shuffle(&mut rand::rng());
 
-    let playlist = get_playlist(state, spotify_user.id).await?;
+    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
+    let playlist = get_playlist(
+        state,
+        spotify_user.id,
+        user.magic_playlist.unwrap_or("none".into()),
+    )
+    .await?;
 
     UserEntity::update_many()
         .filter(UserColumn::Id.eq(state.user_id()))
