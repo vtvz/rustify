@@ -77,14 +77,17 @@ pub async fn handle(
             duration.num_seconds(),
         )
         .await?;
+        app.bot()
+            .send_message(
+                chat_id,
+                format!("All tracks you've listened within {days} days will be skipped"),
+            )
+            .await?;
+    } else {
+        app.bot()
+            .send_message(chat_id, "Slippage is disabled")
+            .await?;
     }
-
-    app.bot()
-        .send_message(
-            chat_id,
-            format!("All tracks you've listened within {days} days will be skipped"),
-        )
-        .await?;
 
     Ok(HandleStatus::Handled)
 }
