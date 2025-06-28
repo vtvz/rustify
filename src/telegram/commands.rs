@@ -5,56 +5,56 @@ use teloxide::utils::command::BotCommands;
 #[derive(BotCommands, PartialEq, Eq, Debug)]
 #[command(rename_rule = "snake_case", parse_with = "split")]
 pub enum UserCommand {
-    #[command(description = "show this help")]
+    #[command(description = "Show this help")]
     Help,
 
-    #[command(description = "start")]
+    #[command(description = "Start")]
     Start,
-    #[command(description = "show keyboard")]
+    #[command(description = "Show keyboard")]
     Keyboard,
-    #[command(description = "dislike current track")]
+    #[command(description = "Dislike current track")]
     Dislike,
-    #[command(description = "like current track")]
+    #[command(description = "Like current track")]
     Like,
-    #[command(description = "delete disliked tracks from your playlists")]
+    #[command(description = "Delete disliked tracks from your playlists")]
     Cleanup,
-    #[command(description = "show details about currently playing track")]
+    #[command(description = "Show details about currently playing track")]
     Details,
-    #[command(description = "show statistics about disliked tracks")]
+    #[command(description = "Show statistics about disliked tracks")]
     Stats,
-    #[command(description = "login to spotify")]
+    #[command(description = "Login to spotify")]
     Register,
 
-    #[command(description = "toggle setting of skipping disliked tracks")]
+    #[command(description = "Toggle setting of skipping disliked tracks")]
     ToggleTrackSkip,
-    #[command(description = "toggle setting of profanity check")]
+    #[command(description = "Toggle setting of profanity check")]
     ToggleProfanityCheck,
-    #[command(description = "set language for analysis results")]
+    #[command(description = "Set language for analysis results")]
     SetAnalysisLanguage { language: String },
 
-    #[command(description = "create or refresh Magic playlist")]
+    #[command(description = "Create or refresh Magic playlist")]
     Magic,
 
     #[command(
-        description = "add word to whitelist",
+        description = "Add word to whitelist",
         rename = "add_word_to_whitelist"
     )]
     AddWhitelistWord { word: String },
 
     #[command(
-        description = "remove word from whitelist",
+        description = "Remove word from whitelist",
         rename = "remove_word_from_whitelist"
     )]
     RemoveWhitelistWord { word: String },
 
     #[command(
-        description = "list words in whitelist",
+        description = "List words in whitelist",
         rename = "list_words_in_whitelist"
     )]
     ListWhitelistWords,
 
     #[command(
-        description = "allows you to skip tracks you've already listened. Pass days to remember"
+        description = "Allows you to skip tracks you've already listened. Pass days to remember"
     )]
     Skippage { days: String },
 }
@@ -108,16 +108,16 @@ impl std::fmt::Display for UserCommandDisplay {
 #[derive(BotCommands, PartialEq, Eq, Debug)]
 #[command(rename_rule = "snake_case", parse_with = "split")]
 pub enum AdminCommand {
-    #[command(description = "show this help")]
+    #[command(description = "Show this help")]
     Admin,
 
-    #[command(description = "manage user whitelist")]
+    #[command(description = "Manage user whitelist")]
     Whitelist(String, String),
 
-    #[command(description = "show global statistics")]
+    #[command(description = "Show global statistics")]
     GlobalStats,
 
-    #[command(description = "get analyze prompt")]
+    #[command(description = "Get analyze prompt")]
     GetAnalyzePrompt,
 }
 
