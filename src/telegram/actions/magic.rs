@@ -3,29 +3,27 @@ use indoc::formatdoc;
 use rand::seq::SliceRandom;
 use rspotify::model::{Id, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
-use sea_orm::prelude::Expr;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use teloxide::payloads::EditMessageTextSetters;
 use teloxide::prelude::Requester;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
-use crate::entity::prelude::{UserColumn, UserEntity};
 use crate::spotify::ShortPlaylist;
+use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
 use crate::user_service::UserService;
 
 async fn get_playlist(
     state: &UserState,
-    user_id: UserId<'static>,
+    spotify_user_id: UserId<'static>,
     magic_playlist_id: String,
 ) -> anyhow::Result<ShortPlaylist> {
     let playlist_name = "Magic✨";
 
     let spotify = state.spotify().await;
 
-    let mut playlists_stream = spotify.user_playlists(user_id.clone());
+    let mut playlists_stream = spotify.user_playlists(spotify_user_id.clone());
 
     while let Some(playlist) = playlists_stream.next().await {
         let playlist = playlist?;
@@ -40,7 +38,7 @@ async fn get_playlist(
 
     let playlist = spotify
         .user_playlist_create(
-            user_id,
+            spotify_user_id,
             playlist_name,
             Some(false),
             Some(false),
@@ -57,7 +55,9 @@ pub async fn handle(
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        return Ok(HandleStatus::Skipped);
+        actions::register::send_register_invite(app, chat_id).await?;
+
+        return Ok(HandleStatus::Handled);
     }
 
     let Some(spotify_user) = state.spotify_user().await? else {
@@ -66,7 +66,7 @@ pub async fn handle(
 
     let m = app
         .bot()
-        .send_message(chat_id, "⏳ Generating Magic Playlist")
+        .send_message(chat_id, "⏳ Generating Magic Playlist ✨")
         .await?;
 
     let spotify = state.spotify().await;
@@ -89,11 +89,7 @@ pub async fn handle(
     )
     .await?;
 
-    UserEntity::update_many()
-        .filter(UserColumn::Id.eq(state.user_id()))
-        .col_expr(UserColumn::MagicPlaylist, Expr::value(playlist.id.id()))
-        .exec(app.db())
-        .await?;
+    UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id.id()).await?;
 
     for chunk in track_ids.chunks(100) {
         spotify
@@ -107,7 +103,7 @@ pub async fn handle(
             m.id,
             formatdoc!(
                 r#"
-                    Created <a href="{}">Magic Playlist</a>
+                    ✨ Created <a href="{}">Magic Playlist</a> ✨
                 "#,
                 playlist.url
             ),

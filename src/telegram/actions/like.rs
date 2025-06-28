@@ -4,6 +4,7 @@ use teloxide::types::ParseMode;
 
 use crate::app::App;
 use crate::spotify::CurrentlyPlaying;
+use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::telegram::utils::link_preview_small_top;
@@ -15,7 +16,9 @@ pub async fn handle(
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        return Ok(HandleStatus::Skipped);
+        actions::register::send_register_invite(app, m.chat.id).await?;
+
+        return Ok(HandleStatus::Handled);
     }
 
     let track = match CurrentlyPlaying::get(&*state.spotify().await).await {

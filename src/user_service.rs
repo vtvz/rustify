@@ -2,15 +2,7 @@ use chrono::Duration;
 use redis::AsyncCommands;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr, Func};
-use sea_orm::{
-    ConnectionTrait,
-    FromQueryResult,
-    IntoActiveModel,
-    QuerySelect,
-    Set,
-    UpdateMany,
-    UpdateResult,
-};
+use sea_orm::{ConnectionTrait, FromQueryResult, QuerySelect, Set, UpdateMany, UpdateResult};
 
 use crate::entity::prelude::*;
 use crate::lyrics;
@@ -179,12 +171,14 @@ impl UserService {
         db: &impl ConnectionTrait,
         id: &str,
         status: UserStatus,
-    ) -> anyhow::Result<UserActiveModel> {
-        let mut user = Self::obtain_by_id(db, id).await?.into_active_model();
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::Status, Expr::value(status))
+            .exec(db)
+            .await?;
 
-        user.status = Set(status);
-
-        Ok(user.save(db).await?)
+        Ok(res)
     }
 
     pub async fn set_cfg_skippage_secs(
@@ -198,6 +192,34 @@ impl UserService {
                 UserColumn::CfgSkippageSecs,
                 Expr::value(duration.num_seconds()),
             )
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
+    pub async fn set_cfg_analysis_language(
+        db: &impl ConnectionTrait,
+        id: &str,
+        lang: &str,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::CfgAnalysisLanguage, Expr::value(lang))
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
+    pub async fn set_magic_playlist(
+        db: &impl ConnectionTrait,
+        id: &str,
+        playlist_id: &str,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::MagicPlaylist, Expr::value(playlist_id))
             .exec(db)
             .await?;
 

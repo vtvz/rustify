@@ -6,6 +6,7 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
 use crate::skippage_service::SkippageService;
+use crate::telegram::actions;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
@@ -19,7 +20,9 @@ pub async fn handle(
     days: String,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        return Ok(HandleStatus::Skipped);
+        actions::register::send_register_invite(app, chat_id).await?;
+
+        return Ok(HandleStatus::Handled);
     }
 
     let days = days.parse::<i64>();
