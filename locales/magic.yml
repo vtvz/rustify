@@ -1,0 +1,21 @@
+_version: 2
+
+magic.header:
+  en: >-
+    <i>Magic Playlist™</i> ✨ is made of your shuffled favorite songs that will be removed from this playlist as you listen to them.
+    This allows you to listen to everything you love one by one without any repetition. You'll love it! 😊
+  ru: todo
+
+magic.generating:
+  en: |-
+    %{header}
+
+    ⏳ Generating <i>Magic Playlist™</i> ✨
+  ru: todo
+
+magic.generated:
+  en: |-
+    %{header}
+
+    ✨ Created <a href="%{url}">Magic Playlist™</a> ✨
+  ru: todo
