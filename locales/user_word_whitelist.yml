@@ -1,42 +1,62 @@
 _version: 2
 
-user-word-whitelist:
-  en: |-
-
 user-word-whitelist.add-provide-word:
   en: |-
-    Provide word <code>/%{command} yourword</code>
+    Provide word <code>/%{command} your-word</code>
+  ru: |-
+    Укажите слово <code>/%{command} ваше-слово</code>
 
 user-word-whitelist.word-added:
   en: |-
     Word <code>'%{word}'</code> added to whitelist
 
     To list all word in whitelist /%{command}
+  ru: |-
+    Слово <code>'%{word}'</code> добавлено в белый список
+
+    Чтобы посмотреть все слова в белом списке /%{command}
 
 user-word-whitelist.word-exist:
   en: |-
     Word <code>'%{word}'</code> already in whitelist
 
     To list all word in whitelist /%{command}
+  ru: |-
+    Слово <code>'%{word}'</code> уже в белом списке
+
+    Чтобы посмотреть все слова в белом списке /%{command}
 
 user-word-whitelist.remove-provide-word:
   en: |-
-    Provide word <code>/%{command} yourword</code>
+    Provide word <code>/%{command} your-word</code>
+  ru: |-
+    Укажите слово <code>/%{command} ваше-слово</code>
 
 user-word-whitelist.removed:
   en: |-
     Word <code>'%{word}'</code> removed from whitelist
+  ru: |-
+    Слово <code>'%{word}'</code> удалено из белого списка
 
 user-word-whitelist.doesnt-exist:
   en: |-
     Word <code>'%{word}'</code> not in whitelist
+
     To list all word in whitelist /%{command}
+  ru: |-
+    Слово <code>'%{word}'</code> не в белом списке
+
+    Чтобы посмотреть все слова в белом списке /%{command}
 
 user-word-whitelist.empty:
   en: |-
     Your whitelist is empty
 
     Add new word with <code>/%{command} your-word</code>
+  ru: |-
+    Ваш белый список пуст
+
+    Добавьте новое слово с помощью <code>/%{command} ваше-слово</code>
 
 user-word-whitelist.list:
   en: |-
@@ -45,3 +65,9 @@ user-word-whitelist.list:
     %{words}
 
     You can remove word with <code>/%{command} your-word</code> command
+  ru: |-
+    Слова, которые вы добавили в белый список:
+
+    %{words}
+
+    Вы можете удалить слово командой <code>/%{command} ваше-слово</code>

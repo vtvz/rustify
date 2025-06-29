@@ -49,16 +49,24 @@ dump.stats:
 dump.cleanup-start:
   en: |-
     Started cleanup. Please wait, it can take a bit of time 🕐
+  ru: |-
+    Начата очистка. Пожалуйста, подождите, это может занять некоторое время 🕐
 
 dump.cleanup-finish:
   en: |-
     Deleted %{removed_playlists} tracks in %{count_playlists} playlists and %{removed_collection} in favorite songs 🗑
+  ru: |-
+    Удалено %{removed_playlists} треков в %{count_playlists} плейлистах и %{removed_collection} из любимых песен 🗑
 
 dump.unhandled-request:
   en: |-
     Your request was not handled 😔
 
     There are commands available to you:
+  ru: |-
+    Ваш запрос не был обработан 😔
+
+    Вам доступны следующие команды:
 
 dump.dislike:
   en: |-
@@ -67,3 +75,9 @@ dump.dislike:
     If you change your mind press 'Ignore text 🙈'
 
     Do not forget you can send link to song to find current status
+  ru: |-
+    Дизлайкнул %{track_link}
+
+    Если передумаете, нажмите 'Игнорировать текст 🙈'
+
+    Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
