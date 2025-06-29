@@ -41,19 +41,17 @@ pub async fn handle(
         ..
     } = UserService::get_stats(app.db(), Some(state.user_id())).await?;
 
-    let message = formatdoc!(
-        r#"
-            📉 <b>Some nice stats for you</b> 📈
-
-            👎 You disliked <code>{dislikes}</code> songs
-            ⏭ I skipped <code>{skips}</code> times
-            💔 Removed <code>{removed_collection}</code> from liked songs
-            🗑 Removed <code>{removed_playlists}</code> from playlists
-            🔬 Checked lyrics <code>{lyrics_checked}</code> times
-            🔍 Analyzed lyrics <code>{lyrics_analyzed}</code> time
-            🙈 You ignored <code>{ignored}</code> tracks lyrics
-            🤬 <code>{lyrics_profane}</code> lyrics were considered as profane
-        "#
+    let message = t!(
+        "dump.stats",
+        locale = state.locale(),
+        dislikes = dislikes,
+        skips = skips,
+        removed_collection = removed_collection,
+        removed_playlists = removed_playlists,
+        lyrics_checked = lyrics_checked,
+        lyrics_analyzed = lyrics_analyzed,
+        ignored = ignored,
+        lyrics_profane = lyrics_profane
     );
 
     app.bot()

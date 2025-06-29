@@ -75,8 +75,9 @@ pub async fn handle(
         return Ok(());
     }
 
-    let message = format!(
-        "Current song ({track_name}) was disliked, but I cannot skip it...",
+    let message = t!(
+        "error.cannot-skip",
+        locale = state.locale(),
         track_name = track.track_tg_link(),
     );
 

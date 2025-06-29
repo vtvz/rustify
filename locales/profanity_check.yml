@@ -1,0 +1,19 @@
+_version: 2
+
+profanity-check.message:
+  en: |-
+    Current song (%{track_name}) <b>probably</b> has bad words:
+
+    %{bad_lines}
+
+    <a href="%{lyrics_link}">%{lyrics_link_text}</a>
+
+    Press 'Ignore text 🙈' to never see this notification for <b>this song</b> again
+  ru: |-
+    Текущая песня (%{track_name}) <b>вероятно</b> содержит нецензурные слова:
+
+    %{bad_lines}
+
+    <a href="%{lyrics_link}">%{lyrics_link_text}</a>
+
+    Нажмите 'Игнорировать текст 🙈', чтобы больше не видеть это уведомление для <b>этой песни</b>

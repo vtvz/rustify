@@ -1,0 +1,5 @@
+_version: 2
+
+error.cannot-skip:
+  en: |-
+    Current song (%{track_name}) was disliked, but I cannot skip it...

@@ -29,7 +29,11 @@ pub async fn handle(
                 .send_message(
                     m.chat.id,
                     UserCommand::descriptions()
-                        .global_description(&format!("Command <code>{command}</code> not found.\n\nThere are commands available to you:"))
+                        .global_description(&t!(
+                            "dump.command-not-found",
+                            locale = state.locale(),
+                            command = command
+                        ))
                         .to_string(),
                 )
                 .reply_markup(StartKeyboard::markup())
@@ -49,7 +53,10 @@ pub async fn handle(
                 UserService::set_status(app.db(), state.user_id(), UserStatus::Active).await?;
 
                 app.bot()
-                    .send_message(m.chat.id, "Here is your keyboard")
+                    .send_message(
+                        m.chat.id,
+                        t!("dump.here-is-your-keyboard", locale = state.locale()),
+                    )
                     .reply_markup(StartKeyboard::markup())
                     .await?;
             } else {
@@ -77,7 +84,7 @@ pub async fn handle(
                 .send_message(
                     m.chat.id,
                     UserCommand::descriptions()
-                        .global_description("Commands available to you")
+                        .global_description(&t!("dump.available-commands", locale = state.locale()))
                         .to_string(),
                 )
                 .reply_markup(StartKeyboard::markup())

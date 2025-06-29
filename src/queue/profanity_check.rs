@@ -1,5 +1,6 @@
 use anyhow::{Context as _, bail};
 use indoc::formatdoc;
+use isolang::Language;
 use redis::AsyncCommands as _;
 use rustrict::Type;
 use teloxide::prelude::*;
@@ -114,14 +115,12 @@ pub async fn check(
     ret.provider = Some(hit.provider());
     ret.found = true;
 
-    /* NOTE: Disable for now
     if hit.language() != Language::Eng {
         tracing::trace!(language = %hit.language(), provider = %hit.provider(), "Track has non English lyrics");
 
         ret.skipped = true;
         return Ok(ret);
     }
-    */
 
     let check = profanity::Manager::check(hit.lyrics());
 
@@ -158,15 +157,9 @@ pub async fn check(
 
     let mut lines = bad_lines.len();
     let message = loop {
-        let message = formatdoc!(
-            r#"
-                Current song ({track_name}) <b>probably</b> has bad words:
-
-                {bad_lines}
-
-                <a href="{lyrics_link}">{lyrics_link_text}</a>
-
-                Press 'Ignore text 🙈' to never see this notification for <b>this song</b> again"#,
+        let message = t!(
+            "profanity-check.message",
+            locale = state.locale(),
             track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
             lyrics_link = hit.link(),

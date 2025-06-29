@@ -1,0 +1,28 @@
+_version: 2
+
+dump.command-not-found:
+  en: |-
+    Command <code>%{command}</code> not found.
+
+    There are commands available to you:
+
+dump.here-is-your-keyboard:
+  en: |-
+    Here is your keyboard
+
+dump.available-commands:
+  en: |-
+    Commands available to you
+
+dump.stats:
+  en: |-
+    📉 <b>Some nice stats for you</b> 📈
+
+    👎 You disliked <code>%{dislikes}</code> songs
+    ⏭ I skipped <code>%{skips}</code> times
+    💔 Removed <code>%{removed_collection}</code> from liked songs
+    🗑 Removed <code>%{removed_playlists}</code> from playlists
+    🔬 Checked lyrics <code>%{lyrics_checked}</code> times
+    🔍 Analyzed lyrics <code>%{lyrics_analyzed}</code> time
+    🙈 You ignored <code>%{ignored}</code> tracks lyrics
+    🤬 <code>%{lyrics_profane}</code> lyrics were considered as profane

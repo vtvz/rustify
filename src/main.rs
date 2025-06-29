@@ -40,7 +40,7 @@ pub mod utils;
 pub mod whitelist;
 pub mod workers;
 
-rust_i18n::i18n!("locales");
+rust_i18n::i18n!("locales", fallback = "en");
 
 #[tokio::main(worker_threads = 4)]
 async fn main() {
