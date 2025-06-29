@@ -40,9 +40,7 @@ pub async fn handle(
         .send_message(
             m.chat.id,
             UserCommand::descriptions()
-                .global_description(
-                    "Your request was not handled 😔\n\nThere are commands available to you:",
-                )
+                .global_description(&t!("dump.unhandled-request", locale = state.locale()))
                 .to_string(),
         )
         .reply_markup(StartKeyboard::markup())

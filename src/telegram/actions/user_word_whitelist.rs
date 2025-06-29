@@ -18,8 +18,9 @@ pub async fn handle_add_word(
     word: String,
 ) -> anyhow::Result<HandleStatus> {
     if word.is_empty() {
-        let message = format!(
-            "Provide word <code>/{command} yourword</code>",
+        let message = t!(
+            "user-word-whitelist.add-provide-word",
+            locale = state.locale(),
             command = UserCommandDisplay::AddWhitelistWord,
         );
 
@@ -40,21 +41,17 @@ pub async fn handle_add_word(
     .await?;
 
     let message = if added {
-        formatdoc!(
-            "
-                Word <code>'{word}'</code> added to whitelist
-
-                To list all word in whitelist /{command}
-            ",
+        t!(
+            "user-word-whitelist.word-added",
+            locale = state.locale(),
+            word = word,
             command = UserCommandDisplay::ListWhitelistWords,
         )
     } else {
-        formatdoc!(
-            "
-                Word <code>'{word}'</code> already in whitelist
-
-                To list all word in whitelist /{command}
-            ",
+        t!(
+            "user-word-whitelist.word-exist",
+            locale = state.locale(),
+            word = word,
             command = UserCommandDisplay::ListWhitelistWords,
         )
     };
@@ -75,8 +72,8 @@ pub async fn handle_remove_word(
     word: String,
 ) -> anyhow::Result<HandleStatus> {
     if word.is_empty() {
-        let message = format!(
-            "Provide word <code>/{command} yourword</code>",
+        let message = t!(
+            "user-word-whitelist.remove-provide-word",
             command = UserCommandDisplay::AddWhitelistWord,
         );
 
@@ -93,13 +90,16 @@ pub async fn handle_remove_word(
         UserWordWhitelistService::remove_ok_word_for_user(app.db(), state.user_id(), &word).await?;
 
     let message = if removed {
-        format!("Word <code>'{word}'</code> removed from whitelist")
+        t!(
+            "user-word-whitelist.removed",
+            locale = state.locale(),
+            word = word
+        )
     } else {
-        formatdoc!(
-            "
-                Word <code>'{word}'</code> not in whitelist
-                To list all word in whitelist /{command}
-            ",
+        t!(
+            "user-word-whitelist.doesnt-exist",
+            locale = state.locale(),
+            word = word,
             command = UserCommandDisplay::ListWhitelistWords,
         )
     };
@@ -121,12 +121,9 @@ pub async fn handle_list_words(
     let words = UserWordWhitelistService::get_ok_words_for_user(app.db(), state.user_id()).await?;
 
     let message = if words.is_empty() {
-        formatdoc!(
-            "
-                Your whitelist is empty
-
-                Add new word with <code>/{command} your-word</code>
-            ",
+        t!(
+            "user-word-whitelist.empty",
+            locale = state.locale(),
             command = UserCommandDisplay::AddWhitelistWord,
         )
     } else {
@@ -137,14 +134,10 @@ pub async fn handle_list_words(
             .collect_vec()
             .join("\n");
 
-        formatdoc!(
-            "
-                Words you added to whitelist:
-
-                {words}
-
-                You can remove word with <code>/{command} your-word</code> command
-            ",
+        t!(
+            "user-word-whitelist.list",
+            locale = state.locale(),
+            words = words,
             command = UserCommandDisplay::RemoveWhitelistWord,
         )
     };

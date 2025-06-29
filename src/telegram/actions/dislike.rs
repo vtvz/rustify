@@ -44,7 +44,7 @@ pub async fn handle(
     let keyboard = InlineButtons::from_track_status(TrackStatus::Disliked, track.id());
 
     app.bot()
-        .send_message(m.chat.id, compose_message(&track))
+        .send_message(m.chat.id, compose_message(&track, state.locale()))
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
@@ -78,7 +78,7 @@ pub async fn handle_inline(
         .edit_message_text(
             q.from.id,
             q.message.context("Message is empty")?.id(),
-            compose_message(&track),
+            compose_message(&track, state.locale()),
         )
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
@@ -88,15 +88,10 @@ pub async fn handle_inline(
     Ok(())
 }
 
-fn compose_message(track: &ShortTrack) -> String {
-    formatdoc!(
-        "
-            Disliked {}
-
-            If you change your mind press 'Ignore text 🙈'
-
-            Do not forget you can send link to song to find current status
-        ",
-        track.track_tg_link()
+fn compose_message(track: &ShortTrack, locale: &str) -> String {
+    t!(
+        "dump.dislike",
+        locale = locale,
+        track_link = track.track_tg_link()
     )
 }

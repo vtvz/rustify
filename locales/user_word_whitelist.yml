@@ -1,0 +1,47 @@
+_version: 2
+
+user-word-whitelist:
+  en: |-
+
+user-word-whitelist.add-provide-word:
+  en: |-
+    Provide word <code>/%{command} yourword</code>
+
+user-word-whitelist.word-added:
+  en: |-
+    Word <code>'%{word}'</code> added to whitelist
+
+    To list all word in whitelist /%{command}
+
+user-word-whitelist.word-exist:
+  en: |-
+    Word <code>'%{word}'</code> already in whitelist
+
+    To list all word in whitelist /%{command}
+
+user-word-whitelist.remove-provide-word:
+  en: |-
+    Provide word <code>/%{command} yourword</code>
+
+user-word-whitelist.removed:
+  en: |-
+    Word <code>'%{word}'</code> removed from whitelist
+
+user-word-whitelist.doesnt-exist:
+  en: |-
+    Word <code>'%{word}'</code> not in whitelist
+    To list all word in whitelist /%{command}
+
+user-word-whitelist.empty:
+  en: |-
+    Your whitelist is empty
+
+    Add new word with <code>/%{command} your-word</code>
+
+user-word-whitelist.list:
+  en: |-
+    Words you added to whitelist:
+
+    %{words}
+
+    You can remove word with <code>/%{command} your-word</code> command

@@ -5,14 +5,22 @@ dump.command-not-found:
     Command <code>%{command}</code> not found.
 
     There are commands available to you:
+  ru: |-
+    Команда <code>%{command}</code> не найдена.
+
+    Вам доступны следующие команды:
 
 dump.here-is-your-keyboard:
   en: |-
-    Here is your keyboard
+    Here is your keyboard ⌨️
+  ru: |-
+    Вот ваша клавиатура ⌨️
 
 dump.available-commands:
   en: |-
-    Commands available to you
+    Commands available to you:
+  ru: |-
+    Доступные вам команды:
 
 dump.stats:
   en: |-
@@ -26,3 +34,36 @@ dump.stats:
     🔍 Analyzed lyrics <code>%{lyrics_analyzed}</code> time
     🙈 You ignored <code>%{ignored}</code> tracks lyrics
     🤬 <code>%{lyrics_profane}</code> lyrics were considered as profane
+  ru: |-
+    📉 <b>Немного статистики для вас</b> 📈
+
+    👎 Вы дизлайкнули <code>%{dislikes}</code> песен
+    ⏭ Я пропустил <code>%{skips}</code> раз
+    💔 Удалено <code>%{removed_collection}</code> из понравившихся песен
+    🗑 Удалено <code>%{removed_playlists}</code> из плейлистов
+    🔬 Проверил тексты <code>%{lyrics_checked}</code> раз
+    🔍 Проанализировал тексты <code>%{lyrics_analyzed}</code> раз
+    🙈 Вы проигнорировали <code>%{ignored}</code> текстов треков
+    🤬 <code>%{lyrics_profane}</code> текстов были признаны нецензурными
+
+dump.cleanup-start:
+  en: |-
+    Started cleanup. Please wait, it can take a bit of time 🕐
+
+dump.cleanup-finish:
+  en: |-
+    Deleted %{removed_playlists} tracks in %{count_playlists} playlists and %{removed_collection} in favorite songs 🗑
+
+dump.unhandled-request:
+  en: |-
+    Your request was not handled 😔
+
+    There are commands available to you:
+
+dump.dislike:
+  en: |-
+    Disliked %{track_link}
+
+    If you change your mind press 'Ignore text 🙈'
+
+    Do not forget you can send link to song to find current status
