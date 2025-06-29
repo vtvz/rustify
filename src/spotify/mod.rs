@@ -25,8 +25,18 @@ use crate::spotify_auth_service::SpotifyAuthService;
 use crate::user_service::UserService;
 
 pub struct ShortPlaylist {
-    pub id: PlaylistId<'static>,
-    pub url: String,
+    id: PlaylistId<'static>,
+    url: String,
+}
+
+impl ShortPlaylist {
+    pub fn id(&self) -> &PlaylistId<'static> {
+        &self.id
+    }
+
+    pub fn url(&self) -> &str {
+        &self.url
+    }
 }
 
 impl From<FullPlaylist> for ShortPlaylist {

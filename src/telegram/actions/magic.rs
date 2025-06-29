@@ -3,7 +3,7 @@ use indoc::formatdoc;
 use rand::seq::SliceRandom;
 use rspotify::model::{Id, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
-use teloxide::payloads::EditMessageTextSetters;
+use teloxide::payloads::{EditMessageTextSetters, SendMessageSetters};
 use teloxide::prelude::Requester;
 use teloxide::types::{ChatId, ParseMode};
 
@@ -11,6 +11,7 @@ use crate::app::App;
 use crate::spotify::ShortPlaylist;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
+use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::user_service::UserService;
 
@@ -64,9 +65,19 @@ pub async fn handle(
         return Ok(HandleStatus::Skipped);
     };
 
+    let header = formatdoc!(
+        "
+            <i>Magic Playlist™</i> ✨ is made of your shuffled favorite songs that will be removed from this playlist as you listen to them. \
+            This allows you to listen to everything you love one by one without any repetition. You'll love it! 😊"
+    );
+
     let m = app
         .bot()
-        .send_message(chat_id, "⏳ Generating Magic Playlist ✨")
+        .send_message(
+            chat_id,
+            format!("{header}\n⏳ Generating <i>Magic Playlist™</i> ✨"),
+        )
+        .parse_mode(ParseMode::Html)
         .await?;
 
     let spotify = state.spotify().await;
@@ -89,11 +100,11 @@ pub async fn handle(
     )
     .await?;
 
-    UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id.id()).await?;
+    UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id().id()).await?;
 
     for chunk in track_ids.chunks(100) {
         spotify
-            .playlist_add_items(playlist.id.clone(), chunk.iter().cloned(), None)
+            .playlist_add_items(playlist.id().clone(), chunk.iter().cloned(), None)
             .await?;
     }
 
@@ -103,12 +114,14 @@ pub async fn handle(
             m.id,
             formatdoc!(
                 r#"
-                    ✨ Created <a href="{}">Magic Playlist</a> ✨
-                "#,
-                playlist.url
+                    {header}
+
+                    ✨ Created <a href="{}">Magic Playlist™</a> ✨"#,
+                playlist.url()
             ),
         )
         .parse_mode(ParseMode::Html)
+        .link_preview_options(link_preview_small_top(playlist.url()))
         .await?;
 
     Ok(HandleStatus::Handled)
