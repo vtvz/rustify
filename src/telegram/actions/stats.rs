@@ -1,4 +1,3 @@
-use indoc::formatdoc;
 use teloxide::prelude::*;
 use teloxide::types::{ParseMode, ReplyParameters};
 

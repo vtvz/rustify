@@ -2,7 +2,6 @@ use std::collections::HashSet;
 
 use anyhow::anyhow;
 use convert_case::{Case, Casing};
-use indoc::formatdoc;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -77,7 +76,10 @@ async fn common(
 ) -> anyhow::Result<HandleStatus> {
     let m = app
         .bot()
-        .send_message(*chat_id, t!("details.collecting-info", locale = state.locale()))
+        .send_message(
+            *chat_id,
+            t!("details.collecting-info", locale = state.locale()),
+        )
         .await?;
 
     let spotify = state.spotify().await;

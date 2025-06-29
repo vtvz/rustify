@@ -1,5 +1,4 @@
 use anyhow::{Context as _, bail};
-use indoc::formatdoc;
 use isolang::Language;
 use redis::AsyncCommands as _;
 use rustrict::Type;

@@ -1,5 +1,4 @@
 use chrono::Duration;
-use indoc::formatdoc;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::Requester;
 use teloxide::types::{ChatId, ParseMode};

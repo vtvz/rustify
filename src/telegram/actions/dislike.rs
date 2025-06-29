@@ -1,5 +1,4 @@
 use anyhow::Context as _;
-use indoc::formatdoc;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
@@ -94,4 +93,5 @@ fn compose_message(track: &ShortTrack, locale: &str) -> String {
         locale = locale,
         track_link = track.track_tg_link()
     )
+    .to_string()
 }

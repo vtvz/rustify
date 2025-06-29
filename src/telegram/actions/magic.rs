@@ -1,5 +1,4 @@
 use futures::StreamExt;
-use indoc::formatdoc;
 use rand::seq::SliceRandom;
 use rspotify::model::{Id, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
@@ -69,7 +68,10 @@ pub async fn handle(
 
     let m = app
         .bot()
-        .send_message(chat_id, t!("magic.generating", header = header, locale = state.locale()))
+        .send_message(
+            chat_id,
+            t!("magic.generating", header = header, locale = state.locale()),
+        )
         .parse_mode(ParseMode::Html)
         .await?;
 
@@ -105,7 +107,12 @@ pub async fn handle(
         .edit_message_text(
             m.chat.id,
             m.id,
-            t!("magic.generated", header = header, url = playlist.url(), locale = state.locale()),
+            t!(
+                "magic.generated",
+                header = header,
+                url = playlist.url(),
+                locale = state.locale()
+            ),
         )
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(playlist.url()))

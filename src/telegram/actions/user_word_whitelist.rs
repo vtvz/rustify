@@ -1,4 +1,3 @@
-use indoc::formatdoc;
 use itertools::Itertools as _;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
@@ -74,7 +73,8 @@ pub async fn handle_remove_word(
     if word.is_empty() {
         let message = t!(
             "user-word-whitelist.remove-provide-word",
-            command = UserCommandDisplay::AddWhitelistWord,
+            locale = state.locale(),
+            command = UserCommandDisplay::RemoveWhitelistWord,
         );
 
         app.bot()

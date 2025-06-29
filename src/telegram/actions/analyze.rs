@@ -1,6 +1,5 @@
 use anyhow::Context as _;
 use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
-use indoc::formatdoc;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters};
@@ -44,14 +43,22 @@ pub async fn handle_inline(
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
-            .edit_message_text(chat_id, message_id, t!("analysis.lyrics-not-found", locale = state.locale()))
+            .edit_message_text(
+                chat_id,
+                message_id,
+                t!("analysis.lyrics-not-found", locale = state.locale()),
+            )
             .await?;
 
         return Ok(());
     };
 
     app.bot()
-        .edit_message_text(chat_id, message_id, t!("analysis.waiting", locale = state.locale()))
+        .edit_message_text(
+            chat_id,
+            message_id,
+            t!("analysis.waiting", locale = state.locale()),
+        )
         .await?;
 
     let res = perform(
@@ -74,7 +81,11 @@ pub async fn handle_inline(
         },
         Err(err) => {
             app.bot()
-                .edit_message_text(chat_id, message_id, t!("analysis.failed", locale = state.locale()))
+                .edit_message_text(
+                    chat_id,
+                    message_id,
+                    t!("analysis.failed", locale = state.locale()),
+                )
                 .await?;
 
             tracing::warn!(err = ?err, "OpenAI request failed");
