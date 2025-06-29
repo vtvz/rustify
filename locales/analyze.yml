@@ -1,0 +1,37 @@
+_version: 2
+
+analysis.disabled:
+  en: >-
+    Analysis is disabled
+  ru: >-
+    Анализ отключен
+
+analysis.lyrics-not-found:
+  en: >-
+    Lyrics not found
+  ru: >-
+    Текст песни не найден
+
+analysis.waiting:
+  en: >-
+    ⏳ Wait for analysis to finish 🔍...
+  ru: >-
+    ⏳ Ждите завершения анализа 🔍...
+
+analysis.failed:
+  en: >-
+    Analysis failed. This happens from time to time. Try again later 🤷
+  ru: >-
+    Анализ не удался. Такое иногда случается. Попробуйте позже 🤷
+
+analysis.result:
+  en: |-
+    %{track_name}
+    Album: %{album_name}
+
+    %{analysis_result}
+  ru: |-
+    %{track_name}
+    Альбом: %{album_name}
+
+    %{analysis_result}

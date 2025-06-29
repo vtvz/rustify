@@ -26,7 +26,7 @@ pub async fn handle_inline(
     let Some(config) = app.analyze() else {
         app.bot()
             .answer_callback_query(q.id)
-            .text("Analysis is disabled")
+            .text(t!("analysis.disabled", locale = state.locale()))
             .await?;
 
         return Ok(());
@@ -44,14 +44,14 @@ pub async fn handle_inline(
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
-            .edit_message_text(chat_id, message_id, "Lyrics not found")
+            .edit_message_text(chat_id, message_id, t!("analysis.lyrics-not-found", locale = state.locale()))
             .await?;
 
         return Ok(());
     };
 
     app.bot()
-        .edit_message_text(chat_id, message_id, "⏳ Wait for analysis to finish 🔍...")
+        .edit_message_text(chat_id, message_id, t!("analysis.waiting", locale = state.locale()))
         .await?;
 
     let res = perform(
@@ -74,11 +74,7 @@ pub async fn handle_inline(
         },
         Err(err) => {
             app.bot()
-                .edit_message_text(
-                    chat_id,
-                    message_id,
-                    "Analysis failed. This happens from time to time. Try again later 🤷",
-                )
+                .edit_message_text(chat_id, message_id, t!("analysis.failed", locale = state.locale()))
                 .await?;
 
             tracing::warn!(err = ?err, "OpenAI request failed");
@@ -106,31 +102,6 @@ async fn perform(
         .unwrap_or_else(|| config.default_language().to_string());
     let model = config.model();
 
-    /* NOTE: Will be removed
-    // temp
-    let http_client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()?;
-
-    let resp: serde_json::Value = http_client
-        .get(dotenv::var("DIRECTUS_API_URL")?)
-        .bearer_auth(dotenv::var("DIRECTUS_API_KEY")?)
-        .send()
-        .await?
-        .json()
-        .await?;
-
-    let test = &resp["data"]["prompt"];
-
-    if let serde_json::Value::String(directus_prompt) = test {
-        prompt = directus_prompt
-            .replace("{song_name}", &song_name)
-            .replace("{lang}", &lang)
-            .replace("{lyrics}", &lyrics);
-    }
-    // temp
-    */
-
     let request = CreateChatCompletionRequestArgs::default()
         .model(model)
         .messages([ChatCompletionRequestUserMessageArgs::default()
@@ -147,21 +118,6 @@ async fn perform(
 
     let response = config.openai_client().chat().create(request).await?;
 
-    let details = if let Some(usage) = response.usage {
-        formatdoc!(
-            "
-                Model: <code>{model}</code>
-                Tokens: prompt — <code>{}</code>, completion — <code>{}</code>
-            ",
-            usage.prompt_tokens,
-            usage.completion_tokens,
-        )
-        .trim()
-        .to_string()
-    } else {
-        format!("Reasoning model: <code>{model}</code>")
-    };
-
     let choices = response.choices.first();
 
     let Some(choice) = choices else { return Ok(()) };
@@ -175,17 +131,12 @@ async fn perform(
         .edit_message_text(
             chat_id,
             message_id,
-            formatdoc!(
-                "
-                    {track_name}
-                    Album: {album_name}
-
-                    {details}
-
-                    {analysis_result}
-                ",
+            t!(
+                "analysis.result",
+                locale = state.locale(),
                 track_name = track.track_tg_link(),
                 album_name = track.album_tg_link(),
+                analysis_result = analysis_result,
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
