@@ -77,7 +77,7 @@ async fn common(
 ) -> anyhow::Result<HandleStatus> {
     let m = app
         .bot()
-        .send_message(*chat_id, t!("details.collecting-info"))
+        .send_message(*chat_id, t!("details.collecting-info", locale = state.locale()))
         .await?;
 
     let spotify = state.spotify().await;
@@ -91,9 +91,9 @@ async fn common(
     let features = spotify.track_features(track.raw_id().clone()).await?;
 
     let modality = match features.mode {
-        Modality::Minor => t!("details.minor"),
-        Modality::Major => t!("details.major"),
-        Modality::NoResult => t!("details.no-result"),
+        Modality::Minor => t!("details.minor", locale = state.locale()),
+        Modality::Major => t!("details.major", locale = state.locale()),
+        Modality::NoResult => t!("details.no-result", locale = state.locale()),
     };
 
     let key = match features.key {
@@ -169,6 +169,7 @@ async fn common(
 
     let header = t!(
         "details.header",
+        locale = state.locale(),
         key = key,
         modality = modality,
         tempo = features.tempo,
@@ -192,6 +193,7 @@ async fn common(
                 m.id,
                 t!(
                     "details.no-lyrics",
+                    locale = state.locale(),
                     header = header.trim(),
                     genres_line = genres_line,
                 ),
@@ -219,6 +221,7 @@ async fn common(
 
         let message = t!(
             "details.with-lyrics",
+            locale = state.locale(),
             header = header.trim(),
             profanity = typ,
             language = hit.language(),
