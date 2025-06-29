@@ -19,6 +19,7 @@ pub mod entity;
 pub mod error_handler;
 pub mod logger;
 pub mod lyrics;
+pub mod magic_service;
 pub mod metrics;
 pub mod profanity;
 pub mod queue;

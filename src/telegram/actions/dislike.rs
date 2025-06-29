@@ -9,6 +9,7 @@ use super::super::inline_buttons::InlineButtons;
 use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
+use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
@@ -20,7 +21,9 @@ pub async fn handle(
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        return Ok(HandleStatus::Skipped);
+        actions::register::send_register_invite(app, m.chat.id).await?;
+
+        return Ok(HandleStatus::Handled);
     }
 
     let track = match CurrentlyPlaying::get(&*state.spotify().await).await {

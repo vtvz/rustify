@@ -97,12 +97,7 @@ pub async fn handle_set_analysis_language(
         return Ok(HandleStatus::Handled);
     }
 
-    let mut user = UserService::obtain_by_id(app.db(), state.user_id())
-        .await?
-        .into_active_model();
-
-    user.cfg_analysis_language = Set(Some(language.clone()));
-    user.save(app.db()).await?;
+    UserService::set_cfg_analysis_language(app.db(), state.user_id(), &language).await?;
 
     let message = format!("Now result of song analysis will be in <b>{language}</b> language");
 

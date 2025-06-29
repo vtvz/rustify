@@ -6,6 +6,7 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
 use crate::skippage_service::SkippageService;
+use crate::telegram::actions;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
@@ -19,7 +20,9 @@ pub async fn handle(
     days: String,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        return Ok(HandleStatus::Skipped);
+        actions::register::send_register_invite(app, chat_id).await?;
+
+        return Ok(HandleStatus::Handled);
     }
 
     let days = days.parse::<i64>();
@@ -38,12 +41,15 @@ pub async fn handle(
                 chat_id,
                 formatdoc!(
                     "
+                        ⏭️ <i>Skippage™</i> allows you to skip tracks you've listened to for a set amount of days. \
+                        It makes your music experience more diverse. <b>Try it!</b>
+
                         Pass number of days to remember played tracks like that:
                         <code>/{} 7</code>
                         Pass zero to disable this function:
                         <code>/{} 0</code>
-                        Number should be 365 or less.
-                        Current setting: {}
+
+                        Current setting: <b>{}</b>
                     ",
                     UserCommandDisplay::Skippage,
                     UserCommandDisplay::Skippage,
@@ -59,7 +65,7 @@ pub async fn handle(
 
     if !(0..=365).contains(&days) {
         app.bot()
-            .send_message(chat_id, "Number should be possitive and 365 or less")
+            .send_message(chat_id, "Number should be positive and 365 or less")
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -80,12 +86,14 @@ pub async fn handle(
         app.bot()
             .send_message(
                 chat_id,
-                format!("All tracks you've listened within {days} days will be skipped"),
+                format!("⏭️ All tracks you've listened within <b>{days} days</b> will be skipped"),
             )
+            .parse_mode(ParseMode::Html)
             .await?;
     } else {
         app.bot()
-            .send_message(chat_id, "Slippage is disabled")
+            .send_message(chat_id, "⏭️ <i>Skippage™</i> is disabled")
+            .parse_mode(ParseMode::Html)
             .await?;
     }
 
