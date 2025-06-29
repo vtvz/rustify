@@ -12,6 +12,10 @@ pub struct UserState {
 }
 
 impl UserState {
+    pub fn locale(&self) -> &'static str {
+        "ru"
+    }
+
     pub async fn spotify(&self) -> RwLockReadGuard<'_, AuthCodeSpotify> {
         self.spotify.read().await
     }

@@ -12,6 +12,8 @@ use std::env;
 extern crate derive_more;
 #[macro_use]
 extern crate serde;
+#[macro_use]
+extern crate rust_i18n;
 
 pub mod app;
 pub mod cache;
@@ -37,6 +39,8 @@ pub mod user_word_whitelist_service;
 pub mod utils;
 pub mod whitelist;
 pub mod workers;
+
+rust_i18n::i18n!("locales");
 
 #[tokio::main(worker_threads = 4)]
 async fn main() {

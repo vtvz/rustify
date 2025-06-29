@@ -1,0 +1,51 @@
+_version: 2
+
+skippage.main:
+  en: |-
+    ⏭️ <i>Skippage™</i> allows you to skip tracks you've listened to for a set amount of days. It makes your music experience more diverse. <b>Try it!</b>
+
+    Pass number of days to remember played tracks like that:
+    <code>/%{command} 7</code>
+    Pass zero to disable this function:
+    <code>/%{command} 0</code>
+
+    Current setting: <b>%{setting}</b>
+  ru: |-
+    ⏭️ <i>Skippage™</i> позволяет пропускать треки, которые вы слушали в течение заданного количества дней. Это делает ваш музыкальный опыт более разнообразным. <b>Попробуйте!</b>
+
+    Передайте количество дней для запоминания прослушанных треков вот так:
+    <code>/%{command} 7</code>
+    Передайте ноль, чтобы отключить эту функцию:
+    <code>/%{command} 0</code>
+
+    Текущая настройка: <b>%{setting}</b>
+
+skippage.main.disabled:
+  en: disabled
+  ru: отключено
+
+skippage.main.one:
+  en: 1 day
+  ru: 1 день
+
+skippage.main.more:
+  en: "%{days} days"
+  ru: "%{days} дней"
+
+skippage.updated:
+  en: >-
+    ⏭️ All tracks you've listened within <b>%{days} days</b> will be skipped
+  ru: >-
+    ⏭️ Все треки, которые вы слушали в течение <b>%{days} дней</b>, будут пропущены
+
+skippage.disabled:
+  en: >-
+    ⏭️ <i>Skippage™</i> is disabled
+  ru: >-
+    ⏭️ <i>Skippage™</i> отключен
+
+skippage.validation:
+  en: >-
+    Number should be positive and 365 or less
+  ru: >-
+    Число должно быть положительным и не больше 365
