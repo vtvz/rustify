@@ -77,7 +77,7 @@ async fn common(
 ) -> anyhow::Result<HandleStatus> {
     let m = app
         .bot()
-        .send_message(*chat_id, "⏳ Collecting information about track 🔍...")
+        .send_message(*chat_id, t!("details.collecting-info"))
         .await?;
 
     let spotify = state.spotify().await;
@@ -91,9 +91,9 @@ async fn common(
     let features = spotify.track_features(track.raw_id().clone()).await?;
 
     let modality = match features.mode {
-        Modality::Minor => "Minor",
-        Modality::Major => "Major",
-        Modality::NoResult => "Something",
+        Modality::Minor => t!("details.minor"),
+        Modality::Major => t!("details.major"),
+        Modality::NoResult => t!("details.no-result"),
     };
 
     let key = match features.key {
@@ -167,45 +167,31 @@ async fn common(
         format!("🎭 Genres: {}\n", genres.iter().join(", "))
     };
 
-    let header: String = formatdoc! {
-        "
-            {track_name}
-            Album: {album_name}
-
-            🎶 <code>{key} {modality}</code> ⌛ {:.0} BPM
-            🎻 Acoustic {:.0}%
-            🕺 Suitable for dancing {:.0}%
-            ⚡️ Energetic {:.0}%
-            🤐 Without vocal {:.0}%
-            🏟 Performed live {:.0}%
-            🎤 Speech-like {:.0}%
-            ☺️ Positiveness {:.0}%
-            👎 Disliked by {disliked_by} people
-            🙈 Ignored by {ignored_by} people
-        ",
-        features.tempo,
-        features.acousticness * 100.0,
-        features.danceability * 100.0,
-        features.energy * 100.0,
-        features.instrumentalness * 100.0,
-        features.liveness * 100.0,
-        features.speechiness * 100.0,
-        features.valence * 100.0,
+    let header = t!(
+        "details.header",
+        key = key,
+        modality = modality,
+        tempo = features.tempo,
+        acousticness = (features.acousticness * 100.0).round() as u64,
+        danceability = (features.danceability * 100.0).round() as u64,
+        energy = (features.energy * 100.0).round() as u64,
+        instrumentalness = (features.instrumentalness * 100.0).round() as u64,
+        liveness = (features.liveness * 100.0).round() as u64,
+        speechiness = (features.speechiness * 100.0).round() as u64,
+        valence = (features.valence * 100.0).round() as u64,
         track_name = track.track_tg_link(),
         album_name = track.album_tg_link(),
-    };
+        disliked_by = disliked_by,
+        ignored_by = ignored_by,
+    );
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
             .edit_message_text(
                 *chat_id,
                 m.id,
-                formatdoc!(
-                    "
-                    {header}
-                    {genres_line}
-                    <code>No lyrics found</code>
-                ",
+                t!(
+                    "details.no-lyrics",
                     header = header.trim(),
                     genres_line = genres_line,
                 ),
@@ -231,16 +217,8 @@ async fn common(
             return Err(anyhow!("Issues with lyrics"));
         }
 
-        let message = formatdoc!(
-            r#"
-                {header}
-                🤬 Profanity <code>{profanity}</code>
-                🌐 Language: {language}
-                {genres_line}
-                {lyrics}
-
-                <a href="{lyrics_link}">{lyrics_link_text}</a>
-            "#,
+        let message = t!(
+            "details.with-lyrics",
             header = header.trim(),
             profanity = typ,
             language = hit.language(),
