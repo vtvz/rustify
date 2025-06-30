@@ -85,15 +85,41 @@ dump.dislike:
 currently-playing-none-reason.pause:
   en: |-
     Current track is on pause
+  ru: |-
+    Текущий трек на паузе
 
 currently-playing-none-reason.nothing:
   en: |-
     Nothing is currently playing
+  ru: |-
+    Сейчас ничего не играет
 
 currently-playing-none-reason.podcast:
   en: |-
     It's a podcast
+  ru: |-
+    Это подкаст
 
 currently-playing-none-reason.local:
   en: |-
     It's a local file
+  ru: |-
+    Это локальный файл
+
+tick-user-check-user-result.skip-same:
+  en: |-
+    Skip same track
+  ru: |-
+    Пропущен тот же трек
+
+tick-user-check-user-result.complete:
+  en: |-
+    Complete check
+  ru: |-
+    Проверка завершена
+
+tick-user-check-user-result.none:
+  en: |-
+    Current track is on pause %{reason}
+  ru: |-
+    Текущий трек на паузе %{reason}
