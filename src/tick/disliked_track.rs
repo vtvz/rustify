@@ -91,7 +91,7 @@ pub async fn handle(
         Ok(_) => Ok(()),
         Err(err) => {
             let mut err = err.into();
-            error_handler::handle(&mut err, app, state.user_id()).await;
+            error_handler::handle(&mut err, app, state.user_id(), state.locale()).await;
             Err(err)
         },
     }

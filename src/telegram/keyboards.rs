@@ -1,7 +1,7 @@
-use strum_macros::{AsRefStr, EnumString};
+use strum_macros::EnumString;
 use teloxide::types::{KeyboardButton, KeyboardMarkup, ReplyMarkup};
 
-#[derive(Clone, EnumString, AsRefStr)]
+#[derive(Clone, EnumString)]
 pub enum StartKeyboard {
     #[strum(serialize = "👎 Dislike playing track")]
     Dislike,
@@ -11,18 +11,25 @@ pub enum StartKeyboard {
     Details,
 }
 
-impl From<StartKeyboard> for KeyboardButton {
-    fn from(keyboard: StartKeyboard) -> Self {
-        Self::new(keyboard.as_ref())
-    }
-}
-
 impl StartKeyboard {
-    pub fn markup() -> ReplyMarkup {
+    pub fn into_button(&self, locale: &str) -> KeyboardButton {
+        let text = match self {
+            StartKeyboard::Dislike => t!("start-keyboard.dislike", locale = locale),
+            StartKeyboard::Stats => t!("start-keyboard.stats", locale = locale),
+            StartKeyboard::Details => t!("start-keyboard.details", locale = locale),
+        };
+
+        KeyboardButton::new(text)
+    }
+
+    pub fn markup(locale: &str) -> ReplyMarkup {
         ReplyMarkup::Keyboard(
             KeyboardMarkup::new(vec![
-                vec![Self::Dislike.into()],
-                vec![Self::Stats.into(), Self::Details.into()],
+                vec![Self::Dislike.into_button(locale)],
+                vec![
+                    Self::Stats.into_button(locale),
+                    Self::Details.into_button(locale),
+                ],
             ])
             .resize_keyboard(),
         )

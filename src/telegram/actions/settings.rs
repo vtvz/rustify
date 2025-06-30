@@ -90,7 +90,7 @@ pub async fn handle_set_analysis_language(
     if let Some(message) = validate(&language) {
         app.bot()
             .send_message(chat_id, message)
-            .reply_markup(StartKeyboard::markup())
+            .reply_markup(StartKeyboard::markup(state.locale()))
             .parse_mode(ParseMode::Html)
             .await?;
 
@@ -103,7 +103,7 @@ pub async fn handle_set_analysis_language(
 
     app.bot()
         .send_message(chat_id, message)
-        .reply_markup(StartKeyboard::markup())
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .parse_mode(ParseMode::Html)
         .await?;
 

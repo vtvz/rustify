@@ -43,7 +43,7 @@ pub async fn handle(
                 .global_description(&t!("dump.unhandled-request", locale = state.locale()))
                 .to_string(),
         )
-        .reply_markup(StartKeyboard::markup())
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .await?;
 
     Ok(HandleStatus::Skipped)

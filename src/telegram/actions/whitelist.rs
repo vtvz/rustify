@@ -4,7 +4,6 @@ use teloxide::types::{ChatId, ParseMode};
 use crate::app::App;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
-use crate::telegram::keyboards::StartKeyboard;
 
 pub async fn handle(
     app: &'static App,
@@ -40,7 +39,6 @@ pub async fn handle(
                     ChatId(user_id_int),
                     "Welcome! Admin allowed you to join Rustify family! Enjoy 💃",
                 )
-                .reply_markup(StartKeyboard::markup())
                 .await?;
 
             actions::register::send_register_invite(app, ChatId(user_id_int)).await?;

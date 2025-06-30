@@ -36,7 +36,7 @@ pub async fn handle(
                         ))
                         .to_string(),
                 )
-                .reply_markup(StartKeyboard::markup())
+                .reply_markup(StartKeyboard::markup(state.locale()))
                 .parse_mode(ParseMode::Html)
                 .await?;
 
@@ -57,7 +57,7 @@ pub async fn handle(
                         m.chat.id,
                         t!("dump.here-is-your-keyboard", locale = state.locale()),
                     )
-                    .reply_markup(StartKeyboard::markup())
+                    .reply_markup(StartKeyboard::markup(state.locale()))
                     .await?;
             } else {
                 actions::register::send_register_invite(app, m.chat.id).await?;
@@ -87,7 +87,7 @@ pub async fn handle(
                         .global_description(&t!("dump.available-commands", locale = state.locale()))
                         .to_string(),
                 )
-                .reply_markup(StartKeyboard::markup())
+                .reply_markup(StartKeyboard::markup(state.locale()))
                 .await?;
         },
         UserCommand::ToggleTrackSkip => {

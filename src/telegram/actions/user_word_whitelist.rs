@@ -25,7 +25,7 @@ pub async fn handle_add_word(
 
         app.bot()
             .send_message(chat_id, message)
-            .reply_markup(StartKeyboard::markup())
+            .reply_markup(StartKeyboard::markup(state.locale()))
             .parse_mode(ParseMode::Html)
             .await?;
 
@@ -57,7 +57,7 @@ pub async fn handle_add_word(
 
     app.bot()
         .send_message(chat_id, message)
-        .reply_markup(StartKeyboard::markup())
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .parse_mode(ParseMode::Html)
         .await?;
 
@@ -79,7 +79,7 @@ pub async fn handle_remove_word(
 
         app.bot()
             .send_message(chat_id, message)
-            .reply_markup(StartKeyboard::markup())
+            .reply_markup(StartKeyboard::markup(state.locale()))
             .parse_mode(ParseMode::Html)
             .await?;
 
@@ -106,7 +106,7 @@ pub async fn handle_remove_word(
 
     app.bot()
         .send_message(chat_id, message)
-        .reply_markup(StartKeyboard::markup())
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .parse_mode(ParseMode::Html)
         .await?;
 
@@ -144,7 +144,7 @@ pub async fn handle_list_words(
 
     app.bot()
         .send_message(chat_id, message.trim())
-        .reply_markup(StartKeyboard::markup())
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .parse_mode(ParseMode::Html)
         .await?;
 

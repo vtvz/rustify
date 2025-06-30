@@ -26,7 +26,7 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
 
     let state = match res {
         Err(mut err) => {
-            error_handler::handle(&mut err, app, user_id).await;
+            error_handler::handle(&mut err, app, user_id, "en").await;
 
             return Err(err);
         },

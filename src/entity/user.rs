@@ -19,6 +19,7 @@ impl EntityName for Entity {
 pub struct Model {
     pub id: String,
     pub name: String,
+    pub locale: String,
     pub removed_playlists: i64,
     pub removed_collection: i64,
     pub lyrics_checked: i64,
@@ -56,6 +57,7 @@ impl ActiveModelBehavior for ActiveModel {
 pub enum Column {
     Id,
     Name,
+    Locale,
     RemovedPlaylists,
     RemovedCollection,
     LyricsChecked,
@@ -98,6 +100,7 @@ impl ColumnTrait for Column {
         match self {
             Self::Id => ColumnType::Text.def(),
             Self::Name => ColumnType::Text.def(),
+            Self::Locale => ColumnType::Text.def(),
             Self::RemovedPlaylists => ColumnType::BigInteger.def(),
             Self::RemovedCollection => ColumnType::BigInteger.def(),
             Self::LyricsChecked => ColumnType::BigInteger.def(),

@@ -45,7 +45,7 @@ pub async fn handle(
                     setting = days_fmt,
                 ),
             )
-            .reply_markup(StartKeyboard::markup())
+            .reply_markup(StartKeyboard::markup(state.locale()))
             .parse_mode(ParseMode::Html)
             .await?;
 

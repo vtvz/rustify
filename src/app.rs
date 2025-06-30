@@ -6,13 +6,14 @@ use anyhow::Context;
 use async_openai::config::OpenAIConfig;
 use indoc::formatdoc;
 use rustrict::Replacements;
-use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
+use sea_orm::{DatabaseConnection, DbConn, EntityTrait, QuerySelect, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
 use teloxide::dispatching::dialogue::RedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
 use tokio::sync::RwLock;
 
+use crate::entity::prelude::{UserColumn, UserEntity};
 use crate::metrics::influx::InfluxClient;
 use crate::user::UserState;
 use crate::{cache, lyrics, profanity, spotify, whitelist};
@@ -280,10 +281,18 @@ impl App {
         let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
         let spotify = RwLock::new(spotify);
 
+        let res: Option<String> = UserEntity::find()
+            .select_only()
+            .column(UserColumn::Locale)
+            .into_tuple()
+            .one(self.db())
+            .await?;
+
         let state = UserState {
             spotify,
             spotify_user: Default::default(),
             user_id: user_id.to_string(),
+            locale: res.unwrap_or("en".into()),
         };
 
         Ok(state)

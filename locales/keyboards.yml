@@ -1,0 +1,13 @@
+_version: 2
+
+start-keyboard.dislike:
+  en: |-
+    👎 Dislike playing track
+
+start-keyboard.stats:
+  en: |-
+    📈 Stats
+
+start-keyboard.details:
+  en: |-
+    🎤 Details of track

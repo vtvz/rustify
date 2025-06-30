@@ -3,3 +3,18 @@ _version: 2
 error.cannot-skip:
   en: |-
     Current song (%{track_name}) was disliked, but I cannot skip it...
+
+error.unavailable-in-country:
+  en: |-
+    Your Spotify accont says 'Spotify is unavailable in this country'.
+    Please fix this issue and relogin by calling /%{command} command to continue using Rustify
+
+error.spotify-auth-failed:
+  en: |-
+    Failed to Authenticate user to Spotify. Please relogin by calling /%{command} command.
+
+    <pre>{error}</pre>,
+
+error.spotify-invalid-token:
+  en: |-
+    Relogin to Spotify by calling /%{command} command,

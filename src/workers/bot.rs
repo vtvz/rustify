@@ -165,7 +165,7 @@ pub async fn work() {
                 let result = rustify::telegram::handlers::message::handle(app, &state, m.clone()).await;
 
                 if let Err(mut err) = result {
-                    let res = error_handler::handle(&mut err, app, state.user_id()).await;
+                    let res = error_handler::handle(&mut err, app, state.user_id(), state.locale()).await;
                     if !res.user_notified {
                         app.bot().send_message(
                             m.chat.id,

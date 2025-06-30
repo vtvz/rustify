@@ -58,9 +58,18 @@ pub async fn consume(
 
     let data: ProfanityCheckQueueTask = serde_json::from_str(&message)?;
 
-    let err_wrap = || async {
-        let user_state = app.user_state(&data.user_id).await?;
+    let user_state = app.user_state(&data.user_id).await;
 
+    let user_state = match user_state {
+        Ok(user_state) => user_state,
+        Err(mut err) => {
+            error_handler::handle(&mut err, app, &data.user_id, "en").await;
+
+            return Ok(());
+        },
+    };
+
+    let err_wrap = || async {
         let res = check(app, &user_state, &data.track)
             .await
             .context("Check lyrics failed")?;
@@ -78,7 +87,7 @@ pub async fn consume(
     match res {
         Ok(_) => {},
         Err(mut err) => {
-            error_handler::handle(&mut err, app, &data.user_id).await;
+            error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
         },
     }
 
@@ -191,7 +200,7 @@ pub async fn check(
         Ok(_) => Ok(ret),
         Err(err) => {
             let mut err = err.into();
-            error_handler::handle(&mut err, app, state.user_id()).await;
+            error_handler::handle(&mut err, app, state.user_id(), state.locale()).await;
             Err(err)
         },
     }

@@ -41,7 +41,7 @@ pub async fn handle(
 
     app.bot()
         .send_message(m.chat.id, format!("Liked {}", track.track_tg_link()))
-        .reply_markup(StartKeyboard::markup())
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .await?;

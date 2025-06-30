@@ -80,7 +80,7 @@ async fn process_spotify_code(
 
     app.bot()
         .send_message(m.chat.id, "Yeah! You registered successfully!")
-        .reply_markup(StartKeyboard::markup())
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .await?;
 
     Ok(HandleStatus::Handled)

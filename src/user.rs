@@ -9,11 +9,12 @@ pub struct UserState {
     pub user_id: String,
 
     pub spotify_user: Mutex<Option<Option<PrivateUser>>>,
+    pub locale: String,
 }
 
 impl UserState {
-    pub fn locale(&self) -> &'static str {
-        "ru"
+    pub fn locale(&self) -> &str {
+        &self.locale
     }
 
     pub async fn spotify(&self) -> RwLockReadGuard<'_, AuthCodeSpotify> {
