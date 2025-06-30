@@ -29,7 +29,8 @@ pub async fn handle_inline(
     TrackStatusService::set_status(app.db(), state.user_id(), track_id, TrackStatus::Ignore)
         .await?;
 
-    let keyboard = InlineButtons::from_track_status(TrackStatus::Ignore, track.id());
+    let keyboard =
+        InlineButtons::from_track_status(TrackStatus::Ignore, track.id(), state.locale());
 
     app.bot()
         .edit_message_text(

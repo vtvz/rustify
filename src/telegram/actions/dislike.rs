@@ -40,7 +40,8 @@ pub async fn handle(
     TrackStatusService::set_status(app.db(), state.user_id(), track.id(), TrackStatus::Disliked)
         .await?;
 
-    let keyboard = InlineButtons::from_track_status(TrackStatus::Disliked, track.id());
+    let keyboard =
+        InlineButtons::from_track_status(TrackStatus::Disliked, track.id(), state.locale());
 
     app.bot()
         .send_message(m.chat.id, compose_message(&track, state.locale()))
@@ -71,7 +72,8 @@ pub async fn handle_inline(
     TrackStatusService::set_status(app.db(), state.user_id(), track_id, TrackStatus::Disliked)
         .await?;
 
-    let keyboard = InlineButtons::from_track_status(TrackStatus::Disliked, track.id());
+    let keyboard =
+        InlineButtons::from_track_status(TrackStatus::Disliked, track.id(), state.locale());
 
     app.bot()
         .edit_message_text(

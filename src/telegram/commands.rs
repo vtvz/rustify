@@ -57,6 +57,9 @@ pub enum UserCommand {
         description = "Allows you to skip tracks you've already listened. Pass days to remember"
     )]
     Skippage { days: String },
+
+    #[command(description = "Change Language")]
+    Language,
 }
 
 pub enum UserCommandDisplay {
@@ -77,6 +80,7 @@ pub enum UserCommandDisplay {
     ListWhitelistWords,
     Magic,
     Skippage,
+    Language,
 }
 
 impl std::fmt::Display for UserCommandDisplay {
@@ -99,6 +103,7 @@ impl std::fmt::Display for UserCommandDisplay {
             Self::ListWhitelistWords => "list_words_in_whitelist",
             Self::Magic => "magic",
             Self::Skippage => "skippage",
+            Self::Language => "language",
         };
 
         f.write_str(string)
@@ -167,6 +172,7 @@ mod tests {
             UserCommand::ListWhitelistWords => UserCommandDisplay::ListWhitelistWords,
             UserCommand::Magic => UserCommandDisplay::Magic,
             UserCommand::Skippage { .. } => UserCommandDisplay::Skippage,
+            UserCommand::Language { .. } => UserCommandDisplay::Language,
         };
     }
 

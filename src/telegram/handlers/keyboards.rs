@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use anyhow::Context;
 use teloxide::prelude::*;
 
@@ -22,13 +20,11 @@ pub async fn handle(
 
     let text = m.text().context("No text available")?;
 
-    let button = StartKeyboard::from_str(text);
+    let button = StartKeyboard::from_str(text, state.locale());
 
-    if button.is_err() {
+    let Some(button) = button else {
         return Ok(HandleStatus::Skipped);
-    }
-
-    let button = button?;
+    };
 
     match button {
         StartKeyboard::Dislike => actions::dislike::handle(app, state, m).await,

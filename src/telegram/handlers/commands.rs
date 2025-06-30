@@ -8,7 +8,7 @@ use crate::app::App;
 use crate::entity::prelude::*;
 use crate::telegram::actions;
 use crate::telegram::commands::UserCommand;
-use crate::telegram::keyboards::StartKeyboard;
+use crate::telegram::keyboards::{LanguageKeyboard, StartKeyboard};
 use crate::user::UserState;
 use crate::user_service::UserService;
 
@@ -118,6 +118,15 @@ pub async fn handle(
         },
         UserCommand::Skippage { days } => {
             return actions::skippage::handle(app, state, m.chat.id, days).await;
+        },
+        UserCommand::Language => {
+            app.bot()
+                .send_message(
+                    m.chat.id,
+                    t!("dump.here-is-your-keyboard", locale = state.locale()),
+                )
+                .reply_markup(LanguageKeyboard::markup())
+                .await?;
         },
     }
     Ok(HandleStatus::Handled)

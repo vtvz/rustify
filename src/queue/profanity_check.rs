@@ -187,11 +187,19 @@ pub async fn check(
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Dislike(track.id().into()).into()],
-                vec![InlineButtons::Ignore(track.id().into()).into()],
-                vec![InlineButtons::Analyze(track.id().into()).into()],
+                vec![
+                    InlineButtons::Dislike(track.id().into())
+                        .into_inline_keyboard_button(state.locale()),
+                ],
+                vec![
+                    InlineButtons::Ignore(track.id().into())
+                        .into_inline_keyboard_button(state.locale()),
+                ],
+                vec![
+                    InlineButtons::Analyze(track.id().into())
+                        .into_inline_keyboard_button(state.locale()),
+                ],
             ],
         )))
         .await;

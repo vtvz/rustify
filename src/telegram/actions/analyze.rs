@@ -136,7 +136,7 @@ async fn perform(
     let analysis_result = choice.message.content.clone().unwrap_or_default();
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
-    let keyboard = InlineButtons::from_track_status(status, track.id());
+    let keyboard = InlineButtons::from_track_status(status, track.id(), state.locale());
 
     app.bot()
         .edit_message_text(

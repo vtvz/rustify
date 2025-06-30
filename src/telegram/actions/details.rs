@@ -86,7 +86,7 @@ async fn common(
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
-    let mut keyboard = InlineButtons::from_track_status(status, track.id());
+    let mut keyboard = InlineButtons::from_track_status(status, track.id(), state.locale());
 
     // NOTE: It works because I have old token I need to cherish
     #[allow(deprecated)]
@@ -241,7 +241,10 @@ async fn common(
     };
 
     if app.analyze().is_some() {
-        keyboard.push(vec![InlineButtons::Analyze(track.id().to_owned()).into()]);
+        keyboard.push(vec![
+            InlineButtons::Analyze(track.id().to_owned())
+                .into_inline_keyboard_button(state.locale()),
+        ]);
     }
 
     app.bot()
