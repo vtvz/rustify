@@ -34,7 +34,7 @@ skippage.main.more:
 
 skippage.updated:
   en: >-
-    ⏭️ All tracks you've listened within <b>%{days} days</b> will be skipped
+    ⏭️ All tracks you've listened to within <b>%{days} days</b> will be skipped
   ru: >-
     ⏭️ Все треки, которые вы слушали в течение <b>%{days} дней</b>, будут пропущены
 

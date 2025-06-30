@@ -2,7 +2,7 @@ _version: 2
 
 details.collecting-info:
   en: >-
-    ⏳ Collecting information about track 🔍...
+    ⏳ Collecting information about the track 🔍...
   ru: >-
     ⏳ Собираем информацию о треке 🔍...
 
@@ -31,12 +31,12 @@ details.header:
 
     🎶 <code>%{key} %{modality}</code> ⌛ %{tempo} BPM
     🎻 Acoustic %{acousticness}%
-    🕺 Suitable for dancing %{danceability}%
-    ⚡️ Energetic %{energy}%
-    🤐 Without vocal %{instrumentalness}%
+    🕺 Danceability %{danceability}%
+    ⚡️ Energy %{energy}%
+    🤐 Instrumentalness %{instrumentalness}%
     🏟 Performed live %{liveness}%
     🎤 Speech-like %{speechiness}%
-    ☺️ Positiveness %{valence}%
+    ☺️ Positivity %{valence}%
     👎 Disliked by %{disliked_by} people
     🙈 Ignored by %{ignored_by} people
   ru: |-

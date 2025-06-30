@@ -31,9 +31,9 @@ dump.stats:
     💔 Removed <code>%{removed_collection}</code> from liked songs
     🗑 Removed <code>%{removed_playlists}</code> from playlists
     🔬 Checked lyrics <code>%{lyrics_checked}</code> times
-    🔍 Analyzed lyrics <code>%{lyrics_analyzed}</code> time
-    🙈 You ignored <code>%{ignored}</code> tracks lyrics
-    🤬 <code>%{lyrics_profane}</code> lyrics were considered as profane
+    🔍 Analyzed lyrics <code>%{lyrics_analyzed}</code> times
+    🙈 You ignored <code>%{ignored}</code> track lyrics
+    🤬 <code>%{lyrics_profane}</code> lyrics were considered profane
   ru: |-
     📉 <b>Немного статистики для вас</b> 📈
 
@@ -74,7 +74,7 @@ dump.dislike:
 
     If you change your mind press 'Ignore text 🙈'
 
-    Do not forget you can send link to song to find current status
+    Do not forget you can send a link to a song to find current status
   ru: |-
     Дизлайкнул %{track_link}
 

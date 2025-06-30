@@ -10,7 +10,7 @@ user-word-whitelist.word-added:
   en: |-
     Word <code>'%{word}'</code> added to whitelist
 
-    To list all word in whitelist /%{command}
+    To list all words in whitelist /%{command}
   ru: |-
     Слово <code>'%{word}'</code> добавлено в белый список
 
@@ -18,9 +18,9 @@ user-word-whitelist.word-added:
 
 user-word-whitelist.word-exist:
   en: |-
-    Word <code>'%{word}'</code> already in whitelist
+    Word <code>'%{word}'</code> is already in whitelist
 
-    To list all word in whitelist /%{command}
+    To list all words in whitelist /%{command}
   ru: |-
     Слово <code>'%{word}'</code> уже в белом списке
 
@@ -40,9 +40,9 @@ user-word-whitelist.removed:
 
 user-word-whitelist.doesnt-exist:
   en: |-
-    Word <code>'%{word}'</code> not in whitelist
+    Word <code>'%{word}'</code> is not in whitelist
 
-    To list all word in whitelist /%{command}
+    To list all words in whitelist /%{command}
   ru: |-
     Слово <code>'%{word}'</code> не в белом списке
 
@@ -64,7 +64,7 @@ user-word-whitelist.list:
 
     %{words}
 
-    You can remove word with <code>/%{command} your-word</code> command
+    You can remove a word with <code>/%{command} your-word</code> command
   ru: |-
     Слова, которые вы добавили в белый список:
 
