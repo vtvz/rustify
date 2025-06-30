@@ -30,7 +30,7 @@ pub async fn handle_current(
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             app.bot()
-                .send_message(*chat_id, message.to_string())
+                .send_message(*chat_id, message.localize(state.locale()))
                 .await?;
 
             return Ok(HandleStatus::Handled);

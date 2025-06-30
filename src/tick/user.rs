@@ -1,5 +1,6 @@
+use std::borrow::Cow;
+
 use anyhow::Context;
-use strum_macros::Display;
 
 use super::skippage;
 use crate::app::App;
@@ -10,14 +11,26 @@ use crate::user_service::UserService;
 use crate::{error_handler, queue, rickroll, spotify};
 
 #[allow(dead_code)]
-#[derive(Clone, Display)]
+#[derive(Clone)]
 pub enum CheckUserResult {
-    #[strum(serialize = "Skip same track")]
     SkipSame,
-    #[strum(serialize = "Complete check")]
     Complete,
-    #[strum(serialize = "Current track is on pause {0}")]
     None(spotify::CurrentlyPlayingNoneReason),
+}
+
+impl CheckUserResult {
+    #[allow(dead_code)]
+    pub fn localize(&self, locale: &str) -> Cow<'_, str> {
+        match self {
+            Self::SkipSame => t!("tick-user-check-user-result.skip-same", locale = locale),
+            Self::Complete => t!("tick-user-check-user-result.complete", locale = locale),
+            Self::None(reason) => t!(
+                "tick-user-check-user-result.none",
+                locale = locale,
+                reason = reason.localize(locale)
+            ),
+        }
+    }
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %user_id))]

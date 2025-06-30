@@ -1,5 +1,7 @@
 pub mod errors;
 
+use std::borrow::Cow;
+
 use anyhow::{Context, anyhow};
 pub use errors::SpotifyError;
 use rspotify::clients::{BaseClient, OAuthClient};
@@ -17,7 +19,6 @@ use rspotify::model::{
 };
 use rspotify::{AuthCodeSpotify, ClientError, ClientResult, Token, scopes};
 use sea_orm::{DbConn, TransactionTrait};
-use strum_macros::Display;
 use teloxide::utils::html;
 
 use crate::entity::prelude::*;
@@ -188,16 +189,31 @@ impl From<FullTrack> for ShortTrack {
     }
 }
 
-#[derive(Clone, Display)]
+#[derive(Clone)]
 pub enum CurrentlyPlayingNoneReason {
-    #[strum(serialize = "Current track is on pause")]
     Pause,
-    #[strum(serialize = "Nothing is currently playing")]
     Nothing,
-    #[strum(serialize = "It's a podcast")]
     Podcast,
-    #[strum(serialize = "It's a local file")]
     Local,
+}
+
+impl CurrentlyPlayingNoneReason {
+    pub fn localize(&self, locale: &str) -> Cow<'_, str> {
+        match self {
+            Self::Pause => {
+                t!("currently-playing-none-reason.pause", locale = locale)
+            },
+            Self::Nothing => {
+                t!("currently-playing-none-reason.nothing", locale = locale)
+            },
+            Self::Podcast => {
+                t!("currently-playing-none-reason.podcast", locale = locale)
+            },
+            Self::Local => {
+                t!("currently-playing-none-reason.local", locale = locale)
+            },
+        }
+    }
 }
 
 pub enum CurrentlyPlaying {

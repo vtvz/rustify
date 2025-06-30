@@ -25,7 +25,7 @@ pub async fn handle(
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             app.bot()
-                .send_message(m.chat.id, message.to_string())
+                .send_message(m.chat.id, message.localize(state.locale()))
                 .await?;
 
             return Ok(HandleStatus::Handled);
