@@ -16,6 +16,7 @@ pub use super::user::{
     ActiveModel as UserActiveModel,
     Column as UserColumn,
     Entity as UserEntity,
+    Locale as UserLocale,
     Model as UserModel,
     Status as UserStatus,
 };

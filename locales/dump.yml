@@ -81,3 +81,19 @@ dump.dislike:
     Если передумаете, нажмите 'Игнорировать текст 🙈'
 
     Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
+
+currently-playing-none-reason.pause:
+  en: |-
+    Current track is on pause
+
+currently-playing-none-reason.nothing:
+  en: |-
+    Nothing is currently playing
+
+currently-playing-none-reason.podcast:
+  en: |-
+    It's a podcast
+
+currently-playing-none-reason.local:
+  en: |-
+    It's a local file

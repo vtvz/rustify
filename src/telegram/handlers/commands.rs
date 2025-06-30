@@ -121,10 +121,7 @@ pub async fn handle(
         },
         UserCommand::Language => {
             app.bot()
-                .send_message(
-                    m.chat.id,
-                    t!("dump.here-is-your-keyboard", locale = state.locale()),
-                )
+                .send_message(m.chat.id, t!("language.command", locale = state.locale()))
                 .reply_markup(LanguageKeyboard::markup())
                 .await?;
         },

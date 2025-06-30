@@ -1,5 +1,7 @@
 use teloxide::types::{KeyboardButton, KeyboardMarkup, ReplyMarkup};
 
+use crate::entity::prelude::UserLocale;
+
 #[derive(Clone)]
 pub enum StartKeyboard {
     Dislike,
@@ -60,6 +62,13 @@ impl LanguageKeyboard {
         KeyboardButton::new(text)
     }
 
+    pub fn into_locale(&self) -> UserLocale {
+        match self {
+            Self::English => UserLocale::English,
+            Self::Russian => UserLocale::Russian,
+        }
+    }
+
     pub fn markup() -> ReplyMarkup {
         ReplyMarkup::Keyboard(
             KeyboardMarkup::new(vec![vec![
@@ -70,13 +79,13 @@ impl LanguageKeyboard {
         )
     }
 
-    pub fn from_str(text: &str) -> Self {
+    pub fn parse(text: &str) -> Option<Self> {
         if text == t!("language.change", locale = "en") {
-            Self::English
+            Some(Self::English)
         } else if text == t!("language.change", locale = "ru") {
-            Self::Russian
+            Some(Self::Russian)
         } else {
-            Self::English
+            None
         }
     }
 }

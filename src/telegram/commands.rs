@@ -172,7 +172,7 @@ mod tests {
             UserCommand::ListWhitelistWords => UserCommandDisplay::ListWhitelistWords,
             UserCommand::Magic => UserCommandDisplay::Magic,
             UserCommand::Skippage { .. } => UserCommandDisplay::Skippage,
-            UserCommand::Language { .. } => UserCommandDisplay::Language,
+            UserCommand::Language => UserCommandDisplay::Language,
         };
     }
 

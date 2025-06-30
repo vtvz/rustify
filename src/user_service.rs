@@ -212,6 +212,20 @@ impl UserService {
         Ok(res)
     }
 
+    pub async fn set_locale(
+        db: &impl ConnectionTrait,
+        id: &str,
+        locale: UserLocale,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::Locale, Expr::value(locale))
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn set_magic_playlist(
         db: &impl ConnectionTrait,
         id: &str,

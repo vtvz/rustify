@@ -4,7 +4,7 @@ use teloxide::prelude::*;
 use super::HandleStatus;
 use crate::app::App;
 use crate::telegram::actions;
-use crate::telegram::keyboards::StartKeyboard;
+use crate::telegram::keyboards::{LanguageKeyboard, StartKeyboard};
 use crate::user::UserState;
 
 pub async fn handle(
@@ -22,13 +22,24 @@ pub async fn handle(
 
     let button = StartKeyboard::from_str(text, state.locale());
 
-    let Some(button) = button else {
-        return Ok(HandleStatus::Skipped);
+    if let Some(button) = button {
+        match button {
+            StartKeyboard::Dislike => actions::dislike::handle(app, state, m).await?,
+            StartKeyboard::Stats => actions::stats::handle(app, state, m).await?,
+            StartKeyboard::Details => {
+                actions::details::handle_current(app, state, &m.chat.id).await?
+            },
+        };
+        return Ok(HandleStatus::Handled);
     };
 
-    match button {
-        StartKeyboard::Dislike => actions::dislike::handle(app, state, m).await,
-        StartKeyboard::Stats => actions::stats::handle(app, state, m).await,
-        StartKeyboard::Details => actions::details::handle_current(app, state, &m.chat.id).await,
-    }
+    let button = LanguageKeyboard::parse(text);
+
+    if let Some(button) = button {
+        actions::language::handle(app, state, m, button.into_locale()).await?;
+
+        return Ok(HandleStatus::Handled);
+    };
+
+    Ok(HandleStatus::Skipped)
 }

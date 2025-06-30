@@ -24,6 +24,12 @@ language.change:
   ru: |-
     Русский 🇷🇺
 
+language.changed:
+  en: |-
+    Your languag is now English 🇺🇸
+  ru: |-
+    Теперь Ваш язык Русский 🇷🇺
+
 language.command:
   en: |-
     Choose your language

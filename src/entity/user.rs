@@ -19,7 +19,7 @@ impl EntityName for Entity {
 pub struct Model {
     pub id: String,
     pub name: String,
-    pub locale: String,
+    pub locale: Locale,
     pub removed_playlists: i64,
     pub removed_collection: i64,
     pub lyrics_checked: i64,
@@ -100,7 +100,7 @@ impl ColumnTrait for Column {
         match self {
             Self::Id => ColumnType::Text.def(),
             Self::Name => ColumnType::Text.def(),
-            Self::Locale => ColumnType::Text.def(),
+            Self::Locale => Locale::db_type(),
             Self::RemovedPlaylists => ColumnType::BigInteger.def(),
             Self::RemovedCollection => ColumnType::BigInteger.def(),
             Self::LyricsChecked => ColumnType::BigInteger.def(),
@@ -169,5 +169,45 @@ impl TryFrom<&str> for Status {
 impl Default for Status {
     fn default() -> Self {
         Self::None
+    }
+}
+
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
+#[sea_orm(rs_type = "String", db_type = "Text")]
+pub enum Locale {
+    #[sea_orm(string_value = "ru")]
+    Russian,
+    #[sea_orm(string_value = "en")]
+    English,
+}
+
+impl AsRef<str> for Locale {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::Russian => "ru",
+            Self::English => "en",
+        }
+    }
+}
+
+impl FromStr for Locale {
+    type Err = sea_orm::DbErr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from(s)
+    }
+}
+
+impl TryFrom<&str> for Locale {
+    type Error = sea_orm::DbErr;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::try_from_value(&value.to_owned())
+    }
+}
+
+impl Default for Locale {
+    fn default() -> Self {
+        Self::English
     }
 }
