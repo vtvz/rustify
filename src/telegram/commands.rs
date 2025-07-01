@@ -27,28 +27,28 @@ pub enum UserCommand {
     #[command(description = "command.register")]
     Register,
 
-    #[command(description = "command.toggle_track_skip")]
+    #[command(description = "command.toggle-track-skip")]
     ToggleTrackSkip,
-    #[command(description = "command.toggle_profanity_check")]
+    #[command(description = "command.toggle-profanity-check")]
     ToggleProfanityCheck,
 
     #[command(description = "command.magic")]
     Magic,
 
     #[command(
-        description = "command.add_whitelist_word",
+        description = "command.add-whitelist-word",
         rename = "add_word_to_whitelist"
     )]
     AddWhitelistWord { word: String },
 
     #[command(
-        description = "command.remove_whitelist_word",
+        description = "command.remove-whitelist-word",
         rename = "remove_word_from_whitelist"
     )]
     RemoveWhitelistWord { word: String },
 
     #[command(
-        description = "command.list_whitelist_words",
+        description = "command.list-whitelist-words",
         rename = "list_words_in_whitelist"
     )]
     ListWhitelistWords,

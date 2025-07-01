@@ -2,15 +2,15 @@ _version: 2
 
 command.help:
   en: |-
-    Show this help !!!
+    Show this help
   ru: |-
-    Показать эту справку !!!
+    Показать эту справку
 
 command.start:
   en: |-
-    Start !!!
+    Start
   ru: |-
-    Старт !!!
+    Старт
 
 command.keyboard:
   en: |-
@@ -44,9 +44,9 @@ command.details:
 
 command.stats:
   en: |-
-    Show statistics about disliked tracks
+    Show statistics about tracks
   ru: |-
-    Показать статистику нелюбимых треков
+    Показать статистику треков
 
 command.register:
   en: |-
@@ -54,13 +54,13 @@ command.register:
   ru: |-
     Войти в Spotify
 
-command.toggle_track_skip:
+command.toggle-track-skip:
   en: |-
     Toggle setting of skipping disliked tracks
   ru: |-
     Переключить настройку пропуска нелюбимых треков
 
-command.toggle_profanity_check:
+command.toggle-profanity-check:
   en: |-
     Toggle setting of profanity check
   ru: |-
@@ -72,19 +72,19 @@ command.magic:
   ru: |-
     Создать или обновить магический плейлист
 
-command.add_whitelist_word:
+command.add-whitelist-word:
   en: |-
     Add word to whitelist
   ru: |-
     Добавить слово в белый список
 
-command.remove_whitelist_word:
+command.remove-whitelist-word:
   en: |-
     Remove word from whitelist
   ru: |-
     Удалить слово из белого списка
 
-command.list_whitelist_words:
+command.list-whitelist-words:
   en: |-
     List words in whitelist
   ru: |-
