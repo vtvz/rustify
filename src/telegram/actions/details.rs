@@ -166,7 +166,11 @@ async fn common(
     let genres_line = if genres.is_empty() {
         "".into()
     } else {
-        format!("🎭 Genres: {}\n", genres.iter().join(", "))
+        t!(
+            "details.genres",
+            genres = genres.iter().join(", "),
+            locale = state.locale()
+        )
     };
 
     let header = t!(

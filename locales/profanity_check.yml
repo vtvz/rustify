@@ -2,7 +2,7 @@ _version: 2
 
 profanity-check.message:
   en: |-
-    Current song (%{track_name}) <b>probably</b> has bad words:
+    🚨 Current song (%{track_name}) <b>probably</b> has bad words:
 
     %{bad_lines}
 
@@ -10,7 +10,7 @@ profanity-check.message:
 
     Press 'Ignore text 🙈' to never see this notification for <b>this song</b> again
   ru: |-
-    Текущая песня (%{track_name}) <b>вероятно</b> содержит нецензурные слова:
+    🚨 Текущая песня (%{track_name}) <b>вероятно</b> содержит нецензурные слова:
 
     %{bad_lines}
 

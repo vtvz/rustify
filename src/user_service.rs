@@ -198,20 +198,6 @@ impl UserService {
         Ok(res)
     }
 
-    pub async fn set_cfg_analysis_language(
-        db: &impl ConnectionTrait,
-        id: &str,
-        lang: &str,
-    ) -> anyhow::Result<UpdateResult> {
-        let res = UserEntity::update_many()
-            .filter(UserColumn::Id.eq(id))
-            .col_expr(UserColumn::CfgAnalysisLanguage, Expr::value(lang))
-            .exec(db)
-            .await?;
-
-        Ok(res)
-    }
-
     pub async fn set_locale(
         db: &impl ConnectionTrait,
         id: &str,

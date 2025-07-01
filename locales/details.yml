@@ -2,9 +2,9 @@ _version: 2
 
 details.collecting-info:
   en: >-
-    ⏳ Collecting information about the track 🔍...
+    ⏳ Collecting information about the track 🔍
   ru: >-
-    ⏳ Собираем информацию о треке 🔍...
+    ⏳ Собираем информацию о треке 🔍
 
 details.minor:
   en: >-
@@ -26,7 +26,7 @@ details.no-result:
 
 details.header:
   en: |-
-    %{track_name}
+    🎵 %{track_name}
     Album: %{album_name}
 
     🎶 <code>%{key} %{modality}</code> ⌛ %{tempo} BPM
@@ -40,7 +40,7 @@ details.header:
     👎 Disliked by %{disliked_by} people
     🙈 Ignored by %{ignored_by} people
   ru: |-
-    %{track_name}
+    🎵 %{track_name}
     Альбом: %{album_name}
 
     🎶 <code>%{key} %{modality}</code> ⌛ %{tempo} BPM
@@ -54,14 +54,22 @@ details.header:
     👎 Не нравится %{disliked_by} людям
     🙈 Игнорируется %{ignored_by} людьми
 
+details.genres:
+  en: |-
+    🎭 Genres: %{genres}
+  ru: |-
+    🎭 Жанры: %{genres}
+
 details.no-lyrics:
   en: |-
     %{header}
     %{genres_line}
+
     <code>No lyrics found</code>
   ru: |-
     %{header}
     %{genres_line}
+
     <code>Текст песни не найден</code>
 
 details.with-lyrics:
@@ -70,6 +78,7 @@ details.with-lyrics:
     🤬 Profanity <code>%{profanity}</code>
     🌐 Language: %{language}
     %{genres_line}
+
     %{lyrics}
 
     <a href="%{lyrics_link}">%{lyrics_link_text}</a>
@@ -78,6 +87,7 @@ details.with-lyrics:
     🤬 Ненормативная лексика <code>%{profanity}</code>
     🌐 Язык: %{language}
     %{genres_line}
+
     %{lyrics}
 
     <a href="%{lyrics_link}">%{lyrics_link_text}</a>

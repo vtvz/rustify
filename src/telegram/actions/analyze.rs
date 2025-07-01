@@ -105,12 +105,6 @@ async fn perform(
 ) -> Result<(), anyhow::Error> {
     let song_name = track.name_with_artists();
 
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
-
-    let lang = user
-        .cfg_analysis_language
-        .clone()
-        .unwrap_or_else(|| config.default_language().to_string());
     let model = config.model();
 
     let request = CreateChatCompletionRequestArgs::default()
@@ -120,7 +114,7 @@ async fn perform(
                 config
                     .prompt()
                     .replace("{song_name}", &song_name)
-                    .replace("{lang}", &lang)
+                    .replace("{lang}", state.language())
                     .replace("{lyrics}", &lyrics),
             )
             .build()?

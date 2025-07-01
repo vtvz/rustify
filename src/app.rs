@@ -13,7 +13,7 @@ use teloxide::dispatching::dialogue::RedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
 use tokio::sync::RwLock;
 
-use crate::entity::prelude::{UserColumn, UserEntity};
+use crate::entity::prelude::{UserColumn, UserEntity, UserLocale};
 use crate::metrics::influx::InfluxClient;
 use crate::user::UserState;
 use crate::{cache, lyrics, profanity, spotify, whitelist};
@@ -32,7 +32,6 @@ pub struct App {
 
 pub struct AnalyzeConfig {
     openai_client: async_openai::Client<OpenAIConfig>,
-    default_language: String,
     model: String,
     prompt: String,
 }
@@ -40,10 +39,6 @@ pub struct AnalyzeConfig {
 impl AnalyzeConfig {
     pub fn openai_client(&self) -> &async_openai::Client<OpenAIConfig> {
         &self.openai_client
-    }
-
-    pub fn default_language(&self) -> &str {
-        &self.default_language
     }
 
     pub fn model(&self) -> &str {
@@ -219,7 +214,6 @@ async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
 
     let config = AnalyzeConfig {
         openai_client,
-        default_language: dotenv::var("ANALYZE_DEFAULT_LANGUAGE").unwrap_or("English".into()),
         model: dotenv::var("OPENAI_API_MODEL").unwrap_or("gpt-4o".into()),
         prompt: formatdoc!("
             Provide a detailed description, meaning, and storyline of the following song lyrics: \"{{song_name}}\" and answer these questions:
@@ -281,7 +275,7 @@ impl App {
         let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
         let spotify = RwLock::new(spotify);
 
-        let res: Option<String> = UserEntity::find()
+        let res: Option<UserLocale> = UserEntity::find()
             .select_only()
             .column(UserColumn::Locale)
             .into_tuple()
@@ -292,7 +286,7 @@ impl App {
             spotify,
             spotify_user: Default::default(),
             user_id: user_id.to_string(),
-            locale: res.unwrap_or("en".into()),
+            locale: res.unwrap_or_default(),
         };
 
         Ok(state)

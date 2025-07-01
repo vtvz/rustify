@@ -96,12 +96,6 @@ pub async fn handle(
         UserCommand::ToggleProfanityCheck => {
             return actions::settings::handle_toggle_profanity_check(app, state, m.chat.id).await;
         },
-        UserCommand::SetAnalysisLanguage { language } => {
-            return actions::settings::handle_set_analysis_language(
-                app, state, m.chat.id, language,
-            )
-            .await;
-        },
         UserCommand::AddWhitelistWord { word } => {
             return actions::user_word_whitelist::handle_add_word(app, state, m.chat.id, word)
                 .await;

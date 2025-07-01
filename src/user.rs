@@ -4,17 +4,23 @@ use rspotify::clients::OAuthClient;
 use rspotify::model::{PrivateUser, SubscriptionLevel};
 use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+use crate::entity::prelude::UserLocale;
+
 pub struct UserState {
     pub spotify: RwLock<AuthCodeSpotify>,
     pub user_id: String,
 
     pub spotify_user: Mutex<Option<Option<PrivateUser>>>,
-    pub locale: String,
+    pub locale: UserLocale,
 }
 
 impl UserState {
     pub fn locale(&self) -> &str {
-        &self.locale
+        self.locale.as_ref()
+    }
+
+    pub fn language(&self) -> &str {
+        self.locale.language()
     }
 
     pub async fn spotify(&self) -> RwLockReadGuard<'_, AuthCodeSpotify> {

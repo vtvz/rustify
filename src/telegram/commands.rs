@@ -29,8 +29,6 @@ pub enum UserCommand {
     ToggleTrackSkip,
     #[command(description = "Toggle setting of profanity check")]
     ToggleProfanityCheck,
-    #[command(description = "Set language for analysis results")]
-    SetAnalysisLanguage { language: String },
 
     #[command(description = "Create or refresh Magic playlist")]
     Magic,
@@ -73,7 +71,6 @@ pub enum UserCommandDisplay {
     Register,
     ToggleTrackSkip,
     ToggleProfanityCheck,
-    SetAnalysisLanguage,
     Help,
     AddWhitelistWord,
     RemoveWhitelistWord,
@@ -96,7 +93,6 @@ impl std::fmt::Display for UserCommandDisplay {
             Self::Register => "register",
             Self::ToggleTrackSkip => "toggle_track_skip",
             Self::ToggleProfanityCheck => "toggle_profanity_check",
-            Self::SetAnalysisLanguage => "set_analysis_language",
             Self::Help => "help",
             Self::AddWhitelistWord => "add_word_to_whitelist",
             Self::RemoveWhitelistWord => "remove_word_from_whitelist",
@@ -165,7 +161,6 @@ mod tests {
             UserCommand::Register => UserCommandDisplay::Register,
             UserCommand::ToggleTrackSkip => UserCommandDisplay::ToggleTrackSkip,
             UserCommand::ToggleProfanityCheck => UserCommandDisplay::ToggleProfanityCheck,
-            UserCommand::SetAnalysisLanguage { .. } => UserCommandDisplay::SetAnalysisLanguage,
             UserCommand::Help => UserCommandDisplay::Help,
             UserCommand::AddWhitelistWord { .. } => UserCommandDisplay::AddWhitelistWord,
             UserCommand::RemoveWhitelistWord { .. } => UserCommandDisplay::RemoveWhitelistWord,

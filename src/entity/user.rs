@@ -32,8 +32,6 @@ pub struct Model {
     pub updated_at: chrono::NaiveDateTime,
     pub cfg_check_profanity: bool,
     pub cfg_skip_tracks: bool,
-    pub cfg_not_english_alert: bool,
-    pub cfg_analysis_language: Option<String>,
     pub cfg_skippage_secs: i64,
     pub magic_playlist: Option<String>,
 }
@@ -74,8 +72,6 @@ pub enum Column {
     UpdatedAt,
     CfgCheckProfanity,
     CfgSkipTracks,
-    CfgNotEnglishAlert,
-    CfgAnalysisLanguage,
     CfgSkippageSecs,
     MagicPlaylist,
 }
@@ -115,8 +111,6 @@ impl ColumnTrait for Column {
             Self::UpdatedAt => ColumnType::DateTime.def(),
             Self::CfgCheckProfanity => ColumnType::Boolean.def(),
             Self::CfgSkipTracks => ColumnType::Boolean.def(),
-            Self::CfgNotEnglishAlert => ColumnType::Boolean.def(),
-            Self::CfgAnalysisLanguage => ColumnType::Text.def().null(),
             Self::CfgSkippageSecs => ColumnType::BigInteger.def(),
             Self::MagicPlaylist => ColumnType::Text.def().null(),
         }
@@ -179,6 +173,15 @@ pub enum Locale {
     Russian,
     #[sea_orm(string_value = "en")]
     English,
+}
+
+impl Locale {
+    pub fn language(&self) -> &str {
+        match self {
+            Self::Russian => "Russian",
+            Self::English => "English",
+        }
+    }
 }
 
 impl AsRef<str> for Locale {

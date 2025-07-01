@@ -46,6 +46,6 @@ skippage.disabled:
 
 skippage.validation:
   en: >-
-    Number should be positive and 365 or less
+    ⚠️ Number should be positive and 365 or less
   ru: >-
-    Число должно быть положительным и не больше 365
+    ⚠️ Число должно быть положительным и не больше 365

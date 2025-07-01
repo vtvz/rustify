@@ -1,5 +1,4 @@
 use anyhow::Context as _;
-use indoc::formatdoc;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
@@ -36,15 +35,10 @@ pub async fn handle_inline(
         .edit_message_text(
             q.from.id,
             q.message.context("Message is empty")?.id(),
-            formatdoc!(
-                "
-                    Bad words of {} will be forever ignored
-
-                    If you change your mind press 'Dislike 👎'
-
-                    Do not forget you can send link to song to find current status
-                ",
-                track.track_tg_link()
+            t!(
+                "dump.ignore",
+                track_link = track.track_tg_link(),
+                locale = state.locale()
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
