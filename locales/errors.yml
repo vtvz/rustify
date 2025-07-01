@@ -6,15 +6,15 @@ error.cannot-skip:
 
 error.unavailable-in-country:
   en: |-
-    🚫 Your Spotify accont says 'Spotify is unavailable in this country'.
+    🚫 Your Spotify account says 'Spotify is unavailable in this country'.
     Please fix this issue and relogin by calling /%{command} command to continue using Rustify
 
 error.spotify-auth-failed:
   en: |-
     ❌ Failed to Authenticate user to Spotify. Please relogin by calling /%{command} command.
 
-    <pre>{error}</pre>,
+    <pre>{error}</pre>
 
 error.spotify-invalid-token:
   en: |-
-    Relogin to Spotify by calling /%{command} command,
+    Relogin to Spotify by calling /%{command} command

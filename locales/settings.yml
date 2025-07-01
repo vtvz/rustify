@@ -2,13 +2,13 @@ _version: 2
 
 settings.profanity-check-on:
   en: |-
-    🚫 Tracks will be checked on profanity content
+    🚫 Tracks will be checked for profanity content
   ru: |-
     🚫 Треки будут проверяться на нецензурный контент
 
 settings.profanity-check-off:
   en: |-
-    ✅ Tracks won't be checked on profanity content
+    ✅ Tracks won't be checked for profanity content
   ru: |-
     ✅ Треки не будут проверяться на нецензурный контент
 

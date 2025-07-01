@@ -170,7 +170,7 @@ pub async fn check(
             locale = state.locale(),
             track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
-            lyrics_link = hit.link(),
+            lyrics_link = hit.link().trim(),
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
         );
 
