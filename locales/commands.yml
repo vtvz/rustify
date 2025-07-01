@@ -1,0 +1,103 @@
+_version: 2
+
+command.help:
+  en: |-
+    Show this help !!!
+  ru: |-
+    Показать эту справку !!!
+
+command.start:
+  en: |-
+    Start !!!
+  ru: |-
+    Старт !!!
+
+command.keyboard:
+  en: |-
+    Show keyboard
+  ru: |-
+    Показать клавиатуру
+
+command.dislike:
+  en: |-
+    Dislike current track
+  ru: |-
+    Не нравится текущий трек
+
+command.like:
+  en: |-
+    Like current track
+  ru: |-
+    Нравится текущий трек
+
+command.cleanup:
+  en: |-
+    Cleanup disliked tracks
+  ru: |-
+    Очистить нелюбимые треки
+
+command.details:
+  en: |-
+    Show details about currently playing track
+  ru: |-
+    Показать детали о текущем треке
+
+command.stats:
+  en: |-
+    Show statistics about disliked tracks
+  ru: |-
+    Показать статистику нелюбимых треков
+
+command.register:
+  en: |-
+    Login to spotify
+  ru: |-
+    Войти в Spotify
+
+command.toggle_track_skip:
+  en: |-
+    Toggle setting of skipping disliked tracks
+  ru: |-
+    Переключить настройку пропуска нелюбимых треков
+
+command.toggle_profanity_check:
+  en: |-
+    Toggle setting of profanity check
+  ru: |-
+    Переключить настройку проверки нецензурной лексики
+
+command.magic:
+  en: |-
+    Create or refresh Magic playlist
+  ru: |-
+    Создать или обновить магический плейлист
+
+command.add_whitelist_word:
+  en: |-
+    Add word to whitelist
+  ru: |-
+    Добавить слово в белый список
+
+command.remove_whitelist_word:
+  en: |-
+    Remove word from whitelist
+  ru: |-
+    Удалить слово из белого списка
+
+command.list_whitelist_words:
+  en: |-
+    List words in whitelist
+  ru: |-
+    Показать слова в белом списке
+
+command.skippage:
+  en: |-
+    Allows you to skip tracks you've already listened. Pass days to remember
+  ru: |-
+    Позволяет пропускать треки, которые вы уже слушали. Укажите количество дней для запоминания
+
+command.language:
+  en: |-
+    Change Language
+  ru: |-
+    Изменить язык

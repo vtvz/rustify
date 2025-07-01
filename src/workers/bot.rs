@@ -5,11 +5,13 @@ use rustify::telegram::commands::UserCommand;
 use rustify::telegram::utils::link_preview_disabled;
 use rustify::user::UserState;
 use rustify::user_service::UserService;
+use sea_orm::Iterable;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode, User};
 use teloxide::utils::command::BotCommands as _;
 
+use crate::entity::prelude::UserLocale;
 use crate::{self as rustify, error_handler};
 
 async fn sync_name(
@@ -142,10 +144,13 @@ pub async fn work() {
 
     let app = App::init().await.expect("State to be built");
 
-    app.bot()
-        .set_my_commands(UserCommand::bot_commands())
-        .await
-        .expect("update commands should be working");
+    for locale in UserLocale::iter() {
+        app.bot()
+            .set_my_commands(UserCommand::localized_bot_commands(locale.as_ref()))
+            .language_code(locale.as_ref())
+            .await
+            .expect("update commands should be working");
+    }
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
 

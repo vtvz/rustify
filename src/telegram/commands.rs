@@ -1,63 +1,78 @@
 use std::fmt::Formatter;
 
+use strum_macros::EnumIter;
+use teloxide::types::BotCommand;
 use teloxide::utils::command::BotCommands;
 
-#[derive(BotCommands, PartialEq, Eq, Debug)]
+#[derive(BotCommands, PartialEq, Eq, Debug, EnumIter)]
 #[command(rename_rule = "snake_case", parse_with = "split")]
 pub enum UserCommand {
-    #[command(description = "Show this help")]
+    #[command(description = "command.help")]
     Help,
 
-    #[command(description = "Start")]
+    #[command(description = "command.start")]
     Start,
-    #[command(description = "Show keyboard")]
+    #[command(description = "command.keyboard")]
     Keyboard,
-    #[command(description = "Dislike current track")]
+    #[command(description = "command.dislike")]
     Dislike,
-    #[command(description = "Like current track")]
+    #[command(description = "command.like")]
     Like,
-    #[command(description = "Delete disliked tracks from your playlists")]
+    #[command(description = "command.cleanup")]
     Cleanup,
-    #[command(description = "Show details about currently playing track")]
+    #[command(description = "command.details")]
     Details,
-    #[command(description = "Show statistics about disliked tracks")]
+    #[command(description = "command.stats")]
     Stats,
-    #[command(description = "Login to spotify")]
+    #[command(description = "command.register")]
     Register,
 
-    #[command(description = "Toggle setting of skipping disliked tracks")]
+    #[command(description = "command.toggle_track_skip")]
     ToggleTrackSkip,
-    #[command(description = "Toggle setting of profanity check")]
+    #[command(description = "command.toggle_profanity_check")]
     ToggleProfanityCheck,
 
-    #[command(description = "Create or refresh Magic playlist")]
+    #[command(description = "command.magic")]
     Magic,
 
     #[command(
-        description = "Add word to whitelist",
+        description = "command.add_whitelist_word",
         rename = "add_word_to_whitelist"
     )]
     AddWhitelistWord { word: String },
 
     #[command(
-        description = "Remove word from whitelist",
+        description = "command.remove_whitelist_word",
         rename = "remove_word_from_whitelist"
     )]
     RemoveWhitelistWord { word: String },
 
     #[command(
-        description = "List words in whitelist",
+        description = "command.list_whitelist_words",
         rename = "list_words_in_whitelist"
     )]
     ListWhitelistWords,
 
-    #[command(
-        description = "Allows you to skip tracks you've already listened. Pass days to remember"
-    )]
+    #[command(description = "command.skippage")]
     Skippage { days: String },
 
-    #[command(description = "Change Language")]
+    #[command(description = "command.language")]
     Language,
+}
+
+impl UserCommand {
+    pub fn localized_bot_commands(locale: &str) -> Vec<BotCommand> {
+        let commands = Self::bot_commands();
+
+        commands
+            .into_iter()
+            .map(|command| {
+                let description = command.description.clone();
+                let description = t!(description, locale = locale);
+                command.description(description.to_string())
+            })
+            .collect()
+    }
 }
 
 pub enum UserCommandDisplay {
