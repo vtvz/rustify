@@ -4,11 +4,11 @@ dump.command-not-found:
   en: |-
     ❓ Command <code>%{command}</code> not found.
 
-    There are commands available to you:
+    📋 There are commands available to you:
   ru: |-
     ❓ Команда <code>%{command}</code> не найдена.
 
-    Вам доступны следующие команды:
+    📋 Вам доступны следующие команды:
 
 dump.here-is-your-keyboard:
   en: |-
@@ -62,11 +62,11 @@ dump.unhandled-request:
   en: |-
     Your request was not handled 😔
 
-    There are commands available to you:
+    📋 There are commands available to you:
   ru: |-
     Ваш запрос не был обработан 😔
 
-    Вам доступны следующие команды:
+    📋 Вам доступны следующие команды:
 
 dump.dislike:
   en: |-
@@ -84,17 +84,17 @@ dump.dislike:
 
 dump.ignore:
   en: |-
-    Bad words of %{track_link} will be forever ignored
+    🙈 Bad words of %{track_link} will be forever ignored
 
     If you change your mind press 'Dislike 👎'
 
-    Do not forget you can send a link to a song to find current status
+    💡 Do not forget you can send a link to a song to find current status
   ru: |-
-    Плохие слова из %{track_link} будут навсегда проигнорированы
+    🙈 Плохие слова из %{track_link} будут навсегда проигнорированы
 
     Если передумаете, нажмите 'Не нравится 👎'
 
-    Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
+    💡 Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
 
 currently-playing-none-reason.pause:
   en: |-
