@@ -23,9 +23,9 @@ pub async fn handle_toggle_profanity_check(
     user_model.save(app.db()).await?;
 
     let message = if new_status {
-        "Tracks will be checked on profanity content"
+        t!("settings.profanity-check-on", locale = state.locale())
     } else {
-        "Tracks won't be checked on profanity content"
+        t!("settings.profanity-check-off", locale = state.locale())
     };
 
     app.bot()
@@ -51,9 +51,9 @@ pub async fn handle_toggle_skip_tracks(
     user_model.save(app.db()).await?;
 
     let message = if new_status {
-        "Disliked tracks will be skipped"
+        t!("settings.skip-on", locale = state.locale())
     } else {
-        "Disliked tracks won't be skipped"
+        t!("settings.skip-off", locale = state.locale())
     };
 
     app.bot()
