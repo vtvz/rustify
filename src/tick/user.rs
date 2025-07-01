@@ -60,15 +60,13 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
 
     rickroll::queue(app, &state).await.ok();
 
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
-
-    let skippage_skipped = skippage::handle(app, &state, &track, &user).await?;
+    let skippage_skipped = skippage::handle(app, &state, &track).await?;
 
     if skippage_skipped {
         return Ok(CheckUserResult::Complete);
     }
 
-    super::magic::handle(app, &state, &track, context.as_ref(), &user)
+    super::magic::handle(app, &state, &track, context.as_ref())
         .await
         .ok();
 
@@ -76,12 +74,12 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
 
     match status {
         TrackStatus::Disliked => {
-            if user.cfg_skip_tracks {
+            if state.user().cfg_skip_tracks {
                 super::disliked_track::handle(app, &state, &track, context.as_ref()).await?;
             }
         },
         TrackStatus::None => {
-            if user.cfg_check_profanity {
+            if state.user().cfg_check_profanity {
                 let changed = UserService::sync_current_playing(
                     app.redis_conn().await?,
                     state.user_id(),

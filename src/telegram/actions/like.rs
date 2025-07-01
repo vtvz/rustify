@@ -16,7 +16,7 @@ pub async fn handle(
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, m.chat.id).await?;
+        actions::register::send_register_invite(app, m.chat.id, state.locale()).await?;
 
         return Ok(HandleStatus::Handled);
     }

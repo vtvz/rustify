@@ -41,7 +41,7 @@ pub async fn handle(
                 )
                 .await?;
 
-            actions::register::send_register_invite(app, ChatId(user_id_int)).await?;
+            actions::register::send_register_invite(app, ChatId(user_id_int), "en").await?;
         },
         "deny" => {
             app.whitelist().deny(app.db(), &user_id).await?;

@@ -153,7 +153,7 @@ impl UserService {
         let user = Self::query(Some(id), None).one(db).await?;
 
         let user = match user {
-            Some(spotify_auth) => spotify_auth,
+            Some(user) => user,
             None => {
                 UserActiveModel {
                     id: Set(id.to_owned()),

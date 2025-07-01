@@ -6,16 +6,15 @@ use anyhow::Context;
 use async_openai::config::OpenAIConfig;
 use indoc::formatdoc;
 use rustrict::Replacements;
-use sea_orm::{DatabaseConnection, DbConn, EntityTrait, QuerySelect, SqlxPostgresConnector};
+use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
 use teloxide::dispatching::dialogue::RedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
-use tokio::sync::RwLock;
 
-use crate::entity::prelude::{UserColumn, UserEntity, UserLocale};
 use crate::metrics::influx::InfluxClient;
 use crate::user::UserState;
+use crate::user_service::UserService;
 use crate::{cache, lyrics, profanity, spotify, whitelist};
 
 pub struct App {
@@ -273,21 +272,8 @@ impl App {
 
     pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {
         let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
-        let spotify = RwLock::new(spotify);
-
-        let res: Option<UserLocale> = UserEntity::find()
-            .select_only()
-            .column(UserColumn::Locale)
-            .into_tuple()
-            .one(self.db())
-            .await?;
-
-        let state = UserState {
-            spotify,
-            spotify_user: Default::default(),
-            user_id: user_id.to_string(),
-            locale: res.unwrap_or_default(),
-        };
+        let user = UserService::obtain_by_id(self.db(), user_id).await?;
+        let state = UserState::new(user, spotify);
 
         Ok(state)
     }

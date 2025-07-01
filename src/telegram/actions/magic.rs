@@ -55,7 +55,7 @@ pub async fn handle(
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, chat_id).await?;
+        actions::register::send_register_invite(app, chat_id, state.locale()).await?;
 
         return Ok(HandleStatus::Handled);
     }
@@ -87,11 +87,10 @@ pub async fn handle(
 
     track_ids.shuffle(&mut rand::rng());
 
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
     let playlist = get_playlist(
         state,
         spotify_user.id,
-        user.magic_playlist.unwrap_or("none".into()),
+        state.user().magic_playlist.clone().unwrap_or("none".into()),
     )
     .await?;
 

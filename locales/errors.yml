@@ -3,18 +3,29 @@ _version: 2
 error.cannot-skip:
   en: |-
     ❌ Current song (%{track_name}) was disliked, but I cannot skip it...
+  ru: |-
+    ❌ Текущая песня (%{track_name}) была дизлайкнута, но я не могу её пропустить...
 
 error.unavailable-in-country:
   en: |-
     🚫 Your Spotify account says 'Spotify is unavailable in this country'.
     Please fix this issue and relogin by calling /%{command} command to continue using Rustify
+  ru: |-
+    🚫 Ваш аккаунт Spotify сообщает 'Spotify недоступен в этой стране'.
+    Пожалуйста, исправьте эту проблему и войдите заново, вызвав команду /%{command}, чтобы продолжить использовать Rustify
 
 error.spotify-auth-failed:
   en: |-
     ❌ Failed to Authenticate user to Spotify. Please relogin by calling /%{command} command.
 
     <pre>{error}</pre>
+  ru: |-
+    ❌ Не удалось аутентифицировать пользователя в Spotify. Пожалуйста, войдите заново, вызвав команду /%{command}.
+
+    <pre>{error}</pre>
 
 error.spotify-invalid-token:
   en: |-
     Relogin to Spotify by calling /%{command} command
+  ru: |-
+    Войдите заново в Spotify, вызвав команду /%{command}

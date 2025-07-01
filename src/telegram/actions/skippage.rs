@@ -19,16 +19,15 @@ pub async fn handle(
     days: String,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, chat_id).await?;
+        actions::register::send_register_invite(app, chat_id, state.locale()).await?;
 
         return Ok(HandleStatus::Handled);
     }
 
     let days = days.parse::<i64>();
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
 
     let Ok(days) = days else {
-        let days = Duration::seconds(user.cfg_skippage_secs).num_days();
+        let days = Duration::seconds(state.user().cfg_skippage_secs).num_days();
         let days_fmt = match days {
             0 => t!("skippage.main.disabled", locale = state.locale()),
             1 => t!("skippage.main.one", locale = state.locale()),
@@ -68,7 +67,7 @@ pub async fn handle(
         SkippageService::update_skippage_entries_ttl(
             &mut app.redis_conn().await?,
             state.user_id(),
-            user.cfg_skippage_secs,
+            state.user().cfg_skippage_secs,
             duration.num_seconds(),
         )
         .await?;

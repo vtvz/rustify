@@ -6,18 +6,15 @@ use teloxide::types::{ChatId, ParseMode};
 use crate::app::App;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
-use crate::user_service::UserService;
 
 pub async fn handle_toggle_profanity_check(
     app: &App,
     state: &UserState,
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
+    let new_status = !state.user().cfg_check_profanity;
 
-    let new_status = !user.cfg_check_profanity;
-
-    let mut user_model = user.into_active_model();
+    let mut user_model = state.user().clone().into_active_model();
 
     user_model.cfg_check_profanity = Set(new_status);
     user_model.save(app.db()).await?;
@@ -41,11 +38,9 @@ pub async fn handle_toggle_skip_tracks(
     state: &UserState,
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
+    let new_status = !state.user().cfg_skip_tracks;
 
-    let new_status = !user.cfg_skip_tracks;
-
-    let mut user_model = user.into_active_model();
+    let mut user_model = state.user().clone().into_active_model();
 
     user_model.cfg_skip_tracks = Set(new_status);
     user_model.save(app.db()).await?;

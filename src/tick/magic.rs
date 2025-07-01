@@ -2,7 +2,6 @@ use rspotify::clients::OAuthClient;
 use rspotify::model::{Context as SpotifyContext, Id, PlaylistId, Type as SpotifyType};
 
 use crate::app::App;
-use crate::entity::prelude::UserModel;
 use crate::magic_service::MagicService;
 use crate::spotify::ShortTrack;
 use crate::user::UserState;
@@ -19,7 +18,6 @@ pub async fn handle(
     state: &UserState,
     track: &ShortTrack,
     context: Option<&SpotifyContext>,
-    user: &UserModel,
 ) -> anyhow::Result<()> {
     let Some(context) = context else {
         return Ok(());
@@ -29,7 +27,7 @@ pub async fn handle(
         return Ok(());
     }
 
-    let Some(playlist_id) = user.magic_playlist.as_ref() else {
+    let Some(playlist_id) = state.user().magic_playlist.as_ref() else {
         return Ok(());
     };
 
