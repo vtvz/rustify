@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
-use async_openai::config::OpenAIConfig;
+use async_openai::config::{OPENAI_API_BASE, OpenAIConfig};
 use indoc::formatdoc;
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
@@ -202,7 +202,9 @@ async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
         return Ok(None);
     };
 
-    let openai_config = OpenAIConfig::new().with_api_key(api_key);
+    let openai_config = OpenAIConfig::new()
+        .with_api_key(api_key)
+        .with_api_base(dotenv::var("OPENAI_API_BASE").unwrap_or(OPENAI_API_BASE.into()));
 
     let http_client = reqwest::ClientBuilder::new()
         .timeout(Duration::from_secs(20))
