@@ -1,6 +1,5 @@
 use teloxide::prelude::*;
 use teloxide::types::{MediaKind, MessageCommon, MessageKind};
-use teloxide::utils::command::BotCommands;
 
 use super::{HandleStatus, return_if_handled};
 use crate::app::App;
@@ -39,7 +38,7 @@ pub async fn handle(
     app.bot()
         .send_message(
             m.chat.id,
-            UserCommand::descriptions()
+            UserCommand::localized_descriptions(state.locale())
                 .global_description(&t!("dump.unhandled-request", locale = state.locale()))
                 .to_string(),
         )

@@ -9,7 +9,6 @@ use sea_orm::Iterable;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode, User};
-use teloxide::utils::command::BotCommands as _;
 
 use crate::entity::prelude::UserLocale;
 use crate::{self as rustify, error_handler};

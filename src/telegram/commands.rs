@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use std::fmt::Formatter;
+use std::sync::RwLock;
 
 use strum_macros::EnumIter;
 use teloxide::types::BotCommand;
-use teloxide::utils::command::BotCommands;
+use teloxide::utils::command::{BotCommands, CommandDescription, CommandDescriptions};
 
 #[derive(BotCommands, PartialEq, Eq, Debug, EnumIter)]
 #[command(rename_rule = "snake_case", parse_with = "split")]
@@ -67,11 +69,48 @@ impl UserCommand {
         commands
             .into_iter()
             .map(|command| {
-                let description = command.description.clone();
-                let description = t!(description, locale = locale);
+                let description = t!(command.description.clone(), locale = locale);
                 command.description(description.to_string())
             })
             .collect()
+    }
+
+    pub fn localized_descriptions(locale: &str) -> CommandDescriptions {
+        lazy_static::lazy_static! {
+            static ref CACHE: RwLock<HashMap<String, &'static [CommandDescription<'static>]>> = RwLock::new(HashMap::new());
+        }
+
+        let entry = { CACHE.read().expect("Lock is poisoned").get(locale).copied() };
+
+        match entry {
+            Some(descriptions) => CommandDescriptions::new(descriptions),
+
+            None => {
+                let descriptions: Vec<_> = Self::bot_commands()
+                    .into_iter()
+                    .map(|command| {
+                        let description = t!(&command.description, locale = locale);
+                        let command_str = Box::leak(command.command.into_boxed_str());
+                        let description_str = Box::leak(description.to_string().into_boxed_str());
+                        CommandDescription {
+                            prefix: "",
+                            command: command_str,
+                            aliases: &[],
+                            description: description_str,
+                        }
+                    })
+                    .collect();
+
+                let descriptions_static = Box::leak(descriptions.into_boxed_slice());
+
+                CACHE
+                    .write()
+                    .expect("Lock is poisoned")
+                    .insert(locale.into(), descriptions_static);
+
+                CommandDescriptions::new(descriptions_static)
+            },
+        }
     }
 }
 

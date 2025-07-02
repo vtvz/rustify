@@ -28,7 +28,7 @@ pub async fn handle(
             app.bot()
                 .send_message(
                     m.chat.id,
-                    UserCommand::descriptions()
+                    UserCommand::localized_descriptions(state.locale())
                         .global_description(&t!(
                             "dump.command-not-found",
                             locale = state.locale(),
@@ -83,7 +83,7 @@ pub async fn handle(
             app.bot()
                 .send_message(
                     m.chat.id,
-                    UserCommand::descriptions()
+                    UserCommand::localized_descriptions(state.locale())
                         .global_description(&t!("dump.available-commands", locale = state.locale()))
                         .to_string(),
                 )
