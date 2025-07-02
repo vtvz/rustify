@@ -19,15 +19,10 @@ pub async fn handle(
 
     let locale = locale.as_ref();
 
-    app.bot()
-        .send_message(m.chat.id, t!("language.changed", locale = locale))
-        .reply_markup(StartKeyboard::markup(locale))
-        .parse_mode(ParseMode::Html)
-        .await?;
-
     if !state.is_spotify_authed().await {
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))
+            .parse_mode(ParseMode::Html)
             .await?;
 
         actions::register::send_register_invite(app, m.chat.id, state.locale()).await?;
@@ -35,6 +30,7 @@ pub async fn handle(
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))
             .reply_markup(StartKeyboard::markup(locale))
+            .parse_mode(ParseMode::Html)
             .await?;
     }
 
