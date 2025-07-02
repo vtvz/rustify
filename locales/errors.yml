@@ -29,3 +29,13 @@ error.spotify-invalid-token:
     Relogin to Spotify by calling /%{command} command
   ru: |-
     Войдите заново в Spotify, вызвав команду /%{command}
+
+error.general:
+  en: |-
+    <b>Sorry, error has happened :(</b>
+
+    <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
+  ru: |-
+    <b>Извините, произошла ошибка :(</b>
+
+    <a href="https://github.com/vtvz/rustify/issues/new">Сообщить о проблеме на GitHub</a>

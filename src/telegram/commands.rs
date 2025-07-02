@@ -7,7 +7,7 @@ use teloxide::types::BotCommand;
 use teloxide::utils::command::{BotCommands, CommandDescription, CommandDescriptions};
 
 #[derive(BotCommands, PartialEq, Eq, Debug, EnumIter)]
-#[command(rename_rule = "snake_case", parse_with = "split")]
+#[command(rename_rule = "snake_case")]
 pub enum UserCommand {
     #[command(description = "command.help")]
     Help,
