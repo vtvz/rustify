@@ -39,3 +39,13 @@ error.general:
     <b>Извините, произошла ошибка :(</b>
 
     <a href="https://github.com/vtvz/rustify/issues/new">Сообщить о проблеме на GitHub</a>
+
+error.unhandled-request:
+  en: |-
+    Your request was not handled 😔
+
+    📋 There are commands available to you:
+  ru: |-
+    Ваш запрос не был обработан 😔
+
+    📋 Вам доступны следующие команды:

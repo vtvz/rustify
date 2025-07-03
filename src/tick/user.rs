@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use anyhow::Context;
 
 use super::skippage;
@@ -16,21 +14,6 @@ pub enum CheckUserResult {
     SkipSame,
     Complete,
     None(spotify::CurrentlyPlayingNoneReason),
-}
-
-impl CheckUserResult {
-    #[allow(dead_code)]
-    pub fn localize(&self, locale: &str) -> Cow<'_, str> {
-        match self {
-            Self::SkipSame => t!("tick-user-check-user-result.skip-same", locale = locale),
-            Self::Complete => t!("tick-user-check-user-result.complete", locale = locale),
-            Self::None(reason) => t!(
-                "tick-user-check-user-result.none",
-                locale = locale,
-                reason = reason.localize(locale)
-            ),
-        }
-    }
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %user_id))]

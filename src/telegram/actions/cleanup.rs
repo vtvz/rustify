@@ -20,7 +20,10 @@ pub async fn handle(
 ) -> anyhow::Result<HandleStatus> {
     let message = app
         .bot()
-        .send_message(m.chat.id, t!("dump.cleanup-start", locale = state.locale()))
+        .send_message(
+            m.chat.id,
+            t!("actions.cleanup-start", locale = state.locale()),
+        )
         .reply_parameters(ReplyParameters::new(m.id))
         .await?;
 
@@ -142,7 +145,7 @@ pub async fn handle(
             message.chat.id,
             message.id,
             t!(
-                "dump.cleanup-finish",
+                "actions.cleanup-finish",
                 locale = state.locale(),
                 removed_playlists = removed_playlists,
                 count_playlists = count,

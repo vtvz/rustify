@@ -14,6 +14,10 @@ pub enum UserCommand {
 
     #[command(description = "command.start")]
     Start,
+
+    #[command(description = "command.language")]
+    Language,
+
     #[command(description = "command.keyboard")]
     Keyboard,
     #[command(description = "command.dislike")]
@@ -57,9 +61,6 @@ pub enum UserCommand {
 
     #[command(description = "command.skippage")]
     Skippage { days: String },
-
-    #[command(description = "command.language")]
-    Language,
 }
 
 impl UserCommand {

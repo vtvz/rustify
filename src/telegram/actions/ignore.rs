@@ -36,7 +36,7 @@ pub async fn handle_inline(
             q.from.id,
             q.message.context("Message is empty")?.id(),
             t!(
-                "dump.ignore",
+                "actions.ignore",
                 track_link = track.track_tg_link(),
                 locale = state.locale()
             ),

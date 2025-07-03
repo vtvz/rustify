@@ -30,7 +30,7 @@ pub async fn handle(
                     m.chat.id,
                     UserCommand::localized_descriptions(state.locale())
                         .global_description(&t!(
-                            "dump.command-not-found",
+                            "command.not-found",
                             locale = state.locale(),
                             command = command
                         ))
@@ -55,7 +55,7 @@ pub async fn handle(
                 app.bot()
                     .send_message(
                         m.chat.id,
-                        t!("dump.here-is-your-keyboard", locale = state.locale()),
+                        t!("actions.here-is-your-keyboard", locale = state.locale()),
                     )
                     .reply_markup(StartKeyboard::markup(state.locale()))
                     .await?;
@@ -84,7 +84,10 @@ pub async fn handle(
                 .send_message(
                     m.chat.id,
                     UserCommand::localized_descriptions(state.locale())
-                        .global_description(&t!("dump.available-commands", locale = state.locale()))
+                        .global_description(&t!(
+                            "command.available-header",
+                            locale = state.locale()
+                        ))
                         .to_string(),
                 )
                 .reply_markup(StartKeyboard::markup(state.locale()))

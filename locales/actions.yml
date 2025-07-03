@@ -1,28 +1,12 @@
 _version: 2
 
-dump.command-not-found:
-  en: |-
-    ❓ Command <code>%{command}</code> not found.
-
-    📋 There are commands available to you:
-  ru: |-
-    ❓ Команда <code>%{command}</code> не найдена.
-
-    📋 Вам доступны следующие команды:
-
-dump.here-is-your-keyboard:
+actions.here-is-your-keyboard:
   en: |-
     Here is your keyboard ⌨️
   ru: |-
     Вот ваша клавиатура ⌨️
 
-dump.available-commands:
-  en: |-
-    📋 Commands available to you:
-  ru: |-
-    📋 Доступные вам команды:
-
-dump.stats:
+actions.stats:
   en: |-
     📉 <b>Some nice stats for you</b> 📈
 
@@ -46,29 +30,19 @@ dump.stats:
     🙈 Вы проигнорировали <code>%{ignored}</code> текстов треков
     🤬 <code>%{lyrics_profane}</code> текстов были признаны нецензурными
 
-dump.cleanup-start:
+actions.cleanup-start:
   en: |-
     Started cleanup. Please wait, it can take a bit of time 🕐
   ru: |-
     Начата очистка. Пожалуйста, подождите, это может занять некоторое время 🕐
 
-dump.cleanup-finish:
+actions.cleanup-finish:
   en: |-
     Deleted %{removed_playlists} tracks in %{count_playlists} playlists and %{removed_collection} in favorite songs 🗑
   ru: |-
     Удалено %{removed_playlists} треков в %{count_playlists} плейлистах и %{removed_collection} из любимых песен 🗑
 
-dump.unhandled-request:
-  en: |-
-    Your request was not handled 😔
-
-    📋 There are commands available to you:
-  ru: |-
-    Ваш запрос не был обработан 😔
-
-    📋 Вам доступны следующие команды:
-
-dump.dislike:
+actions.dislike:
   en: |-
     👎 Disliked %{track_link}
 
@@ -82,7 +56,7 @@ dump.dislike:
 
     💡 Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
 
-dump.ignore:
+actions.ignore:
   en: |-
     🙈 Bad words of %{track_link} will be forever ignored
 
@@ -95,45 +69,3 @@ dump.ignore:
     Если передумаете, нажмите 'Не нравится 👎'
 
     💡 Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
-
-currently-playing-none-reason.pause:
-  en: |-
-    ⏸️ Current track is on pause
-  ru: |-
-    ⏸️ Текущий трек на паузе
-
-currently-playing-none-reason.nothing:
-  en: |-
-    🔇 Nothing is currently playing
-  ru: |-
-    🔇 Сейчас ничего не играет
-
-currently-playing-none-reason.podcast:
-  en: |-
-    🎙️ It's a podcast
-  ru: |-
-    🎙️ Это подкаст
-
-currently-playing-none-reason.local:
-  en: |-
-    📁 It's a local file
-  ru: |-
-    📁 Это локальный файл
-
-tick-user-check-user-result.skip-same:
-  en: |-
-    ⏭️ Skip same track
-  ru: |-
-    ⏭️ Пропущен тот же трек
-
-tick-user-check-user-result.complete:
-  en: |-
-    ✅ Complete check
-  ru: |-
-    ✅ Проверка завершена
-
-tick-user-check-user-result.none:
-  en: |-
-    ⏸️ Current track is on pause %{reason}
-  ru: |-
-    ⏸️ Текущий трек на паузе %{reason}

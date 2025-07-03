@@ -41,7 +41,7 @@ pub async fn handle(
     } = UserService::get_stats(app.db(), Some(state.user_id())).await?;
 
     let message = t!(
-        "dump.stats",
+        "actions.stats",
         locale = state.locale(),
         dislikes = dislikes,
         skips = skips,

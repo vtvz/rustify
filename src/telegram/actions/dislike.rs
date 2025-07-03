@@ -91,7 +91,7 @@ pub async fn handle_inline(
 
 fn compose_message(track: &ShortTrack, locale: &str) -> String {
     t!(
-        "dump.dislike",
+        "actions.dislike",
         locale = locale,
         track_link = track.track_tg_link()
     )

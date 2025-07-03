@@ -39,7 +39,7 @@ pub async fn handle(
         .send_message(
             m.chat.id,
             UserCommand::localized_descriptions(state.locale())
-                .global_description(&t!("dump.unhandled-request", locale = state.locale()))
+                .global_description(&t!("error.unhandled-request", locale = state.locale()))
                 .to_string(),
         )
         .reply_markup(StartKeyboard::markup(state.locale()))

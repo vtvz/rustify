@@ -1,5 +1,21 @@
 _version: 2
 
+command.not-found:
+  en: |-
+    ❓ Command <code>%{command}</code> not found.
+
+    📋 There are commands available to you:
+  ru: |-
+    ❓ Команда <code>%{command}</code> не найдена.
+
+    📋 Вам доступны следующие команды:
+
+command.available-header:
+  en: |-
+    📋 Commands available to you:
+  ru: |-
+    📋 Доступные вам команды:
+
 command.help:
   en: |-
     Show this help
