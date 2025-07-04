@@ -2,7 +2,6 @@ use anyhow::Context;
 use rspotify::clients::OAuthClient;
 
 use crate::app::App;
-use crate::entity::prelude::UserModel;
 use crate::skippage_service::SkippageService;
 use crate::spotify::ShortTrack;
 use crate::user::UserState;
@@ -18,9 +17,8 @@ pub async fn handle(
     app: &'static App,
     state: &UserState,
     track: &ShortTrack,
-    user: &UserModel,
 ) -> anyhow::Result<bool> {
-    if user.cfg_skippage_secs == 0 {
+    if state.user().cfg_skippage_secs == 0 {
         return Ok(false);
     }
 
@@ -50,7 +48,7 @@ pub async fn handle(
         &mut redis_conn,
         state.user_id(),
         track.id(),
-        user.cfg_skippage_secs as u64,
+        state.user().cfg_skippage_secs as u64,
     )
     .await?;
 

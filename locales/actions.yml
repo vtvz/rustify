@@ -1,0 +1,71 @@
+_version: 2
+
+actions.here-is-your-keyboard:
+  en: |-
+    Here is your keyboard ⌨️
+  ru: |-
+    Вот ваша клавиатура ⌨️
+
+actions.stats:
+  en: |-
+    📉 <b>Some nice stats for you</b> 📈
+
+    👎 You disliked <code>%{dislikes}</code> songs
+    ⏭ I skipped <code>%{skips}</code> times
+    💔 Removed <code>%{removed_collection}</code> from liked songs
+    🗑 Removed <code>%{removed_playlists}</code> from playlists
+    🔬 Checked lyrics <code>%{lyrics_checked}</code> times
+    🔍 Analyzed lyrics <code>%{lyrics_analyzed}</code> times
+    🙈 You ignored <code>%{ignored}</code> track lyrics
+    🤬 <code>%{lyrics_profane}</code> lyrics were considered profane
+  ru: |-
+    📉 <b>Немного статистики для вас</b> 📈
+
+    👎 Вы дизлайкнули <code>%{dislikes}</code> песен
+    ⏭ Я пропустил <code>%{skips}</code> раз
+    💔 Удалено <code>%{removed_collection}</code> из понравившихся песен
+    🗑 Удалено <code>%{removed_playlists}</code> из плейлистов
+    🔬 Проверил тексты <code>%{lyrics_checked}</code> раз
+    🔍 Проанализировал тексты <code>%{lyrics_analyzed}</code> раз
+    🙈 Вы проигнорировали <code>%{ignored}</code> текстов треков
+    🤬 <code>%{lyrics_profane}</code> текстов были признаны нецензурными
+
+actions.cleanup-start:
+  en: |-
+    Started cleanup. Please wait, it can take a bit of time 🕐
+  ru: |-
+    Начата очистка. Пожалуйста, подождите, это может занять некоторое время 🕐
+
+actions.cleanup-finish:
+  en: |-
+    Deleted %{removed_playlists} tracks in %{count_playlists} playlists and %{removed_collection} in favorite songs 🗑
+  ru: |-
+    Удалено %{removed_playlists} треков в %{count_playlists} плейлистах и %{removed_collection} из любимых песен 🗑
+
+actions.dislike:
+  en: |-
+    👎 Disliked %{track_link}
+
+    If you change your mind press 'Ignore text 🙈'
+
+    💡 Do not forget you can send a link to a song to find current status
+  ru: |-
+    👎 Дизлайкнул %{track_link}
+
+    Если передумаете, нажмите 'Игнорировать текст 🙈'
+
+    💡 Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
+
+actions.ignore:
+  en: |-
+    🙈 Bad words of %{track_link} will be forever ignored
+
+    If you change your mind press 'Dislike 👎'
+
+    💡 Do not forget you can send a link to a song to find current status
+  ru: |-
+    🙈 Плохие слова из %{track_link} будут навсегда проигнорированы
+
+    Если передумаете, нажмите 'Не нравится 👎'
+
+    💡 Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус

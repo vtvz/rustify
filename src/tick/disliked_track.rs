@@ -75,8 +75,9 @@ pub async fn handle(
         return Ok(());
     }
 
-    let message = format!(
-        "Current song ({track_name}) was disliked, but I cannot skip it...",
+    let message = t!(
+        "error.cannot-skip",
+        locale = state.locale(),
         track_name = track.track_tg_link(),
     );
 
@@ -90,7 +91,7 @@ pub async fn handle(
         Ok(_) => Ok(()),
         Err(err) => {
             let mut err = err.into();
-            error_handler::handle(&mut err, app, state.user_id()).await;
+            error_handler::handle(&mut err, app, state.user_id(), state.locale()).await;
             Err(err)
         },
     }

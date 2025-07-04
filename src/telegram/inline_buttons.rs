@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -13,11 +14,11 @@ pub enum InlineButtons {
 }
 
 impl InlineButtons {
-    pub fn label(&self) -> &str {
+    pub fn label(&self, locale: &str) -> Cow<'_, str> {
         match self {
-            InlineButtons::Dislike(_) => "Dislike 👎",
-            InlineButtons::Ignore(_) => "Ignore text 🙈",
-            InlineButtons::Analyze(_) => "Analyze text 🔍",
+            InlineButtons::Dislike(_) => t!("inline-buttons.dislike", locale = locale),
+            InlineButtons::Ignore(_) => t!("inline-buttons.ignore", locale = locale),
+            InlineButtons::Analyze(_) => t!("inline-buttons.analyze", locale = locale),
         }
     }
 }
@@ -26,28 +27,37 @@ impl InlineButtons {
     pub fn from_track_status(
         status: TrackStatus,
         track_id: &str,
+        locale: &str,
     ) -> Vec<Vec<InlineKeyboardButton>> {
         match status {
             TrackStatus::None => {
                 #[rustfmt::skip]
                 vec![
-                    vec![Self::Dislike(track_id.to_owned()).into()],
-                    vec![Self::Ignore(track_id.to_owned()).into()],
+                    vec![Self::Dislike(track_id.to_owned()).into_inline_keyboard_button(locale)],
+                    vec![Self::Ignore(track_id.to_owned()).into_inline_keyboard_button(locale)],
                 ]
             },
             TrackStatus::Disliked => {
                 #[rustfmt::skip]
                 vec![
-                    vec![Self::Ignore(track_id.to_owned()).into()],
+                    vec![Self::Ignore(track_id.to_owned()).into_inline_keyboard_button(locale)],
                 ]
             },
             TrackStatus::Ignore => {
                 #[rustfmt::skip]
                 vec![
-                    vec![Self::Dislike(track_id.to_owned()).into()],
+                    vec![Self::Dislike(track_id.to_owned()).into_inline_keyboard_button(locale)],
                 ]
             },
         }
+    }
+}
+
+impl InlineButtons {
+    pub fn into_inline_keyboard_button(self, locale: &str) -> InlineKeyboardButton {
+        let label = self.label(locale);
+
+        InlineKeyboardButton::new(label, self.clone().into())
     }
 }
 
@@ -55,14 +65,6 @@ impl InlineButtons {
 impl Into<InlineKeyboardButtonKind> for InlineButtons {
     fn into(self) -> InlineKeyboardButtonKind {
         InlineKeyboardButtonKind::CallbackData(self.to_string())
-    }
-}
-
-#[allow(clippy::from_over_into)]
-impl Into<InlineKeyboardButton> for InlineButtons {
-    fn into(self) -> InlineKeyboardButton {
-        let label = self.label();
-        InlineKeyboardButton::new(label, self.clone().into())
     }
 }
 

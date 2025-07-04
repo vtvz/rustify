@@ -45,7 +45,8 @@ async fn process_spotify_code(
     let instance = state.spotify_write().await;
 
     if let Err(err) = instance.request_token(&code).await {
-        app.bot().send_message(m.chat.id, "Cannot retrieve token. Code is probably broken. Run /register command and try again please")
+        app.bot()
+            .send_message(m.chat.id, t!("register.error", locale = state.locale()))
             .await?;
 
         return Err(err.into());
@@ -55,7 +56,7 @@ async fn process_spotify_code(
 
     let Ok(token) = token else {
         app.bot()
-            .send_message(m.chat.id, "Cannot retrieve token. Try again")
+            .send_message(m.chat.id, t!("register.error", locale = state.locale()))
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -63,7 +64,7 @@ async fn process_spotify_code(
 
     let Some(token) = token.clone() else {
         app.bot()
-            .send_message(m.chat.id, "Token is not retrieved. Try again")
+            .send_message(m.chat.id, t!("register.error", locale = state.locale()))
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -79,8 +80,8 @@ async fn process_spotify_code(
     }
 
     app.bot()
-        .send_message(m.chat.id, "Yeah! You registered successfully!")
-        .reply_markup(StartKeyboard::markup())
+        .send_message(m.chat.id, t!("register.success", locale = state.locale()))
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .await?;
 
     Ok(HandleStatus::Handled)
@@ -89,19 +90,17 @@ async fn process_spotify_code(
 pub async fn send_register_invite(
     app: &'static App,
     chat_id: ChatId,
+    locale: &str,
 ) -> anyhow::Result<HandleStatus> {
     let url = app.spotify_manager().get_authorize_url().await?;
     app.bot()
-        .send_message(
-            chat_id,
-            "Click this button below and after authentication copy URL from browser and send me",
-        )
+        .send_message(chat_id, t!("register.invite", locale = locale))
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
                 vec![InlineKeyboardButton {
-                    text: "Login with Spotify".into(),
+                    text: t!("register.button", locale = locale).into(),
                     kind: InlineKeyboardButtonKind::Url(url.parse()?),
                 }]
             ],

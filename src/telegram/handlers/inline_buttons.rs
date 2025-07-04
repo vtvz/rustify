@@ -15,7 +15,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
             .await?;
 
         if let Some(chat_id) = q.chat_id() {
-            actions::register::send_register_invite(app, chat_id).await?;
+            actions::register::send_register_invite(app, chat_id, state.locale()).await?;
         }
 
         return Ok(());

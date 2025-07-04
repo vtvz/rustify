@@ -16,7 +16,7 @@ pub async fn handle(
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, m.chat.id).await?;
+        actions::register::send_register_invite(app, m.chat.id, state.locale()).await?;
 
         return Ok(HandleStatus::Handled);
     }
@@ -25,7 +25,7 @@ pub async fn handle(
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             app.bot()
-                .send_message(m.chat.id, message.to_string())
+                .send_message(m.chat.id, message.localize(state.locale()))
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -41,7 +41,7 @@ pub async fn handle(
 
     app.bot()
         .send_message(m.chat.id, format!("Liked {}", track.track_tg_link()))
-        .reply_markup(StartKeyboard::markup())
+        .reply_markup(StartKeyboard::markup(state.locale()))
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .await?;

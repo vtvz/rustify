@@ -8,7 +8,7 @@ use crate::app::App;
 use crate::entity::prelude::*;
 use crate::telegram::actions;
 use crate::telegram::commands::UserCommand;
-use crate::telegram::keyboards::StartKeyboard;
+use crate::telegram::keyboards::{LanguageKeyboard, StartKeyboard};
 use crate::user::UserState;
 use crate::user_service::UserService;
 
@@ -28,11 +28,15 @@ pub async fn handle(
             app.bot()
                 .send_message(
                     m.chat.id,
-                    UserCommand::descriptions()
-                        .global_description(&format!("Command <code>{command}</code> not found.\n\nThere are commands available to you:"))
+                    UserCommand::localized_descriptions(state.locale())
+                        .global_description(&t!(
+                            "command.not-found",
+                            locale = state.locale(),
+                            command = command
+                        ))
                         .to_string(),
                 )
-                .reply_markup(StartKeyboard::markup())
+                .reply_markup(StartKeyboard::markup(state.locale()))
                 .parse_mode(ParseMode::Html)
                 .await?;
 
@@ -49,11 +53,14 @@ pub async fn handle(
                 UserService::set_status(app.db(), state.user_id(), UserStatus::Active).await?;
 
                 app.bot()
-                    .send_message(m.chat.id, "Here is your keyboard")
-                    .reply_markup(StartKeyboard::markup())
+                    .send_message(
+                        m.chat.id,
+                        t!("actions.here-is-your-keyboard", locale = state.locale()),
+                    )
+                    .reply_markup(StartKeyboard::markup(state.locale()))
                     .await?;
             } else {
-                actions::register::send_register_invite(app, m.chat.id).await?;
+                actions::register::send_register_invite(app, m.chat.id, state.locale()).await?;
             }
         },
         UserCommand::Dislike => {
@@ -70,17 +77,20 @@ pub async fn handle(
             return actions::details::handle_current(app, state, &m.chat.id).await;
         },
         UserCommand::Register => {
-            return actions::register::send_register_invite(app, m.chat.id).await;
+            return actions::register::send_register_invite(app, m.chat.id, state.locale()).await;
         },
         UserCommand::Help => {
             app.bot()
                 .send_message(
                     m.chat.id,
-                    UserCommand::descriptions()
-                        .global_description("Commands available to you")
+                    UserCommand::localized_descriptions(state.locale())
+                        .global_description(&t!(
+                            "command.available-header",
+                            locale = state.locale()
+                        ))
                         .to_string(),
                 )
-                .reply_markup(StartKeyboard::markup())
+                .reply_markup(StartKeyboard::markup(state.locale()))
                 .await?;
         },
         UserCommand::ToggleTrackSkip => {
@@ -88,12 +98,6 @@ pub async fn handle(
         },
         UserCommand::ToggleProfanityCheck => {
             return actions::settings::handle_toggle_profanity_check(app, state, m.chat.id).await;
-        },
-        UserCommand::SetAnalysisLanguage { language } => {
-            return actions::settings::handle_set_analysis_language(
-                app, state, m.chat.id, language,
-            )
-            .await;
         },
         UserCommand::AddWhitelistWord { word } => {
             return actions::user_word_whitelist::handle_add_word(app, state, m.chat.id, word)
@@ -111,6 +115,12 @@ pub async fn handle(
         },
         UserCommand::Skippage { days } => {
             return actions::skippage::handle(app, state, m.chat.id, days).await;
+        },
+        UserCommand::Language => {
+            app.bot()
+                .send_message(m.chat.id, t!("language.command", locale = state.locale()))
+                .reply_markup(LanguageKeyboard::markup())
+                .await?;
         },
     }
     Ok(HandleStatus::Handled)

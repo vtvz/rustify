@@ -19,6 +19,7 @@ impl EntityName for Entity {
 pub struct Model {
     pub id: String,
     pub name: String,
+    pub locale: Locale,
     pub removed_playlists: i64,
     pub removed_collection: i64,
     pub lyrics_checked: i64,
@@ -31,8 +32,6 @@ pub struct Model {
     pub updated_at: chrono::NaiveDateTime,
     pub cfg_check_profanity: bool,
     pub cfg_skip_tracks: bool,
-    pub cfg_not_english_alert: bool,
-    pub cfg_analysis_language: Option<String>,
     pub cfg_skippage_secs: i64,
     pub magic_playlist: Option<String>,
 }
@@ -56,6 +55,7 @@ impl ActiveModelBehavior for ActiveModel {
 pub enum Column {
     Id,
     Name,
+    Locale,
     RemovedPlaylists,
     RemovedCollection,
     LyricsChecked,
@@ -72,8 +72,6 @@ pub enum Column {
     UpdatedAt,
     CfgCheckProfanity,
     CfgSkipTracks,
-    CfgNotEnglishAlert,
-    CfgAnalysisLanguage,
     CfgSkippageSecs,
     MagicPlaylist,
 }
@@ -98,6 +96,7 @@ impl ColumnTrait for Column {
         match self {
             Self::Id => ColumnType::Text.def(),
             Self::Name => ColumnType::Text.def(),
+            Self::Locale => Locale::db_type(),
             Self::RemovedPlaylists => ColumnType::BigInteger.def(),
             Self::RemovedCollection => ColumnType::BigInteger.def(),
             Self::LyricsChecked => ColumnType::BigInteger.def(),
@@ -112,8 +111,6 @@ impl ColumnTrait for Column {
             Self::UpdatedAt => ColumnType::DateTime.def(),
             Self::CfgCheckProfanity => ColumnType::Boolean.def(),
             Self::CfgSkipTracks => ColumnType::Boolean.def(),
-            Self::CfgNotEnglishAlert => ColumnType::Boolean.def(),
-            Self::CfgAnalysisLanguage => ColumnType::Text.def().null(),
             Self::CfgSkippageSecs => ColumnType::BigInteger.def(),
             Self::MagicPlaylist => ColumnType::Text.def().null(),
         }
@@ -166,5 +163,54 @@ impl TryFrom<&str> for Status {
 impl Default for Status {
     fn default() -> Self {
         Self::None
+    }
+}
+
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
+#[sea_orm(rs_type = "String", db_type = "Text")]
+pub enum Locale {
+    #[sea_orm(string_value = "ru")]
+    Russian,
+    #[sea_orm(string_value = "en")]
+    English,
+}
+
+impl Locale {
+    pub fn language(&self) -> &str {
+        match self {
+            Self::Russian => "Russian",
+            Self::English => "English",
+        }
+    }
+}
+
+impl AsRef<str> for Locale {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::Russian => "ru",
+            Self::English => "en",
+        }
+    }
+}
+
+impl FromStr for Locale {
+    type Err = sea_orm::DbErr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from(s)
+    }
+}
+
+impl TryFrom<&str> for Locale {
+    type Error = sea_orm::DbErr;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::try_from_value(&value.to_owned())
+    }
+}
+
+impl Default for Locale {
+    fn default() -> Self {
+        Self::English
     }
 }

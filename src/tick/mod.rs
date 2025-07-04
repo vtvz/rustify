@@ -63,7 +63,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
 
                 let checked: anyhow::Result<_> = match res {
                     Err(mut err) => {
-                        error_handler::handle(&mut err, app, &user_id).await;
+                        error_handler::handle(&mut err, app, &user_id, "en").await;
 
                         Err(err)
                     },

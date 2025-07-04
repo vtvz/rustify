@@ -1,5 +1,5 @@
 use anyhow::{Context as _, bail};
-use indoc::formatdoc;
+use isolang::Language;
 use redis::AsyncCommands as _;
 use rustrict::Type;
 use teloxide::prelude::*;
@@ -58,9 +58,18 @@ pub async fn consume(
 
     let data: ProfanityCheckQueueTask = serde_json::from_str(&message)?;
 
-    let err_wrap = || async {
-        let user_state = app.user_state(&data.user_id).await?;
+    let user_state = app.user_state(&data.user_id).await;
 
+    let user_state = match user_state {
+        Ok(user_state) => user_state,
+        Err(mut err) => {
+            error_handler::handle(&mut err, app, &data.user_id, "en").await;
+
+            return Ok(());
+        },
+    };
+
+    let err_wrap = || async {
         let res = check(app, &user_state, &data.track)
             .await
             .context("Check lyrics failed")?;
@@ -78,7 +87,7 @@ pub async fn consume(
     match res {
         Ok(_) => {},
         Err(mut err) => {
-            error_handler::handle(&mut err, app, &data.user_id).await;
+            error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
         },
     }
 
@@ -114,14 +123,12 @@ pub async fn check(
     ret.provider = Some(hit.provider());
     ret.found = true;
 
-    /* NOTE: Disable for now
     if hit.language() != Language::Eng {
         tracing::trace!(language = %hit.language(), provider = %hit.provider(), "Track has non English lyrics");
 
         ret.skipped = true;
         return Ok(ret);
     }
-    */
 
     let check = profanity::Manager::check(hit.lyrics());
 
@@ -158,18 +165,12 @@ pub async fn check(
 
     let mut lines = bad_lines.len();
     let message = loop {
-        let message = formatdoc!(
-            r#"
-                Current song ({track_name}) <b>probably</b> has bad words:
-
-                {bad_lines}
-
-                <a href="{lyrics_link}">{lyrics_link_text}</a>
-
-                Press 'Ignore text 🙈' to never see this notification for <b>this song</b> again"#,
+        let message = t!(
+            "profanity-check.message",
+            locale = state.locale(),
             track_name = track.track_tg_link(),
             bad_lines = bad_lines[0..lines].join("\n"),
-            lyrics_link = hit.link(),
+            lyrics_link = hit.link().trim(),
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
         );
 
@@ -186,11 +187,19 @@ pub async fn check(
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            #[rustfmt::skip]
             vec![
-                vec![InlineButtons::Dislike(track.id().into()).into()],
-                vec![InlineButtons::Ignore(track.id().into()).into()],
-                vec![InlineButtons::Analyze(track.id().into()).into()],
+                vec![
+                    InlineButtons::Dislike(track.id().into())
+                        .into_inline_keyboard_button(state.locale()),
+                ],
+                vec![
+                    InlineButtons::Ignore(track.id().into())
+                        .into_inline_keyboard_button(state.locale()),
+                ],
+                vec![
+                    InlineButtons::Analyze(track.id().into())
+                        .into_inline_keyboard_button(state.locale()),
+                ],
             ],
         )))
         .await;
@@ -199,7 +208,7 @@ pub async fn check(
         Ok(_) => Ok(ret),
         Err(err) => {
             let mut err = err.into();
-            error_handler::handle(&mut err, app, state.user_id()).await;
+            error_handler::handle(&mut err, app, state.user_id(), state.locale()).await;
             Err(err)
         },
     }
