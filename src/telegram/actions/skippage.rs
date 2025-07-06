@@ -64,13 +64,16 @@ pub async fn handle(
     UserService::set_cfg_skippage_secs(app.db(), state.user_id(), duration).await?;
 
     if days > 0 {
-        SkippageService::update_skippage_entries_ttl(
-            &mut app.redis_conn().await?,
-            state.user_id(),
-            state.user().cfg_skippage_secs,
-            duration.num_seconds(),
-        )
-        .await?;
+        if state.user().cfg_skippage_secs > 0 {
+            SkippageService::update_skippage_entries_ttl(
+                &mut app.redis_conn().await?,
+                state.user_id(),
+                state.user().cfg_skippage_secs,
+                duration.num_seconds(),
+            )
+            .await?;
+        }
+
         app.bot()
             .send_message(
                 chat_id,
