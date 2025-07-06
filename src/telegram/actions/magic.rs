@@ -1,15 +1,17 @@
+use anyhow::Context;
 use futures::StreamExt;
 use rand::seq::SliceRandom;
 use rspotify::model::{Id, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
 use teloxide::payloads::{EditMessageTextSetters, SendMessageSetters};
 use teloxide::prelude::Requester;
-use teloxide::types::{ChatId, ParseMode};
+use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
 use crate::spotify::ShortPlaylist;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
+use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::user_service::UserService;
@@ -49,6 +51,103 @@ async fn get_playlist(
     Ok(playlist.into())
 }
 
+pub async fn handle_inline(
+    app: &'static App,
+    state: &UserState,
+    q: CallbackQuery,
+) -> anyhow::Result<()> {
+    let chat_id = q.from.id;
+
+    if !state.is_spotify_authed().await {
+        actions::register::send_register_invite(app, chat_id.into(), state.locale()).await?;
+
+        return Ok(());
+    }
+
+    let Some(spotify_user) = state.spotify_user().await? else {
+        return Ok(());
+    };
+
+    let message_id = q.message.clone().context("Message is empty")?.id();
+
+    let header = t!("magic.header", locale = state.locale());
+
+    app.bot()
+        .edit_message_text(
+            chat_id,
+            message_id,
+            t!("magic.generating", header = header, locale = state.locale()),
+        )
+        .parse_mode(ParseMode::Html)
+        .await?;
+
+    let playlist = generate_playlist(app, state, spotify_user).await;
+
+    match playlist {
+        Ok(playlist) => {
+            app.bot()
+                .edit_message_text(
+                    chat_id,
+                    message_id,
+                    t!(
+                        "magic.generated",
+                        header = header,
+                        url = playlist.url(),
+                        locale = state.locale()
+                    ),
+                )
+                .parse_mode(ParseMode::Html)
+                .link_preview_options(link_preview_small_top(playlist.url()))
+                .await?;
+
+            Ok(())
+        },
+
+        Err(err) => {
+            app.bot()
+                .edit_message_text(
+                    chat_id,
+                    message_id,
+                    t!("magic.failed", header = header, locale = state.locale()),
+                )
+                .parse_mode(ParseMode::Html)
+                .await?;
+
+            Err(err)
+        },
+    }
+}
+
+async fn generate_playlist(
+    app: &App,
+    state: &UserState,
+    spotify_user: rspotify::model::PrivateUser,
+) -> Result<ShortPlaylist, anyhow::Error> {
+    let spotify = state.spotify().await;
+    let mut saved_tracks = spotify.current_user_saved_tracks(None);
+    let mut track_ids = vec![];
+    while let Some(track) = saved_tracks.next().await {
+        let track = track?;
+        if let Some(track_id) = track.track.id {
+            track_ids.push(track_id.into())
+        }
+    }
+    track_ids.shuffle(&mut rand::rng());
+    let playlist = get_playlist(
+        state,
+        spotify_user.id,
+        state.user().magic_playlist.clone().unwrap_or("none".into()),
+    )
+    .await?;
+    UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id().id()).await?;
+    for chunk in track_ids.chunks(100) {
+        spotify
+            .playlist_add_items(playlist.id().clone(), chunk.iter().cloned(), None)
+            .await?;
+    }
+    Ok(playlist)
+}
+
 pub async fn handle(
     app: &'static App,
     state: &UserState,
@@ -60,61 +159,23 @@ pub async fn handle(
         return Ok(HandleStatus::Handled);
     }
 
-    let Some(spotify_user) = state.spotify_user().await? else {
-        return Ok(HandleStatus::Skipped);
-    };
-
     let header = t!("magic.header", locale = state.locale());
 
-    let m = app
-        .bot()
+    app.bot()
         .send_message(
             chat_id,
-            t!("magic.generating", header = header, locale = state.locale()),
-        )
-        .parse_mode(ParseMode::Html)
-        .await?;
-
-    let spotify = state.spotify().await;
-    let mut saved_tracks = spotify.current_user_saved_tracks(None);
-    let mut track_ids = vec![];
-    while let Some(track) = saved_tracks.next().await {
-        let track = track?;
-        if let Some(track_id) = track.track.id {
-            track_ids.push(track_id.into())
-        }
-    }
-
-    track_ids.shuffle(&mut rand::rng());
-
-    let playlist = get_playlist(
-        state,
-        spotify_user.id,
-        state.user().magic_playlist.clone().unwrap_or("none".into()),
-    )
-    .await?;
-
-    UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id().id()).await?;
-
-    for chunk in track_ids.chunks(100) {
-        spotify
-            .playlist_add_items(playlist.id().clone(), chunk.iter().cloned(), None)
-            .await?;
-    }
-
-    app.bot()
-        .edit_message_text(
-            m.chat.id,
-            m.id,
             t!(
-                "magic.generated",
+                "magic.description",
                 header = header,
-                url = playlist.url(),
                 locale = state.locale()
             ),
         )
         .parse_mode(ParseMode::Html)
-        .link_preview_options(link_preview_small_top(playlist.url()))
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            vec![vec![
+                InlineButtons::Magic.into_inline_keyboard_button(state.locale()),
+            ]],
+        )))
         .await?;
 
     Ok(HandleStatus::Handled)

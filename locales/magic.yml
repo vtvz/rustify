@@ -8,6 +8,16 @@ magic.header:
     <i>Magic Playlist™</i> ✨ состоит из ваших любимых песен в случайном порядке, которые будут удаляться из плейлиста по мере их прослушивания.
     Это позволяет вам слушать всё, что вы любите, по одному треку без повторений. Вам понравится! 😊
 
+magic.description:
+  en: |-
+    %{header}
+
+    👇 Click the button below to create or update <i>Magic Playlist™</i> ✨
+  ru: |-
+    %{header}
+
+    👇 Нажмите на кнопку ниже чтобы создать или обновить <i>Magic Playlist™</i> ✨
+
 magic.generating:
   en: |-
     %{header}
@@ -18,6 +28,12 @@ magic.generating:
 
     ⏳ Создаю <i>Magic Playlist™</i> ✨
 
+magic.button:
+  en: |-
+    ✨ Generate Magic Playlist™ ✨
+  ru: |-
+    ✨ Создать Magic Playlist™ ✨
+
 magic.generated:
   en: |-
     %{header}
@@ -27,3 +43,13 @@ magic.generated:
     %{header}
 
     ✨ Создан <a href="%{url}">Magic Playlist™</a> ✨
+
+magic.failed:
+  en: |-
+    %{header}
+
+    ❌ Something went wrong. Please try again later 🤷
+  ru: |-
+    %{header}
+
+    ❌ Что-то пошло не так. Попробуйте позже 🤷

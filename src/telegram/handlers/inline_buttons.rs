@@ -35,6 +35,9 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         InlineButtons::Analyze(id) => {
             actions::analyze::handle_inline(app, state, q, &id).await?;
         },
+        InlineButtons::Magic => {
+            actions::magic::handle_inline(app, state, q).await?;
+        },
     }
 
     Ok(())
