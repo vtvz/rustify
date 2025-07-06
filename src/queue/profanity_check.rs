@@ -12,6 +12,7 @@ use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::user_service::UserService;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
+use crate::utils::StringUtils;
 use crate::{error_handler, lyrics, profanity, telegram};
 
 #[derive(Serialize, Deserialize)]
@@ -174,7 +175,7 @@ pub async fn check(
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
         );
 
-        if message.len() <= telegram::MESSAGE_MAX_LEN {
+        if message.chars_len() <= telegram::MESSAGE_MAX_LEN {
             break message;
         }
 

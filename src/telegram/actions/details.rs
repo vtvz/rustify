@@ -18,6 +18,7 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
+use crate::utils::StringUtils;
 use crate::{profanity, telegram};
 
 pub async fn handle_current(
@@ -237,7 +238,7 @@ async fn common(
             lyrics_link_text = hit.link_text(lines == lyrics.len()),
         );
 
-        if message.len() <= telegram::MESSAGE_MAX_LEN {
+        if message.chars_len() <= telegram::MESSAGE_MAX_LEN {
             break message;
         }
 
