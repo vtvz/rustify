@@ -1,0 +1,119 @@
+_version: 2
+
+command.not-found:
+  en: |-
+    ❓ Command <code>%{command}</code> not found.
+
+    📋 There are commands available to you:
+  ru: |-
+    ❓ Команда <code>%{command}</code> не найдена.
+
+    📋 Вам доступны следующие команды:
+
+command.available-header:
+  en: |-
+    📋 Commands available to you:
+  ru: |-
+    📋 Доступные вам команды:
+
+command.help:
+  en: |-
+    Show this help
+  ru: |-
+    Показать эту справку
+
+command.start:
+  en: |-
+    Start
+  ru: |-
+    Старт
+
+command.keyboard:
+  en: |-
+    Show keyboard
+  ru: |-
+    Показать клавиатуру
+
+command.dislike:
+  en: |-
+    Dislike current track
+  ru: |-
+    Не нравится текущий трек
+
+command.like:
+  en: |-
+    Like current track
+  ru: |-
+    Нравится текущий трек
+
+command.cleanup:
+  en: |-
+    Clean up disliked tracks
+  ru: |-
+    Очистить нелюбимые треки
+
+command.details:
+  en: |-
+    Show details about the currently playing track
+  ru: |-
+    Показать детали о текущем треке
+
+command.stats:
+  en: |-
+    Show statistics about tracks
+  ru: |-
+    Показать статистику треков
+
+command.register:
+  en: |-
+    Log in to Spotify
+  ru: |-
+    Войти в Spotify
+
+command.toggle-track-skip:
+  en: |-
+    Toggle the setting for skipping disliked tracks
+  ru: |-
+    Переключить настройку пропуска нелюбимых треков
+
+command.toggle-profanity-check:
+  en: |-
+    Toggle the profanity check setting
+  ru: |-
+    Переключить настройку проверки нецензурной лексики
+
+command.magic:
+  en: |-
+    Create or refresh Magic playlist
+  ru: |-
+    Создать или обновить Magic Playlist™
+
+command.add-whitelist-word:
+  en: |-
+    Add word to whitelist
+  ru: |-
+    Добавить слово в белый список
+
+command.remove-whitelist-word:
+  en: |-
+    Remove word from whitelist
+  ru: |-
+    Удалить слово из белого списка
+
+command.list-whitelist-words:
+  en: |-
+    List words in whitelist
+  ru: |-
+    Показать слова в белом списке
+
+command.skippage:
+  en: |-
+    Allows you to skip tracks you've already listened to. Pass the number of days to remember
+  ru: |-
+    Позволяет пропускать треки, которые вы уже слушали. Укажите количество дней для запоминания
+
+command.language:
+  en: |-
+    Change language
+  ru: |-
+    Изменить язык

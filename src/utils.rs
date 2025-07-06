@@ -139,3 +139,22 @@ impl Clock {
         Utc::now().naive_local().round_subsecs(0)
     }
 }
+
+pub trait StringUtils {
+    fn chars_len(&self) -> usize;
+
+    fn chars_crop(&self, len: usize) -> String;
+}
+
+impl<T> StringUtils for T
+where
+    T: AsRef<str>,
+{
+    fn chars_len(&self) -> usize {
+        self.as_ref().chars().count()
+    }
+
+    fn chars_crop(&self, len: usize) -> String {
+        self.as_ref().chars().take(len).collect()
+    }
+}

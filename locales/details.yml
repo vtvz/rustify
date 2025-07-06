@@ -1,0 +1,93 @@
+_version: 2
+
+details.collecting-info:
+  en: >-
+    ⏳ Collecting information about the track 🔍
+  ru: >-
+    ⏳ Собираем информацию о треке 🔍
+
+details.minor:
+  en: >-
+    Minor
+  ru: >-
+    Минор
+
+details.major:
+  en: >-
+    Major
+  ru: >-
+    Мажор
+
+details.no-result:
+  en: >-
+    Something
+  ru: >-
+    Что-то
+
+details.header:
+  en: |-
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    🎶 <code>%{key} %{modality}</code> ⌛ %{tempo} BPM
+    🎻 Acoustic %{acousticness}%
+    🕺 Danceability %{danceability}%
+    ⚡️ Energy %{energy}%
+    🤐 Instrumentalness %{instrumentalness}%
+    🏟 Performed live %{liveness}%
+    🎤 Speech-like %{speechiness}%
+    ☺️ Positivity %{valence}%
+    👎 Disliked by %{disliked_by} people
+    🙈 Ignored by %{ignored_by} people
+  ru: |-
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    🎶 <code>%{key} %{modality}</code> ⌛ %{tempo} BPM
+    🎻 Акустичность %{acousticness}%
+    🕺 Подходит для танцев %{danceability}%
+    ⚡️ Энергичность %{energy}%
+    🤐 Без вокала %{instrumentalness}%
+    🏟 Исполнено вживую %{liveness}%
+    🎤 Речевая составляющая %{speechiness}%
+    ☺️ Позитивность %{valence}%
+    👎 Не нравится %{disliked_by} людям
+    🙈 Игнорируется %{ignored_by} людьми
+
+details.genres:
+  en: |-
+    🎭 Genres: %{genres}
+  ru: |-
+    🎭 Жанры: %{genres}
+
+details.no-lyrics:
+  en: |-
+    %{header}
+    %{genres_line}
+
+    <code>No lyrics found</code>
+  ru: |-
+    %{header}
+    %{genres_line}
+
+    <code>Текст песни не найден</code>
+
+details.with-lyrics:
+  en: |-
+    %{header}
+    🤬 Profanity <code>%{profanity}</code>
+    🌐 Language: %{language}
+    %{genres_line}
+
+    %{lyrics}
+
+    <a href="%{lyrics_link}">%{lyrics_link_text}</a>
+  ru: |-
+    %{header}
+    🤬 Ненормативная лексика <code>%{profanity}</code>
+    🌐 Язык: %{language}
+    %{genres_line}
+
+    %{lyrics}
+
+    <a href="%{lyrics_link}">%{lyrics_link_text}</a>

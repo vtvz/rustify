@@ -2,7 +2,6 @@ use std::collections::HashSet;
 
 use anyhow::anyhow;
 use convert_case::{Case, Casing};
-use indoc::formatdoc;
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -19,6 +18,7 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
+use crate::utils::StringUtils;
 use crate::{profanity, telegram};
 
 pub async fn handle_current(
@@ -31,7 +31,7 @@ pub async fn handle_current(
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(message) => {
             app.bot()
-                .send_message(*chat_id, message.to_string())
+                .send_message(*chat_id, message.localize(state.locale()))
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -77,23 +77,26 @@ async fn common(
 ) -> anyhow::Result<HandleStatus> {
     let m = app
         .bot()
-        .send_message(*chat_id, "⏳ Collecting information about track 🔍...")
+        .send_message(
+            *chat_id,
+            t!("details.collecting-info", locale = state.locale()),
+        )
         .await?;
 
     let spotify = state.spotify().await;
 
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
-    let mut keyboard = InlineButtons::from_track_status(status, track.id());
+    let mut keyboard = InlineButtons::from_track_status(status, track.id(), state.locale());
 
     // NOTE: It works because I have old token I need to cherish
     #[allow(deprecated)]
     let features = spotify.track_features(track.raw_id().clone()).await?;
 
     let modality = match features.mode {
-        Modality::Minor => "Minor",
-        Modality::Major => "Major",
-        Modality::NoResult => "Something",
+        Modality::Minor => t!("details.minor", locale = state.locale()),
+        Modality::Major => t!("details.major", locale = state.locale()),
+        Modality::NoResult => t!("details.no-result", locale = state.locale()),
     };
 
     let key = match features.key {
@@ -164,48 +167,40 @@ async fn common(
     let genres_line = if genres.is_empty() {
         "".into()
     } else {
-        format!("🎭 Genres: {}\n", genres.iter().join(", "))
+        t!(
+            "details.genres",
+            genres = genres.iter().join(", "),
+            locale = state.locale()
+        )
     };
 
-    let header: String = formatdoc! {
-        "
-            {track_name}
-            Album: {album_name}
-
-            🎶 <code>{key} {modality}</code> ⌛ {:.0} BPM
-            🎻 Acoustic {:.0}%
-            🕺 Suitable for dancing {:.0}%
-            ⚡️ Energetic {:.0}%
-            🤐 Without vocal {:.0}%
-            🏟 Performed live {:.0}%
-            🎤 Speech-like {:.0}%
-            ☺️ Positiveness {:.0}%
-            👎 Disliked by {disliked_by} people
-            🙈 Ignored by {ignored_by} people
-        ",
-        features.tempo,
-        features.acousticness * 100.0,
-        features.danceability * 100.0,
-        features.energy * 100.0,
-        features.instrumentalness * 100.0,
-        features.liveness * 100.0,
-        features.speechiness * 100.0,
-        features.valence * 100.0,
+    let header = t!(
+        "details.header",
+        locale = state.locale(),
+        key = key,
+        modality = modality,
+        tempo = features.tempo,
+        acousticness = (features.acousticness * 100.0).round() as u64,
+        danceability = (features.danceability * 100.0).round() as u64,
+        energy = (features.energy * 100.0).round() as u64,
+        instrumentalness = (features.instrumentalness * 100.0).round() as u64,
+        liveness = (features.liveness * 100.0).round() as u64,
+        speechiness = (features.speechiness * 100.0).round() as u64,
+        valence = (features.valence * 100.0).round() as u64,
         track_name = track.track_tg_link(),
         album_name = track.album_tg_link(),
-    };
+        disliked_by = disliked_by,
+        ignored_by = ignored_by,
+    );
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
             .edit_message_text(
                 *chat_id,
                 m.id,
-                formatdoc!(
-                    "
-                    {header}
-                    {genres_line}
-                    <code>No lyrics found</code>
-                ",
+                t!(
+                    "details.no-lyrics",
+                    locale = state.locale(),
                     header = header.trim(),
                     genres_line = genres_line,
                 ),
@@ -231,16 +226,9 @@ async fn common(
             return Err(anyhow!("Issues with lyrics"));
         }
 
-        let message = formatdoc!(
-            r#"
-                {header}
-                🤬 Profanity <code>{profanity}</code>
-                🌐 Language: {language}
-                {genres_line}
-                {lyrics}
-
-                <a href="{lyrics_link}">{lyrics_link_text}</a>
-            "#,
+        let message = t!(
+            "details.with-lyrics",
+            locale = state.locale(),
             header = header.trim(),
             profanity = typ,
             language = hit.language(),
@@ -250,7 +238,7 @@ async fn common(
             lyrics_link_text = hit.link_text(lines == lyrics.len()),
         );
 
-        if message.len() <= telegram::MESSAGE_MAX_LEN {
+        if message.chars_len() <= telegram::MESSAGE_MAX_LEN {
             break message;
         }
 
@@ -258,7 +246,10 @@ async fn common(
     };
 
     if app.analyze().is_some() {
-        keyboard.push(vec![InlineButtons::Analyze(track.id().to_owned()).into()]);
+        keyboard.push(vec![
+            InlineButtons::Analyze(track.id().to_owned())
+                .into_inline_keyboard_button(state.locale()),
+        ]);
     }
 
     app.bot()

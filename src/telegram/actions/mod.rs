@@ -4,6 +4,7 @@ pub mod details;
 pub mod dislike;
 pub mod global_stats;
 pub mod ignore;
+pub mod language;
 pub mod like;
 pub mod magic;
 pub mod register;

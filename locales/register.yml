@@ -1,0 +1,25 @@
+_version: 2
+
+register.error:
+  en: |-
+    Cannot retrieve token. Code is probably broken. Run /register command and try again please
+  ru: |-
+    Не удается получить токен. Код, вероятно, сломан. Выполните команду /register и попробуйте снова
+
+register.success:
+  en: |-
+    Yeah! You registered successfully!
+  ru: |-
+    Отлично! Вы успешно зарегистрировались!
+
+register.invite:
+  en: |-
+    Click this button below and after authentication copy URL from browser and send me
+  ru: |-
+    Нажмите на кнопку ниже, и после аутентификации скопируйте URL из браузера и отправьте мне
+
+register.button:
+  en: |-
+    Login with Spotify
+  ru: |-
+    Войти через Spotify

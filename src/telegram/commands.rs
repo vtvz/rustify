@@ -1,62 +1,118 @@
+use std::collections::HashMap;
 use std::fmt::Formatter;
+use std::sync::RwLock;
 
-use teloxide::utils::command::BotCommands;
+use strum_macros::EnumIter;
+use teloxide::types::BotCommand;
+use teloxide::utils::command::{BotCommands, CommandDescription, CommandDescriptions};
 
-#[derive(BotCommands, PartialEq, Eq, Debug)]
-#[command(rename_rule = "snake_case", parse_with = "split")]
+#[derive(BotCommands, PartialEq, Eq, Debug, EnumIter)]
+#[command(rename_rule = "snake_case")]
 pub enum UserCommand {
-    #[command(description = "Show this help")]
+    #[command(description = "command.help")]
     Help,
 
-    #[command(description = "Start")]
+    #[command(description = "command.start")]
     Start,
-    #[command(description = "Show keyboard")]
+
+    #[command(description = "command.language")]
+    Language,
+
+    #[command(description = "command.keyboard")]
     Keyboard,
-    #[command(description = "Dislike current track")]
+    #[command(description = "command.dislike")]
     Dislike,
-    #[command(description = "Like current track")]
+    #[command(description = "command.like")]
     Like,
-    #[command(description = "Delete disliked tracks from your playlists")]
+    #[command(description = "command.cleanup")]
     Cleanup,
-    #[command(description = "Show details about currently playing track")]
+    #[command(description = "command.details")]
     Details,
-    #[command(description = "Show statistics about disliked tracks")]
+    #[command(description = "command.stats")]
     Stats,
-    #[command(description = "Login to spotify")]
+    #[command(description = "command.register")]
     Register,
 
-    #[command(description = "Toggle setting of skipping disliked tracks")]
+    #[command(description = "command.toggle-track-skip")]
     ToggleTrackSkip,
-    #[command(description = "Toggle setting of profanity check")]
+    #[command(description = "command.toggle-profanity-check")]
     ToggleProfanityCheck,
-    #[command(description = "Set language for analysis results")]
-    SetAnalysisLanguage { language: String },
 
-    #[command(description = "Create or refresh Magic playlist")]
+    #[command(description = "command.magic")]
     Magic,
 
     #[command(
-        description = "Add word to whitelist",
+        description = "command.add-whitelist-word",
         rename = "add_word_to_whitelist"
     )]
     AddWhitelistWord { word: String },
 
     #[command(
-        description = "Remove word from whitelist",
+        description = "command.remove-whitelist-word",
         rename = "remove_word_from_whitelist"
     )]
     RemoveWhitelistWord { word: String },
 
     #[command(
-        description = "List words in whitelist",
+        description = "command.list-whitelist-words",
         rename = "list_words_in_whitelist"
     )]
     ListWhitelistWords,
 
-    #[command(
-        description = "Allows you to skip tracks you've already listened. Pass days to remember"
-    )]
+    #[command(description = "command.skippage")]
     Skippage { days: String },
+}
+
+impl UserCommand {
+    pub fn localized_bot_commands(locale: &str) -> Vec<BotCommand> {
+        let commands = Self::bot_commands();
+
+        commands
+            .into_iter()
+            .map(|command| {
+                let description = t!(command.description.clone(), locale = locale);
+                command.description(description.to_string())
+            })
+            .collect()
+    }
+
+    pub fn localized_descriptions(locale: &str) -> CommandDescriptions {
+        lazy_static::lazy_static! {
+            static ref CACHE: RwLock<HashMap<String, &'static [CommandDescription<'static>]>> = RwLock::new(HashMap::new());
+        }
+
+        let entry = { CACHE.read().expect("Lock is poisoned").get(locale).copied() };
+
+        match entry {
+            Some(descriptions) => CommandDescriptions::new(descriptions),
+
+            None => {
+                let descriptions: Vec<_> = Self::bot_commands()
+                    .into_iter()
+                    .map(|command| {
+                        let description = t!(&command.description, locale = locale);
+                        let command_str = Box::leak(command.command.into_boxed_str());
+                        let description_str = Box::leak(description.to_string().into_boxed_str());
+                        CommandDescription {
+                            prefix: "",
+                            command: command_str,
+                            aliases: &[],
+                            description: description_str,
+                        }
+                    })
+                    .collect();
+
+                let descriptions_static = Box::leak(descriptions.into_boxed_slice());
+
+                CACHE
+                    .write()
+                    .expect("Lock is poisoned")
+                    .insert(locale.into(), descriptions_static);
+
+                CommandDescriptions::new(descriptions_static)
+            },
+        }
+    }
 }
 
 pub enum UserCommandDisplay {
@@ -70,13 +126,13 @@ pub enum UserCommandDisplay {
     Register,
     ToggleTrackSkip,
     ToggleProfanityCheck,
-    SetAnalysisLanguage,
     Help,
     AddWhitelistWord,
     RemoveWhitelistWord,
     ListWhitelistWords,
     Magic,
     Skippage,
+    Language,
 }
 
 impl std::fmt::Display for UserCommandDisplay {
@@ -92,13 +148,13 @@ impl std::fmt::Display for UserCommandDisplay {
             Self::Register => "register",
             Self::ToggleTrackSkip => "toggle_track_skip",
             Self::ToggleProfanityCheck => "toggle_profanity_check",
-            Self::SetAnalysisLanguage => "set_analysis_language",
             Self::Help => "help",
             Self::AddWhitelistWord => "add_word_to_whitelist",
             Self::RemoveWhitelistWord => "remove_word_from_whitelist",
             Self::ListWhitelistWords => "list_words_in_whitelist",
             Self::Magic => "magic",
             Self::Skippage => "skippage",
+            Self::Language => "language",
         };
 
         f.write_str(string)
@@ -160,13 +216,13 @@ mod tests {
             UserCommand::Register => UserCommandDisplay::Register,
             UserCommand::ToggleTrackSkip => UserCommandDisplay::ToggleTrackSkip,
             UserCommand::ToggleProfanityCheck => UserCommandDisplay::ToggleProfanityCheck,
-            UserCommand::SetAnalysisLanguage { .. } => UserCommandDisplay::SetAnalysisLanguage,
             UserCommand::Help => UserCommandDisplay::Help,
             UserCommand::AddWhitelistWord { .. } => UserCommandDisplay::AddWhitelistWord,
             UserCommand::RemoveWhitelistWord { .. } => UserCommandDisplay::RemoveWhitelistWord,
             UserCommand::ListWhitelistWords => UserCommandDisplay::ListWhitelistWords,
             UserCommand::Magic => UserCommandDisplay::Magic,
             UserCommand::Skippage { .. } => UserCommandDisplay::Skippage,
+            UserCommand::Language => UserCommandDisplay::Language,
         };
     }
 

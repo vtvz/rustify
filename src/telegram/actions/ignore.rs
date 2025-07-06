@@ -1,5 +1,4 @@
 use anyhow::Context as _;
-use indoc::formatdoc;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
@@ -29,21 +28,17 @@ pub async fn handle_inline(
     TrackStatusService::set_status(app.db(), state.user_id(), track_id, TrackStatus::Ignore)
         .await?;
 
-    let keyboard = InlineButtons::from_track_status(TrackStatus::Ignore, track.id());
+    let keyboard =
+        InlineButtons::from_track_status(TrackStatus::Ignore, track.id(), state.locale());
 
     app.bot()
         .edit_message_text(
             q.from.id,
             q.message.context("Message is empty")?.id(),
-            formatdoc!(
-                "
-                    Bad words of {} will be forever ignored
-
-                    If you change your mind press 'Dislike 👎'
-
-                    Do not forget you can send link to song to find current status
-                ",
-                track.track_tg_link()
+            t!(
+                "actions.ignore",
+                track_link = track.track_tg_link(),
+                locale = state.locale()
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))

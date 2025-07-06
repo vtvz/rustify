@@ -1,0 +1,25 @@
+_version: 2
+
+settings.profanity-check-on:
+  en: |-
+    🚫 Tracks will be checked for profanity content
+  ru: |-
+    🚫 Треки будут проверяться на нецензурный контент
+
+settings.profanity-check-off:
+  en: |-
+    ✅ Tracks won't be checked for profanity content
+  ru: |-
+    ✅ Треки не будут проверяться на нецензурный контент
+
+settings.skip-on:
+  en: |-
+    ⏭️ Disliked tracks will be skipped
+  ru: |-
+    ⏭️ Нелюбимые треки будут пропускаться
+
+settings.skip-off:
+  en: |-
+    ▶️ Disliked tracks won't be skipped
+  ru: |-
+    ▶️ Нелюбимые треки не будут пропускаться

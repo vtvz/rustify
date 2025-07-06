@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
-use async_openai::config::OpenAIConfig;
+use async_openai::config::{OPENAI_API_BASE, OpenAIConfig};
 use indoc::formatdoc;
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
@@ -11,10 +11,10 @@ use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
 use teloxide::dispatching::dialogue::RedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
-use tokio::sync::RwLock;
 
 use crate::metrics::influx::InfluxClient;
 use crate::user::UserState;
+use crate::user_service::UserService;
 use crate::{cache, lyrics, profanity, spotify, whitelist};
 
 pub struct App {
@@ -31,7 +31,6 @@ pub struct App {
 
 pub struct AnalyzeConfig {
     openai_client: async_openai::Client<OpenAIConfig>,
-    default_language: String,
     model: String,
     prompt: String,
 }
@@ -39,10 +38,6 @@ pub struct AnalyzeConfig {
 impl AnalyzeConfig {
     pub fn openai_client(&self) -> &async_openai::Client<OpenAIConfig> {
         &self.openai_client
-    }
-
-    pub fn default_language(&self) -> &str {
-        &self.default_language
     }
 
     pub fn model(&self) -> &str {
@@ -207,7 +202,9 @@ async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
         return Ok(None);
     };
 
-    let openai_config = OpenAIConfig::new().with_api_key(api_key);
+    let openai_config = OpenAIConfig::new()
+        .with_api_key(api_key)
+        .with_api_base(dotenv::var("OPENAI_API_BASE").unwrap_or(OPENAI_API_BASE.into()));
 
     let http_client = reqwest::ClientBuilder::new()
         .timeout(Duration::from_secs(20))
@@ -218,7 +215,6 @@ async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
 
     let config = AnalyzeConfig {
         openai_client,
-        default_language: dotenv::var("ANALYZE_DEFAULT_LANGUAGE").unwrap_or("English".into()),
         model: dotenv::var("OPENAI_API_MODEL").unwrap_or("gpt-4o".into()),
         prompt: formatdoc!("
             Provide a detailed description, meaning, and storyline of the following song lyrics: \"{{song_name}}\" and answer these questions:
@@ -229,7 +225,7 @@ async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
             4. Does this song reference any form of occultism or spiritism? If yes, explain.
             5. Are there any mentions of violence in this song? If yes, describe them.
 
-            Reply in {{lang}} language and {{lang}} only. Respond with no formatting. There are lyrics:
+            Reply in {{lang}} language and {{lang}} only. Keep response within 2000 characters. Respond with no formatting. Here are the lyrics:
 
             {{lyrics}}
         ")
@@ -278,13 +274,8 @@ impl App {
 
     pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {
         let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
-        let spotify = RwLock::new(spotify);
-
-        let state = UserState {
-            spotify,
-            spotify_user: Default::default(),
-            user_id: user_id.to_string(),
-        };
+        let user = UserService::obtain_by_id(self.db(), user_id).await?;
+        let state = UserState::new(user, spotify);
 
         Ok(state)
     }

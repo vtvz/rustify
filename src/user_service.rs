@@ -153,7 +153,7 @@ impl UserService {
         let user = Self::query(Some(id), None).one(db).await?;
 
         let user = match user {
-            Some(spotify_auth) => spotify_auth,
+            Some(user) => user,
             None => {
                 UserActiveModel {
                     id: Set(id.to_owned()),
@@ -198,14 +198,14 @@ impl UserService {
         Ok(res)
     }
 
-    pub async fn set_cfg_analysis_language(
+    pub async fn set_locale(
         db: &impl ConnectionTrait,
         id: &str,
-        lang: &str,
+        locale: UserLocale,
     ) -> anyhow::Result<UpdateResult> {
         let res = UserEntity::update_many()
             .filter(UserColumn::Id.eq(id))
-            .col_expr(UserColumn::CfgAnalysisLanguage, Expr::value(lang))
+            .col_expr(UserColumn::Locale, Expr::value(locale))
             .exec(db)
             .await?;
 

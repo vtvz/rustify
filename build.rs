@@ -14,6 +14,7 @@ fn emit_git() {
 
 fn main() {
     println!("cargo:rerun-if-changed=migrations");
+    println!("cargo:rerun-if-changed=locales");
 
     emit_git();
 }

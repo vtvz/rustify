@@ -9,6 +9,7 @@ use crate::app::App;
 use crate::entity::prelude::UserStatus;
 use crate::spotify;
 use crate::spotify_auth_service::SpotifyAuthService;
+use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user_service::UserService;
 
@@ -65,6 +66,7 @@ pub async fn spotify_resp_error(
     err: &mut anyhow::Error,
     app: &App,
     user_id: &str,
+    locale: &str,
 ) -> anyhow::Result<ErrorHandlingResult> {
     let Some(response) = spotify::SpotifyError::extract_response(err) else {
         return Ok(ErrorHandlingResult::unhandled());
@@ -109,9 +111,12 @@ pub async fn spotify_resp_error(
                         app.bot()
                             .send_message(
                                 ChatId(user_id.parse()?),
-                                "Your Spotify accont says 'Spotify is unavailable in this country'.\nPlease fix this issue and relogin by calling /register command to continue using Rustify"
+                                t!(
+                                    "error.unavailable-in-country",
+                                    command = UserCommandDisplay::Register
+                                ),
                             )
-                            .reply_markup(StartKeyboard::markup())
+                            .reply_markup(StartKeyboard::markup(locale))
                             .await?;
 
                         return Ok(ErrorHandlingResult::handled_notified());
@@ -130,12 +135,13 @@ pub async fn spotify_resp_error(
                     app.bot()
                         .send_message(
                             ChatId(user_id.parse()?),
-                            format!(
-                                "Failed to Authenticate user to Spotify. Please relogin by calling /register command.\n\n<pre>{}</pre>",
-                                serr.error_description
+                            t!(
+                                "error.spotify-auth-failed",
+                                command = UserCommandDisplay::Register,
+                                error = serr.error_description
                             ),
                         )
-                        .reply_markup(StartKeyboard::markup())
+                        .reply_markup(StartKeyboard::markup(locale))
                         .await?;
 
                     return Ok(ErrorHandlingResult::handled_notified());
@@ -156,6 +162,7 @@ pub async fn spotify_client_error(
     err: &mut anyhow::Error,
     app: &App,
     user_id: &str,
+    locale: &str,
 ) -> anyhow::Result<ErrorHandlingResult> {
     let Some(err) = err.downcast_mut::<rspotify::ClientError>() else {
         return Ok(ErrorHandlingResult::unhandled());
@@ -169,9 +176,12 @@ pub async fn spotify_client_error(
             app.bot()
                 .send_message(
                     ChatId(user_id.parse()?),
-                    "Relogin to Spotify by calling /register command",
+                    t!(
+                        "error.spotify-invalid-token",
+                        command = UserCommandDisplay::Register
+                    ),
                 )
-                .reply_markup(StartKeyboard::markup())
+                .reply_markup(StartKeyboard::markup(locale))
                 .await?;
 
             return Ok(ErrorHandlingResult::handled_notified());
@@ -187,13 +197,14 @@ async fn handle_inner(
     err: &mut anyhow::Error,
     app: &App,
     user_id: &str,
+    locale: &str,
 ) -> anyhow::Result<ErrorHandlingResult> {
-    let res = spotify_resp_error(err, app, user_id).await?;
+    let res = spotify_resp_error(err, app, user_id, locale).await?;
     if res.handled {
         return Ok(res);
     }
 
-    let res = spotify_client_error(err, app, user_id).await?;
+    let res = spotify_client_error(err, app, user_id, locale).await?;
     if res.handled {
         return Ok(res);
     }
@@ -209,8 +220,13 @@ async fn handle_inner(
 }
 
 #[tracing::instrument(skip_all, fields(user_id))]
-pub async fn handle(err: &mut anyhow::Error, app: &App, user_id: &str) -> ErrorHandlingResult {
-    let res = handle_inner(err, app, user_id).await;
+pub async fn handle(
+    err: &mut anyhow::Error,
+    app: &App,
+    user_id: &str,
+    locale: &str,
+) -> ErrorHandlingResult {
+    let res = handle_inner(err, app, user_id, locale).await;
 
     match res {
         Ok(res) => res,

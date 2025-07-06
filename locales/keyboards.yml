@@ -1,0 +1,37 @@
+_version: 2
+
+start-keyboard.dislike:
+  en: |-
+    👎 Dislike playing track
+  ru: |-
+    👎 Не нравится трек
+
+start-keyboard.stats:
+  en: |-
+    📈 Stats
+  ru: |-
+    📈 Статистика
+
+start-keyboard.details:
+  en: |-
+    🎤 Details of track
+  ru: |-
+    🎤 Детали трека
+
+language.change:
+  en: |-
+    English 🇺🇸
+  ru: |-
+    Русский 🇷🇺
+
+language.changed:
+  en: |-
+    Your language is now English 🇺🇸
+  ru: |-
+    Теперь Ваш язык Русский 🇷🇺
+
+language.command:
+  en: |-
+    Choose your language
+  ru: |-
+    Выберите язык

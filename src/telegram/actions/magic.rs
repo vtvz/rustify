@@ -1,5 +1,4 @@
 use futures::StreamExt;
-use indoc::formatdoc;
 use rand::seq::SliceRandom;
 use rspotify::model::{Id, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
@@ -56,7 +55,7 @@ pub async fn handle(
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, chat_id).await?;
+        actions::register::send_register_invite(app, chat_id, state.locale()).await?;
 
         return Ok(HandleStatus::Handled);
     }
@@ -65,17 +64,13 @@ pub async fn handle(
         return Ok(HandleStatus::Skipped);
     };
 
-    let header = formatdoc!(
-        "
-            <i>Magic Playlist™</i> ✨ is made of your shuffled favorite songs that will be removed from this playlist as you listen to them. \
-            This allows you to listen to everything you love one by one without any repetition. You'll love it! 😊"
-    );
+    let header = t!("magic.header", locale = state.locale());
 
     let m = app
         .bot()
         .send_message(
             chat_id,
-            format!("{header}\n⏳ Generating <i>Magic Playlist™</i> ✨"),
+            t!("magic.generating", header = header, locale = state.locale()),
         )
         .parse_mode(ParseMode::Html)
         .await?;
@@ -92,11 +87,10 @@ pub async fn handle(
 
     track_ids.shuffle(&mut rand::rng());
 
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
     let playlist = get_playlist(
         state,
         spotify_user.id,
-        user.magic_playlist.unwrap_or("none".into()),
+        state.user().magic_playlist.clone().unwrap_or("none".into()),
     )
     .await?;
 
@@ -112,12 +106,11 @@ pub async fn handle(
         .edit_message_text(
             m.chat.id,
             m.id,
-            formatdoc!(
-                r#"
-                    {header}
-
-                    ✨ Created <a href="{}">Magic Playlist™</a> ✨"#,
-                playlist.url()
+            t!(
+                "magic.generated",
+                header = header,
+                url = playlist.url(),
+                locale = state.locale()
             ),
         )
         .parse_mode(ParseMode::Html)

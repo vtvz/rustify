@@ -1,0 +1,19 @@
+_version: 2
+
+inline-buttons.dislike:
+  en: |-
+    Dislike 👎
+  ru: |-
+    Не нравится 👎
+
+inline-buttons.ignore:
+  en: |-
+    Ignore text 🙈
+  ru: |-
+    Игнорировать текст 🙈
+
+inline-buttons.analyze:
+  en: |-
+    Analyze text 🔍
+  ru: |-
+    Анализировать текст 🔍

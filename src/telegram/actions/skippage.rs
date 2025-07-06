@@ -1,5 +1,4 @@
 use chrono::Duration;
-use indoc::formatdoc;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::Requester;
 use teloxide::types::{ChatId, ParseMode};
@@ -20,43 +19,32 @@ pub async fn handle(
     days: String,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, chat_id).await?;
+        actions::register::send_register_invite(app, chat_id, state.locale()).await?;
 
         return Ok(HandleStatus::Handled);
     }
 
     let days = days.parse::<i64>();
-    let user = UserService::obtain_by_id(app.db(), state.user_id()).await?;
 
     let Ok(days) = days else {
-        let days = Duration::seconds(user.cfg_skippage_secs).num_days();
+        let days = Duration::seconds(state.user().cfg_skippage_secs).num_days();
         let days_fmt = match days {
-            0 => "disabled".to_owned(),
-            1 => "1 day".to_owned(),
-            days => format!("{} days", days),
+            0 => t!("skippage.main.disabled", locale = state.locale()),
+            1 => t!("skippage.main.one", locale = state.locale()),
+            days => t!("skippage.main.more", locale = state.locale(), days = days),
         };
 
         app.bot()
             .send_message(
                 chat_id,
-                formatdoc!(
-                    "
-                        ⏭️ <i>Skippage™</i> allows you to skip tracks you've listened to for a set amount of days. \
-                        It makes your music experience more diverse. <b>Try it!</b>
-
-                        Pass number of days to remember played tracks like that:
-                        <code>/{} 7</code>
-                        Pass zero to disable this function:
-                        <code>/{} 0</code>
-
-                        Current setting: <b>{}</b>
-                    ",
-                    UserCommandDisplay::Skippage,
-                    UserCommandDisplay::Skippage,
-                    days_fmt,
+                t!(
+                    "skippage.main",
+                    locale = state.locale(),
+                    command = UserCommandDisplay::Skippage,
+                    setting = days_fmt,
                 ),
             )
-            .reply_markup(StartKeyboard::markup())
+            .reply_markup(StartKeyboard::markup(state.locale()))
             .parse_mode(ParseMode::Html)
             .await?;
 
@@ -65,7 +53,7 @@ pub async fn handle(
 
     if !(0..=365).contains(&days) {
         app.bot()
-            .send_message(chat_id, "Number should be positive and 365 or less")
+            .send_message(chat_id, t!("skippage.validation", locale = state.locale()))
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -76,23 +64,26 @@ pub async fn handle(
     UserService::set_cfg_skippage_secs(app.db(), state.user_id(), duration).await?;
 
     if days > 0 {
-        SkippageService::update_skippage_entries_ttl(
-            &mut app.redis_conn().await?,
-            state.user_id(),
-            user.cfg_skippage_secs,
-            duration.num_seconds(),
-        )
-        .await?;
+        if state.user().cfg_skippage_secs > 0 {
+            SkippageService::update_skippage_entries_ttl(
+                &mut app.redis_conn().await?,
+                state.user_id(),
+                state.user().cfg_skippage_secs,
+                duration.num_seconds(),
+            )
+            .await?;
+        }
+
         app.bot()
             .send_message(
                 chat_id,
-                format!("⏭️ All tracks you've listened within <b>{days} days</b> will be skipped"),
+                t!("skippage.updated", locale = state.locale(), days = days),
             )
             .parse_mode(ParseMode::Html)
             .await?;
     } else {
         app.bot()
-            .send_message(chat_id, "⏭️ <i>Skippage™</i> is disabled")
+            .send_message(chat_id, t!("skippage.disabled", locale = state.locale()))
             .parse_mode(ParseMode::Html)
             .await?;
     }

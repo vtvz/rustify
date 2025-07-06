@@ -6,7 +6,6 @@ use super::HandleStatus;
 use crate::app::App;
 use crate::telegram::actions;
 use crate::telegram::commands::AdminCommand;
-use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
 
 pub async fn handle(
@@ -36,7 +35,6 @@ pub async fn handle(
                         .global_description("Admin Commands available to you")
                         .to_string(),
                 )
-                .reply_markup(StartKeyboard::markup())
                 .await?;
         },
         AdminCommand::Whitelist(action, user_id) => {
@@ -53,7 +51,6 @@ pub async fn handle(
                         .map(|config| config.prompt())
                         .unwrap_or("Analyze did not configured"),
                 )
-                .reply_markup(StartKeyboard::markup())
                 .await?;
         },
     }
