@@ -32,6 +32,19 @@ impl UserWordWhitelistService {
         Ok(ok_words)
     }
 
+    pub async fn count_ok_words_for_user(
+        db: &impl ConnectionTrait,
+        user_id: &str,
+    ) -> anyhow::Result<u64> {
+        let count = UserWordWhitelistEntity::find()
+            .select_only()
+            .filter(UserWordWhitelistColumn::UserId.eq(user_id))
+            .count(db)
+            .await?;
+
+        Ok(count)
+    }
+
     pub async fn add_ok_word_for_user(
         db: &impl ConnectionTrait,
         user_id: String,

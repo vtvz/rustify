@@ -9,6 +9,7 @@ use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
+use crate::utils::StringUtils;
 
 pub async fn handle_add_word(
     app: &App,
@@ -16,13 +17,38 @@ pub async fn handle_add_word(
     chat_id: ChatId,
     word: String,
 ) -> anyhow::Result<HandleStatus> {
-    if word.is_empty() {
-        let message = t!(
-            "user-word-whitelist.add-provide-word",
-            locale = state.locale(),
-            command = UserCommandDisplay::AddWhitelistWord,
-        );
+    let count_words =
+        UserWordWhitelistService::count_ok_words_for_user(app.db(), state.user_id()).await?;
 
+    let validate = |word: &str| {
+        if count_words >= 20 {
+            return Some(t!(
+                "user-word-whitelist.limit-amount",
+                locale = state.locale(),
+                limit = 20
+            ));
+        }
+
+        if word.is_empty() {
+            return Some(t!(
+                "user-word-whitelist.add-provide-word",
+                locale = state.locale(),
+                command = UserCommandDisplay::AddWhitelistWord,
+            ));
+        }
+
+        if word.chars_len() > 16 {
+            return Some(t!(
+                "user-word-whitelist.limit-length",
+                locale = state.locale(),
+                limit = 16,
+            ));
+        }
+
+        None
+    };
+
+    if let Some(message) = validate(&word) {
         app.bot()
             .send_message(chat_id, message)
             .reply_markup(StartKeyboard::markup(state.locale()))

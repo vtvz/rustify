@@ -6,6 +6,18 @@ user-word-whitelist.add-provide-word:
   ru: |-
     📝 Укажите слово <code>/%{command} ваше-слово</code>
 
+user-word-whitelist.limit-length:
+  en: |-
+    ❌ Word must not be longer than %{limit} characters
+  ru: |-
+    ❌ Слово должно быть не длиннее %{limit} символов
+
+user-word-whitelist.limit-amount:
+  en: |-
+    ❌ You can add no more than %{limit} words
+  ru: |-
+    ❌ Вы можете добавить не больше %{limit} слов
+
 user-word-whitelist.word-added:
   en: |-
     ✅ Word <code>'%{word}'</code> added to whitelist
