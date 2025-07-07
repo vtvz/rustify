@@ -12,6 +12,7 @@ pub enum InlineButtons {
     Ignore(String),
     Analyze(String),
     Magic,
+    SkippageEnable(bool),
 }
 
 impl InlineButtons {
@@ -21,6 +22,13 @@ impl InlineButtons {
             InlineButtons::Ignore(_) => t!("inline-buttons.ignore", locale = locale),
             InlineButtons::Analyze(_) => t!("inline-buttons.analyze", locale = locale),
             InlineButtons::Magic => t!("magic.button", locale = locale),
+            InlineButtons::SkippageEnable(to_enable) => {
+                if *to_enable {
+                    t!("skippage.enable-button", locale = locale)
+                } else {
+                    t!("skippage.disable-button", locale = locale)
+                }
+            },
         }
     }
 }
