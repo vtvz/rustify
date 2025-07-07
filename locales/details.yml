@@ -34,7 +34,7 @@ details.header:
     🕺 Danceability %{danceability}%
     ⚡️ Energy %{energy}%
     🤐 Instrumentalness %{instrumentalness}%
-    🏟 Performed live %{liveness}%
+    🏟 Live performance %{liveness}%
     🎤 Speech-like %{speechiness}%
     ☺️ Positivity %{valence}%
     👎 Disliked by %{disliked_by} people

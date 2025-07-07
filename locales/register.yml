@@ -2,7 +2,7 @@ _version: 2
 
 register.error:
   en: |-
-    Cannot retrieve token. Code is probably broken. Run /register command and try again please
+    Cannot retrieve token. The code is probably broken. Please run the /register command and try again
   ru: |-
     Не удается получить токен. Код, вероятно, сломан. Выполните команду /register и попробуйте снова
 
@@ -14,7 +14,7 @@ register.success:
 
 register.invite:
   en: |-
-    Click this button below and after authentication copy URL from browser and send me
+    Click the button below and after authentication copy the URL from your browser and send it to me
   ru: |-
     Нажмите на кнопку ниже, и после аутентификации скопируйте URL из браузера и отправьте мне
 

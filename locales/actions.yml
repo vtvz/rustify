@@ -11,7 +11,7 @@ actions.stats:
     📉 <b>Some nice stats for you</b> 📈
 
     👎 You disliked <code>%{dislikes}</code> songs
-    ⏭ I skipped <code>%{skips}</code> times
+    ⏭ Skipped <code>%{skips}</code> times
     💔 Removed <code>%{removed_collection}</code> from liked songs
     🗑 Removed <code>%{removed_playlists}</code> from playlists
     🔬 Checked lyrics <code>%{lyrics_checked}</code> times
@@ -22,11 +22,11 @@ actions.stats:
     📉 <b>Немного статистики для вас</b> 📈
 
     👎 Вы дизлайкнули <code>%{dislikes}</code> песен
-    ⏭ Я пропустил <code>%{skips}</code> раз
+    ⏭ Пропущено <code>%{skips}</code> раз
     💔 Удалено <code>%{removed_collection}</code> из понравившихся песен
     🗑 Удалено <code>%{removed_playlists}</code> из плейлистов
-    🔬 Проверил тексты <code>%{lyrics_checked}</code> раз
-    🔍 Проанализировал тексты <code>%{lyrics_analyzed}</code> раз
+    🔬 Проверено текстов <code>%{lyrics_checked}</code> раз
+    🔍 Проанализировано текстов <code>%{lyrics_analyzed}</code> раз
     🙈 Вы проигнорировали <code>%{ignored}</code> текстов треков
     🤬 <code>%{lyrics_profane}</code> текстов были признаны нецензурными
 
@@ -46,7 +46,7 @@ actions.dislike:
   en: |-
     👎 Disliked %{track_link}
 
-    If you change your mind press 'Ignore text 🙈'
+    If you change your mind, press 'Ignore text 🙈'
 
     💡 Do not forget you can send a link to a song to find current status
   ru: |-
@@ -60,7 +60,7 @@ actions.ignore:
   en: |-
     🙈 Bad words of %{track_link} will be forever ignored
 
-    If you change your mind press 'Dislike 👎'
+    If you change your mind, press 'Dislike 👎'
 
     💡 Do not forget you can send a link to a song to find current status
   ru: |-

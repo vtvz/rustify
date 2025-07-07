@@ -32,7 +32,7 @@ error.spotify-invalid-token:
 
 error.general:
   en: |-
-    <b>Sorry, error has happened :(</b>
+    <b>Sorry, an error has occurred :(</b>
 
     <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
   ru: |-
