@@ -25,7 +25,7 @@ pub async fn handle(
             .parse_mode(ParseMode::Html)
             .await?;
 
-        actions::register::send_register_invite(app, m.chat.id, state.locale()).await?;
+        actions::register::send_register_invite(app, m.chat.id, locale).await?;
     } else {
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))
