@@ -225,7 +225,7 @@ async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
             4. Does this song reference any form of occultism or spiritism? If yes, explain.
             5. Are there any mentions of violence in this song? If yes, describe them.
 
-            Reply in {{lang}} language and {{lang}} only. Keep response within 2000 characters. Respond with no formatting. Here are the lyrics:
+            Reply in {{lang}} language and {{lang}} only. Keep response within 1500 characters. Respond with no formatting. Here are the lyrics:
 
             {{lyrics}}
         ")
