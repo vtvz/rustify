@@ -3,7 +3,7 @@ use reqwest::StatusCode;
 use teloxide::ApiError;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::Requester;
-use teloxide::types::ChatId;
+use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::UserStatus;
@@ -113,7 +113,8 @@ pub async fn spotify_resp_error(
                                 ChatId(user_id.parse()?),
                                 t!(
                                     "error.unavailable-in-country",
-                                    command = UserCommandDisplay::Register
+                                    locale = locale,
+                                    command = UserCommandDisplay::Register,
                                 ),
                             )
                             .reply_markup(StartKeyboard::markup(locale))
@@ -137,11 +138,12 @@ pub async fn spotify_resp_error(
                             ChatId(user_id.parse()?),
                             t!(
                                 "error.spotify-auth-failed",
+                                locale = locale,
                                 command = UserCommandDisplay::Register,
-                                error = serr.error_description
+                                error = serr.error_description,
                             ),
                         )
-                        .reply_markup(StartKeyboard::markup(locale))
+                        .parse_mode(ParseMode::Html)
                         .await?;
 
                     return Ok(ErrorHandlingResult::handled_notified());
@@ -178,6 +180,7 @@ pub async fn spotify_client_error(
                     ChatId(user_id.parse()?),
                     t!(
                         "error.spotify-invalid-token",
+                        locale = locale,
                         command = UserCommandDisplay::Register
                     ),
                 )
