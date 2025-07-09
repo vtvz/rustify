@@ -2,15 +2,29 @@ _version: 2
 
 register.error:
   en: |-
-    ❌ Cannot retrieve token. The code is probably broken. Please run the /register command and try again
+    ❌ Cannot retrieve token. The code is probably broken. Please run the /%{command} command and try again
   ru: |-
-    ❌ Не удается получить токен. Код, вероятно, сломан. Выполните команду /register и попробуйте снова
+    ❌ Не удается получить токен. Код, вероятно, сломан. Выполните команду /%{command} и попробуйте снова
 
 register.success:
   en: |-
-    🎉 Yeah! You registered successfully!
+    🎉 Great! You registered successfully!
+
+    Now you can:
+    • Press '%{dislike_button}' to block a song
+    • Press '%{details_button}' to get the lyrics of the currently playing song and additional information
+    • There you can also analyze lyrics using AI
+    • Use the /%{magic_command} command to generate a <i>Magic Playlist™</i>✨
+    • Use the /%{skippage_command} command to activate the <i>Skippage™</i> function
   ru: |-
     🎉 Отлично! Вы успешно зарегистрировались!
+
+    Теперь вы можете:
+    • Нажать '%{dislike_button}', чтобы заблокировать песню
+    • Нажать '%{details_button}', чтобы получить текст проигрываемой песни и дополнительную информацию
+    • Там же вы можете проанализировать текст с помощью ИИ
+    • Вызвать команду /%{magic_command}, чтобы сгенерировать <i>Magic Playlist™</i>✨
+    • Вызвать команду /%{skippage_command}, чтобы активировать функцию <i>Skippage™</i>
 
 register.invite:
   en: |-
