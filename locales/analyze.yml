@@ -29,9 +29,17 @@ analysis.result:
     🎵 %{track_name}
     Album: %{album_name}
 
+    <blockquote>ℹ️You can transcribe and analyze any audio in the <a href="https://t.me/insightify_tgbot">Insightify</a> bot</blockquote>
+
     %{analysis_result}
+
+    <blockquote>ℹ️You can transcribe and analyze any audio in the <a href="https://t.me/insightify_tgbot">Insightify</a> bot</blockquote>
   ru: |-
     🎵 %{track_name}
     Альбом: %{album_name}
 
+    <blockquote>ℹ️Вы можете расшифровать и проанализировать любое аудио в <a href="https://t.me/insightify_tgbot">Insightify</a> боте</blockquote>
+
     %{analysis_result}
+
+    <blockquote>ℹ️Вы можете расшифровать и проанализировать любое аудио в <a href="https://t.me/insightify_tgbot">Insightify</a> боте</blockquote>
