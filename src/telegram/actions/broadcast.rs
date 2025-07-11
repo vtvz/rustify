@@ -1,0 +1,76 @@
+use backon::{ExponentialBuilder, Retryable};
+use indoc::formatdoc;
+use itertools::Itertools;
+use teloxide::prelude::*;
+use teloxide::types::ParseMode;
+
+use crate::app::App;
+use crate::entity::prelude::*;
+use crate::telegram::handlers::HandleStatus;
+use crate::user::UserState;
+use crate::user_service::UserService;
+
+pub async fn handle(
+    app: &'static App,
+    _state: &UserState,
+    m: &Message,
+    locale: &str,
+) -> anyhow::Result<HandleStatus> {
+    let locale: Result<UserLocale, _> = locale.parse();
+
+    let Ok(locale) = locale else {
+        app.bot()
+            .send_message(m.chat.id, "Pass right locale")
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    };
+
+    let Some(reply) = m.reply_to_message() else {
+        app.bot()
+            .send_message(m.chat.id, "Reply to message")
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    };
+
+    let users = UserService::get_users_for_locale(app.db(), locale).await?;
+
+    let mut errors = vec![];
+    let mut sent = 0;
+
+    for user in &users {
+        let send_fn = || async {
+            app.bot()
+                .copy_message(ChatId(user.id.parse()?), reply.chat.id, reply.id)
+                .await?;
+
+            anyhow::Ok(())
+        };
+
+        let res = send_fn.retry(ExponentialBuilder::default()).await;
+
+        match res {
+            Ok(_) => sent += 1,
+            Err(err) => errors.push(err),
+        }
+    }
+
+    let errors = errors
+        .iter()
+        .map(|err| format!("<blockquote>{err:?}</blockquote>"))
+        .collect_vec();
+
+    let message = formatdoc!(
+        "Sent to {sent} users. Errors:\n\n{errors}",
+        errors = errors.join("\n\n")
+    );
+
+    app.bot()
+        .send_message(m.chat.id, message)
+        .parse_mode(ParseMode::Html)
+        .send()
+        .await?;
+
+    Ok(HandleStatus::Handled)
+}

@@ -226,6 +226,18 @@ impl UserService {
         Ok(res)
     }
 
+    pub async fn get_users_for_locale(
+        db: &impl ConnectionTrait,
+        locale: UserLocale,
+    ) -> anyhow::Result<Vec<UserModel>> {
+        let res = Self::query(None, None)
+            .filter(UserColumn::Locale.eq(locale))
+            .all(db)
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn set_magic_playlist(
         db: &impl ConnectionTrait,
         id: &str,
