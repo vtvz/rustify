@@ -60,7 +60,10 @@ pub async fn handle(
                     .reply_markup(StartKeyboard::markup(state.locale()))
                     .await?;
             } else {
-                actions::register::send_register_invite(app, m.chat.id, state.locale()).await?;
+                app.bot()
+                    .send_message(m.chat.id, t!("language.command", locale = state.locale()))
+                    .reply_markup(LanguageKeyboard::markup())
+                    .await?;
             }
         },
         UserCommand::Dislike => {

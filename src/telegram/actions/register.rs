@@ -14,6 +14,7 @@ use super::super::keyboards::StartKeyboard;
 use crate::app::App;
 use crate::entity::prelude::*;
 use crate::spotify_auth_service::SpotifyAuthService;
+use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
 use crate::user_service::UserService;
@@ -44,19 +45,33 @@ async fn process_spotify_code(
 ) -> anyhow::Result<HandleStatus> {
     let instance = state.spotify_write().await;
 
-    if let Err(err) = instance.request_token(&code).await {
+    if let Err(_err) = instance.request_token(&code).await {
         app.bot()
-            .send_message(m.chat.id, t!("register.error", locale = state.locale()))
+            .send_message(
+                m.chat.id,
+                t!(
+                    "register.error",
+                    command = UserCommandDisplay::Register,
+                    locale = state.locale()
+                ),
+            )
             .await?;
 
-        return Err(err.into());
+        return Ok(HandleStatus::Handled);
     }
 
     let token = instance.token.lock().await;
 
     let Ok(token) = token else {
         app.bot()
-            .send_message(m.chat.id, t!("register.error", locale = state.locale()))
+            .send_message(
+                m.chat.id,
+                t!(
+                    "register.error",
+                    command = UserCommandDisplay::Register,
+                    locale = state.locale()
+                ),
+            )
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -64,7 +79,14 @@ async fn process_spotify_code(
 
     let Some(token) = token.clone() else {
         app.bot()
-            .send_message(m.chat.id, t!("register.error", locale = state.locale()))
+            .send_message(
+                m.chat.id,
+                t!(
+                    "register.error",
+                    command = UserCommandDisplay::Register,
+                    locale = state.locale()
+                ),
+            )
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -80,7 +102,18 @@ async fn process_spotify_code(
     }
 
     app.bot()
-        .send_message(m.chat.id, t!("register.success", locale = state.locale()))
+        .send_message(
+            m.chat.id,
+            t!(
+                "register.success",
+                magic_command = UserCommandDisplay::Magic,
+                skippage_command = UserCommandDisplay::Skippage,
+                dislike_button = t!("start-keyboard.dislike", locale = state.locale()),
+                details_button = t!("start-keyboard.details", locale = state.locale()),
+                locale = state.locale()
+            ),
+        )
+        .parse_mode(ParseMode::Html)
         .reply_markup(StartKeyboard::markup(state.locale()))
         .await?;
 

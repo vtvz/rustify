@@ -18,7 +18,7 @@ pub async fn handle(
     state: &UserState,
     track: &ShortTrack,
 ) -> anyhow::Result<bool> {
-    if state.user().cfg_skippage_secs == 0 {
+    if !state.user().cfg_skippage_enabled {
         return Ok(false);
     }
 

@@ -18,11 +18,11 @@ error.spotify-auth-failed:
   en: |-
     ❌ Failed to Authenticate user to Spotify. Please relogin by calling /%{command} command.
 
-    <pre>{error}</pre>
+    <pre>%{error}</pre>
   ru: |-
     ❌ Не удалось аутентифицировать пользователя в Spotify. Пожалуйста, войдите заново, вызвав команду /%{command}.
 
-    <pre>{error}</pre>
+    <pre>%{error}</pre>
 
 error.spotify-invalid-token:
   en: |-

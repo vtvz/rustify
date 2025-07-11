@@ -33,6 +33,7 @@ pub struct Model {
     pub cfg_check_profanity: bool,
     pub cfg_skip_tracks: bool,
     pub cfg_skippage_secs: i64,
+    pub cfg_skippage_enabled: bool,
     pub magic_playlist: Option<String>,
 }
 
@@ -73,6 +74,7 @@ pub enum Column {
     CfgCheckProfanity,
     CfgSkipTracks,
     CfgSkippageSecs,
+    CfgSkippageEnabled,
     MagicPlaylist,
 }
 
@@ -112,6 +114,7 @@ impl ColumnTrait for Column {
             Self::CfgCheckProfanity => ColumnType::Boolean.def(),
             Self::CfgSkipTracks => ColumnType::Boolean.def(),
             Self::CfgSkippageSecs => ColumnType::BigInteger.def(),
+            Self::CfgSkippageEnabled => ColumnType::Boolean.def(),
             Self::MagicPlaylist => ColumnType::Text.def().null(),
         }
     }

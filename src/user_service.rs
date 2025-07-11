@@ -198,6 +198,20 @@ impl UserService {
         Ok(res)
     }
 
+    pub async fn set_cfg_skippage_enabled(
+        db: &impl ConnectionTrait,
+        id: &str,
+        enabled: bool,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::CfgSkippageEnabled, Expr::value(enabled))
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn set_locale(
         db: &impl ConnectionTrait,
         id: &str,

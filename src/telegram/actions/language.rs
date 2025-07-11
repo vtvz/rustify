@@ -1,5 +1,5 @@
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
+use teloxide::types::{KeyboardRemove, ParseMode, ReplyMarkup};
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -22,10 +22,11 @@ pub async fn handle(
     if !state.is_spotify_authed().await {
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))
+            .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
             .parse_mode(ParseMode::Html)
             .await?;
 
-        actions::register::send_register_invite(app, m.chat.id, state.locale()).await?;
+        actions::register::send_register_invite(app, m.chat.id, locale).await?;
     } else {
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))

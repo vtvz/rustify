@@ -38,6 +38,9 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         InlineButtons::Magic => {
             actions::magic::handle_inline(app, state, q).await?;
         },
+        InlineButtons::SkippageEnable(to_enable) => {
+            actions::skippage::handle_inline(app, state, q, to_enable).await?;
+        },
     }
 
     Ok(())

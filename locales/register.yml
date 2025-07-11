@@ -2,24 +2,66 @@ _version: 2
 
 register.error:
   en: |-
-    Cannot retrieve token. The code is probably broken. Please run the /register command and try again
+    ❌ Cannot retrieve token. The code is probably broken. Please run the /%{command} command and try again
   ru: |-
-    Не удается получить токен. Код, вероятно, сломан. Выполните команду /register и попробуйте снова
+    ❌ Не удается получить токен. Код, вероятно, сломан. Выполните команду /%{command} и попробуйте снова
 
 register.success:
   en: |-
-    Yeah! You registered successfully!
+    🎉 Great! You registered successfully!
+
+    Now you can:
+    • Press '%{dislike_button}' to block a song
+    • Press '%{details_button}' to get the lyrics of the currently playing song and additional information
+    • There you can also analyze lyrics using AI
+    • Use the /%{magic_command} command to generate a <i>Magic Playlist™</i>✨
+    • Use the /%{skippage_command} command to activate the <i>Skippage™</i> function
   ru: |-
-    Отлично! Вы успешно зарегистрировались!
+    🎉 Отлично! Вы успешно зарегистрировались!
+
+    Теперь вы можете:
+    • Нажать '%{dislike_button}', чтобы заблокировать песню
+    • Нажать '%{details_button}', чтобы получить текст проигрываемой песни и дополнительную информацию
+    • Там же вы можете проанализировать текст с помощью ИИ
+    • Вызвать команду /%{magic_command}, чтобы сгенерировать <i>Magic Playlist™</i>✨
+    • Вызвать команду /%{skippage_command}, чтобы активировать функцию <i>Skippage™</i>
 
 register.invite:
   en: |-
-    Click the button below and after authentication copy the URL from your browser and send it to me
+    <b>Welcome to Rustify!</b>
+
+    🚀 To get started, connect your <i>Spotify</i> account:
+
+    • Click the button below 👇
+    • Authenticate through Spotify 🔐
+    • Copy the link from your browser's address bar 📋
+    • Send this link to me 💌
+
+    <b>Features:</b>
+    • Block unwanted songs ("Dislike")
+    • Notifications for profanity in lyrics
+    • Get song lyrics and AI-powered analysis
+    • Create <i>Magic Playlist™</i>✨ from your favorite tracks
+    • <i>Skippage™</i> function will diverse your listening experience
   ru: |-
-    Нажмите на кнопку ниже, и после аутентификации скопируйте URL из браузера и отправьте мне
+    <b>Добро пожаловать в Rustify!</b>
+
+    🚀 Для начала работы подключите ваш <i>Spotify</i> аккаунт:
+
+    • Нажмите кнопку ниже 👇
+    • Авторизуйтесь через Spotify 🔐
+    • Скопируйте ссылку из адресной строки браузера 📋
+    • Отправьте эту ссылку мне 💌
+
+    <b>Возможности:</b>
+    • Блокировка нежелательных песен ("Дизлайк")
+    • Уведомление на нецензурную лексику в тексте
+    • Получение текстов песен и их анализ с помощью ИИ
+    • Создание <i>Magic Playlist™</i>✨ из любимых треков
+    • Функция <i>Skippage™</i> разнообразит ваши впечатления от прослушивания
 
 register.button:
   en: |-
-    Login with Spotify
+    🎵 Login with Spotify
   ru: |-
-    Войти через Spotify
+    🎵 Войти через Spotify
