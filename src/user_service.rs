@@ -238,6 +238,21 @@ impl UserService {
         Ok(res)
     }
 
+    pub async fn count_users_locales(
+        db: &impl ConnectionTrait,
+    ) -> anyhow::Result<Vec<(UserLocale, i64)>> {
+        let res: Vec<(UserLocale, i64)> = Self::query(None, None)
+            .select_only()
+            .column(UserColumn::Locale)
+            .column_as(UserColumn::Id.count(), "count")
+            .group_by(UserColumn::Locale)
+            .into_tuple()
+            .all(db)
+            .await?;
+
+        Ok(res)
+    }
+
     pub async fn set_magic_playlist(
         db: &impl ConnectionTrait,
         id: &str,
