@@ -1,6 +1,5 @@
 use backon::{ExponentialBuilder, Retryable};
 use indoc::formatdoc;
-use itertools::Itertools;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
@@ -36,7 +35,7 @@ pub async fn handle(
 
     let users = UserService::get_users_for_locale(app.db(), locale).await?;
 
-    let mut errors = vec![];
+    let mut errors = 0;
     let mut sent = 0;
 
     for user in &users {
@@ -52,19 +51,14 @@ pub async fn handle(
 
         match res {
             Ok(_) => sent += 1,
-            Err(err) => errors.push(err),
+            Err(err) => {
+                tracing::warn!(err = ?err, "Error on message broadcasting");
+                errors += 1
+            },
         }
     }
 
-    let errors = errors
-        .iter()
-        .map(|err| format!("<blockquote>{err:?}</blockquote>"))
-        .collect_vec();
-
-    let message = formatdoc!(
-        "Sent to {sent} users. Errors:\n\n{errors}",
-        errors = errors.join("\n\n")
-    );
+    let message = formatdoc!("Sent to {sent} users. Errors {errors}");
 
     app.bot()
         .send_message(m.chat.id, message)
