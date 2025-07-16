@@ -36,7 +36,7 @@ FROM debian:bookworm-slim
 
 RUN \
   --mount=type=cache,target=/var/cache/apt \
-  apt-get update && apt-get install --no-install-recommends -y ca-certificates \
+  apt-get update && apt-get install --no-install-recommends -y ca-certificates heaptrack \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 

@@ -7,6 +7,7 @@
   loop:
     - "{{ rustify_deploy_path }}"
     - "{{ rustify_deploy_path }}/var"
+    - "{{ rustify_deploy_path }}/heaptrack"
 
 - name: Generate Env for rustify
   ansible.builtin.set_fact:

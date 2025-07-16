@@ -9,7 +9,9 @@ services:
     environment:
       {{ rustify_env_content | indent(6) }}
     restart: always
-    entrypoint: /usr/local/bin/rustify
+    volumes:
+      - ./var/heaptrack:/var/heaptrack
+    entrypoint: heaptrack -o /var/heaptrack/heaptrack_bot --record-only /usr/local/bin/rustify
     command: bot
 
   track_check:
@@ -17,7 +19,9 @@ services:
     environment:
       {{ rustify_env_content | indent(6) }}
     restart: always
-    entrypoint: /usr/local/bin/rustify
+    volumes:
+      - ./var/heaptrack:/var/heaptrack
+    entrypoint: heaptrack -o /var/heaptrack/heaptrack_track_check --record-only /usr/local/bin/rustify
     command: track_check
 
   queues:
@@ -25,7 +29,9 @@ services:
     environment:
       {{ rustify_env_content | indent(6) }}
     restart: always
-    entrypoint: /usr/local/bin/rustify
+    volumes:
+      - ./var/heaptrack:/var/heaptrack
+    entrypoint: heaptrack -o /var/heaptrack/heaptrack_queues --record-only /usr/local/bin/rustify
     command: queues
 
   db:
