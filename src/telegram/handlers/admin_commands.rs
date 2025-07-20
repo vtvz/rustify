@@ -53,6 +53,9 @@ pub async fn handle(
                 )
                 .await?;
         },
+        AdminCommand::Broadcast { locale } => {
+            return actions::broadcast::handle(app, state, m, &locale).await;
+        },
     }
 
     Ok(HandleStatus::Handled)

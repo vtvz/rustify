@@ -1,4 +1,5 @@
 use indoc::formatdoc;
+use itertools::Itertools;
 use teloxide::prelude::*;
 use teloxide::types::{ParseMode, ReplyParameters};
 
@@ -32,6 +33,18 @@ pub async fn handle(
         lyrics_azlyrics,
         lyrics_analyzed,
     } = UserService::get_stats(app.db(), None).await?;
+
+    let user_locales = UserService::count_users_locales(app.db())
+        .await?
+        .iter()
+        .map(|(locale, count)| {
+            format!(
+                "• {locale}: <code>{count}</code>",
+                locale = locale.language()
+            )
+        })
+        .collect_vec()
+        .join("\n");
 
     let lyrics_found_ratio = 100.0 * lyrics_found as f32 / lyrics_checked as f32;
     let lyrics_genius_ratio = 100.0 * lyrics_genius as f32 / lyrics_found as f32;
@@ -69,6 +82,10 @@ pub async fn handle(
             • MusixMatch <code>{lyrics_musixmatch} ({lyrics_musixmatch_ratio:.2}%)</code>
             • LrcLib <code>{lyrics_lrclib} ({lyrics_lrclib_ratio:.2}%)</code>
             • AZLyrics <code>{lyrics_azlyrics} ({lyrics_azlyrics_ratio:.2}%)</code>
+
+            <b>Locales stats</b>
+
+            {user_locales}
         "#
     );
 

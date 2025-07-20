@@ -8,6 +8,7 @@ rust-version = "1.75.0"
 again = "0.1.2"
 anyhow = { version = "1.0.97", features = ["backtrace"] }
 async-openai = "0.28.0"
+backon = "1.5.1"
 # base64 = "0.22.1"
 cached = { version = "0.55.1", features = ["async", "redis_tokio"] }
 chrono = "0.4.40"

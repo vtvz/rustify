@@ -175,6 +175,9 @@ pub enum AdminCommand {
 
     #[command(description = "Get analyze prompt")]
     GetAnalyzePrompt,
+
+    #[command(description = "Broadcast a message to all users")]
+    Broadcast { locale: String },
 }
 
 pub enum AdminCommandDisplay {
@@ -182,6 +185,7 @@ pub enum AdminCommandDisplay {
     Whitelist,
     GlobalStats,
     GetAnalyzePrompt,
+    Broadcast,
 }
 
 impl std::fmt::Display for AdminCommandDisplay {
@@ -191,6 +195,7 @@ impl std::fmt::Display for AdminCommandDisplay {
             AdminCommandDisplay::Whitelist => "whitelist",
             AdminCommandDisplay::GlobalStats => "global_stats",
             AdminCommandDisplay::GetAnalyzePrompt => "get_analyze_prompt",
+            AdminCommandDisplay::Broadcast => "broadcast",
         };
 
         f.write_str(string)
@@ -235,6 +240,7 @@ mod tests {
             AdminCommand::Whitelist(..) => AdminCommandDisplay::Whitelist,
             AdminCommand::GlobalStats => AdminCommandDisplay::GlobalStats,
             AdminCommand::GetAnalyzePrompt => AdminCommandDisplay::GetAnalyzePrompt,
+            AdminCommand::Broadcast { .. } => AdminCommandDisplay::Broadcast,
         };
     }
 }

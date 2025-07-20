@@ -1,12 +1,12 @@
 use std::time::Duration;
 
+use backon::{ExponentialBuilder, Retryable};
 use cached::proc_macro::io_cached;
 use indoc::formatdoc;
 use isolang::Language;
 use reqwest::{Client, ClientBuilder};
 use serde::{Deserialize, Serialize};
 use strsim::normalized_damerau_levenshtein;
-use tokio::time::sleep;
 
 use super::BEST_FIT_THRESHOLD;
 use super::utils::get_track_names;
@@ -198,33 +198,21 @@ impl LrcLib {
     }
 
     async fn make_request_with_retry(&self, url: url::Url) -> anyhow::Result<String> {
-        const MAX_RETRIES: u32 = 3;
-
-        let mut last_error = None;
-
-        for attempt in 1..=MAX_RETRIES {
-            let response = self
+        let send_fn = || async {
+            let res = self
                 .reqwest
                 .get(url.clone())
                 .header("Lrclib-Client", "Rustify (https://github.com/vtvz/rustify)")
                 .send()
-                .await;
+                .await?
+                .text()
+                .await?;
 
-            match response {
-                Ok(response) => return Ok(response.text().await?),
-                Err(e) => {
-                    last_error = Some(anyhow::Error::from(e));
-                },
-            }
+            anyhow::Ok(res)
+        };
 
-            // Don't sleep after the last attempt
-            if attempt < MAX_RETRIES {
-                let delay = Duration::from_millis(500 * attempt as u64); // Exponential backoff: 500ms, 1s, 1.5s
-                sleep(delay).await;
-            }
-        }
+        let res = send_fn.retry(ExponentialBuilder::default()).await?;
 
-        Err(last_error
-            .unwrap_or_else(|| anyhow::anyhow!("All {} retry attempts failed", MAX_RETRIES)))
+        Ok(res)
     }
 }
