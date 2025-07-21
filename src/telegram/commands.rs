@@ -24,6 +24,8 @@ pub enum UserCommand {
     Dislike,
     #[command(description = "command.like")]
     Like,
+    #[command(description = "command.recommendasion")]
+    Recommendasion,
     #[command(description = "command.cleanup")]
     Cleanup,
     #[command(description = "command.details")]
@@ -133,6 +135,7 @@ pub enum UserCommandDisplay {
     Magic,
     Skippage,
     Language,
+    Recommendasion,
 }
 
 impl std::fmt::Display for UserCommandDisplay {
@@ -155,6 +158,7 @@ impl std::fmt::Display for UserCommandDisplay {
             Self::Magic => "magic",
             Self::Skippage => "skippage",
             Self::Language => "language",
+            Self::Recommendasion => "recommendasion",
         };
 
         f.write_str(string)
@@ -215,6 +219,7 @@ mod tests {
             UserCommand::Keyboard => UserCommandDisplay::Keyboard,
             UserCommand::Dislike => UserCommandDisplay::Dislike,
             UserCommand::Like => UserCommandDisplay::Like,
+            UserCommand::Recommendasion => UserCommandDisplay::Recommendasion,
             UserCommand::Cleanup => UserCommandDisplay::Cleanup,
             UserCommand::Details => UserCommandDisplay::Details,
             UserCommand::Stats => UserCommandDisplay::Stats,

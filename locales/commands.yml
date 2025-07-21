@@ -117,3 +117,9 @@ command.language:
     Change language
   ru: |-
     Изменить язык
+
+command.recommendasion:
+  en: |-
+    Generate recommendations
+  ru: |-
+    Сгенерировать рекоммендации
