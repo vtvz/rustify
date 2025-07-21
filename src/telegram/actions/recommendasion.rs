@@ -1,5 +1,5 @@
-use anyhow::Context;
 use async_openai::types::{
+    ChatCompletionRequestSystemMessageArgs,
     ChatCompletionRequestUserMessageArgs,
     ChatCompletionToolArgs,
     ChatCompletionToolType,
@@ -9,33 +9,28 @@ use async_openai::types::{
 use futures::StreamExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use rand::seq::SliceRandom;
-use rspotify::model::{Id, UserId};
-use rspotify::prelude::{BaseClient as _, OAuthClient as _};
+use rspotify::prelude::OAuthClient as _;
 use serde_json::json;
-use teloxide::payloads::{EditMessageTextSetters, SendMessageSetters};
+use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::Requester;
-use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
-use crate::spotify::{ShortPlaylist, ShortTrack};
+use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
-use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::keyboards::StartKeyboard;
-use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::user_service::UserService;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Tracks {
-    pub tracks: Vec<Track>,
+    pub recommendations: Vec<Track>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Track {
     pub artist_name: String,
-    pub track_name: String,
+    pub track_title: String,
 }
 
 pub async fn handle(
@@ -62,56 +57,66 @@ pub async fn handle(
         }
     }
 
-    let mut tracks = tracks
+    let tracks = tracks
         .iter()
         .map(|item| item.name_with_artists())
         .join("\n");
 
     let user_prompt = formatdoc!(
         "
-            You are a music recommendation system.
-            You analyze what people love and suggest fresh music to listen.
-            Generate 30 suggestions what to listen based on the list below. Do not repeat tracks.
-            Artists should be unique and do not overlap with the user's ones
-            Do not suggest same artists. Do not suggest same tracks
-            There are user's favorite tracks you need:
+            User's favorite tracks:
 
-            {tracks}"
+            {tracks}
+
+            Generate a list of 10 music tracks in the format 'Artist - Track Title' that are similar in style, genre, or mood,
+            but are not in the provided list. Avoid duplicates and ensure diversity.
+        "
     );
 
     let config = app.analyze().unwrap();
 
     let req = CreateChatCompletionRequestArgs::default()
         .model(config.model())
-        .messages([ChatCompletionRequestUserMessageArgs::default()
-            .content(user_prompt)
-            .build()?
-            .into()])
+        .messages([
+            ChatCompletionRequestSystemMessageArgs::default()
+                .content("You are a music recommendation engine")
+                .build()?.
+                into(),
+            ChatCompletionRequestUserMessageArgs::default()
+                .content(user_prompt)
+                .build()?
+                .into()
+        ])
         .tools(vec![
             ChatCompletionToolArgs::default()
                 .r#type(ChatCompletionToolType::Function)
                 .function(
                     FunctionObjectArgs::default()
-                        .name("suggest_tracks")
-                        .description("Suggest users fresh tracks to listen")
+                        .name("recommend_tracks")
+                        .description("Generate 10 music track recommendations based on user's favorite tracks")
                         .parameters(json!({
                             "type": "object",
                             "properties": {
-                                "tracks": {
+                                "recommendations": {
                                     "type": "array",
-                                    "description": "List of unique suggested tracks",
-                                    "minItems": 10,  "maxItems": 10,
+                                    "description": "List of 10 recommended music tracks",
                                     "items": {
                                         "type": "object",
                                         "properties": {
-                                            "artist_name": {"type": "string", "description": "Artist name"},
-                                            "track_name": {"type": "string", "description": "Track name without artist"},
+                                            "artist_name": {
+                                                "type": "string",
+                                                "description": "Name of the artist"
+                                            },
+                                            "track_title": {
+                                                "type": "string",
+                                                "description": "Title of the track"
+                                            }
                                         },
-                                        "required": ["artist_name", "track_name"],
+                                        "required": ["artist_name", "track_title"]
                                     },
                                 },
                             },
-                            "required": ["tracks"]
+                            "required": ["recommendations"]
                         }))
                         .build()?,
                 )
@@ -140,20 +145,20 @@ pub async fn handle(
     let tracks: Tracks = serde_json::from_str(&response_message.function.arguments)?;
 
     let tracks = tracks
-        .tracks
+        .recommendations
         .iter()
         .map(|genre| {
             let mut url = search_url.clone();
             url.path_segments_mut()
                 .expect("Infallible")
-                .push(&format!("{} {}", genre.artist_name, genre.track_name));
+                .push(&format!("{} - {}", genre.artist_name, genre.track_title));
 
             (genre, url)
         })
         .map(|(genre, url)| {
             format!(
                 r#"<a href="{url}">{} - {}</a>"#,
-                genre.artist_name, genre.track_name
+                genre.artist_name, genre.track_title
             )
         })
         .join("\n");
