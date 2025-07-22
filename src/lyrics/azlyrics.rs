@@ -116,7 +116,7 @@ impl AZLyrics {
         let track_name = track.name();
         let cmp_track_name = track_name.to_lowercase();
 
-        let q = format!("{} {}", artist_name, track_name);
+        let q = format!("{artist_name} {track_name}");
 
         let res = self
             .reqwest
