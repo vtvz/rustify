@@ -78,7 +78,7 @@ impl UserCommand {
             .collect()
     }
 
-    pub fn localized_descriptions(locale: &str) -> CommandDescriptions {
+    pub fn localized_descriptions(locale: &str) -> CommandDescriptions<'static> {
         lazy_static::lazy_static! {
             static ref CACHE: RwLock<HashMap<String, &'static [CommandDescription<'static>]>> = RwLock::new(HashMap::new());
         }

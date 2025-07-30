@@ -5,7 +5,7 @@ use convert_case::{Case, Casing};
 use itertools::Itertools;
 use lazy_static::lazy_static;
 use regex::Regex;
-use rspotify::clients::BaseClient;
+use rspotify::clients::BaseClient as _;
 use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
@@ -151,7 +151,7 @@ async fn common(
                 let mut url = search_url.clone();
                 url.path_segments_mut()
                     .expect("Infallible")
-                    .push(&format!(r#"genre:"{}""#, genre));
+                    .push(&format!(r#"genre:"{genre}""#));
 
                 (genre.to_case(Case::Title), url)
             })

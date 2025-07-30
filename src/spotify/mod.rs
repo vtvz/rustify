@@ -2,7 +2,7 @@ pub mod errors;
 
 use std::borrow::Cow;
 
-use anyhow::{Context, anyhow};
+use anyhow::{anyhow, Context};
 pub use errors::SpotifyError;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
