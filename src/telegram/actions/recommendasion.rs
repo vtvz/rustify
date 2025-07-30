@@ -15,7 +15,7 @@ use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::Requester;
 use teloxide::types::{ChatId, ParseMode};
 
-use crate::app::App;
+use crate::app::{AnalyzeConfig, App};
 use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
@@ -23,7 +23,7 @@ use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Tracks {
+pub struct Recommendations {
     pub recommendations: Vec<Track>,
 }
 
@@ -62,6 +62,43 @@ pub async fn handle(
         .map(|item| item.name_with_artists())
         .join("\n");
 
+    let config = app.analyze().unwrap();
+    let tracks = get_recommendations(config, tracks).await?;
+
+    let search_url = url::Url::parse("https://open.spotify.com/search")?;
+
+    let tracks = tracks
+        .recommendations
+        .iter()
+        .map(|genre| {
+            let mut url = search_url.clone();
+            url.path_segments_mut()
+                .expect("Infallible")
+                .push(&format!("{} - {}", genre.artist_name, genre.track_title));
+
+            (genre, url)
+        })
+        .map(|(genre, url)| {
+            format!(
+                r#"<a href="{url}">{} - {}</a>"#,
+                genre.artist_name, genre.track_title
+            )
+        })
+        .join("\n");
+
+    app.bot()
+        .send_message(chat_id, tracks)
+        .parse_mode(ParseMode::Html)
+        .reply_markup(StartKeyboard::markup(state.locale()))
+        .await?;
+
+    Ok(HandleStatus::Handled)
+}
+
+async fn get_recommendations(
+    config: &AnalyzeConfig,
+    tracks: String,
+) -> Result<Recommendations, anyhow::Error> {
     let user_prompt = formatdoc!(
         "
             User's favorite tracks:
@@ -72,8 +109,6 @@ pub async fn handle(
             but are not in the provided list. Avoid duplicates and ensure diversity.
         "
     );
-
-    let config = app.analyze().unwrap();
 
     let req = CreateChatCompletionRequestArgs::default()
         .model(config.model())
@@ -122,6 +157,7 @@ pub async fn handle(
                 )
                 .build()?,
         ])
+        .tool_choice("recommend_tracks")
         .build()?;
 
     let response_message = config
@@ -139,35 +175,6 @@ pub async fn handle(
         .first()
         .cloned()
         .unwrap();
-
-    let search_url = url::Url::parse("https://open.spotify.com/search")?;
-
-    let tracks: Tracks = serde_json::from_str(&response_message.function.arguments)?;
-
-    let tracks = tracks
-        .recommendations
-        .iter()
-        .map(|genre| {
-            let mut url = search_url.clone();
-            url.path_segments_mut()
-                .expect("Infallible")
-                .push(&format!("{} - {}", genre.artist_name, genre.track_title));
-
-            (genre, url)
-        })
-        .map(|(genre, url)| {
-            format!(
-                r#"<a href="{url}">{} - {}</a>"#,
-                genre.artist_name, genre.track_title
-            )
-        })
-        .join("\n");
-
-    app.bot()
-        .send_message(chat_id, tracks)
-        .parse_mode(ParseMode::Html)
-        .reply_markup(StartKeyboard::markup(state.locale()))
-        .await?;
-
-    Ok(HandleStatus::Handled)
+    let tracks: Recommendations = serde_json::from_str(&response_message.function.arguments)?;
+    Ok(tracks)
 }
