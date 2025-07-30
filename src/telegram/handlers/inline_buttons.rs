@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::Context as _;
 use teloxide::dispatching::dialogue::GetChatId as _;
 use teloxide::prelude::*;
 
@@ -10,7 +10,7 @@ use crate::user::UserState;
 pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
         app.bot()
-            .answer_callback_query(&q.id)
+            .answer_callback_query(q.id.clone())
             .text("You need to register first")
             .await?;
 

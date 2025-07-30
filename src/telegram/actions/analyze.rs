@@ -2,7 +2,7 @@ use anyhow::Context as _;
 use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
-use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters};
+use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
 use teloxide::prelude::Requester as _;
 use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode, UserId};
 

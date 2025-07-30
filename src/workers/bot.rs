@@ -34,7 +34,7 @@ async fn sync_name(
             tg_user
                 .username
                 .as_deref()
-                .map(|username| format!("(@{})", username))
+                .map(|username| format!("(@{username})"))
                 .unwrap_or_default()
         )
         .trim()

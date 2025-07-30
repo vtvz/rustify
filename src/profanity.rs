@@ -49,7 +49,7 @@ impl IntoIterator for CheckResult {
 pub struct Checker;
 
 impl CheckResult {
-    pub fn iter(&self) -> Iter<LineResult> {
+    pub fn iter(&self) -> Iter<'_, LineResult> {
         self.lines.iter()
     }
 
@@ -158,9 +158,9 @@ impl LineResult {
                     self.bad_chars.contains(&i),
                     self.bad_chars.contains(&(i + 1)),
                 ) {
-                    (false, true, false) => format!("<tg-spoiler><u>{}</u></tg-spoiler>", c),
-                    (true, true, false) => format!("{}</u></tg-spoiler>", c),
-                    (false, true, true) => format!("<tg-spoiler><u>{}", c),
+                    (false, true, false) => format!("<tg-spoiler><u>{c}</u></tg-spoiler>"),
+                    (true, true, false) => format!("{c}</u></tg-spoiler>"),
+                    (false, true, true) => format!("<tg-spoiler><u>{c}"),
                     _ => c.into(),
                 }
             })
@@ -234,7 +234,7 @@ impl TypeWrapper {
             '❔'
         };
 
-        format!("{} {:?}", emoji, typ)
+        format!("{emoji} {typ:?}")
     }
 }
 
@@ -248,12 +248,12 @@ impl Display for TypeWrapper {
 pub fn check_cases() {
     let cases = [];
 
-    cases.map(|case| {
+    let _ = cases.map(|case| {
         let (censored, typ) = rustrict::Censor::from_str(case)
             .with_censor_first_character_threshold(Type::ANY)
             .with_censor_threshold(Type::ANY)
             .censor_and_analyze();
 
-        println!("{:?} {:?} {:?}", case, censored, typ);
+        println!("{case:?} {censored:?} {typ:?}");
     });
 }

@@ -172,7 +172,7 @@ impl GeniusLocal {
         let mut hits_count = 0;
 
         for (name_i, name) in names.into_iter().enumerate() {
-            let q = format!("{} {}", name, artist);
+            let q = format!("{name} {artist}");
 
             let hits: Vec<GeniusHit> = self
                 .reqwest

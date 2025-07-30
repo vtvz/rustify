@@ -19,7 +19,7 @@ impl InfluxClient {
         let headers = {
             let mut headers = header::HeaderMap::new();
 
-            let mut auth_header = header::HeaderValue::from_str(&format!("Token {}", token))?;
+            let mut auth_header = header::HeaderValue::from_str(&format!("Token {token}"))?;
 
             auth_header.set_sensitive(true);
 
