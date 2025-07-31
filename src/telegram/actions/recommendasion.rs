@@ -1,3 +1,6 @@
+use std::time::Duration;
+
+use anyhow::Context;
 use async_openai::types::{
     ChatCompletionRequestSystemMessageArgs,
     ChatCompletionRequestUserMessageArgs,
@@ -6,20 +9,25 @@ use async_openai::types::{
     CreateChatCompletionRequestArgs,
     FunctionObjectArgs,
 };
+use backon::{ExponentialBuilder, Retryable};
 use futures::StreamExt;
 use indoc::formatdoc;
 use itertools::Itertools;
-use rspotify::prelude::OAuthClient as _;
+use rspotify::model::SearchType;
+use rspotify::prelude::{BaseClient, OAuthClient as _};
 use serde_json::json;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::Requester;
+use teloxide::sugar::request::RequestLinkPreviewExt;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::{AnalyzeConfig, App};
+use crate::entity::prelude::TrackStatus;
 use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
+use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -57,38 +65,84 @@ pub async fn handle(
         }
     }
 
-    let tracks = tracks
+    let track_names = tracks
         .iter()
         .map(|item| item.name_with_artists())
         .join("\n");
 
-    let config = app.analyze().unwrap();
-    let tracks = get_recommendations(config, tracks).await?;
+    let config = app.analyze().context("Failed to get analyze config")?;
+
+    let track_recommendations = (|| get_recommendations(config, &track_names))
+        .retry(ExponentialBuilder::default())
+        .notify(|err: &anyhow::Error, dur: Duration| {
+            tracing::warn!(
+                err = ?err,
+                "Recommendasion is failed. Retry in {dur} sec",
+                dur = dur.as_secs()
+            );
+        })
+        .await?;
 
     let search_url = url::Url::parse("https://open.spotify.com/search")?;
 
-    let tracks = tracks
-        .recommendations
-        .iter()
-        .map(|genre| {
-            let mut url = search_url.clone();
-            url.path_segments_mut()
-                .expect("Infallible")
-                .push(&format!("{} - {}", genre.artist_name, genre.track_title));
-
-            (genre, url)
-        })
-        .map(|(genre, url)| {
-            format!(
-                r#"<a href="{url}">{} - {}</a>"#,
-                genre.artist_name, genre.track_title
+    let mut track_links = vec![];
+    for track_recommendation in &track_recommendations.recommendations {
+        let rspotify::model::SearchResult::Tracks(res) = spotify
+            .search(
+                &format!(
+                    "track:{track} artist:{artist}",
+                    track = track_recommendation.track_title,
+                    artist = track_recommendation.artist_name
+                ),
+                SearchType::Track,
+                None,
+                None,
+                Some(1),
+                None,
             )
-        })
-        .join("\n");
+            .await?
+        else {
+            panic!("")
+        };
+
+        let Some(track) = res.items.first().cloned() else {
+            let mut url = search_url.clone();
+            url.path_segments_mut().expect("Infallible").push(&format!(
+                "{} - {}",
+                track_recommendation.artist_name, track_recommendation.track_title
+            ));
+
+            track_links.push(format!(
+                r#"🔍 <a href="{url}">{} - {}</a>"#,
+                track_recommendation.artist_name, track_recommendation.track_title
+            ));
+
+            continue;
+        };
+
+        let track = ShortTrack::new(track);
+
+        let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
+
+        if matches!(status, TrackStatus::Disliked) {
+            track_links.push(format!("👎 {}", track.track_tg_link()));
+
+            continue;
+        }
+
+        spotify
+            .add_item_to_queue(track.raw_id().clone().into(), None)
+            .await?;
+
+        track_links.push(track.track_tg_link());
+
+        // dbg!(res);
+    }
 
     app.bot()
-        .send_message(chat_id, tracks)
+        .send_message(chat_id, track_links.join("\n"))
         .parse_mode(ParseMode::Html)
+        .disable_link_preview(true)
         .reply_markup(StartKeyboard::markup(state.locale()))
         .await?;
 
@@ -97,16 +151,18 @@ pub async fn handle(
 
 async fn get_recommendations(
     config: &AnalyzeConfig,
-    tracks: String,
+    tracks: &str,
 ) -> Result<Recommendations, anyhow::Error> {
+    let amount = 10;
     let user_prompt = formatdoc!(
         "
             User's favorite tracks:
 
             {tracks}
 
-            Generate a list of 10 music tracks in the format 'Artist - Track Title' that are similar in style, genre, or mood,
-            but are not in the provided list. Avoid duplicates and ensure diversity.
+            Generate a list of {amount} music tracks in the format 'Artist - Track Title' that are similar in style, genre, or mood, but are not in the provided list.
+            Avoid duplicates and ensure diversity. Do not suggest the same artist twice. Try to suggest tracks with different genres. Do not suggest tracks with explicit or profane lyrics.
+            Don't make up non-existent songs
         "
     );
 
@@ -128,13 +184,14 @@ async fn get_recommendations(
                 .function(
                     FunctionObjectArgs::default()
                         .name("recommend_tracks")
-                        .description("Generate 10 music track recommendations based on user's favorite tracks")
+                        .description(format!("Generate {amount} music track recommendations based on user's favorite tracks"))
+                        .strict(true)
                         .parameters(json!({
                             "type": "object",
                             "properties": {
                                 "recommendations": {
                                     "type": "array",
-                                    "description": "List of 10 recommended music tracks",
+                                    "description": format!("List of {amount} recommended music tracks"),
                                     "items": {
                                         "type": "object",
                                         "properties": {
@@ -167,14 +224,20 @@ async fn get_recommendations(
         .await?
         .choices
         .first()
-        .unwrap()
+        .context("No choices returned from OpenAI API")?
         .message
         .clone()
         .tool_calls
-        .unwrap()
+        .context("No tool calls found in response message")?
         .first()
         .cloned()
-        .unwrap();
+        .context("No tool call found in response")?;
+
+    if response_message.function.name != "recommend_tracks" {
+        anyhow::bail!("Wrong function is called");
+    }
+
     let tracks: Recommendations = serde_json::from_str(&response_message.function.arguments)?;
+
     Ok(tracks)
 }
