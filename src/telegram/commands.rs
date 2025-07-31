@@ -24,7 +24,8 @@ pub enum UserCommand {
     Dislike,
     #[command(description = "command.like")]
     Like,
-    #[command(description = "command.recommendasion")]
+    // #[command(description = "command.recommendasion")]
+    #[command(hide)]
     Recommendasion,
     #[command(description = "command.details")]
     Details,

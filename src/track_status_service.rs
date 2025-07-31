@@ -2,7 +2,14 @@ use rspotify::model::TrackId;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr};
-use sea_orm::{ConnectionTrait, FromQueryResult, IntoActiveModel, QuerySelect, UpdateResult};
+use sea_orm::{
+    ConnectionTrait,
+    FromQueryResult,
+    IntoActiveModel,
+    QueryOrder,
+    QuerySelect,
+    UpdateResult,
+};
 
 use crate::entity::prelude::*;
 use crate::utils::Clock;
@@ -145,16 +152,21 @@ impl TrackStatusService {
         user_id: &str,
         status: TrackStatus,
     ) -> anyhow::Result<Vec<TrackId<'static>>> {
-        let tracks: Vec<TrackStatusModel> = Self::builder()
+        let tracks: Vec<String> = Self::builder()
             .status(Some(status))
             .user_id(Some(user_id))
             .build()
+            .select_only()
+            .column(TrackStatusColumn::TrackId)
+            .limit(50)
+            .order_by_desc(TrackStatusColumn::CreatedAt)
+            .into_tuple()
             .all(db)
             .await?;
 
         let res: Vec<_> = tracks
             .into_iter()
-            .map(|track| TrackId::from_id(track.track_id))
+            .map(TrackId::from_id)
             .collect::<Result<_, _>>()?;
 
         Ok(res)

@@ -16,7 +16,7 @@ use itertools::Itertools;
 use rspotify::model::SearchType;
 use rspotify::prelude::{BaseClient, OAuthClient as _};
 use serde_json::json;
-use teloxide::payloads::{EditMessageTextSetters, SendMessageSetters};
+use teloxide::payloads::EditMessageTextSetters;
 use teloxide::prelude::Requester;
 use teloxide::sugar::request::RequestLinkPreviewExt;
 use teloxide::types::{ChatId, ParseMode};
@@ -26,7 +26,6 @@ use crate::entity::prelude::TrackStatus;
 use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
-use crate::telegram::keyboards::StartKeyboard;
 use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 
@@ -52,6 +51,14 @@ pub async fn handle(
         return Ok(HandleStatus::Handled);
     }
 
+    let Some(config) = app.analyze() else {
+        app.bot()
+            .send_message(chat_id, "Recommendasion is disabled")
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    };
+
     let m = app
         .bot()
         .send_message(chat_id, "Collecting your favorite songs")
@@ -71,6 +78,26 @@ pub async fn handle(
     }
 
     app.bot()
+        .edit_message_text(chat_id, m.id, "Collecting your disliked songs")
+        .await?;
+
+    let disliked_track_ids =
+        TrackStatusService::get_ids_with_status(app.db(), state.user_id(), TrackStatus::Disliked)
+            .await?;
+
+    let disliked_short_tracks = spotify
+        .tracks(disliked_track_ids, None)
+        .await?
+        .into_iter()
+        .map(ShortTrack::from)
+        .collect_vec();
+
+    let disliked_tracks = disliked_short_tracks
+        .into_iter()
+        .map(|track| track.name_with_artists())
+        .join("\n");
+
+    app.bot()
         .edit_message_text(chat_id, m.id, "Asking AI about recommended track for you")
         .await?;
 
@@ -79,9 +106,7 @@ pub async fn handle(
         .map(|item| item.name_with_artists())
         .join("\n");
 
-    let config = app.analyze().context("Failed to get analyze config")?;
-
-    let track_recommendations = (|| get_recommendations(config, &track_names, ""))
+    let track_recommendations = (|| get_recommendations(config, &track_names, &disliked_tracks))
         .retry(ExponentialBuilder::default())
         .notify(|err: &anyhow::Error, dur: Duration| {
             tracing::warn!(
@@ -152,8 +177,6 @@ pub async fn handle(
             .await?;
 
         track_links.push(track.track_tg_link());
-
-        // dbg!(res);
     }
 
     app.bot()
@@ -199,7 +222,7 @@ async fn get_recommendations(
                 .build()?
                 .into(),
             ChatCompletionRequestUserMessageArgs::default()
-                .content(format!("Disliked tracks:\n{disliked_tracks}"))
+                .content(format!("Recently disliked tracks:\n{disliked_tracks}"))
                 .build()?
                 .into(),
         ])
