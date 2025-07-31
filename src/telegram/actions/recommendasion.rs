@@ -81,7 +81,7 @@ pub async fn handle(
 
     let config = app.analyze().context("Failed to get analyze config")?;
 
-    let track_recommendations = (|| get_recommendations(config, &track_names))
+    let track_recommendations = (|| get_recommendations(config, &track_names, ""))
         .retry(ExponentialBuilder::default())
         .notify(|err: &anyhow::Error, dur: Duration| {
             tracing::warn!(
@@ -167,17 +167,19 @@ pub async fn handle(
 
 async fn get_recommendations(
     config: &AnalyzeConfig,
-    tracks: &str,
+    liked_tracks: &str,
+    disliked_tracks: &str,
 ) -> Result<Recommendations, anyhow::Error> {
     let amount = 10;
     let user_prompt = formatdoc!(
         "
-            Generate a list of {amount} music track recommendations that are similar in style, genre, or mood to the provided tracks, but are not in the provided list.
+            Generate a list of {amount} music track recommendations that are similar in style, genre, or mood to the user's favorite tracks, but avoid styles similar to their disliked tracks.
+            Do not recommend any tracks that are already in either the favorite or disliked lists.
             For each recommendation, provide the artist name and track title separately.
             Ensure variety by not suggesting the same artist twice and exploring different subgenres or related styles within the user's musical taste.
             Do not suggest tracks with explicit or profane lyrics. Only recommend real, existing songs that can be found on music streaming platforms.
 
-            User's favorite tracks will be listed in the next message.
+            User's favorite tracks will be listed in the next message, followed by their disliked tracks.
         "
     );
 
@@ -193,7 +195,11 @@ async fn get_recommendations(
                 .build()?
                 .into(),
             ChatCompletionRequestUserMessageArgs::default()
-                .content(tracks)
+                .content(format!("Favorite tracks:\n{liked_tracks}"))
+                .build()?
+                .into(),
+            ChatCompletionRequestUserMessageArgs::default()
+                .content(format!("Disliked tracks:\n{disliked_tracks}"))
                 .build()?
                 .into(),
         ])
