@@ -26,8 +26,6 @@ pub enum UserCommand {
     Like,
     #[command(description = "command.recommendasion")]
     Recommendasion,
-    #[command(description = "command.cleanup")]
-    Cleanup,
     #[command(description = "command.details")]
     Details,
     #[command(description = "command.stats")]
@@ -122,7 +120,6 @@ pub enum UserCommandDisplay {
     Keyboard,
     Dislike,
     Like,
-    Cleanup,
     Details,
     Stats,
     Register,
@@ -145,7 +142,6 @@ impl std::fmt::Display for UserCommandDisplay {
             Self::Keyboard => "keyboard",
             Self::Dislike => "dislike",
             Self::Like => "like",
-            Self::Cleanup => "cleanup",
             Self::Details => "details",
             Self::Stats => "stats",
             Self::Register => "register",
@@ -220,7 +216,6 @@ mod tests {
             UserCommand::Dislike => UserCommandDisplay::Dislike,
             UserCommand::Like => UserCommandDisplay::Like,
             UserCommand::Recommendasion => UserCommandDisplay::Recommendasion,
-            UserCommand::Cleanup => UserCommandDisplay::Cleanup,
             UserCommand::Details => UserCommandDisplay::Details,
             UserCommand::Stats => UserCommandDisplay::Stats,
             UserCommand::Register => UserCommandDisplay::Register,

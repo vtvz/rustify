@@ -46,12 +46,6 @@ command.like:
   ru: |-
     Нравится текущий трек
 
-command.cleanup:
-  en: |-
-    Clean up disliked tracks
-  ru: |-
-    Очистить нелюбимые треки
-
 command.details:
   en: |-
     Show details about the currently playing track
