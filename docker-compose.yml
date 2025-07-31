@@ -5,9 +5,9 @@ services:
     restart: always
     ports:
       - 5432:5432
-    # volumes:
-    #   - ./var/postgres:/var/lib/postgresql
-    #   - .:/pwd
+    volumes:
+      - ./var/postgres:/var/lib/postgresql
+      - .:/pwd
     environment:
       POSTGRES_PASSWORD: example
 
