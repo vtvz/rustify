@@ -72,9 +72,6 @@ pub async fn handle(
         UserCommand::Like => {
             return actions::like::handle(app, state, m).await;
         },
-        UserCommand::Cleanup => {
-            return actions::cleanup::handle(app, state, m).await;
-        },
         UserCommand::Stats => return actions::stats::handle(app, state, m).await,
         UserCommand::Details => {
             return actions::details::handle_current(app, state, &m.chat.id).await;
