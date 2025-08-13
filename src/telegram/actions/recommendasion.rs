@@ -23,6 +23,7 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::{AnalyzeConfig, App};
 use crate::entity::prelude::TrackStatus;
+use crate::recommendasion_service::RecommendasionService;
 use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
@@ -50,6 +51,12 @@ pub async fn handle(
 
         return Ok(HandleStatus::Handled);
     }
+
+    let mut redis_conn = app.redis_conn().await?;
+
+    let mut recommended =
+        RecommendasionService::get_already_recommended(&mut redis_conn, state.user_id()).await?;
+    let recommended_str = recommended.join("\n");
 
     let Some(config) = app.analyze() else {
         app.bot()
@@ -85,12 +92,16 @@ pub async fn handle(
         TrackStatusService::get_ids_with_status(app.db(), state.user_id(), TrackStatus::Disliked)
             .await?;
 
-    let disliked_short_tracks = spotify
-        .tracks(disliked_track_ids, None)
-        .await?
-        .into_iter()
-        .map(ShortTrack::from)
-        .collect_vec();
+    let disliked_short_tracks = if !disliked_track_ids.is_empty() {
+        spotify
+            .tracks(disliked_track_ids, None)
+            .await?
+            .into_iter()
+            .map(ShortTrack::from)
+            .collect_vec()
+    } else {
+        vec![]
+    };
 
     let disliked_tracks = disliked_short_tracks
         .into_iter()
@@ -106,16 +117,17 @@ pub async fn handle(
         .map(|item| item.name_with_artists())
         .join("\n");
 
-    let track_recommendations = (|| get_recommendations(config, &track_names, &disliked_tracks))
-        .retry(ExponentialBuilder::default())
-        .notify(|err: &anyhow::Error, dur: Duration| {
-            tracing::warn!(
-                err = ?err,
-                "Recommendasion is failed. Retry in {dur} sec",
-                dur = dur.as_secs()
-            );
-        })
-        .await?;
+    let track_recommendations =
+        (|| get_recommendations(config, &track_names, &disliked_tracks, &recommended_str))
+            .retry(ExponentialBuilder::default())
+            .notify(|err: &anyhow::Error, dur: Duration| {
+                tracing::warn!(
+                    err = ?err,
+                    "Recommendasion is failed. Retry in {dur} sec",
+                    dur = dur.as_secs()
+                );
+            })
+            .await?;
 
     let search_url = url::Url::parse("https://open.spotify.com/search")?;
 
@@ -144,25 +156,28 @@ pub async fn handle(
             )
             .await?
         else {
-            panic!("")
+            anyhow::bail!("Searching for tracks must return tracks")
         };
 
         let Some(track) = res.items.first().cloned() else {
             let mut url = search_url.clone();
-            url.path_segments_mut().expect("Infallible").push(&format!(
-                "{} - {}",
+            let track_name = format!(
+                "{} — {}",
                 track_recommendation.artist_name, track_recommendation.track_title
-            ));
+            );
 
-            track_links.push(format!(
-                r#"🔍 <a href="{url}">{} - {}</a>"#,
-                track_recommendation.artist_name, track_recommendation.track_title
-            ));
+            url.path_segments_mut()
+                .expect("Infallible")
+                .push(&track_name);
+
+            track_links.push(format!(r#"🔍 <a href="{url}">{track_name}</a>"#,));
 
             continue;
         };
 
         let track = ShortTrack::new(track);
+
+        recommended.insert(0, track.name_with_artists());
 
         let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
@@ -179,6 +194,9 @@ pub async fn handle(
         track_links.push(track.track_tg_link());
     }
 
+    RecommendasionService::save_already_recommended(&mut redis_conn, state.user_id(), &recommended)
+        .await?;
+
     app.bot()
         .edit_message_text(chat_id, m.id, track_links.join("\n"))
         .parse_mode(ParseMode::Html)
@@ -192,17 +210,51 @@ async fn get_recommendations(
     config: &AnalyzeConfig,
     liked_tracks: &str,
     disliked_tracks: &str,
+    recommended_tracks: &str,
 ) -> Result<Recommendations, anyhow::Error> {
     let amount = 10;
+    let system_prompt = formatdoc!(
+        "
+            You are a music recommendation engine. Your primary goal is to suggest music tracks that the user will enjoy while STRICTLY AVOIDING any tracks they have disliked.
+
+            CRITICAL RULES - FAILURE TO FOLLOW THESE WILL RESULT IN POOR USER EXPERIENCE:
+            1. NEVER recommend tracks that appear in the user's disliked list - this is the most important rule
+            2. NEVER recommend tracks that appear in the user's favorite list (they already have them)
+            3. NEVER recommend tracks that have been previously suggested
+            4. NEVER recommend the same artist twice in one recommendation set
+            5. Only recommend real, existing songs available on streaming platforms
+            6. Avoid explicit or profane lyrics
+
+            The user has explicitly disliked certain tracks - recommending similar tracks will frustrate them. Pay extra attention to the disliked tracks list and avoid anything similar in style, artist, or genre to those tracks.
+        "
+    );
+
     let user_prompt = formatdoc!(
         "
-            Generate a list of {amount} music track recommendations that are similar in style, genre, or mood to the user's favorite tracks, but avoid styles similar to their disliked tracks.
-            Do not recommend any tracks that are already in either the favorite or disliked lists.
-            For each recommendation, provide the artist name and track title separately.
-            Ensure variety by not suggesting the same artist twice and exploring different subgenres or related styles within the user's musical taste.
-            Do not suggest tracks with explicit or profane lyrics. Only recommend real, existing songs that can be found on music streaming platforms.
+            🚫 FORBIDDEN TRACKS - DO NOT RECOMMEND ANYTHING SIMILAR TO THESE:
+            {disliked_tracks}
 
-            User's favorite tracks will be listed in the next message, followed by their disliked tracks.
+            ⚠️ CRITICAL: The above tracks are DISLIKED by the user. Do NOT recommend:
+            - Any of these exact tracks
+            - Tracks by the same artists
+            - Tracks in similar genres/styles
+            - Tracks with similar energy/mood
+            - Tracks from the same era if they share similar characteristics
+
+            ✅ FAVORITE TRACKS (recommend similar styles/genres to these):
+            {liked_tracks}
+
+            📝 PREVIOUSLY RECOMMENDED (do not repeat):
+            {recommended_tracks}
+
+            TASK: Generate exactly {amount} NEW music recommendations that:
+            1. Are similar in style/genre to my FAVORITE tracks
+            2. Are COMPLETELY DIFFERENT from my DISLIKED tracks
+            3. Have NOT been previously recommended
+            4. Are from different artists (no duplicates)
+            5. Are real, existing songs available on streaming platforms
+
+            Remember: Recommending anything similar to the FORBIDDEN tracks will result in a poor user experience.
         "
     );
 
@@ -210,19 +262,11 @@ async fn get_recommendations(
         .model(config.model())
         .messages([
             ChatCompletionRequestSystemMessageArgs::default()
-                .content("You are a music recommendation engine")
+                .content(system_prompt.as_str())
                 .build()?.
                 into(),
             ChatCompletionRequestUserMessageArgs::default()
                 .content(user_prompt.as_str())
-                .build()?
-                .into(),
-            ChatCompletionRequestUserMessageArgs::default()
-                .content(format!("Favorite tracks:\n{liked_tracks}"))
-                .build()?
-                .into(),
-            ChatCompletionRequestUserMessageArgs::default()
-                .content(format!("Recently disliked tracks:\n{disliked_tracks}"))
                 .build()?
                 .into(),
         ])

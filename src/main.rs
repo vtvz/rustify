@@ -25,6 +25,7 @@ pub mod magic_service;
 pub mod metrics;
 pub mod profanity;
 pub mod queue;
+pub mod recommendasion_service;
 pub mod rickroll;
 pub mod serde_utils;
 pub mod skippage_service;
