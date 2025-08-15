@@ -229,7 +229,7 @@ async fn get_recommendations(
         "
     );
 
-    let user_prompt = formatdoc!(
+    let disliked_prompt = formatdoc!(
         "
             🚫 FORBIDDEN TRACKS - DO NOT RECOMMEND ANYTHING SIMILAR TO THESE:
             {disliked_tracks}
@@ -240,13 +240,25 @@ async fn get_recommendations(
             - Tracks in similar genres/styles
             - Tracks with similar energy/mood
             - Tracks from the same era if they share similar characteristics
+        "
+    );
 
+    let liked_prompt = formatdoc!(
+        "
             ✅ FAVORITE TRACKS (recommend similar styles/genres to these):
             {liked_tracks}
+        "
+    );
 
+    let recommended_prompt = formatdoc!(
+        "
             📝 PREVIOUSLY RECOMMENDED (do not repeat):
             {recommended_tracks}
+        "
+    );
 
+    let task_prompt = formatdoc!(
+        "
             TASK: Generate exactly {amount} NEW music recommendations that:
             1. Are similar in style/genre to my FAVORITE tracks
             2. Are COMPLETELY DIFFERENT from my DISLIKED tracks
@@ -266,7 +278,19 @@ async fn get_recommendations(
                 .build()?.
                 into(),
             ChatCompletionRequestUserMessageArgs::default()
-                .content(user_prompt.as_str())
+                .content(disliked_prompt.as_str())
+                .build()?
+                .into(),
+            ChatCompletionRequestUserMessageArgs::default()
+                .content(liked_prompt.as_str())
+                .build()?
+                .into(),
+            ChatCompletionRequestUserMessageArgs::default()
+                .content(recommended_prompt.as_str())
+                .build()?
+                .into(),
+            ChatCompletionRequestUserMessageArgs::default()
+                .content(task_prompt.as_str())
                 .build()?
                 .into(),
         ])
