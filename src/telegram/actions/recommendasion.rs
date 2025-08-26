@@ -54,10 +54,6 @@ pub async fn handle(
 
     let mut redis_conn = app.redis_conn().await?;
 
-    let mut recommended =
-        RecommendasionService::get_already_recommended(&mut redis_conn, state.user_id()).await?;
-    let recommended_str = recommended.join("\n");
-
     let Some(config) = app.analyze() else {
         app.bot()
             .send_message(chat_id, "Recommendasion is disabled")
@@ -71,27 +67,148 @@ pub async fn handle(
         .send_message(chat_id, "Collecting your favorite songs")
         .await?;
 
+    let mut already_recommended =
+        RecommendasionService::get_already_recommended(&mut redis_conn, state.user_id()).await?;
+
     let spotify = state.spotify().await;
-    let mut saved_tracks = spotify.current_user_saved_tracks(None);
-    let mut tracks: Vec<ShortTrack> = vec![];
 
-    while let Some(track) = saved_tracks.next().await {
-        let track = track?;
-        tracks.push(track.track.into());
+    let liked_tracks = get_liked_tracks(&spotify).await?;
 
-        if tracks.len() >= 100 {
+    let disliked_tracks = get_disliked_tracks(app, state, chat_id, &m, &spotify).await?;
+
+    app.bot()
+        .edit_message_text(chat_id, m.id, "Asking AI about recommended track for you")
+        .await?;
+
+    let mut recommendations = vec![];
+    let mut recommended_disliked = vec![];
+    let mut slop = vec![];
+
+    for _ in 0..5 {
+        let (recommendations_iter, disliked_iter, slop_iter) = (|| {
+            get_real_recommendations(
+                app,
+                state,
+                config,
+                &liked_tracks,
+                &disliked_tracks,
+                &already_recommended,
+            )
+        })
+        .retry(ExponentialBuilder::default())
+        .notify(|err: &anyhow::Error, dur: Duration| {
+            tracing::warn!(
+                err = ?err,
+                "Recommendasion is failed. Retry in {dur} sec",
+                dur = dur.as_secs()
+            );
+        })
+        .await?;
+
+        for recommendation in recommendations_iter {
+            recommendations.push(recommendation.clone());
+
+            already_recommended.insert(0, recommendation);
+        }
+
+        recommended_disliked.extend(disliked_iter);
+        slop.extend(slop_iter);
+
+        if recommendations.len() > 10 {
             break;
         }
     }
 
     app.bot()
-        .edit_message_text(chat_id, m.id, "Collecting your disliked songs")
+        .edit_message_text(chat_id, m.id, "Adding tracks to Spotify queue")
         .await?;
 
+    let mut recommendation_links = vec![];
+    for recommendation in recommendations {
+        spotify
+            .add_item_to_queue(recommendation.raw_id().clone().into(), None)
+            .await?;
+
+        recommendation_links.push(recommendation.track_tg_link());
+    }
+
+    let mut disliked_links = vec![];
+    for disliked in recommended_disliked {
+        disliked_links.push(format!("👎 {}", disliked.track_tg_link()));
+    }
+
+    let search_url = url::Url::parse("https://open.spotify.com/search")?;
+
+    let mut slop_links = vec![];
+    for slop in slop {
+        let mut url = search_url.clone();
+        let track_name = format!("{} — {}", slop.artist_name, slop.track_title);
+
+        url.path_segments_mut()
+            .expect("Infallible")
+            .push(&track_name);
+
+        slop_links.push(format!(r#"🔍 <a href="{url}">{track_name}</a>"#,));
+    }
+
+    RecommendasionService::save_already_recommended(
+        &mut redis_conn,
+        state.user_id(),
+        &already_recommended,
+    )
+    .await?;
+
+    let msg = formatdoc!(
+        "
+            Recommendations:
+
+            {recommendation_links}
+
+            <blockquote expandable>{disliked_links}
+            {slop_links}</blockquote>
+        ",
+        recommendation_links = recommendation_links.join("\n"),
+        disliked_links = disliked_links.join("\n"),
+        slop_links = slop_links.join("\n"),
+    );
+    app.bot()
+        .edit_message_text(chat_id, m.id, msg)
+        .parse_mode(ParseMode::Html)
+        .disable_link_preview(true)
+        .await?;
+
+    Ok(HandleStatus::Handled)
+}
+
+async fn get_liked_tracks(
+    spotify: &tokio::sync::RwLockReadGuard<'_, rspotify::AuthCodeSpotify>,
+) -> Result<Vec<ShortTrack>, anyhow::Error> {
+    let mut saved_tracks = spotify.current_user_saved_tracks(None);
+    let mut liked_tracks: Vec<ShortTrack> = vec![];
+    while let Some(track) = saved_tracks.next().await {
+        let track = track?;
+        liked_tracks.push(track.track.into());
+
+        if liked_tracks.len() >= 100 {
+            break;
+        }
+    }
+    Ok(liked_tracks)
+}
+
+async fn get_disliked_tracks(
+    app: &'static App,
+    state: &UserState,
+    chat_id: ChatId,
+    m: &teloxide::prelude::Message,
+    spotify: &tokio::sync::RwLockReadGuard<'_, rspotify::AuthCodeSpotify>,
+) -> Result<Vec<ShortTrack>, anyhow::Error> {
+    app.bot()
+        .edit_message_text(chat_id, m.id, "Collecting your disliked songs")
+        .await?;
     let disliked_track_ids =
         TrackStatusService::get_ids_with_status(app.db(), state.user_id(), TrackStatus::Disliked)
             .await?;
-
     let disliked_short_tracks = if !disliked_track_ids.is_empty() {
         spotify
             .tracks(disliked_track_ids, None)
@@ -102,45 +219,32 @@ pub async fn handle(
     } else {
         vec![]
     };
+    Ok(disliked_short_tracks)
+}
 
-    let disliked_tracks = disliked_short_tracks
-        .into_iter()
-        .map(|track| track.name_with_artists())
-        .join("\n");
+async fn get_real_recommendations(
+    app: &App,
+    state: &UserState,
+    config: &AnalyzeConfig,
+    liked_tracks: &[ShortTrack],
+    disliked_tracks: &[ShortTrack],
+    already_recommended_tracks: &[ShortTrack],
+) -> anyhow::Result<(Vec<ShortTrack>, Vec<ShortTrack>, Vec<Track>)> {
+    let track_recommendations = get_recommendations(
+        config,
+        liked_tracks,
+        disliked_tracks,
+        already_recommended_tracks,
+    )
+    .await?;
 
-    app.bot()
-        .edit_message_text(chat_id, m.id, "Asking AI about recommended track for you")
-        .await?;
+    let spotify = state.spotify().await;
 
-    let track_names = tracks
-        .iter()
-        .map(|item| item.name_with_artists())
-        .join("\n");
+    let mut recommended = vec![];
+    let mut disliked = vec![];
+    let mut slop = vec![];
 
-    let track_recommendations =
-        (|| get_recommendations(config, &track_names, &disliked_tracks, &recommended_str))
-            .retry(ExponentialBuilder::default())
-            .notify(|err: &anyhow::Error, dur: Duration| {
-                tracing::warn!(
-                    err = ?err,
-                    "Recommendasion is failed. Retry in {dur} sec",
-                    dur = dur.as_secs()
-                );
-            })
-            .await?;
-
-    let search_url = url::Url::parse("https://open.spotify.com/search")?;
-
-    app.bot()
-        .edit_message_text(
-            chat_id,
-            m.id,
-            "Finding songs in spotify and adding to queue",
-        )
-        .await?;
-
-    let mut track_links = vec![];
-    for track_recommendation in &track_recommendations.recommendations {
+    for track_recommendation in track_recommendations.recommendations {
         let rspotify::model::SearchResult::Tracks(res) = spotify
             .search(
                 &format!(
@@ -160,59 +264,53 @@ pub async fn handle(
         };
 
         let Some(track) = res.items.first().cloned() else {
-            let mut url = search_url.clone();
-            let track_name = format!(
-                "{} — {}",
-                track_recommendation.artist_name, track_recommendation.track_title
-            );
-
-            url.path_segments_mut()
-                .expect("Infallible")
-                .push(&track_name);
-
-            track_links.push(format!(r#"🔍 <a href="{url}">{track_name}</a>"#,));
+            slop.push(track_recommendation);
 
             continue;
         };
 
         let track = ShortTrack::new(track);
 
-        recommended.insert(0, track.name_with_artists());
-
         let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
         if matches!(status, TrackStatus::Disliked) {
-            track_links.push(format!("👎 {}", track.track_tg_link()));
+            disliked.push(track);
 
             continue;
         }
 
-        spotify
-            .add_item_to_queue(track.raw_id().clone().into(), None)
-            .await?;
+        if recommended.contains(&track) {
+            continue;
+        };
 
-        track_links.push(track.track_tg_link());
+        recommended.insert(0, track);
     }
 
-    RecommendasionService::save_already_recommended(&mut redis_conn, state.user_id(), &recommended)
-        .await?;
-
-    app.bot()
-        .edit_message_text(chat_id, m.id, track_links.join("\n"))
-        .parse_mode(ParseMode::Html)
-        .disable_link_preview(true)
-        .await?;
-
-    Ok(HandleStatus::Handled)
+    Ok((recommended, disliked, slop))
 }
 
 async fn get_recommendations(
     config: &AnalyzeConfig,
-    liked_tracks: &str,
-    disliked_tracks: &str,
-    recommended_tracks: &str,
+    liked_tracks: &[ShortTrack],
+    disliked_tracks: &[ShortTrack],
+    already_recommended_tracks: &[ShortTrack],
 ) -> Result<Recommendations, anyhow::Error> {
-    let amount = 10;
+    let liked_tracks = liked_tracks
+        .iter()
+        .map(|track| track.name_with_artists())
+        .join("\n");
+
+    let disliked_tracks = disliked_tracks
+        .iter()
+        .map(|track| track.name_with_artists())
+        .join("\n");
+
+    let recommended_tracks = already_recommended_tracks
+        .iter()
+        .map(|track| track.name_with_artists())
+        .join("\n");
+
+    let amount = 30;
     let system_prompt = formatdoc!(
         "
             You are a music recommendation engine. Your primary goal is to suggest music tracks that the user will enjoy while STRICTLY AVOIDING any tracks they have disliked.

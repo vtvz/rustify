@@ -2,7 +2,7 @@ pub mod errors;
 
 use std::borrow::Cow;
 
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 pub use errors::SpotifyError;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
@@ -62,7 +62,7 @@ impl From<SimplifiedPlaylist> for ShortPlaylist {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ShortTrack {
     id: TrackId<'static>,
     name: String,

@@ -3,6 +3,8 @@ use itertools::Itertools;
 use redis::AsyncCommands;
 use redis::aio::MultiplexedConnection;
 
+use crate::spotify::ShortTrack;
+
 pub struct RecommendasionService {}
 
 impl RecommendasionService {
@@ -10,14 +12,14 @@ impl RecommendasionService {
     pub async fn get_already_recommended(
         redis_conn: &mut MultiplexedConnection,
         user_id: &str,
-    ) -> anyhow::Result<Vec<String>> {
+    ) -> anyhow::Result<Vec<ShortTrack>> {
         let recommended_key = format!("rustify:recommendasion:{user_id}:recommended");
 
         let recommended: Option<String> = redis_conn.get(&recommended_key).await?;
 
         let recommended = recommended.unwrap_or_default();
 
-        let recommended: Vec<String> = serde_json::from_str(&recommended).unwrap_or_default();
+        let recommended: Vec<ShortTrack> = serde_json::from_str(&recommended).unwrap_or_default();
 
         Ok(recommended)
     }
@@ -26,7 +28,7 @@ impl RecommendasionService {
     pub async fn save_already_recommended(
         redis_conn: &mut MultiplexedConnection,
         user_id: &str,
-        recommended: &[String],
+        recommended: &[ShortTrack],
     ) -> anyhow::Result<()> {
         let recommended_key = format!("rustify:recommendasion:{user_id}:recommended");
 
