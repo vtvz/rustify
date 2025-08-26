@@ -279,11 +279,17 @@ async fn get_real_recommendations(
             continue;
         }
 
-        if recommended.contains(&track) {
+        if recommended
+            .iter()
+            .any(|item: &ShortTrack| item.id() == track.id())
+        {
             continue;
         };
 
-        if liked_tracks.contains(&track) {
+        if liked_tracks
+            .iter()
+            .any(|item: &ShortTrack| item.id() == track.id())
+        {
             continue;
         };
 
