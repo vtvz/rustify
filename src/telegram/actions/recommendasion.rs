@@ -279,7 +279,7 @@ async fn get_real_recommendations(
             continue;
         }
 
-        if recommended
+        if already_recommended_tracks
             .iter()
             .any(|item: &ShortTrack| item.id() == track.id())
         {
