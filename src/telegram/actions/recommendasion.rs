@@ -283,6 +283,10 @@ async fn get_real_recommendations(
             continue;
         };
 
+        if liked_tracks.contains(&track) {
+            continue;
+        };
+
         recommended.insert(0, track);
     }
 
