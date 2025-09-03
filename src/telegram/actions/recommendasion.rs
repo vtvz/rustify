@@ -119,6 +119,8 @@ pub async fn handle(
         }
     }
 
+    let slop_rate = slop.len() * 100 / (slop.len() + recommendations.len() + 1);
+
     app.bot()
         .edit_message_text(chat_id, m.id, "Adding tracks to Spotify queue")
         .await?;
@@ -163,6 +165,8 @@ pub async fn handle(
             Recommendations:
 
             {recommendation_links}
+
+            Slop rate: {slop_rate}%
 
             <blockquote expandable>{disliked_links}
             {slop_links}</blockquote>
@@ -380,6 +384,7 @@ async fn get_recommendations(
 
     let req = CreateChatCompletionRequestArgs::default()
         .model(config.model())
+        .temperature(0.5 as f32)
         .messages([
             ChatCompletionRequestSystemMessageArgs::default()
                 .content(system_prompt.as_str())
