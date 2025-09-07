@@ -384,7 +384,7 @@ async fn get_recommendations(
 
     let req = CreateChatCompletionRequestArgs::default()
         .model(config.model())
-        .temperature(0.5 as f32)
+        .temperature(2.0)
         .messages([
             ChatCompletionRequestSystemMessageArgs::default()
                 .content(system_prompt.as_str())
