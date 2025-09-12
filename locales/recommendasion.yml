@@ -11,12 +11,12 @@ recommendasion.welcome:
     🤖 <i>Recommendasion™</i> is an experimental feature that uses your preferences to suggest something new with AI.
 
 
-    Click <i>"🤖 Generate recommendations"</i> and AI will analyze your likes, dislikes and suggest something fresh. AI can be silly sometimes, so don't judge too harshly 🙂
+    Click <i>"🤖 Generate recommendations"</i> and AI will analyze your likes, dislikes and add something fresh to your Spotify queue. AI can be silly sometimes, so don't judge too harshly 🙂
   ru: >-
     🤖 <i>Recommendasion™</i> экспериментальная функция, которая использует ваши предпочтения, чтобы с помощью ИИ предложить что-то новое.
 
 
-    Нажмите <i>"🤖 Сгенерировать рекомендации"</i> и ИИ проанализирует ваши лайки, дизлайки и предложит что-нибудь новенькое. ИИ бывает глуп, так что не судите строго 🙂
+    Нажмите <i>"🤖 Сгенерировать рекомендации"</i> и ИИ проанализирует ваши лайки, дизлайки и добавит в очередь Spotify что-нибудь новенькое. ИИ бывает глуп, так что не судите строго 🙂
 
 recommendasion.disabled:
   en: >-
