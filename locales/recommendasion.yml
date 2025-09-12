@@ -28,9 +28,11 @@ recommendasion.collecting-favorites:
   en: >-
     ⌛️ Generating recommendations...
 
+
     ❤️ Collecting your favorite songs
   ru: >-
     ⌛️ Генерирую рекомендации...
+
 
     ❤️ Собираю ваши любимые песни
 
@@ -38,9 +40,11 @@ recommendasion.collecting-dislikes:
   en: >-
     ⌛️ Generating recommendations...
 
+
     👎 Collecting your disliked songs
   ru: >-
     ⌛️ Генерирую рекомендации...
+
 
     👎 Собираю ваши нелюбимые песни
 
@@ -48,9 +52,11 @@ recommendasion.ask-ai:
   en: >-
     ⌛️ Generating recommendations...
 
+
     🤖 Asking AI for track recommendations
   ru: >-
     ⌛️ Генерирую рекомендации...
+
 
     🤖 Спрашиваю ИИ о рекомендуемых треков для вас
 
@@ -58,9 +64,11 @@ recommendasion.queue:
   en: >-
     ⌛️ Generating recommendations...
 
+
     🎵 Adding tracks to Spotify queue
   ru: >-
     ⌛️ Генерирую рекомендации...
+
 
     🎵 Добавляю треки в очередь Spotify
 

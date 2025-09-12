@@ -33,14 +33,55 @@ use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Recommendations {
-    pub recommendations: Vec<Track>,
+pub struct RecommendationsRaw {
+    pub recommendations: Vec<TrackRaw>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Track {
+pub struct TrackRaw {
     pub artist_name: String,
     pub track_title: String,
+}
+
+#[derive(Default, Debug)]
+pub struct Recommendations {
+    pub recommended: Vec<ShortTrack>,
+    pub disliked: Vec<ShortTrack>,
+    pub slop: Vec<TrackRaw>,
+}
+
+impl Recommendations {
+    pub fn disliked_formatted(&self) -> Vec<String> {
+        self.disliked
+            .iter()
+            .map(|item| format!("👎 {}", item.track_tg_link()))
+            .collect()
+    }
+
+    pub fn slop_formatted(&self) -> Vec<String> {
+        let search_url = url::Url::parse("https://open.spotify.com/search").expect("It's parsable");
+
+        let mut slop_links = vec![];
+        for slop in &self.slop {
+            let mut url = search_url.clone();
+            let track_name = format!("{} — {}", slop.artist_name, slop.track_title);
+
+            url.path_segments_mut()
+                .expect("Infallible")
+                .push(&track_name);
+
+            slop_links.push(format!(r#"🔍 <a href="{url}">{track_name}</a>"#,));
+        }
+
+        slop_links
+    }
+}
+
+#[derive(Default, Debug)]
+pub struct UserData {
+    pub liked: Vec<ShortTrack>,
+    pub disliked: Vec<ShortTrack>,
+    pub recommended: Vec<ShortTrack>,
 }
 
 pub async fn handle(
@@ -141,10 +182,17 @@ pub async fn handle_inline(
         )
         .await?;
 
-    let mut already_recommended =
-        RecommendasionService::get_already_recommended(&mut redis_conn, state.user_id()).await?;
+    let mut user_data = UserData {
+        recommended: RecommendasionService::get_already_recommended(
+            &mut redis_conn,
+            state.user_id(),
+        )
+        .await?,
 
-    let liked_tracks = get_liked_tracks(&spotify).await?;
+        liked: get_liked_tracks(&spotify).await?,
+
+        ..Default::default()
+    };
 
     app.bot()
         .edit_message_text(
@@ -157,7 +205,7 @@ pub async fn handle_inline(
         )
         .await?;
 
-    let disliked_tracks = get_disliked_tracks(app, state, &spotify).await?;
+    user_data.disliked = get_disliked_tracks(app, state, &spotify).await?;
 
     app.bot()
         .edit_message_text(
@@ -167,46 +215,10 @@ pub async fn handle_inline(
         )
         .await?;
 
-    let mut recommendations = vec![];
-    let mut recommended_disliked = vec![];
-    let mut slop = vec![];
+    let recommendations = get_recommendations(app, state, config, &mut user_data).await?;
 
-    for _ in 0..5 {
-        let (recommendations_iter, disliked_iter, slop_iter) = (|| {
-            get_real_recommendations(
-                app,
-                state,
-                config,
-                &liked_tracks,
-                &disliked_tracks,
-                &already_recommended,
-            )
-        })
-        .retry(ExponentialBuilder::default())
-        .notify(|err: &anyhow::Error, dur: Duration| {
-            tracing::warn!(
-                err = ?err,
-                "Recommendasion is failed. Retry in {dur} sec",
-                dur = dur.as_secs()
-            );
-        })
-        .await?;
-
-        for recommendation in recommendations_iter {
-            recommendations.push(recommendation.clone());
-
-            already_recommended.insert(0, recommendation);
-        }
-
-        recommended_disliked.extend(disliked_iter);
-        slop.extend(slop_iter);
-
-        if recommendations.len() > 10 {
-            break;
-        }
-    }
-
-    let slop_rate = slop.len() * 100 / (slop.len() + recommendations.len() + 1);
+    let slop_rate = recommendations.slop.len() * 100
+        / (recommendations.slop.len() + recommendations.recommended.len() + 1);
 
     app.bot()
         .edit_message_text(
@@ -217,7 +229,7 @@ pub async fn handle_inline(
         .await?;
 
     let mut recommendation_links = vec![];
-    for recommendation in recommendations {
+    for recommendation in &recommendations.recommended {
         spotify
             .add_item_to_queue(recommendation.raw_id().clone().into(), None)
             .await?;
@@ -225,29 +237,14 @@ pub async fn handle_inline(
         recommendation_links.push(recommendation.track_tg_link());
     }
 
-    let mut disliked_links = vec![];
-    for disliked in recommended_disliked {
-        disliked_links.push(format!("👎 {}", disliked.track_tg_link()));
-    }
+    let mut disliked_links = recommendations.disliked_formatted();
 
-    let search_url = url::Url::parse("https://open.spotify.com/search")?;
-
-    let mut slop_links = vec![];
-    for slop in slop {
-        let mut url = search_url.clone();
-        let track_name = format!("{} — {}", slop.artist_name, slop.track_title);
-
-        url.path_segments_mut()
-            .expect("Infallible")
-            .push(&track_name);
-
-        slop_links.push(format!(r#"🔍 <a href="{url}">{track_name}</a>"#,));
-    }
+    let slop_links = recommendations.slop_formatted();
 
     RecommendasionService::save_already_recommended(
         &mut redis_conn,
         state.user_id(),
-        &already_recommended,
+        &user_data.recommended,
     )
     .await?;
 
@@ -271,6 +268,44 @@ pub async fn handle_inline(
         .await?;
 
     Ok(HandleStatus::Handled)
+}
+
+async fn get_recommendations(
+    app: &'static App,
+    state: &UserState,
+    config: &AnalyzeConfig,
+    user_data: &mut UserData,
+) -> Result<Recommendations, anyhow::Error> {
+    let mut recommendations = Recommendations::default();
+    for _ in 0..5 {
+        let recommendations_result =
+            (|| get_recommendations_attempt(app, state, config, &*user_data))
+                .retry(ExponentialBuilder::default())
+                .notify(|err: &anyhow::Error, dur: Duration| {
+                    tracing::warn!(
+                        err = ?err,
+                        "Recommendasion is failed. Retry in {dur} sec",
+                        dur = dur.as_secs()
+                    );
+                })
+                .await?;
+
+        for recommendation in recommendations_result.recommended {
+            recommendations.recommended.push(recommendation.clone());
+
+            user_data.recommended.insert(0, recommendation);
+        }
+
+        recommendations
+            .disliked
+            .extend(recommendations_result.disliked);
+        recommendations.slop.extend(recommendations_result.slop);
+
+        if recommendations.recommended.len() > 10 {
+            break;
+        }
+    }
+    Ok(recommendations)
 }
 
 async fn get_liked_tracks(
@@ -310,29 +345,19 @@ async fn get_disliked_tracks(
     Ok(disliked_short_tracks)
 }
 
-async fn get_real_recommendations(
+async fn get_recommendations_attempt(
     app: &App,
     state: &UserState,
     config: &AnalyzeConfig,
-    liked_tracks: &[ShortTrack],
-    disliked_tracks: &[ShortTrack],
-    already_recommended_tracks: &[ShortTrack],
-) -> anyhow::Result<(Vec<ShortTrack>, Vec<ShortTrack>, Vec<Track>)> {
-    let track_recommendations = get_recommendations(
-        config,
-        liked_tracks,
-        disliked_tracks,
-        already_recommended_tracks,
-    )
-    .await?;
+    user_data: &UserData,
+) -> anyhow::Result<Recommendations> {
+    let recommendations_raw = get_raw_recommendations(config, user_data).await?;
 
     let spotify = state.spotify().await;
 
-    let mut recommended = vec![];
-    let mut disliked = vec![];
-    let mut slop = vec![];
+    let mut recommendations = Recommendations::default();
 
-    for track_recommendation in track_recommendations.recommendations {
+    for track_recommendation in recommendations_raw.recommendations {
         let rspotify::model::SearchResult::Tracks(res) = spotify
             .search(
                 &format!(
@@ -352,7 +377,7 @@ async fn get_real_recommendations(
         };
 
         let Some(track) = res.items.first().cloned() else {
-            slop.push(track_recommendation);
+            recommendations.slop.push(track_recommendation);
 
             continue;
         };
@@ -362,48 +387,51 @@ async fn get_real_recommendations(
         let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
         if matches!(status, TrackStatus::Disliked) {
-            disliked.push(track);
+            recommendations.disliked.push(track);
 
             continue;
         }
 
-        if already_recommended_tracks
+        if user_data
+            .recommended
             .iter()
             .any(|item: &ShortTrack| item.id() == track.id())
         {
             continue;
         };
 
-        if liked_tracks
+        if user_data
+            .liked
             .iter()
             .any(|item: &ShortTrack| item.id() == track.id())
         {
             continue;
         };
 
-        recommended.insert(0, track);
+        recommendations.recommended.insert(0, track);
     }
 
-    Ok((recommended, disliked, slop))
+    Ok(recommendations)
 }
 
-async fn get_recommendations(
+async fn get_raw_recommendations(
     config: &AnalyzeConfig,
-    liked_tracks: &[ShortTrack],
-    disliked_tracks: &[ShortTrack],
-    already_recommended_tracks: &[ShortTrack],
-) -> Result<Recommendations, anyhow::Error> {
-    let liked_tracks = liked_tracks
+    user_data: &UserData,
+) -> Result<RecommendationsRaw, anyhow::Error> {
+    let liked_tracks = user_data
+        .liked
         .iter()
         .map(|track| track.name_with_artists())
         .join("\n");
 
-    let disliked_tracks = disliked_tracks
+    let disliked_tracks = user_data
+        .disliked
         .iter()
         .map(|track| track.name_with_artists())
         .join("\n");
 
-    let recommended_tracks = already_recommended_tracks
+    let recommended_tracks = user_data
+        .recommended
         .iter()
         .map(|track| track.name_with_artists())
         .join("\n");
@@ -552,7 +580,7 @@ async fn get_recommendations(
         anyhow::bail!("Wrong function is called");
     }
 
-    let tracks: Recommendations = serde_json::from_str(&response_message.function.arguments)?;
+    let tracks: RecommendationsRaw = serde_json::from_str(&response_message.function.arguments)?;
 
     Ok(tracks)
 }
