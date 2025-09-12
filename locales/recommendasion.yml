@@ -1,0 +1,89 @@
+_version: 2
+
+recommendasion.button:
+  en: >-
+    🤖 Generate recommendations
+  ru: >-
+    🤖 Сгенерировать рекомендации
+
+recommendasion.welcome:
+  en: >-
+    🤖 <i>Recommendasion™</i> is an experimental feature that uses your preferences to suggest something new with AI
+  ru: >-
+    🤖 <i>Recommendasion™</i> экспериментальная функция, которая использует ваши предпочтения, чтобы с помощью ИИ предложить что-то новое
+
+recommendasion.disabled:
+  en: >-
+    🚫 <i>Recommendasion™</i> is disabled
+  ru: >-
+    🚫 <i>Recommendasion™</i> отключен
+
+recommendasion.device-not-found:
+  en: >-
+    ❌ Device not found. Start listening to something and try again
+  ru: >-
+    ❌ Устройство не найдено. Начните что-то слушать и попробуйте снова
+
+recommendasion.collecting-favorites:
+  en: >-
+    ⌛️ Generating recommendations...
+
+    ❤️ Collecting your favorite songs
+  ru: >-
+    ⌛️ Генерирую рекомендации...
+
+    ❤️ Собираю ваши любимые песни
+
+recommendasion.collecting-dislikes:
+  en: >-
+    ⌛️ Generating recommendations...
+
+    👎 Collecting your disliked songs
+  ru: >-
+    ⌛️ Генерирую рекомендации...
+
+    👎 Собираю ваши нелюбимые песни
+
+recommendasion.ask-ai:
+  en: >-
+    ⌛️ Generating recommendations...
+
+    🤖 Asking AI for track recommendations
+  ru: >-
+    ⌛️ Генерирую рекомендации...
+
+    🤖 Спрашиваю ИИ о рекомендуемых треков для вас
+
+recommendasion.queue:
+  en: >-
+    ⌛️ Generating recommendations...
+
+    🎵 Adding tracks to Spotify queue
+  ru: >-
+    ⌛️ Генерирую рекомендации...
+
+    🎵 Добавляю треки в очередь Spotify
+
+recommendasion.result:
+  en: >-
+    🎯 Recommendations:
+
+
+    %{recommendation_links}
+
+
+    📊 Slop rate: %{slop_rate}%
+
+
+    <blockquote expandable>%{slop_links}</blockquote>
+  ru: >-
+    🎯 Рекомендации:
+
+
+    %{recommendation_links}
+
+
+    📊 Процент шлака: %{slop_rate}%
+
+
+    <blockquote expandable>%{slop_links}</blockquote>

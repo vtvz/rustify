@@ -15,11 +15,12 @@ use indoc::formatdoc;
 use itertools::Itertools;
 use rspotify::model::SearchType;
 use rspotify::prelude::{BaseClient, OAuthClient as _};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
-use teloxide::payloads::EditMessageTextSetters;
+use teloxide::payloads::{EditMessageTextSetters, SendMessageSetters};
 use teloxide::prelude::Requester;
 use teloxide::sugar::request::RequestLinkPreviewExt;
-use teloxide::types::{ChatId, ParseMode};
+use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::{AnalyzeConfig, App};
 use crate::entity::prelude::TrackStatus;
@@ -27,6 +28,7 @@ use crate::recommendasion_service::RecommendasionService;
 use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
+use crate::telegram::inline_buttons::InlineButtons;
 use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 
@@ -52,32 +54,117 @@ pub async fn handle(
         return Ok(HandleStatus::Handled);
     }
 
-    let mut redis_conn = app.redis_conn().await?;
-
-    let Some(config) = app.analyze() else {
+    let Some(_) = app.analyze() else {
         app.bot()
-            .send_message(chat_id, "Recommendasion is disabled")
+            .send_message(
+                chat_id,
+                t!("recommendasion.disabled", locale = state.locale()),
+            )
             .await?;
 
         return Ok(HandleStatus::Handled);
     };
 
-    let m = app
-        .bot()
-        .send_message(chat_id, "Collecting your favorite songs")
+    app.bot()
+        .send_message(
+            chat_id,
+            t!("recommendasion.welcome", locale = state.locale()),
+        )
+        .parse_mode(ParseMode::Html)
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            vec![vec![
+                InlineButtons::Recommendasion.into_inline_keyboard_button(state.locale()),
+            ]],
+        )))
+        .await?;
+
+    Ok(HandleStatus::Handled)
+}
+
+pub async fn handle_inline(
+    app: &'static App,
+    state: &UserState,
+    q: CallbackQuery,
+) -> anyhow::Result<HandleStatus> {
+    let chat_id = q.from.id;
+
+    let message_id = q.message.clone().context("Message is empty")?.id();
+
+    if !state.is_spotify_authed().await {
+        actions::register::send_register_invite(app, chat_id.into(), state.locale()).await?;
+
+        return Ok(HandleStatus::Handled);
+    }
+
+    let mut redis_conn = app.redis_conn().await?;
+
+    let Some(config) = app.analyze() else {
+        app.bot()
+            .edit_message_text(
+                chat_id,
+                message_id,
+                t!("recommendasion.disabled", locale = state.locale()),
+            )
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    };
+
+    let spotify = state.spotify().await;
+
+    let Some(_) = spotify
+        .current_playback(None, None::<&[rspotify::model::AdditionalType]>)
+        .await?
+    else {
+        app.bot()
+            .edit_message_text(
+                chat_id,
+                message_id,
+                t!("recommendasion.device-not-found", locale = state.locale()),
+            )
+            .reply_markup(InlineKeyboardMarkup::new(vec![vec![
+                InlineButtons::Recommendasion.into_inline_keyboard_button(state.locale()),
+            ]]))
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    };
+
+    app.bot()
+        .edit_message_text(
+            chat_id,
+            message_id,
+            t!(
+                "recommendasion.collecting-favorites",
+                locale = state.locale()
+            ),
+        )
         .await?;
 
     let mut already_recommended =
         RecommendasionService::get_already_recommended(&mut redis_conn, state.user_id()).await?;
 
-    let spotify = state.spotify().await;
-
     let liked_tracks = get_liked_tracks(&spotify).await?;
 
-    let disliked_tracks = get_disliked_tracks(app, state, chat_id, &m, &spotify).await?;
+    app.bot()
+        .edit_message_text(
+            chat_id,
+            message_id,
+            t!(
+                "recommendasion.collecting-dislikes",
+                locale = state.locale()
+            ),
+        )
+        .await?;
+
+    let disliked_tracks = get_disliked_tracks(app, state, &spotify).await?;
 
     app.bot()
-        .edit_message_text(chat_id, m.id, "Asking AI about recommended track for you")
+        .edit_message_text(
+            chat_id,
+            message_id,
+            t!("recommendasion.ask-ai", locale = state.locale()),
+        )
         .await?;
 
     let mut recommendations = vec![];
@@ -122,7 +209,11 @@ pub async fn handle(
     let slop_rate = slop.len() * 100 / (slop.len() + recommendations.len() + 1);
 
     app.bot()
-        .edit_message_text(chat_id, m.id, "Adding tracks to Spotify queue")
+        .edit_message_text(
+            chat_id,
+            message_id,
+            t!("recommendasion.queue", locale = state.locale()),
+        )
         .await?;
 
     let mut recommendation_links = vec![];
@@ -160,25 +251,23 @@ pub async fn handle(
     )
     .await?;
 
-    let msg = formatdoc!(
-        "
-            Recommendations:
+    disliked_links.extend(slop_links);
 
-            {recommendation_links}
-
-            Slop rate: {slop_rate}%
-
-            <blockquote expandable>{disliked_links}
-            {slop_links}</blockquote>
-        ",
+    let msg = t!(
+        "recommendasion.result",
         recommendation_links = recommendation_links.join("\n"),
-        disliked_links = disliked_links.join("\n"),
-        slop_links = slop_links.join("\n"),
+        slop_rate = slop_rate,
+        slop_links = disliked_links.join("\n"),
+        locale = state.locale(),
     );
+
     app.bot()
-        .edit_message_text(chat_id, m.id, msg)
+        .edit_message_text(chat_id, message_id, msg)
         .parse_mode(ParseMode::Html)
         .disable_link_preview(true)
+        .reply_markup(InlineKeyboardMarkup::new(vec![vec![
+            InlineButtons::Recommendasion.into_inline_keyboard_button(state.locale()),
+        ]]))
         .await?;
 
     Ok(HandleStatus::Handled)
@@ -203,13 +292,8 @@ async fn get_liked_tracks(
 async fn get_disliked_tracks(
     app: &'static App,
     state: &UserState,
-    chat_id: ChatId,
-    m: &teloxide::prelude::Message,
     spotify: &tokio::sync::RwLockReadGuard<'_, rspotify::AuthCodeSpotify>,
 ) -> Result<Vec<ShortTrack>, anyhow::Error> {
-    app.bot()
-        .edit_message_text(chat_id, m.id, "Collecting your disliked songs")
-        .await?;
     let disliked_track_ids =
         TrackStatusService::get_ids_with_status(app.db(), state.user_id(), TrackStatus::Disliked)
             .await?;
