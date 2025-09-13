@@ -80,7 +80,6 @@ impl Recommendations {
 #[derive(Default, Debug)]
 pub struct UserData {
     pub liked: Vec<ShortTrack>,
-    pub disliked: Vec<ShortTrack>,
     pub recommended: Vec<ShortTrack>,
 }
 
@@ -190,8 +189,6 @@ pub async fn handle_inline(
         .await?,
 
         liked: get_liked_tracks(&spotify).await?,
-
-        ..Default::default()
     };
 
     app.bot()
@@ -204,8 +201,6 @@ pub async fn handle_inline(
             ),
         )
         .await?;
-
-    user_data.disliked = get_disliked_tracks(app, state, &spotify).await?;
 
     app.bot()
         .edit_message_text(
@@ -324,27 +319,6 @@ async fn get_liked_tracks(
     Ok(liked_tracks)
 }
 
-async fn get_disliked_tracks(
-    app: &'static App,
-    state: &UserState,
-    spotify: &tokio::sync::RwLockReadGuard<'_, rspotify::AuthCodeSpotify>,
-) -> Result<Vec<ShortTrack>, anyhow::Error> {
-    let disliked_track_ids =
-        TrackStatusService::get_ids_with_status(app.db(), state.user_id(), TrackStatus::Disliked)
-            .await?;
-    let disliked_short_tracks = if !disliked_track_ids.is_empty() {
-        spotify
-            .tracks(disliked_track_ids, None)
-            .await?
-            .into_iter()
-            .map(ShortTrack::from)
-            .collect_vec()
-    } else {
-        vec![]
-    };
-    Ok(disliked_short_tracks)
-}
-
 async fn get_recommendations_attempt(
     app: &App,
     state: &UserState,
@@ -424,60 +398,23 @@ async fn get_raw_recommendations(
         .map(|track| track.name_with_artists())
         .join("\n");
 
-    let disliked_tracks = user_data
-        .disliked
-        .iter()
-        .map(|track| track.name_with_artists())
-        .join("\n");
-
-    let recommended_tracks = user_data
-        .recommended
-        .iter()
-        .map(|track| track.name_with_artists())
-        .join("\n");
-
     let amount = 30;
     let system_prompt = formatdoc!(
         "
-            You are a music recommendation engine. Your primary goal is to suggest music tracks that the user will enjoy while STRICTLY AVOIDING any tracks they have disliked.
+            You are a music recommendation engine. Your primary goal is to suggest music tracks that the user will enjoy.
 
             CRITICAL RULES - FAILURE TO FOLLOW THESE WILL RESULT IN POOR USER EXPERIENCE:
-            1. NEVER recommend tracks that appear in the user's disliked list - this is the most important rule
-            2. NEVER recommend tracks that appear in the user's favorite list (they already have them)
-            3. NEVER recommend tracks that have been previously suggested
-            4. NEVER recommend the same artist twice in one recommendation set
-            5. Only recommend real, existing songs available on streaming platforms
-            6. Avoid explicit or profane lyrics
-
-            The user has explicitly disliked certain tracks - recommending similar tracks will frustrate them. Pay extra attention to the disliked tracks list and avoid anything similar in style, artist, or genre to those tracks.
-        "
-    );
-
-    let disliked_prompt = formatdoc!(
-        "
-            🚫 FORBIDDEN TRACKS - DO NOT RECOMMEND ANYTHING SIMILAR TO THESE:
-            {disliked_tracks}
-
-            ⚠️ CRITICAL: The above tracks are DISLIKED by the user. Do NOT recommend:
-            - Any of these exact tracks
-            - Tracks by the same artists
-            - Tracks in similar genres/styles
-            - Tracks with similar energy/mood
-            - Tracks from the same era if they share similar characteristics
+            1. NEVER recommend tracks that appear in the user's favorite list (they already have them)
+            2. NEVER recommend the same artist twice in one recommendation set
+            3. Only recommend real, existing songs available on streaming platforms
+            4. Avoid explicit or profane lyrics
         "
     );
 
     let liked_prompt = formatdoc!(
         "
-            ✅ FAVORITE TRACKS (recommend similar styles/genres to these):
+            FAVORITE TRACKS (recommend similar styles/genres to these):
             {liked_tracks}
-        "
-    );
-
-    let recommended_prompt = formatdoc!(
-        "
-            📝 PREVIOUSLY RECOMMENDED (do not repeat):
-            {recommended_tracks}
         "
     );
 
@@ -485,12 +422,8 @@ async fn get_raw_recommendations(
         "
             TASK: Generate exactly {amount} NEW music recommendations that:
             1. Are similar in style/genre to my FAVORITE tracks
-            2. Are COMPLETELY DIFFERENT from my DISLIKED tracks
-            3. Have NOT been previously recommended
-            4. Are from different artists (no duplicates)
-            5. Are real, existing songs available on streaming platforms
-
-            Remember: Recommending anything similar to the FORBIDDEN tracks will result in a poor user experience.
+            2. Are from different artists (no duplicates)
+            3. Are real, existing songs available on streaming platforms
         "
     );
 
@@ -503,15 +436,7 @@ async fn get_raw_recommendations(
                 .build()?.
                 into(),
             ChatCompletionRequestUserMessageArgs::default()
-                .content(disliked_prompt.as_str())
-                .build()?
-                .into(),
-            ChatCompletionRequestUserMessageArgs::default()
                 .content(liked_prompt.as_str())
-                .build()?
-                .into(),
-            ChatCompletionRequestUserMessageArgs::default()
-                .content(recommended_prompt.as_str())
                 .build()?
                 .into(),
             ChatCompletionRequestUserMessageArgs::default()

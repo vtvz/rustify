@@ -32,7 +32,7 @@ impl RecommendasionService {
     ) -> anyhow::Result<()> {
         let recommended_key = format!("rustify:recommendasion:{user_id}:recommended");
 
-        let recommended = recommended.iter().take(100).collect_vec();
+        let recommended = recommended.iter().take(1000).collect_vec();
 
         let ttl = Duration::days(30);
 
