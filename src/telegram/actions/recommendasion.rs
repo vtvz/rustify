@@ -209,17 +209,6 @@ pub async fn handle_inline(
         .edit_message_text(
             chat_id,
             message_id,
-            t!(
-                "recommendasion.collecting-dislikes",
-                locale = state.locale()
-            ),
-        )
-        .await?;
-
-    app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
             t!("recommendasion.ask-ai", locale = state.locale()),
         )
         .await?;

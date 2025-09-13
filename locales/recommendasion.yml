@@ -42,18 +42,6 @@ recommendasion.collecting-favorites:
 
     ❤️ Собираю ваши любимые песни
 
-recommendasion.collecting-dislikes:
-  en: >-
-    ⌛️ Generating recommendations...
-
-
-    👎 Collecting your disliked songs
-  ru: >-
-    ⌛️ Генерирую рекомендации...
-
-
-    👎 Собираю ваши нелюбимые песни
-
 recommendasion.ask-ai:
   en: >-
     ⌛️ Generating recommendations...
