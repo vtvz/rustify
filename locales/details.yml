@@ -1,9 +1,15 @@
 _version: 2
 
 details.collecting-info:
-  en: >-
+  en: |-
+    🎵 %{track_name}
+    Album: %{album_name}
+
     ⏳ Collecting information about the track 🔍
-  ru: >-
+  ru: |-
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
     ⏳ Собираем информацию о треке 🔍
 
 details.minor:

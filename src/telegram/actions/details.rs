@@ -79,8 +79,15 @@ async fn common(
         .bot()
         .send_message(
             *chat_id,
-            t!("details.collecting-info", locale = state.locale()),
+            t!(
+                "details.collecting-info",
+                locale = state.locale(),
+                track_name = track.track_tg_link(),
+                album_name = track.album_tg_link(),
+            ),
         )
+        .link_preview_options(link_preview_small_top(track.url()))
+        .parse_mode(ParseMode::Html)
         .await?;
 
     let spotify = state.spotify().await;

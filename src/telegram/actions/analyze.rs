@@ -60,8 +60,15 @@ pub async fn handle_inline(
         .edit_message_text(
             chat_id,
             message_id,
-            t!("analysis.waiting", locale = state.locale()),
+            t!(
+                "analysis.waiting",
+                locale = state.locale(),
+                track_name = track.track_tg_link(),
+                album_name = track.album_tg_link(),
+            ),
         )
+        .link_preview_options(link_preview_small_top(track.url()))
+        .parse_mode(ParseMode::Html)
         .await?;
 
     let res = perform(
@@ -70,7 +77,7 @@ pub async fn handle_inline(
         chat_id,
         message_id,
         config,
-        track,
+        &track,
         hit.lyrics().join("\n"),
     )
     .await;
@@ -87,8 +94,19 @@ pub async fn handle_inline(
                 .edit_message_text(
                     chat_id,
                     message_id,
-                    t!("analysis.failed", locale = state.locale()),
+                    t!(
+                        "analysis.failed",
+                        locale = state.locale(),
+                        track_name = track.track_tg_link(),
+                        album_name = track.album_tg_link(),
+                    ),
                 )
+                .link_preview_options(link_preview_small_top(track.url()))
+                .reply_markup(InlineKeyboardMarkup::new(vec![vec![
+                    InlineButtons::Analyze(track.id().into())
+                        .into_inline_keyboard_button(state.locale()),
+                ]]))
+                .parse_mode(ParseMode::Html)
                 .await?;
 
             tracing::warn!(err = ?err, "OpenAI request failed");
@@ -103,7 +121,7 @@ async fn perform(
     chat_id: UserId,
     message_id: teloxide::types::MessageId,
     config: &AIConfig,
-    track: ShortTrack,
+    track: &ShortTrack,
     lyrics: String,
 ) -> Result<(), anyhow::Error> {
     let song_name = track.name_with_artists();
