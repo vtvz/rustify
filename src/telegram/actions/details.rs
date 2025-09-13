@@ -245,7 +245,7 @@ async fn common(
         lines -= 1;
     };
 
-    if app.analyze().is_some() {
+    if app.ai().is_some() {
         keyboard.push(vec![
             InlineButtons::Analyze(track.id().to_owned())
                 .into_inline_keyboard_button(state.locale()),

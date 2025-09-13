@@ -43,16 +43,6 @@ pub async fn handle(
         AdminCommand::GlobalStats => {
             return actions::global_stats::handle(app, state, m).await;
         },
-        AdminCommand::GetAnalyzePrompt => {
-            app.bot()
-                .send_message(
-                    m.chat.id,
-                    app.analyze()
-                        .map(|config| config.prompt())
-                        .unwrap_or("Analyze did not configured"),
-                )
-                .await?;
-        },
         AdminCommand::Broadcast { locale } => {
             return actions::broadcast::handle(app, state, m, &locale).await;
         },

@@ -22,7 +22,7 @@ use teloxide::prelude::Requester;
 use teloxide::sugar::request::RequestLinkPreviewExt;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
-use crate::app::{AnalyzeConfig, App};
+use crate::app::{AIConfig, App};
 use crate::entity::prelude::TrackStatus;
 use crate::recommendasion_service::RecommendasionService;
 use crate::spotify::ShortTrack;
@@ -83,6 +83,12 @@ pub struct UserData {
     pub recommended: Vec<ShortTrack>,
 }
 
+#[tracing::instrument(
+    skip_all,
+    fields(
+        user_id = state.user_id(),
+    )
+)]
 pub async fn handle(
     app: &'static App,
     state: &UserState,
@@ -94,7 +100,7 @@ pub async fn handle(
         return Ok(HandleStatus::Handled);
     }
 
-    let Some(_) = app.analyze() else {
+    let Some(_) = app.ai() else {
         app.bot()
             .send_message(
                 chat_id,
@@ -121,6 +127,12 @@ pub async fn handle(
     Ok(HandleStatus::Handled)
 }
 
+#[tracing::instrument(
+    skip_all,
+    fields(
+        user_id = state.user_id(),
+    )
+)]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
@@ -138,7 +150,7 @@ pub async fn handle_inline(
 
     let mut redis_conn = app.redis_conn().await?;
 
-    let Some(config) = app.analyze() else {
+    let Some(config) = app.ai() else {
         app.bot()
             .edit_message_text(
                 chat_id,
@@ -149,6 +161,8 @@ pub async fn handle_inline(
 
         return Ok(HandleStatus::Handled);
     };
+
+    tracing::info!("User called Recommendasion");
 
     let spotify = state.spotify().await;
 
@@ -268,11 +282,14 @@ pub async fn handle_inline(
 async fn get_recommendations(
     app: &'static App,
     state: &UserState,
-    config: &AnalyzeConfig,
+    config: &AIConfig,
     user_data: &mut UserData,
 ) -> Result<Recommendations, anyhow::Error> {
+    let attempts = 10;
+    let min_tracks = 10;
+
     let mut recommendations = Recommendations::default();
-    for _ in 0..5 {
+    for _ in 0..attempts {
         let recommendations_result =
             (|| get_recommendations_attempt(app, state, config, &*user_data))
                 .retry(ExponentialBuilder::default())
@@ -296,7 +313,7 @@ async fn get_recommendations(
             .extend(recommendations_result.disliked);
         recommendations.slop.extend(recommendations_result.slop);
 
-        if recommendations.recommended.len() > 10 {
+        if recommendations.recommended.len() > min_tracks {
             break;
         }
     }
@@ -322,7 +339,7 @@ async fn get_liked_tracks(
 async fn get_recommendations_attempt(
     app: &App,
     state: &UserState,
-    config: &AnalyzeConfig,
+    config: &AIConfig,
     user_data: &UserData,
 ) -> anyhow::Result<Recommendations> {
     let recommendations_raw = get_raw_recommendations(config, user_data).await?;
@@ -389,7 +406,7 @@ async fn get_recommendations_attempt(
 }
 
 async fn get_raw_recommendations(
-    config: &AnalyzeConfig,
+    config: &AIConfig,
     user_data: &UserData,
 ) -> Result<RecommendationsRaw, anyhow::Error> {
     let liked_tracks = user_data

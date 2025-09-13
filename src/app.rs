@@ -4,7 +4,6 @@ use std::time::Duration;
 
 use anyhow::Context;
 use async_openai::config::{OPENAI_API_BASE, OpenAIConfig};
-use indoc::formatdoc;
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
@@ -25,27 +24,22 @@ pub struct App {
     db: DatabaseConnection,
     influx: Option<InfluxClient>,
     redis: redis::Client,
-    analyze: Option<AnalyzeConfig>,
+    ai: Option<AIConfig>,
     dialogue_storage: Arc<RedisStorage<Bincode>>,
 }
 
-pub struct AnalyzeConfig {
+pub struct AIConfig {
     openai_client: async_openai::Client<OpenAIConfig>,
     model: String,
-    prompt: String,
 }
 
-impl AnalyzeConfig {
+impl AIConfig {
     pub fn openai_client(&self) -> &async_openai::Client<OpenAIConfig> {
         &self.openai_client
     }
 
     pub fn model(&self) -> &str {
         &self.model
-    }
-
-    pub fn prompt(&self) -> &str {
-        &self.prompt
     }
 }
 
@@ -78,8 +72,8 @@ impl App {
         &self.influx
     }
 
-    pub fn analyze(&self) -> Option<&AnalyzeConfig> {
-        self.analyze.as_ref()
+    pub fn ai(&self) -> Option<&AIConfig> {
+        self.ai.as_ref()
     }
 
     pub fn dialogue_storage(&self) -> &RedisStorage<Bincode> {
@@ -197,7 +191,7 @@ async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
     Ok(client)
 }
 
-async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
+async fn init_analyze() -> anyhow::Result<Option<AIConfig>> {
     let Ok(api_key) = dotenv::var("OPENAI_API_KEY") else {
         return Ok(None);
     };
@@ -213,22 +207,9 @@ async fn init_analyze() -> anyhow::Result<Option<AnalyzeConfig>> {
     let openai_client =
         async_openai::Client::with_config(openai_config).with_http_client(http_client);
 
-    let config = AnalyzeConfig {
+    let config = AIConfig {
         openai_client,
         model: dotenv::var("OPENAI_API_MODEL").unwrap_or("gpt-4o".into()),
-        prompt: formatdoc!("
-            Provide a detailed description, meaning, and storyline of the following song lyrics: \"{{song_name}}\" and answer these questions:
-
-            1. Does this song relate to any religion, and if so, which religion? Provide details.
-            2. Does this song contain profane or explicit content or phrases? If yes, list them.
-            3. Does this song include any sexual amorality, actions, or even hints? If yes, specify.
-            4. Does this song reference any form of occultism or spiritism? If yes, explain.
-            5. Are there any mentions of violence in this song? If yes, describe them.
-
-            Reply in {{lang}} language and {{lang}} only. Keep response within 1500 characters. Respond with no formatting. Here are the lyrics:
-
-            {{lyrics}}
-        ")
     };
 
     Ok(Some(config))
@@ -263,7 +244,7 @@ impl App {
             db,
             influx,
             redis,
-            analyze,
+            ai: analyze,
             dialogue_storage: RedisStorage::open(&redis_url, Bincode).await?,
         });
 
