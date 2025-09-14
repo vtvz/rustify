@@ -201,7 +201,9 @@ pub async fn work() {
             },
         ));
 
-    let mut dispatcher = Dispatcher::builder(app.bot().clone(), handler).build();
+    let mut dispatcher = Dispatcher::builder(app.bot().clone(), handler)
+        .distribution_function(|_| None::<()>)
+        .build();
 
     let token = dispatcher.shutdown_token();
 

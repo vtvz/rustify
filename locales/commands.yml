@@ -114,12 +114,6 @@ command.language:
 
 command.recommendasion:
   en: |-
-    Generate recommendations
-  ru: |-
-    Сгенерировать рекоммендации
-
-command.recommendasion:
-  en: |-
     Call Recommendasion™
   ru: |-
     Вызвать Recommendasion™
