@@ -111,3 +111,9 @@ command.language:
     Change language
   ru: |-
     Изменить язык
+
+command.recommendasion:
+  en: |-
+    Call Recommendasion™
+  ru: |-
+    Вызвать Recommendasion™

@@ -1,0 +1,85 @@
+_version: 2
+
+recommendasion.button:
+  en: |-
+    🤖 Generate recommendations
+  ru: |-
+    🤖 Сгенерировать рекомендации
+
+recommendasion.welcome:
+  en: |-
+    🤖 <i>Recommendasion™</i> is an experimental feature that uses your preferences to suggest something new with AI.
+
+    Click <i>"🤖 Generate recommendations"</i> and AI will analyze your likes and add something fresh to your Spotify queue. AI can be silly sometimes, so don't judge too harshly 🙂
+  ru: |-
+    🤖 <i>Recommendasion™</i> экспериментальная функция, которая использует ваши предпочтения, чтобы с помощью ИИ предложить что-то новое.
+
+    Нажмите <i>"🤖 Сгенерировать рекомендации"</i> и ИИ проанализирует ваши лайки и добавит в очередь Spotify что-нибудь новенькое. ИИ бывает глуп, так что не судите строго 🙂
+
+recommendasion.disabled:
+  en: |-
+    🚫 <i>Recommendasion™</i> is disabled
+  ru: |-
+    🚫 <i>Recommendasion™</i> отключен
+
+recommendasion.device-not-found:
+  en: |-
+    ❌ Device not found. Start listening to something and try again
+  ru: |-
+    ❌ Устройство не найдено. Начните что-то слушать и попробуйте снова
+
+recommendasion.collecting-favorites:
+  en: |-
+    ⌛️ Generating recommendations...
+
+    ❤️ Collecting your favorite songs
+  ru: |-
+    ⌛️ Генерирую рекомендации...
+
+    ❤️ Собираю ваши любимые песни
+
+recommendasion.ask-ai:
+  en: |-
+    ⌛️ Generating recommendations...
+
+    🤖 Asking AI for track recommendations
+  ru: |-
+    ⌛️ Генерирую рекомендации...
+
+    🤖 Спрашиваю ИИ о рекомендуемых треков для вас
+
+recommendasion.queue:
+  en: |-
+    ⌛️ Generating recommendations...
+
+    🎵 Adding tracks to Spotify queue
+  ru: |-
+    ⌛️ Генерирую рекомендации...
+
+    🎵 Добавляю треки в очередь Spotify
+
+recommendasion.result:
+  en: |-
+    ✅ New tracks added to Spotify queue. Skip to the next track to start listening.
+
+    🎯 Recommendations:
+
+    %{recommendation_links}
+
+    📊 Slop rate: %{slop_rate}% tracks not found on Spotify
+
+    Legend: 👎 dislike, 🔍 not found
+
+    <blockquote expandable>%{slop_links}</blockquote>
+  ru: |-
+    ✅ Новые треки добавлены в очередь Spotify. Переключитесь на следующий трек, чтобы начать слушать.
+
+    🎯 Рекомендации:
+
+    %{recommendation_links}
+
+    📊 Процент шлака: %{slop_rate}% треков не найдено в Spotify
+
+    Условные обозначения: 👎 дизлайк, 🔍 не найден
+
+    <blockquote expandable>%{slop_links}</blockquote>

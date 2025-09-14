@@ -13,15 +13,27 @@ analysis.lyrics-not-found:
     🚫 Текст песни не найден
 
 analysis.waiting:
-  en: >-
+  en: |-
+    🎵 %{track_name}
+    Album: %{album_name}
+
     ⏳ Wait for analysis to finish 🔍
-  ru: >-
+  ru: |-
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
     ⏳ Ждите завершения анализа 🔍
 
 analysis.failed:
-  en: >-
+  en: |-
+    🎵 %{track_name}
+    Album: %{album_name}
+
     ❌ Analysis failed. This happens from time to time. Try again later 🤷
-  ru: >-
+  ru: |-
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
     ❌ Анализ не удался. Такое иногда случается. Попробуйте позже 🤷
 
 analysis.result:
@@ -29,17 +41,17 @@ analysis.result:
     🎵 %{track_name}
     Album: %{album_name}
 
-    <blockquote>ℹ️You can transcribe and analyze any audio in the <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> bot</blockquote>
+    <blockquote>ℹ️ You can transcribe and analyze any audio in the <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> bot</blockquote>
 
     %{analysis_result}
 
-    <blockquote>ℹ️You can transcribe and analyze any audio in the <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> bot</blockquote>
+    <blockquote>ℹ️ You can transcribe and analyze any audio in the <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> bot</blockquote>
   ru: |-
     🎵 %{track_name}
     Альбом: %{album_name}
 
-    <blockquote>ℹ️Вы можете расшифровать и проанализировать любое аудио в <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> боте</blockquote>
+    <blockquote>ℹ️ Вы можете расшифровать и проанализировать любое аудио в <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> боте</blockquote>
 
     %{analysis_result}
 
-    <blockquote>ℹ️Вы можете расшифровать и проанализировать любое аудио в <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> боте</blockquote>
+    <blockquote>ℹ️ Вы можете расшифровать и проанализировать любое аудио в <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> боте</blockquote>

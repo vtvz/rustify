@@ -24,6 +24,8 @@ pub enum UserCommand {
     Dislike,
     #[command(description = "command.like")]
     Like,
+    #[command(description = "command.recommendasion")]
+    Recommendasion,
     #[command(description = "command.details")]
     Details,
     #[command(description = "command.stats")]
@@ -130,6 +132,7 @@ pub enum UserCommandDisplay {
     Magic,
     Skippage,
     Language,
+    Recommendasion,
 }
 
 impl std::fmt::Display for UserCommandDisplay {
@@ -151,6 +154,7 @@ impl std::fmt::Display for UserCommandDisplay {
             Self::Magic => "magic",
             Self::Skippage => "skippage",
             Self::Language => "language",
+            Self::Recommendasion => "recommendasion",
         };
 
         f.write_str(string)
@@ -169,9 +173,6 @@ pub enum AdminCommand {
     #[command(description = "Show global statistics")]
     GlobalStats,
 
-    #[command(description = "Get analyze prompt")]
-    GetAnalyzePrompt,
-
     #[command(description = "Broadcast a message to all users")]
     Broadcast { locale: String },
 }
@@ -180,7 +181,6 @@ pub enum AdminCommandDisplay {
     Admin,
     Whitelist,
     GlobalStats,
-    GetAnalyzePrompt,
     Broadcast,
 }
 
@@ -190,7 +190,6 @@ impl std::fmt::Display for AdminCommandDisplay {
             AdminCommandDisplay::Admin => "admin",
             AdminCommandDisplay::Whitelist => "whitelist",
             AdminCommandDisplay::GlobalStats => "global_stats",
-            AdminCommandDisplay::GetAnalyzePrompt => "get_analyze_prompt",
             AdminCommandDisplay::Broadcast => "broadcast",
         };
 
@@ -211,6 +210,7 @@ mod tests {
             UserCommand::Keyboard => UserCommandDisplay::Keyboard,
             UserCommand::Dislike => UserCommandDisplay::Dislike,
             UserCommand::Like => UserCommandDisplay::Like,
+            UserCommand::Recommendasion => UserCommandDisplay::Recommendasion,
             UserCommand::Details => UserCommandDisplay::Details,
             UserCommand::Stats => UserCommandDisplay::Stats,
             UserCommand::Register => UserCommandDisplay::Register,
@@ -234,7 +234,6 @@ mod tests {
             AdminCommand::Admin => AdminCommandDisplay::Admin,
             AdminCommand::Whitelist(..) => AdminCommandDisplay::Whitelist,
             AdminCommand::GlobalStats => AdminCommandDisplay::GlobalStats,
-            AdminCommand::GetAnalyzePrompt => AdminCommandDisplay::GetAnalyzePrompt,
             AdminCommand::Broadcast { .. } => AdminCommandDisplay::Broadcast,
         };
     }

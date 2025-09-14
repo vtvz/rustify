@@ -1,12 +1,13 @@
 use anyhow::Context as _;
 use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
+use indoc::formatdoc;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
 use teloxide::prelude::Requester as _;
 use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode, UserId};
 
-use crate::app::{AnalyzeConfig, App};
+use crate::app::{AIConfig, App};
 use crate::spotify::ShortTrack;
 use crate::telegram::MESSAGE_MAX_LEN;
 use crate::telegram::inline_buttons::InlineButtons;
@@ -24,7 +25,7 @@ pub async fn handle_inline(
 ) -> anyhow::Result<()> {
     let chat_id = q.from.id;
 
-    let Some(config) = app.analyze() else {
+    let Some(config) = app.ai() else {
         app.bot()
             .answer_callback_query(q.id)
             .text(t!("analysis.disabled", locale = state.locale()))
@@ -59,8 +60,15 @@ pub async fn handle_inline(
         .edit_message_text(
             chat_id,
             message_id,
-            t!("analysis.waiting", locale = state.locale()),
+            t!(
+                "analysis.waiting",
+                locale = state.locale(),
+                track_name = track.track_tg_link(),
+                album_name = track.album_tg_link(),
+            ),
         )
+        .link_preview_options(link_preview_small_top(track.url()))
+        .parse_mode(ParseMode::Html)
         .await?;
 
     let res = perform(
@@ -69,7 +77,7 @@ pub async fn handle_inline(
         chat_id,
         message_id,
         config,
-        track,
+        &track,
         hit.lyrics().join("\n"),
     )
     .await;
@@ -86,8 +94,19 @@ pub async fn handle_inline(
                 .edit_message_text(
                     chat_id,
                     message_id,
-                    t!("analysis.failed", locale = state.locale()),
+                    t!(
+                        "analysis.failed",
+                        locale = state.locale(),
+                        track_name = track.track_tg_link(),
+                        album_name = track.album_tg_link(),
+                    ),
                 )
+                .link_preview_options(link_preview_small_top(track.url()))
+                .reply_markup(InlineKeyboardMarkup::new(vec![vec![
+                    InlineButtons::Analyze(track.id().into())
+                        .into_inline_keyboard_button(state.locale()),
+                ]]))
+                .parse_mode(ParseMode::Html)
                 .await?;
 
             tracing::warn!(err = ?err, "OpenAI request failed");
@@ -101,20 +120,33 @@ async fn perform(
     state: &UserState,
     chat_id: UserId,
     message_id: teloxide::types::MessageId,
-    config: &AnalyzeConfig,
-    track: ShortTrack,
+    config: &AIConfig,
+    track: &ShortTrack,
     lyrics: String,
 ) -> Result<(), anyhow::Error> {
     let song_name = track.name_with_artists();
 
     let model = config.model();
 
+    let prompt = formatdoc!("
+        Provide a detailed description, meaning, and storyline of the following song lyrics: \"{{song_name}}\" and answer these questions:
+
+        1. Does this song relate to any religion, and if so, which religion? Provide details.
+        2. Does this song contain profane or explicit content or phrases? If yes, list them.
+        3. Does this song include any sexual amorality, actions, or even hints? If yes, specify.
+        4. Does this song reference any form of occultism or spiritism? If yes, explain.
+        5. Are there any mentions of violence in this song? If yes, describe them.
+
+        Reply in {{lang}} language and {{lang}} only. Keep response within 1500 characters. Respond with no formatting. Here are the lyrics:
+
+        {{lyrics}}
+    ");
+
     let request = CreateChatCompletionRequestArgs::default()
         .model(model)
         .messages([ChatCompletionRequestUserMessageArgs::default()
             .content(
-                config
-                    .prompt()
+                prompt
                     .replace("{song_name}", &song_name)
                     .replace("{lang}", state.language())
                     .replace("{lyrics}", &lyrics),

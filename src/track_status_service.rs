@@ -1,4 +1,3 @@
-use rspotify::model::TrackId;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr};
@@ -138,26 +137,6 @@ impl TrackStatusService {
             Ok(Some(track_status)) => track_status.status,
             _ => TrackStatus::None,
         }
-    }
-
-    pub async fn get_ids_with_status(
-        db: &impl ConnectionTrait,
-        user_id: &str,
-        status: TrackStatus,
-    ) -> anyhow::Result<Vec<TrackId<'static>>> {
-        let tracks: Vec<TrackStatusModel> = Self::builder()
-            .status(Some(status))
-            .user_id(Some(user_id))
-            .build()
-            .all(db)
-            .await?;
-
-        let res: Vec<_> = tracks
-            .into_iter()
-            .map(|track| TrackId::from_id(track.track_id))
-            .collect::<Result<_, _>>()?;
-
-        Ok(res)
     }
 
     pub async fn increase_skips(

@@ -7,6 +7,12 @@ use crate::telegram::actions;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::user::UserState;
 
+#[tracing::instrument(
+    skip_all,
+    fields(
+        user_id = state.user_id(),
+    )
+)]
 pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> anyhow::Result<()> {
     if !state.is_spotify_authed().await {
         app.bot()
@@ -37,6 +43,9 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         },
         InlineButtons::Magic => {
             actions::magic::handle_inline(app, state, q).await?;
+        },
+        InlineButtons::Recommendasion => {
+            actions::recommendasion::handle_inline(app, state, q).await?;
         },
         InlineButtons::SkippageEnable(to_enable) => {
             actions::skippage::handle_inline(app, state, q, to_enable).await?;

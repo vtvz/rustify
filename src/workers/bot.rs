@@ -128,6 +128,7 @@ async fn whitelisted(app: &'static App, state: &UserState) -> anyhow::Result<boo
     Ok(false)
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn work() {
     // profanity::check_cases();
 
@@ -200,7 +201,9 @@ pub async fn work() {
             },
         ));
 
-    let mut dispatcher = Dispatcher::builder(app.bot().clone(), handler).build();
+    let mut dispatcher = Dispatcher::builder(app.bot().clone(), handler)
+        .distribution_function(|_| None::<()>)
+        .build();
 
     let token = dispatcher.shutdown_token();
 

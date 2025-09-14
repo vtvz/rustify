@@ -113,6 +113,9 @@ pub async fn handle(
         UserCommand::Magic => {
             return actions::magic::handle(app, state, m.chat.id).await;
         },
+        UserCommand::Recommendasion => {
+            return actions::recommendasion::handle(app, state, m.chat.id).await;
+        },
         UserCommand::Skippage { days } => {
             return actions::skippage::handle(app, state, m.chat.id, days).await;
         },

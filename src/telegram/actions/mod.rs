@@ -7,6 +7,7 @@ pub mod ignore;
 pub mod language;
 pub mod like;
 pub mod magic;
+pub mod recommendasion;
 pub mod register;
 pub mod settings;
 pub mod skippage;
