@@ -26,7 +26,7 @@ impl Manager {
         tracing::debug!(word, "Removed custom word");
     }
 
-    pub fn check(text: Vec<&str>) -> CheckResult {
+    pub fn check(text: &[&str]) -> CheckResult {
         CheckResult::perform(text)
     }
 }
@@ -34,16 +34,6 @@ impl Manager {
 pub struct CheckResult {
     lines: Vec<LineResult>,
     pub typ: TypeWrapper,
-}
-
-impl IntoIterator for CheckResult {
-    type IntoIter = <Vec<LineResult> as IntoIterator>::IntoIter;
-    type Item = <Vec<LineResult> as IntoIterator>::Item;
-
-    #[inline]
-    fn into_iter(self) -> Self::IntoIter {
-        <Vec<LineResult> as IntoIterator>::into_iter(self.lines)
-    }
 }
 
 pub struct Checker;
@@ -72,9 +62,9 @@ impl CheckResult {
         bad_chars
     }
 
-    fn perform(text: Vec<&str>) -> Self {
+    fn perform(text: &[&str]) -> Self {
         let checks: Vec<_> = text
-            .into_iter()
+            .iter()
             .enumerate()
             .map(|(index, line)| {
                 let line = html::escape(line);
@@ -135,6 +125,15 @@ impl CheckResult {
             lines: checks,
             typ: sum_type.into(),
         }
+    }
+
+    pub fn get_profine_words(&self) -> HashSet<String> {
+        let mut words = HashSet::new();
+
+        self.iter()
+            .for_each(|item| words.extend(item.get_profine_words()));
+
+        words
     }
 }
 

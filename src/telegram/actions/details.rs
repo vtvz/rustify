@@ -220,7 +220,7 @@ async fn common(
         return Ok(HandleStatus::Handled);
     };
 
-    let checked = profanity::Manager::check(hit.lyrics());
+    let checked = profanity::Manager::check(&hit.lyrics());
 
     let lyrics: Vec<_> = checked.iter().map(|line| line.highlighted()).collect();
 

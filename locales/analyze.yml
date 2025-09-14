@@ -36,6 +36,22 @@ analysis.failed:
 
     ❌ Анализ не удался. Такое иногда случается. Попробуйте позже 🤷
 
+analyze.profane-words-doesnt-fit:
+  en: |-
+    <blockquote expandable>🚷 Profane words analysis section doesn't fit in the results</blockquote>
+  ru: |-
+    <blockquote expandable>🚷 Раздел анализа нецензурных слов не помещается в результаты</blockquote>
+
+analyze.profane-words:
+  en: |-
+    <blockquote expandable>⚠️ Definitions of words that are considered profane. This analysis is not precise and I would recommend manually checking the meanings of the words using Google
+
+    %{profane_words}</blockquote>
+  ru: |-
+    <blockquote expandable>⚠️ Определения слов, которые считаются нецензурными. Этот анализ не точный и я бы рекомендовал самостоятельно проверить значения слов с помощью поисковика
+
+    %{profane_words}</blockquote>
+
 analysis.result:
   en: |-
     🎵 %{track_name}
@@ -45,7 +61,7 @@ analysis.result:
 
     %{analysis_result}
 
-    <blockquote>ℹ️ You can transcribe and analyze any audio in the <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> bot</blockquote>
+    %{profane_words_block}
   ru: |-
     🎵 %{track_name}
     Альбом: %{album_name}
@@ -54,4 +70,4 @@ analysis.result:
 
     %{analysis_result}
 
-    <blockquote>ℹ️ Вы можете расшифровать и проанализировать любое аудио в <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> боте</blockquote>
+    %{profane_words_block}

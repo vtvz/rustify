@@ -131,7 +131,7 @@ pub async fn check(
         return Ok(ret);
     }
 
-    let check = profanity::Manager::check(hit.lyrics());
+    let check = profanity::Manager::check(&hit.lyrics());
 
     if !check.should_trigger() {
         return Ok(ret);
@@ -141,14 +141,14 @@ pub async fn check(
         UserWordWhitelistService::get_ok_words_for_user(app.db(), state.user_id()).await?;
 
     let bad_lines: Vec<_> = check
-        .into_iter()
+        .iter()
         .filter(|profanity::LineResult { typ, .. }| !typ.is(Type::SAFE))
         .filter(|line| {
             let words = line.get_profine_words();
 
             words.difference(&ok_words).next().is_some()
         })
-        .map(|line: profanity::LineResult| {
+        .map(|line: &profanity::LineResult| {
             format!(
                 "<code>{}:</code> {}, <code>[{}]</code>",
                 hit.line_index_name(line.no),

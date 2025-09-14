@@ -39,6 +39,7 @@ pub mod user_service;
 pub mod user_word_whitelist_service;
 pub mod utils;
 pub mod whitelist;
+pub mod words_analyzer;
 pub mod workers;
 
 rust_i18n::i18n!("locales", fallback = "en");
