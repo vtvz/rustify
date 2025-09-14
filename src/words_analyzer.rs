@@ -20,7 +20,10 @@ impl WordAnalyzer {
         config: &AIConfig,
         profane_word: &str,
     ) -> anyhow::Result<String> {
-        let word_key = format!("rustify:word_profanity:{profane_word}");
+        let word_key = format!(
+            "rustify:word_profanity:{profane_word}:{locale}",
+            locale = state.locale()
+        );
 
         let mut redis = app.redis_conn().await?;
 
