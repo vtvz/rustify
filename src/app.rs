@@ -191,7 +191,7 @@ async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
     Ok(client)
 }
 
-async fn init_analyze() -> anyhow::Result<Option<AIConfig>> {
+async fn init_ai() -> anyhow::Result<Option<AIConfig>> {
     let Ok(api_key) = dotenv::var("OPENAI_API_KEY") else {
         return Ok(None);
     };
@@ -223,7 +223,7 @@ impl App {
         let redis = init_redis(&redis_url).await?;
         let spotify_manager = spotify::Manager::new();
         let lyrics_manager = init_lyrics_manager(&redis_url).await?;
-        let analyze = init_analyze().await?;
+        let ai = init_ai().await?;
 
         init_rustrict();
 
@@ -244,7 +244,7 @@ impl App {
             db,
             influx,
             redis,
-            ai: analyze,
+            ai,
             dialogue_storage: RedisStorage::open(&redis_url, Bincode).await?,
         });
 
