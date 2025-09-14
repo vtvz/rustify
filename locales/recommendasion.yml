@@ -1,33 +1,31 @@
 _version: 2
 
 recommendasion.button:
-  en: >-
+  en: |-
     🤖 Generate recommendations
-  ru: >-
+  ru: |-
     🤖 Сгенерировать рекомендации
 
 recommendasion.welcome:
-  en: >-
+  en: |-
     🤖 <i>Recommendasion™</i> is an experimental feature that uses your preferences to suggest something new with AI.
 
-
     Click <i>"🤖 Generate recommendations"</i> and AI will analyze your likes and add something fresh to your Spotify queue. AI can be silly sometimes, so don't judge too harshly 🙂
-  ru: >-
+  ru: |-
     🤖 <i>Recommendasion™</i> экспериментальная функция, которая использует ваши предпочтения, чтобы с помощью ИИ предложить что-то новое.
-
 
     Нажмите <i>"🤖 Сгенерировать рекомендации"</i> и ИИ проанализирует ваши лайки и добавит в очередь Spotify что-нибудь новенькое. ИИ бывает глуп, так что не судите строго 🙂
 
 recommendasion.disabled:
-  en: >-
+  en: |-
     🚫 <i>Recommendasion™</i> is disabled
-  ru: >-
+  ru: |-
     🚫 <i>Recommendasion™</i> отключен
 
 recommendasion.device-not-found:
-  en: >-
+  en: |-
     ❌ Device not found. Start listening to something and try again
-  ru: >-
+  ru: |-
     ❌ Устройство не найдено. Начните что-то слушать и попробуйте снова
 
 recommendasion.collecting-favorites:
@@ -41,7 +39,7 @@ recommendasion.collecting-favorites:
     ❤️ Собираю ваши любимые песни
 
 recommendasion.ask-ai:
-  en: >-
+  en: |-
     ⌛️ Generating recommendations...
 
     🤖 Asking AI for track recommendations
