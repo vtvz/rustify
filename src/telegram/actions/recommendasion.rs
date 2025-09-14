@@ -278,7 +278,7 @@ async fn get_recommendations(
     let min_tracks = 10;
 
     let mut recommendations = Recommendations::default();
-    for _ in 0..attempts {
+    for attempt in 0..attempts {
         let recommendations_result =
             (|| get_recommendations_attempt(app, state, config, &*user_data))
                 .retry(ExponentialBuilder::default())
@@ -305,6 +305,11 @@ async fn get_recommendations(
         if recommendations.recommended.len() > min_tracks {
             break;
         }
+
+        tracing::debug!(
+            attempt = attempt + 1,
+            "AI recommended less than {attempts} tracks. Continue"
+        );
     }
     Ok(recommendations)
 }
