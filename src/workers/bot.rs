@@ -128,6 +128,7 @@ async fn whitelisted(app: &'static App, state: &UserState) -> anyhow::Result<boo
     Ok(false)
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn work() {
     // profanity::check_cases();
 

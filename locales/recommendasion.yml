@@ -31,14 +31,12 @@ recommendasion.device-not-found:
     ❌ Устройство не найдено. Начните что-то слушать и попробуйте снова
 
 recommendasion.collecting-favorites:
-  en: >-
+  en: |-
     ⌛️ Generating recommendations...
 
-
     ❤️ Collecting your favorite songs
-  ru: >-
+  ru: |-
     ⌛️ Генерирую рекомендации...
-
 
     ❤️ Собираю ваши любимые песни
 
@@ -46,46 +44,44 @@ recommendasion.ask-ai:
   en: >-
     ⌛️ Generating recommendations...
 
-
     🤖 Asking AI for track recommendations
-  ru: >-
+  ru: |-
     ⌛️ Генерирую рекомендации...
-
 
     🤖 Спрашиваю ИИ о рекомендуемых треков для вас
 
 recommendasion.queue:
-  en: >-
+  en: |-
     ⌛️ Generating recommendations...
 
-
     🎵 Adding tracks to Spotify queue
-  ru: >-
+  ru: |-
     ⌛️ Генерирую рекомендации...
-
 
     🎵 Добавляю треки в очередь Spotify
 
 recommendasion.result:
-  en: >-
+  en: |-
+    ✅ New tracks added to Spotify queue. Skip to the next track to start listening.
+
     🎯 Recommendations:
 
-
     %{recommendation_links}
 
+    📊 Slop rate: %{slop_rate}% tracks not found on Spotify
 
-    📊 Slop rate: %{slop_rate}%
-
+    Legend: 👎 dislike, 🔍 not found
 
     <blockquote expandable>%{slop_links}</blockquote>
-  ru: >-
-    🎯 Рекомендации:
+  ru: |-
+    ✅ Новые треки добавлены в очередь Spotify. Переключитесь на следующий трек, чтобы начать слушать.
 
+    🎯 Рекомендации:
 
     %{recommendation_links}
 
+    📊 Процент шлака: %{slop_rate}% треков не найдено в Spotify
 
-    📊 Процент шлака: %{slop_rate}%
-
+    Условные обозначения: 👎 дизлайк, 🔍 не найден
 
     <blockquote expandable>%{slop_links}</blockquote>
