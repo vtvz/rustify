@@ -1,5 +1,59 @@
 _version: 2
 
+analysis.word-analyzer-prompt:
+  en: |-
+    You are given a word from a song: %{profane_word}.
+    1. Assume by default that the word is likely to be profane, unless clearly normal.
+    2. Always explain what it means or how it translates into English, considering it appears in song lyrics.
+    3. If the word is profane, also classify its profaneness as one of:
+    - normal word
+    - mildly profane
+    - highly profane
+    4. If the word is not profane, mark it as normal word without mentioning offensiveness.
+    5. The answer must be between 50 and 150 characters.
+    6. The answer must be a single line, no line breaks.
+    7. Do not include the given word itself or any other offensive words.
+    8. Keep it clean and suitable for all audiences.
+  ru: |-
+    Тебе дано слово из песни: %{profane_word}.
+    1. По умолчанию предполагай, что слово скорее всего нецензурное, если только оно явно не обычное.
+    2. Всегда объясняй, что оно означает или как переводится на русский, учитывая, что оно встречается в тексте песни.
+    3. Если слово нецензурное, также классифицируй его нецензурность как одну из:
+    - обычное слово
+    - слегка нецензурное
+    - сильно нецензурное
+    4. Если слово не нецензурное, отметь его как обычное слово, не упоминая оскорбительность.
+    5. Ответ должен быть от 50 до 150 символов.
+    6. Ответ должен быть в одну строку, без переносов.
+    7. Не включай само данное слово или любые другие оскорбительные слова.
+    8. Делай ответ чистым и подходящим для всех аудиторий.
+
+analysis.prompt:
+  en: |-
+    Provide a detailed description, meaning, and storyline of the following song lyrics: "%{song_name}" and answer these questions:
+
+    1. Does this song relate to any religion, and if so, which religion? Provide details.
+    2. Does this song contain profane or explicit content or phrases? If yes, list them.
+    3. Does this song include any sexual amorality, actions, or even hints? If yes, specify.
+    4. Does this song reference any form of occultism or spiritism? If yes, explain.
+    5. Are there any mentions of violence in this song? If yes, describe them.
+
+    Keep response within 1500 characters. Respond with no formatting. Here are the lyrics:
+
+    %{lyrics}
+  ru: |-
+    Предоставь подробное описание, значение и сюжетную линию следующего текста песни: "%{song_name}" и ответь на эти вопросы:
+
+    1. Связана ли эта песня с какой-либо религией, и если да, то с какой? Предоставьте подробности.
+    2. Содержит ли эта песня нецензурный или откровенный контент или фразы? Если да, перечислите их.
+    3. Включает ли эта песня какую-либо сексуальную аморальность, действия или даже намеки? Если да, укажите.
+    4. Ссылается ли эта песня на какую-либо форму оккультизма или спиритизма? Если да, объясните.
+    5. Есть ли в этой песне упоминания о насилии? Если да, опишите их.
+
+    Ответ должен быть в пределах 1500 символов. Отвечай без форматирования. Вот текст песни:
+
+    %{lyrics}
+
 analysis.disabled:
   en: >-
     ❌ Analysis is disabled

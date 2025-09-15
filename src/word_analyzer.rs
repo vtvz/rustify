@@ -5,7 +5,6 @@ use async_openai::types::{
     CreateChatCompletionRequestArgs,
 };
 use chrono::Duration;
-use indoc::formatdoc;
 use redis::AsyncTypedCommands;
 
 use crate::app::{AIConfig, App};
@@ -49,23 +48,10 @@ impl WordAnalyzer {
         config: &AIConfig,
         profane_word: &str,
     ) -> anyhow::Result<String> {
-        let prompt = formatdoc!(
-            "
-                You are given a word from a song: {profane_word}.
-                1. Assume by default that the word is likely to be profane, unless clearly normal.
-                2. Always explain what it means or how it translates into {language}, considering it appears in song lyrics.
-                3. If the word is profane, also classify its profaneness as one of:
-                - normal word
-                - mildly profane
-                - highly profane
-                4. If the word is not profane, mark it as normal word without mentioning offensiveness.
-                5. The answer must be strictly in {language}.
-                6. The answer must be between 50 and 150 characters.
-                7. The answer must be a single line, no line breaks.
-                8. Do not include the given word itself or any other offensive words.
-                9. Keep it clean and suitable for all audiences.
-            ",
-            language = state.language(),
+        let prompt = t!(
+            "analysis.word-analyzer-prompt",
+            profane_word = profane_word,
+            locale = state.locale()
         );
 
         let req = CreateChatCompletionRequestArgs::default()
@@ -77,7 +63,7 @@ impl WordAnalyzer {
                     .build()?
                     .into(),
                 ChatCompletionRequestUserMessageArgs::default()
-                    .content(prompt)
+                    .content(prompt.as_ref())
                     .build()?
                     .into(),
             ])

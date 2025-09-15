@@ -1,7 +1,6 @@
 use anyhow::Context as _;
 use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 use backon::{ExponentialBuilder, Retryable};
-use indoc::formatdoc;
 use itertools::Itertools;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
@@ -19,7 +18,7 @@ use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 use crate::user_service::UserService;
 use crate::utils::StringUtils;
-use crate::words_analyzer::WordAnalyzer;
+use crate::word_analyzer::WordAnalyzer;
 
 pub async fn handle_inline(
     app: &'static App,
@@ -132,29 +131,17 @@ async fn perform(
 
     let model = config.model();
 
-    let prompt = formatdoc!("
-        Provide a detailed description, meaning, and storyline of the following song lyrics: \"{{song_name}}\" and answer these questions:
-
-        1. Does this song relate to any religion, and if so, which religion? Provide details.
-        2. Does this song contain profane or explicit content or phrases? If yes, list them.
-        3. Does this song include any sexual amorality, actions, or even hints? If yes, specify.
-        4. Does this song reference any form of occultism or spiritism? If yes, explain.
-        5. Are there any mentions of violence in this song? If yes, describe them.
-
-        Reply in {{lang}} language and {{lang}} only. Keep response within 1500 characters. Respond with no formatting. Here are the lyrics:
-
-        {{lyrics}}
-    ");
+    let prompt = t!(
+        "analysis.prompt",
+        song_name = song_name,
+        lyrics = lyrics.join("\n"),
+        locale = state.locale()
+    );
 
     let request = CreateChatCompletionRequestArgs::default()
         .model(model)
         .messages([ChatCompletionRequestUserMessageArgs::default()
-            .content(
-                prompt
-                    .replace("{song_name}", &song_name)
-                    .replace("{lang}", state.language())
-                    .replace("{lyrics}", &lyrics.join("\n")),
-            )
+            .content(prompt.as_ref())
             .build()?
             .into()])
         .build()?;
