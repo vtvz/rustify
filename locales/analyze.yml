@@ -94,17 +94,17 @@ analysis.failed:
 
 analyze.profane-words-doesnt-fit:
   en: |-
-    <blockquote expandable>🚷 Profane words analysis section doesn't fit in the results</blockquote>
+    <blockquote expandable>🚷 <b>Profane words analysis section doesn't fit in the results</b></blockquote>
   ru: |-
-    <blockquote expandable>🚷 Раздел анализа нецензурных слов не помещается в результаты</blockquote>
+    <blockquote expandable>🚷 <b>Раздел анализа нецензурных слов не помещается в результаты</b></blockquote>
 
 analyze.profane-words:
   en: |-
-    <blockquote expandable>⚠️ Definitions of words that are considered profane. This analysis is not precise and I would recommend manually checking the meanings of the words using Google
+    <blockquote expandable>⚠️ <b>Definitions of words that are considered profane.</b> This analysis is not precise and I would recommend manually checking the meanings of the words using Google
 
     %{profane_words}</blockquote>
   ru: |-
-    <blockquote expandable>⚠️ Определения слов, которые считаются нецензурными. Этот анализ не точный и я бы рекомендовал самостоятельно проверить значения слов с помощью поисковика
+    <blockquote expandable>⚠️ <b>Определения слов, которые считаются нецензурными.</b> Этот анализ не точный и я бы рекомендовал самостоятельно проверить значения слов с помощью поисковика
 
     %{profane_words}</blockquote>
 
