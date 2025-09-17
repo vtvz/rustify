@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Expr;
 use sea_orm::sea_query::{Alias, OnConflict};
@@ -43,14 +44,21 @@ impl WordStatsService {
         check: i32,
         analyze: i32,
     ) -> anyhow::Result<()> {
-        let models = words.into_iter().map(|word| WordStatsActiveModel {
-            word: Set(word.into()),
-            details_occurrences: Set(details),
-            check_occurrences: Set(check),
-            analyze_occurrences: Set(analyze),
-            updated_at: Set(Clock::now()),
-            ..Default::default()
-        });
+        let models = words
+            .into_iter()
+            .map(|word| WordStatsActiveModel {
+                word: Set(word.into()),
+                details_occurrences: Set(details),
+                check_occurrences: Set(check),
+                analyze_occurrences: Set(analyze),
+                updated_at: Set(Clock::now()),
+                ..Default::default()
+            })
+            .collect_vec();
+
+        if models.is_empty() {
+            return Ok(());
+        }
 
         WordStatsEntity::insert_many(models)
             .on_conflict(
