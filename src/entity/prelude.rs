@@ -33,3 +33,15 @@ pub use super::user_word_whitelist::{
     Entity as UserWordWhitelistEntity,
     Model as UserWordWhitelistModel,
 };
+pub use super::word_definition::{
+    ActiveModel as WordDefinitionActiveModel,
+    Column as WordDefinitionColumn,
+    Entity as WordDefinitionEntity,
+    Model as WordDefinitionModel,
+};
+pub use super::word_stats::{
+    ActiveModel as WordStatsActiveModel,
+    Column as WordStatsColumn,
+    Entity as WordStatsEntity,
+    Model as WordStatsModel,
+};

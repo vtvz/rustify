@@ -13,6 +13,7 @@ use crate::user::UserState;
 use crate::user_service::UserService;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
 use crate::utils::StringUtils;
+use crate::word_stats_service::WordStatsService;
 use crate::{error_handler, lyrics, profanity, telegram};
 
 #[derive(Serialize, Deserialize)]
@@ -136,6 +137,8 @@ pub async fn check(
     if !check.should_trigger() {
         return Ok(ret);
     }
+
+    WordStatsService::increase_check_occurence(app.db(), &check.get_profine_words()).await?;
 
     let ok_words =
         UserWordWhitelistService::get_ok_words_for_user(app.db(), state.user_id()).await?;

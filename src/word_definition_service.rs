@@ -4,54 +4,61 @@ use async_openai::types::{
     ChatCompletionRequestUserMessageArgs,
     CreateChatCompletionRequestArgs,
 };
-use chrono::Duration;
-use redis::AsyncTypedCommands;
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 
-use crate::app::{AIConfig, App};
-use crate::user::UserState;
+use crate::app::AIConfig;
+use crate::entity::prelude::{
+    WordDefinitionActiveModel,
+    WordDefinitionColumn,
+    WordDefinitionEntity,
+};
 
-pub struct WordAnalyzer {}
+pub struct WordDefinitionService {}
 
-impl WordAnalyzer {
+impl WordDefinitionService {
     pub async fn get_definition(
-        app: &App,
-        state: &UserState,
+        db: &impl ConnectionTrait,
+        locale: &str,
         config: &AIConfig,
         profane_word: &str,
     ) -> anyhow::Result<String> {
-        let word_key = format!(
-            "rustify:word_profanity:{profane_word}:{locale}",
-            locale = state.locale()
-        );
-
-        let mut redis = app.redis_conn().await?;
-
-        let definition: Option<String> = redis.get(&word_key).await?;
+        let definition: Option<String> = WordDefinitionEntity::find()
+            .select_only()
+            .column(WordDefinitionColumn::Definition)
+            .filter(WordDefinitionColumn::Word.eq(profane_word))
+            .filter(WordDefinitionColumn::Locale.eq(locale))
+            .into_tuple()
+            .one(db)
+            .await?;
 
         if let Some(definition) = definition {
             return Ok(definition);
         }
 
-        let definition = Self::get_definition_internal(state, config, profane_word).await?;
+        let definition = Self::get_definition_internal(config, locale, profane_word).await?;
 
-        let ttl = Duration::days(30);
+        let model = WordDefinitionActiveModel {
+            word: Set(profane_word.into()),
+            definition: Set(definition.clone()),
+            locale: Set(locale.into()),
+            ..Default::default()
+        };
 
-        let _: () = redis
-            .set_ex(word_key, &definition, ttl.num_seconds() as _)
-            .await?;
+        WordDefinitionEntity::insert(model).exec(db).await?;
 
         Ok(definition)
     }
 
     pub async fn get_definition_internal(
-        state: &UserState,
         config: &AIConfig,
+        locale: &str,
         profane_word: &str,
     ) -> anyhow::Result<String> {
         let prompt = t!(
             "analysis.word-analyzer-prompt",
             profane_word = profane_word,
-            locale = state.locale()
+            locale = locale,
         );
 
         let req = CreateChatCompletionRequestArgs::default()

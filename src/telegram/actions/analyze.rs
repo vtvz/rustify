@@ -18,7 +18,8 @@ use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 use crate::user_service::UserService;
 use crate::utils::StringUtils;
-use crate::word_analyzer::WordAnalyzer;
+use crate::word_definition_service::WordDefinitionService;
+use crate::word_stats_service::WordStatsService;
 
 pub async fn handle_inline(
     app: &'static App,
@@ -159,12 +160,16 @@ async fn perform(
 
     let checked = profanity::Manager::check(lyrics);
 
+    WordStatsService::increase_analyze_occurence(app.db(), &checked.get_profine_words()).await?;
+
     let mut profane_words = vec![];
 
     for profane_word in checked.get_profine_words().iter().sorted() {
-        let definition = (|| WordAnalyzer::get_definition(app, state, config, profane_word))
-            .retry(ExponentialBuilder::default())
-            .await?;
+        let definition = (|| {
+            WordDefinitionService::get_definition(app.db(), state.locale(), config, profane_word)
+        })
+        .retry(ExponentialBuilder::default())
+        .await?;
 
         profane_words.push(format!(
             "<tg-spoiler><code>{profane_word}</code></tg-spoiler> — {definition}"
