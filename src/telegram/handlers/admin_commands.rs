@@ -46,6 +46,12 @@ pub async fn handle(
         AdminCommand::Broadcast { locale } => {
             return actions::broadcast::handle(app, state, m, &locale).await;
         },
+        AdminCommand::GetWordDefinition { locale, word } => {
+            return actions::word_definition::handle(app, m, locale, word, false).await;
+        },
+        AdminCommand::ResetWordDefinition { locale, word } => {
+            return actions::word_definition::handle(app, m, locale, word, true).await;
+        },
     }
 
     Ok(HandleStatus::Handled)

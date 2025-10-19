@@ -5,7 +5,7 @@ use async_openai::types::{
     CreateChatCompletionRequestArgs,
 };
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
+use sea_orm::{ColumnTrait, ConnectionTrait, DeleteResult, EntityTrait, QueryFilter, QuerySelect};
 
 use crate::app::AIConfig;
 use crate::entity::prelude::{
@@ -90,5 +90,19 @@ impl WordDefinitionService {
             .context("I need message content")?;
 
         Ok(res)
+    }
+
+    pub async fn clear_definition(
+        db: &impl ConnectionTrait,
+        locale: &str,
+        profane_word: &str,
+    ) -> anyhow::Result<DeleteResult> {
+        let result = WordDefinitionEntity::delete_many()
+            .filter(WordDefinitionColumn::Word.eq(profane_word))
+            .filter(WordDefinitionColumn::Locale.eq(locale))
+            .exec(db)
+            .await?;
+
+        Ok(result)
     }
 }

@@ -14,6 +14,7 @@ pub enum InlineButtons {
     Magic,
     SkippageEnable(bool),
     Recommendasion,
+    RegenerateWordDefinition { locale: String, word: String },
 }
 
 impl InlineButtons {
@@ -24,6 +25,9 @@ impl InlineButtons {
             InlineButtons::Analyze(_) => t!("inline-buttons.analyze", locale = locale),
             InlineButtons::Magic => t!("magic.button", locale = locale),
             InlineButtons::Recommendasion => t!("recommendasion.button", locale = locale),
+            InlineButtons::RegenerateWordDefinition { .. } => {
+                t!("inline-buttons.regenerate-word-definition", locale = locale)
+            },
             InlineButtons::SkippageEnable(to_enable) => {
                 if *to_enable {
                     t!("skippage.enable-button", locale = locale)

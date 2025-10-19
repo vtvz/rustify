@@ -40,7 +40,7 @@ analysis.prompt:
     4. Does this song reference any form of occultism or spiritism? If yes, explain.
     5. Are there any mentions of violence in this song? If yes, describe them.
 
-    Keep response strictly within 1500 characters. Respond with no formatting. Here are the lyrics:
+    IMPORTANT: Do not quote any parts of the lyrics directly. Instead, paraphrase or translate the meaning into English when explaining specific content. Keep response strictly within 1500 characters. Respond with no formatting. Here are the lyrics:
 
     %{lyrics}
   ru: |-
@@ -52,7 +52,7 @@ analysis.prompt:
     4. Ссылается ли эта песня на какую-либо форму оккультизма или спиритизма? Если да, объясни.
     5. Есть ли в этой песне упоминания о насилии? Если да, опиши их.
 
-    Ответ должен быть строго в пределах 1500 символов. Отвечай без форматирования. Вот текст песни:
+    ВАЖНО: Не цитируй части текста песни напрямую. Вместо этого перефразируй или переведи смысл на русский при объяснении конкретного содержания. Ответ должен быть строго в пределах 1500 символов. Отвечай без форматирования. Вот текст песни:
 
     %{lyrics}
 
