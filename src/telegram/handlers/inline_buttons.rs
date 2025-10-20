@@ -53,7 +53,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         InlineButtons::RegenerateWordDefinition { locale, word } => {
             actions::word_definition::handle_inline(app, q, locale, word).await?;
         },
-        InlineButtons::WordDefinitionsPage { locale, page } => {
+        InlineButtons::WordDefinitionsPage { locale, page, .. } => {
             actions::word_definition::handle_list_page(app, q, locale, page).await?;
         },
     }

@@ -1,4 +1,5 @@
 use anyhow::Context;
+use itertools::Itertools as _;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
@@ -191,7 +192,13 @@ async fn send_definitions_page(
                 chat_id,
                 format!(
                     "Locale <code>{locale_filter}</code> does not exist:\n\n{}",
-                    locale_codes.join("\n")
+                    locale_codes
+                        .iter()
+                        .map(|locale| format!(
+                            "<code>/{} {locale}</code>",
+                            AdminCommandDisplay::ListWordDefinitions
+                        ))
+                        .join("\n")
                 ),
             )
             .parse_mode(ParseMode::Html)
@@ -274,6 +281,7 @@ async fn send_definitions_page(
             InlineButtons::WordDefinitionsPage {
                 locale: locale_filter.clone(),
                 page: page - 1,
+                is_next: false,
             }
             .into_inline_keyboard_button("en"),
         );
@@ -284,6 +292,7 @@ async fn send_definitions_page(
             InlineButtons::WordDefinitionsPage {
                 locale: locale_filter.clone(),
                 page: page + 1,
+                is_next: true,
             }
             .into_inline_keyboard_button("en"),
         );
