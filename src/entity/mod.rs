@@ -7,3 +7,5 @@ mod track_status;
 mod user;
 mod user_whitelist;
 mod user_word_whitelist;
+mod word_definition;
+mod word_stats;

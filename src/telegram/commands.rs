@@ -175,6 +175,15 @@ pub enum AdminCommand {
 
     #[command(description = "Broadcast a message to all users")]
     Broadcast { locale: String },
+
+    #[command(description = "Get word definition")]
+    GetWordDefinition { locale: String, word: String },
+
+    #[command(description = "Reset word definition and generate a new one")]
+    ResetWordDefinition { locale: String, word: String },
+
+    #[command(description = "List word definitions by locale (en, ru, etc)")]
+    ListWordDefinitions { locale: String },
 }
 
 pub enum AdminCommandDisplay {
@@ -182,6 +191,9 @@ pub enum AdminCommandDisplay {
     Whitelist,
     GlobalStats,
     Broadcast,
+    GetWordDefinition,
+    ResetWordDefinition,
+    ListWordDefinitions,
 }
 
 impl std::fmt::Display for AdminCommandDisplay {
@@ -191,6 +203,9 @@ impl std::fmt::Display for AdminCommandDisplay {
             AdminCommandDisplay::Whitelist => "whitelist",
             AdminCommandDisplay::GlobalStats => "global_stats",
             AdminCommandDisplay::Broadcast => "broadcast",
+            AdminCommandDisplay::GetWordDefinition => "get_word_definition",
+            AdminCommandDisplay::ResetWordDefinition => "reset_word_definition",
+            AdminCommandDisplay::ListWordDefinitions => "list_word_definitions",
         };
 
         f.write_str(string)
@@ -235,6 +250,9 @@ mod tests {
             AdminCommand::Whitelist(..) => AdminCommandDisplay::Whitelist,
             AdminCommand::GlobalStats => AdminCommandDisplay::GlobalStats,
             AdminCommand::Broadcast { .. } => AdminCommandDisplay::Broadcast,
+            AdminCommand::GetWordDefinition { .. } => AdminCommandDisplay::GetWordDefinition,
+            AdminCommand::ResetWordDefinition { .. } => AdminCommandDisplay::ResetWordDefinition,
+            AdminCommand::ListWordDefinitions { .. } => AdminCommandDisplay::ListWordDefinitions,
         };
     }
 }

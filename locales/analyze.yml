@@ -1,5 +1,61 @@
 _version: 2
 
+analysis.word-analyzer-prompt:
+  en: |-
+    You are given a word from a song: %{profane_word}.
+    1. Assume by default that the word is likely to be profane, unless clearly normal.
+    2. Always explain what it means or how it translates into English, considering it appears in song lyrics.
+    3. If the word is profane, also classify its profaneness as one of:
+    - normal word
+    - mildly profane
+    - highly profane
+    4. If the word is not profane, mark it as normal word without mentioning offensiveness.
+    5. The answer must be between 50 and 150 characters.
+    6. The answer must be a single line, no line breaks.
+    7. Do not include the given word itself or any other offensive words.
+    8. Keep it clean and suitable for all audiences.
+    9. Respond with no formatting.
+  ru: |-
+    Тебе дано слово из песни: %{profane_word}.
+    1. По умолчанию предполагай, что слово скорее всего нецензурное, если только оно явно не обычное.
+    2. Всегда объясняй, что оно означает или как переводится на русский, учитывая, что оно встречается в тексте песни.
+    3. Если слово нецензурное, также классифицируй его нецензурность как одну из:
+    - обычное слово
+    - слегка нецензурное
+    - сильно нецензурное
+    4. Если слово не нецензурное, отметь его как обычное слово, не упоминая оскорбительность.
+    5. Ответ должен быть от 50 до 150 символов.
+    6. Ответ должен быть в одну строку, без переносов.
+    7. Не включай само данное слово или любые другие оскорбительные слова.
+    8. Делай ответ чистым и подходящим для всех аудиторий.
+    9. Отвечай без форматирования.
+
+analysis.prompt:
+  en: |-
+    Provide a detailed description, meaning, and storyline of the following song lyrics: "%{song_name}" and answer these questions:
+
+    1. Does this song relate to any religion, and if so, which religion? Provide details.
+    2. Does this song contain profane or explicit content or phrases? If yes, list them.
+    3. Does this song include any sexual amorality, actions, or even hints? If yes, specify.
+    4. Does this song reference any form of occultism or spiritism? If yes, explain.
+    5. Are there any mentions of violence in this song? If yes, describe them.
+
+    IMPORTANT: Do not quote any parts of the lyrics directly. Instead, paraphrase or translate the meaning into English when explaining specific content. Keep response strictly within 1500 characters. Respond with no formatting. Here are the lyrics:
+
+    %{lyrics}
+  ru: |-
+    Предоставь подробное описание, значение и сюжетную линию следующего текста песни: "%{song_name}" и ответь на эти вопросы:
+
+    1. Связана ли эта песня с какой-либо религией, и если да, то с какой? Предоставь подробности.
+    2. Содержит ли эта песня нецензурный или откровенный контент или фразы? Если да, перечисли их.
+    3. Включает ли эта песня какую-либо сексуальную аморальность, действия или даже намеки? Если да, укажи.
+    4. Ссылается ли эта песня на какую-либо форму оккультизма или спиритизма? Если да, объясни.
+    5. Есть ли в этой песне упоминания о насилии? Если да, опиши их.
+
+    ВАЖНО: Не цитируй части текста песни напрямую. Вместо этого перефразируй или переведи смысл на русский при объяснении конкретного содержания. Ответ должен быть строго в пределах 1500 символов. Отвечай без форматирования. Вот текст песни:
+
+    %{lyrics}
+
 analysis.disabled:
   en: >-
     ❌ Analysis is disabled
@@ -36,6 +92,22 @@ analysis.failed:
 
     ❌ Анализ не удался. Такое иногда случается. Попробуйте позже 🤷
 
+analyze.profane-words-doesnt-fit:
+  en: |-
+    <blockquote expandable>🚷 <b>Profane words analysis section doesn't fit in the results</b></blockquote>
+  ru: |-
+    <blockquote expandable>🚷 <b>Раздел анализа нецензурных слов не помещается в результаты</b></blockquote>
+
+analyze.profane-words:
+  en: |-
+    <blockquote expandable>⚠️ <b>Definitions of words that are considered profane.</b> This analysis is not precise and I would recommend manually checking the meanings of the words using Google
+
+    %{profane_words}</blockquote>
+  ru: |-
+    <blockquote expandable>⚠️ <b>Определения слов, которые считаются нецензурными.</b> Этот анализ не точный и я бы рекомендовал самостоятельно проверить значения слов с помощью поисковика
+
+    %{profane_words}</blockquote>
+
 analysis.result:
   en: |-
     🎵 %{track_name}
@@ -45,7 +117,7 @@ analysis.result:
 
     %{analysis_result}
 
-    <blockquote>ℹ️ You can transcribe and analyze any audio in the <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> bot</blockquote>
+    %{profane_words_block}
   ru: |-
     🎵 %{track_name}
     Альбом: %{album_name}
@@ -54,4 +126,4 @@ analysis.result:
 
     %{analysis_result}
 
-    <blockquote>ℹ️ Вы можете расшифровать и проанализировать любое аудио в <a href="https://t.me/insightify_tgbot?start=ref-228571569_utm-invlink">Insightify</a> боте</blockquote>
+    %{profane_words_block}

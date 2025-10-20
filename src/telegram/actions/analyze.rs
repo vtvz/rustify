@@ -1,6 +1,7 @@
 use anyhow::Context as _;
 use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
-use indoc::formatdoc;
+use backon::{ExponentialBuilder, Retryable};
+use itertools::Itertools;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
@@ -8,6 +9,7 @@ use teloxide::prelude::Requester as _;
 use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode, UserId};
 
 use crate::app::{AIConfig, App};
+use crate::profanity;
 use crate::spotify::ShortTrack;
 use crate::telegram::MESSAGE_MAX_LEN;
 use crate::telegram::inline_buttons::InlineButtons;
@@ -16,6 +18,8 @@ use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 use crate::user_service::UserService;
 use crate::utils::StringUtils;
+use crate::word_definition_service::WordDefinitionService;
+use crate::word_stats_service::WordStatsService;
 
 pub async fn handle_inline(
     app: &'static App,
@@ -78,7 +82,7 @@ pub async fn handle_inline(
         message_id,
         config,
         &track,
-        hit.lyrics().join("\n"),
+        &hit.lyrics(),
     )
     .await;
 
@@ -122,35 +126,23 @@ async fn perform(
     message_id: teloxide::types::MessageId,
     config: &AIConfig,
     track: &ShortTrack,
-    lyrics: String,
+    lyrics: &[&str],
 ) -> Result<(), anyhow::Error> {
     let song_name = track.name_with_artists();
 
     let model = config.model();
 
-    let prompt = formatdoc!("
-        Provide a detailed description, meaning, and storyline of the following song lyrics: \"{{song_name}}\" and answer these questions:
-
-        1. Does this song relate to any religion, and if so, which religion? Provide details.
-        2. Does this song contain profane or explicit content or phrases? If yes, list them.
-        3. Does this song include any sexual amorality, actions, or even hints? If yes, specify.
-        4. Does this song reference any form of occultism or spiritism? If yes, explain.
-        5. Are there any mentions of violence in this song? If yes, describe them.
-
-        Reply in {{lang}} language and {{lang}} only. Keep response within 1500 characters. Respond with no formatting. Here are the lyrics:
-
-        {{lyrics}}
-    ");
+    let prompt = t!(
+        "analysis.prompt",
+        song_name = song_name,
+        lyrics = lyrics.join("\n"),
+        locale = state.locale()
+    );
 
     let request = CreateChatCompletionRequestArgs::default()
         .model(model)
         .messages([ChatCompletionRequestUserMessageArgs::default()
-            .content(
-                prompt
-                    .replace("{song_name}", &song_name)
-                    .replace("{lang}", state.language())
-                    .replace("{lyrics}", &lyrics),
-            )
+            .content(prompt.as_ref())
             .build()?
             .into()])
         .build()?;
@@ -166,22 +158,63 @@ async fn perform(
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
     let keyboard = InlineButtons::from_track_status(status, track.id(), state.locale());
 
-    let mut message = t!(
-        "analysis.result",
-        locale = state.locale(),
-        track_name = track.track_tg_link(),
-        album_name = track.album_tg_link(),
-        analysis_result = analysis_result,
-    );
+    let checked = profanity::Manager::check(lyrics);
 
-    if message.chars_len() > MESSAGE_MAX_LEN {
-        let analysis_len = analysis_result.chars_len() - (message.chars_len() - MESSAGE_MAX_LEN);
-        message = t!(
+    WordStatsService::increase_analyze_occurence(app.db(), &checked.get_profine_words()).await?;
+
+    let mut profane_words = vec![];
+
+    for profane_word in checked.get_profine_words().iter().sorted() {
+        let definition = (|| {
+            WordDefinitionService::get_definition(app.db(), state.locale(), config, profane_word)
+        })
+        .retry(ExponentialBuilder::default())
+        .await?;
+
+        profane_words.push(format!(
+            "<tg-spoiler><code>{profane_word}</code></tg-spoiler> — {definition}"
+        ));
+    }
+
+    let (profane_words_block, profane_words_doesnt_fit_block) = if profane_words.is_empty() {
+        ("".to_string(), "".to_string())
+    } else {
+        (
+            t!(
+                "analyze.profane-words",
+                profane_words = profane_words.join("\n\n"),
+                locale = state.locale()
+            )
+            .into(),
+            t!("analyze.profane-words-doesnt-fit", locale = state.locale()).into(),
+        )
+    };
+
+    let message_gen = |analysis_result: &str, profane_words_block: &str| {
+        t!(
             "analysis.result",
             locale = state.locale(),
             track_name = track.track_tg_link(),
             album_name = track.album_tg_link(),
-            analysis_result = &analysis_result.chars_crop(analysis_len)
+            analysis_result = analysis_result,
+            profane_words_block = profane_words_block,
+        )
+    };
+
+    let mut message = message_gen(&analysis_result, &profane_words_block);
+
+    // Remove profane block if message is too long
+    if message.chars_len() > MESSAGE_MAX_LEN {
+        message = message_gen(&analysis_result, &profane_words_doesnt_fit_block);
+    }
+
+    // If this didn't help, crop analysis result as well
+    if message.chars_len() > MESSAGE_MAX_LEN {
+        let analysis_len = analysis_result.chars_len() - (message.chars_len() - MESSAGE_MAX_LEN);
+
+        message = message_gen(
+            &analysis_result.chars_crop(analysis_len),
+            &profane_words_doesnt_fit_block,
         );
     }
 

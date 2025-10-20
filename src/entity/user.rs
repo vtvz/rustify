@@ -1,8 +1,9 @@
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-use sea_orm::Set;
 use sea_orm::entity::prelude::*;
 use sea_orm::prelude::async_trait::async_trait;
+use sea_orm::{Iterable as _, Set};
 
 use crate::utils::Clock;
 
@@ -132,7 +133,7 @@ impl Related<super::spotify_auth::Entity> for Entity {
     }
 }
 
-#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default)]
 #[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum Status {
     #[sea_orm(string_value = "active")]
@@ -144,6 +145,7 @@ pub enum Status {
     #[sea_orm(string_value = "token_invalid")]
     TokenInvalid,
     #[sea_orm(string_value = "none")]
+    #[default]
     None,
 }
 
@@ -163,18 +165,13 @@ impl TryFrom<&str> for Status {
     }
 }
 
-impl Default for Status {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default)]
 #[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum Locale {
     #[sea_orm(string_value = "ru")]
     Russian,
     #[sea_orm(string_value = "en")]
+    #[default]
     English,
 }
 
@@ -185,6 +182,10 @@ impl Locale {
             Self::English => "English",
         }
     }
+
+    pub fn locale_codes() -> Vec<String> {
+        Self::iter().map(|locale| locale.to_string()).collect()
+    }
 }
 
 impl AsRef<str> for Locale {
@@ -193,6 +194,12 @@ impl AsRef<str> for Locale {
             Self::Russian => "ru",
             Self::English => "en",
         }
+    }
+}
+
+impl Display for Locale {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_ref())
     }
 }
 
@@ -209,11 +216,5 @@ impl TryFrom<&str> for Locale {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Self::try_from_value(&value.to_owned())
-    }
-}
-
-impl Default for Locale {
-    fn default() -> Self {
-        Self::English
     }
 }

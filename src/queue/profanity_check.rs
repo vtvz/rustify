@@ -13,6 +13,7 @@ use crate::user::UserState;
 use crate::user_service::UserService;
 use crate::user_word_whitelist_service::UserWordWhitelistService;
 use crate::utils::StringUtils;
+use crate::word_stats_service::WordStatsService;
 use crate::{error_handler, lyrics, profanity, telegram};
 
 #[derive(Serialize, Deserialize)]
@@ -131,24 +132,26 @@ pub async fn check(
         return Ok(ret);
     }
 
-    let check = profanity::Manager::check(hit.lyrics());
+    let check = profanity::Manager::check(&hit.lyrics());
 
     if !check.should_trigger() {
         return Ok(ret);
     }
 
+    WordStatsService::increase_check_occurence(app.db(), &check.get_profine_words()).await?;
+
     let ok_words =
         UserWordWhitelistService::get_ok_words_for_user(app.db(), state.user_id()).await?;
 
     let bad_lines: Vec<_> = check
-        .into_iter()
+        .iter()
         .filter(|profanity::LineResult { typ, .. }| !typ.is(Type::SAFE))
         .filter(|line| {
             let words = line.get_profine_words();
 
             words.difference(&ok_words).next().is_some()
         })
-        .map(|line: profanity::LineResult| {
+        .map(|line: &profanity::LineResult| {
             format!(
                 "<code>{}:</code> {}, <code>[{}]</code>",
                 hit.line_index_name(line.no),
