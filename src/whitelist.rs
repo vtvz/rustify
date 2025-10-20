@@ -1,6 +1,6 @@
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::*;
-use sea_orm::{ConnectionTrait, IntoActiveModel};
+use sea_orm::{ConnectionTrait, EntityTrait, IntoActiveModel};
 
 use crate::entity::prelude::*;
 
@@ -18,10 +18,6 @@ impl Manager {
                 .unwrap_or_default(),
             admin: dotenv::var("WHITELIST_ADMIN").unwrap_or_default(),
         }
-    }
-
-    pub fn is_admin(&self, user_id: &str) -> bool {
-        self.admin == user_id
     }
 
     pub fn contact_admin(&self) -> &str {
@@ -60,8 +56,14 @@ impl Manager {
         db: &impl ConnectionTrait,
         user_id: &str,
     ) -> anyhow::Result<(UserWhitelistStatus, bool)> {
-        if !self.enabled || self.admin == user_id {
+        if !self.enabled {
             return Ok((UserWhitelistStatus::Allowed, false));
+        }
+
+        if let Some(user) = UserEntity::find_by_id(user_id).one(db).await? {
+            if user.is_admin() {
+                return Ok((UserWhitelistStatus::Allowed, false));
+            }
         }
 
         let (model, is_new) = self.get_by_user_id(db, user_id).await?;

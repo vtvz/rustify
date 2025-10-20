@@ -18,6 +18,7 @@ pub use super::user::{
     Entity as UserEntity,
     Locale as UserLocale,
     Model as UserModel,
+    Role as UserRole,
     Status as UserStatus,
 };
 pub use super::user_whitelist::{
