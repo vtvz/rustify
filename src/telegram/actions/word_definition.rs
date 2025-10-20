@@ -71,7 +71,6 @@ pub async fn handle_definition(
         .into_inline_keyboard_button("en"),
     ]]);
 
-    // Edit the message with the actual definition
     app.bot()
         .edit_message_text(
             generating_msg.chat.id,
@@ -105,10 +104,6 @@ pub async fn handle_inline_regenerate(
         return Ok(());
     };
 
-    // Answer the callback query immediately
-    app.bot().answer_callback_query(q.id.clone()).await?;
-
-    // Edit message to show "generating" status
     app.bot()
         .edit_message_text(
             chat_id,
