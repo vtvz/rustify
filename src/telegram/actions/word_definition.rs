@@ -1,7 +1,7 @@
 use anyhow::Context;
 use itertools::Itertools as _;
 use teloxide::prelude::*;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode};
+use teloxide::types::{ChatId, InlineKeyboardMarkup, MessageId, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::UserLocale;
@@ -10,45 +10,29 @@ use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::word_definition_service::WordDefinitionService;
 
-pub async fn handle_definition(
+async fn generate_and_send_definition(
     app: &'static App,
-    m: &Message,
+    chat_id: ChatId,
+    message_id: MessageId,
     locale: String,
     word: String,
     refresh: bool,
-) -> anyhow::Result<HandleStatus> {
+) -> anyhow::Result<()> {
     let Some(ai_config) = app.ai() else {
         app.bot()
-            .send_message(
-                m.chat.id,
+            .edit_message_text(
+                chat_id,
+                message_id,
                 "AI configuration is not available. Word definitions cannot be retrieved.",
             )
             .await?;
-
-        return Ok(HandleStatus::Handled);
+        return Ok(());
     };
 
-    let locale_codes = UserLocale::locale_codes();
-
-    if !locale_codes.contains(&locale) {
-        app.bot()
-            .send_message(
-                m.chat.id,
-                format!(
-                    "Locale <code>{locale}</code> does not exist:\n\n{}",
-                    locale_codes.join("\n")
-                ),
-            )
-            .parse_mode(ParseMode::Html)
-            .await?;
-
-        return Ok(HandleStatus::Handled);
-    }
-
-    let generating_msg = app
-        .bot()
-        .send_message(
-            m.chat.id,
+    app.bot()
+        .edit_message_text(
+            chat_id,
+            message_id,
             format!(
                 "Generating definition for <code>{word}</code> (locale: <code>{locale}</code>)...",
             ),
@@ -73,8 +57,8 @@ pub async fn handle_definition(
 
     app.bot()
         .edit_message_text(
-            generating_msg.chat.id,
-            generating_msg.id,
+            chat_id,
+            message_id,
             format!(
                 "Definition for <code>{word}</code> (locale: <code>{locale}</code>):\n\n{definition}",
             ),
@@ -82,6 +66,37 @@ pub async fn handle_definition(
         .parse_mode(ParseMode::Html)
         .reply_markup(keyboard)
         .await?;
+
+    Ok(())
+}
+
+pub async fn handle_definition(
+    app: &'static App,
+    m: &Message,
+    locale: String,
+    word: String,
+    refresh: bool,
+) -> anyhow::Result<HandleStatus> {
+    let locale_codes = UserLocale::locale_codes();
+
+    if !locale_codes.contains(&locale) {
+        app.bot()
+            .send_message(
+                m.chat.id,
+                format!(
+                    "Locale <code>{locale}</code> does not exist:\n\n{}",
+                    locale_codes.join("\n")
+                ),
+            )
+            .parse_mode(ParseMode::Html)
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    }
+
+    let msg = app.bot().send_message(m.chat.id, "Starting...").await?;
+
+    generate_and_send_definition(app, msg.chat.id, msg.id, locale, word, refresh).await?;
 
     Ok(HandleStatus::Handled)
 }
@@ -92,53 +107,11 @@ pub async fn handle_inline_regenerate(
     locale: String,
     word: String,
 ) -> anyhow::Result<()> {
-    let chat_id = q.from.id;
+    let message = q.message.clone().context("Message is empty")?;
+    let message_id = message.id();
+    let chat_id = message.chat().id;
 
-    let message_id = q.message.clone().context("Message is empty")?.id();
-
-    let Some(ai_config) = app.ai() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("AI configuration is not available")
-            .await?;
-        return Ok(());
-    };
-
-    app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
-            format!(
-                "Generating definition for <code>{word}</code> (locale: <code>{locale}</code>)...",
-            ),
-        )
-        .parse_mode(ParseMode::Html)
-        .await?;
-
-    WordDefinitionService::clear_definition(app.db(), &locale, &word).await?;
-
-    let definition =
-        WordDefinitionService::get_definition(app.db(), &locale, ai_config, &word).await?;
-
-    let keyboard = InlineKeyboardMarkup::new(vec![vec![
-        InlineButtons::RegenerateWordDefinition {
-            locale: locale.clone(),
-            word: word.clone(),
-        }
-        .into_inline_keyboard_button("en"),
-    ]]);
-
-    app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
-            format!(
-                "Definition for <code>{word}</code> (locale: <code>{locale}</code>):\n\n{definition}",
-            ),
-        )
-        .parse_mode(ParseMode::Html)
-        .reply_markup(keyboard)
-        .await?;
+    generate_and_send_definition(app, chat_id, message_id, locale, word, true).await?;
 
     Ok(())
 }
