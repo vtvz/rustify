@@ -90,7 +90,7 @@ impl RelationTrait for Relation {
     }
 }
 
-#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default)]
 #[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum Status {
     #[sea_orm(string_value = "disliked")]
@@ -98,6 +98,7 @@ pub enum Status {
     #[sea_orm(string_value = "ignore")]
     Ignore,
     #[sea_orm(string_value = "none")]
+    #[default]
     None,
 }
 
@@ -114,11 +115,5 @@ impl TryFrom<&str> for Status {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Status::try_from_value(&value.to_owned())
-    }
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Self::None
     }
 }

@@ -81,7 +81,7 @@ impl ColumnTrait for Column {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
-#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq)]
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default)]
 #[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum Status {
     #[sea_orm(string_value = "allowed")]
@@ -89,6 +89,7 @@ pub enum Status {
     #[sea_orm(string_value = "denied")]
     Denied,
     #[sea_orm(string_value = "pending")]
+    #[default]
     Pending,
 }
 
@@ -105,11 +106,5 @@ impl TryFrom<&str> for Status {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Status::try_from_value(&value.to_owned())
-    }
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Self::Pending
     }
 }

@@ -15,6 +15,7 @@ pub enum InlineButtons {
     SkippageEnable(bool),
     Recommendasion,
     RegenerateWordDefinition { locale: String, word: String },
+    WordDefinitionsPage { locale: String, page: usize },
 }
 
 impl InlineButtons {
@@ -27,6 +28,9 @@ impl InlineButtons {
             InlineButtons::Recommendasion => t!("recommendasion.button", locale = locale),
             InlineButtons::RegenerateWordDefinition { .. } => {
                 t!("inline-buttons.regenerate-word-definition", locale = locale)
+            },
+            InlineButtons::WordDefinitionsPage { page, .. } => {
+                Cow::Owned(format!("Page {}", page + 1))
             },
             InlineButtons::SkippageEnable(to_enable) => {
                 if *to_enable {
