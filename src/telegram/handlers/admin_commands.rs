@@ -47,10 +47,10 @@ pub async fn handle(
             return actions::broadcast::handle(app, state, m, &locale).await;
         },
         AdminCommand::GetWordDefinition { locale, word } => {
-            return actions::word_definition::handle(app, m, locale, word, false).await;
+            return actions::word_definition::handle_definition(app, m, locale, word, false).await;
         },
         AdminCommand::ResetWordDefinition { locale, word } => {
-            return actions::word_definition::handle(app, m, locale, word, true).await;
+            return actions::word_definition::handle_definition(app, m, locale, word, true).await;
         },
         AdminCommand::ListWordDefinitions { locale } => {
             return actions::word_definition::handle_list(app, m, locale).await;

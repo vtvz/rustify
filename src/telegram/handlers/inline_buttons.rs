@@ -51,10 +51,10 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
             actions::skippage::handle_inline(app, state, q, to_enable).await?;
         },
         InlineButtons::RegenerateWordDefinition { locale, word } => {
-            actions::word_definition::handle_inline(app, q, locale, word).await?;
+            actions::word_definition::handle_inline_regenerate(app, q, locale, word).await?;
         },
         InlineButtons::WordDefinitionsPage { locale, page, .. } => {
-            actions::word_definition::handle_list_page(app, q, locale, page).await?;
+            actions::word_definition::handle_inline_list(app, q, locale, page).await?;
         },
     }
 

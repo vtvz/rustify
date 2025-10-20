@@ -10,7 +10,7 @@ use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::word_definition_service::WordDefinitionService;
 
-pub async fn handle(
+pub async fn handle_definition(
     app: &'static App,
     m: &Message,
     locale: String,
@@ -87,7 +87,7 @@ pub async fn handle(
     Ok(HandleStatus::Handled)
 }
 
-pub async fn handle_inline(
+pub async fn handle_inline_regenerate(
     app: &'static App,
     q: CallbackQuery,
     locale: String,
@@ -158,7 +158,7 @@ pub async fn handle_list(
     Ok(HandleStatus::Handled)
 }
 
-pub async fn handle_list_page(
+pub async fn handle_inline_list(
     app: &'static App,
     q: CallbackQuery,
     locale_filter: String,
