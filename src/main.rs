@@ -48,7 +48,7 @@ rust_i18n::i18n!("locales", fallback = "en");
 
 #[derive(Parser)]
 #[command(name = "rustify")]
-enum Commands {
+enum CliCommands {
     /// Run the Telegram bot worker
     Bot,
     /// Run the track checking worker
@@ -62,12 +62,12 @@ enum Commands {
 
 #[tokio::main(worker_threads = 4)]
 async fn main() {
-    let command = Commands::parse();
+    let command = CliCommands::parse();
 
     match command {
-        Commands::Bot => workers::bot::work().await,
-        Commands::TrackCheck => workers::track_check::work().await,
-        Commands::Queues => workers::queues::work().await,
-        Commands::Users(cmd) => cli::users::run(cmd).await,
+        CliCommands::Bot => workers::bot::work().await,
+        CliCommands::TrackCheck => workers::track_check::work().await,
+        CliCommands::Queues => workers::queues::work().await,
+        CliCommands::Users(cmd) => cli::users::run(cmd).await,
     }
 }
