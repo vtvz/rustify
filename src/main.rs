@@ -6,7 +6,7 @@
     error_generic_member_access
 )]
 
-use std::env;
+use clap::Parser;
 
 #[macro_use]
 extern crate derive_more;
@@ -17,6 +17,7 @@ extern crate rust_i18n;
 
 pub mod app;
 pub mod cache;
+pub mod cli;
 pub mod entity;
 pub mod error_handler;
 pub mod logger;
@@ -45,20 +46,28 @@ pub mod workers;
 
 rust_i18n::i18n!("locales", fallback = "en");
 
+#[derive(Parser)]
+#[command(name = "rustify")]
+enum CliCommands {
+    /// Run the Telegram bot worker
+    Bot,
+    /// Run the track checking worker
+    TrackCheck,
+    /// Run the background queues worker
+    Queues,
+    /// Manage users
+    #[command(subcommand)]
+    Users(cli::users::UsersCommands),
+}
+
 #[tokio::main(worker_threads = 4)]
 async fn main() {
-    let mut args = env::args();
-    args.next(); // skip
+    let command = CliCommands::parse();
 
-    let arg: String = args.next().unwrap_or_default();
-
-    if &arg == "queues" {
-        workers::queues::work().await;
-    } else if &arg == "track_check" {
-        workers::track_check::work().await;
-    } else if &arg == "bot" {
-        workers::bot::work().await;
-    } else {
-        panic!("Provide command");
+    match command {
+        CliCommands::Bot => workers::bot::work().await,
+        CliCommands::TrackCheck => workers::track_check::work().await,
+        CliCommands::Queues => workers::queues::work().await,
+        CliCommands::Users(cmd) => cli::users::run(cmd).await,
     }
 }

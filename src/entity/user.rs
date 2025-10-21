@@ -21,6 +21,7 @@ pub struct Model {
     pub id: String,
     pub name: String,
     pub locale: Locale,
+    pub role: Role,
     pub removed_playlists: i64,
     pub removed_collection: i64,
     pub lyrics_checked: i64,
@@ -36,6 +37,12 @@ pub struct Model {
     pub cfg_skippage_secs: i64,
     pub cfg_skippage_enabled: bool,
     pub magic_playlist: Option<String>,
+}
+
+impl Model {
+    pub fn is_admin(&self) -> bool {
+        self.role.is_admin()
+    }
 }
 
 #[async_trait]
@@ -58,6 +65,7 @@ pub enum Column {
     Id,
     Name,
     Locale,
+    Role,
     RemovedPlaylists,
     RemovedCollection,
     LyricsChecked,
@@ -100,6 +108,7 @@ impl ColumnTrait for Column {
             Self::Id => ColumnType::Text.def(),
             Self::Name => ColumnType::Text.def(),
             Self::Locale => Locale::db_type(),
+            Self::Role => Role::db_type(),
             Self::RemovedPlaylists => ColumnType::BigInteger.def(),
             Self::RemovedCollection => ColumnType::BigInteger.def(),
             Self::LyricsChecked => ColumnType::BigInteger.def(),
@@ -216,5 +225,37 @@ impl TryFrom<&str> for Locale {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Self::try_from_value(&value.to_owned())
+    }
+}
+
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default)]
+#[sea_orm(rs_type = "String", db_type = "Text")]
+pub enum Role {
+    #[sea_orm(string_value = "user")]
+    #[default]
+    User,
+    #[sea_orm(string_value = "admin")]
+    Admin,
+}
+
+impl FromStr for Role {
+    type Err = sea_orm::DbErr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from(s)
+    }
+}
+
+impl TryFrom<&str> for Role {
+    type Error = sea_orm::DbErr;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::try_from_value(&value.to_owned())
+    }
+}
+
+impl Role {
+    pub fn is_admin(&self) -> bool {
+        matches!(self, Self::Admin)
     }
 }

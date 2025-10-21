@@ -23,8 +23,7 @@ pub async fn handle(
         }) => {
             return_if_handled!(handlers::url::handle(app, state, &m).await?);
 
-            // TODO: Better way to handle admin permissions
-            if app.whitelist().is_admin(state.user_id()) {
+            if state.user().is_admin() {
                 return_if_handled!(handlers::admin_commands::handle(app, state, &m).await?);
             }
 
