@@ -28,13 +28,22 @@ pub async fn demote_admin(app: &App, user_id: &str) -> anyhow::Result<()> {
     set_role(app, user_id, UserRole::User).await
 }
 
-pub async fn list_admins(app: &App) -> anyhow::Result<Vec<UserModel>> {
+pub async fn list_admins(app: &App) -> anyhow::Result<()> {
     let admins = UserEntity::find()
         .filter(UserColumn::Role.eq(UserRole::Admin))
         .all(app.db())
         .await?;
 
-    Ok(admins)
+    if admins.is_empty() {
+        println!("No admins found");
+    } else {
+        println!("Admins:");
+        for admin in admins {
+            println!("  - {} ({})", admin.id, admin.name);
+        }
+    }
+
+    Ok(())
 }
 
 async fn set_role(app: &App, user_id: &str, role: UserRole) -> anyhow::Result<()> {
@@ -66,20 +75,7 @@ pub async fn run(command: UsersCommands) {
     let result = match command {
         UsersCommands::Promote { user_id } => promote_admin(app, &user_id).await,
         UsersCommands::Demote { user_id } => demote_admin(app, &user_id).await,
-        UsersCommands::ListAdmins => match list_admins(app).await {
-            Ok(admins) => {
-                if admins.is_empty() {
-                    println!("No admins found");
-                } else {
-                    println!("Admins:");
-                    for admin in admins {
-                        println!("  - {} ({})", admin.id, admin.name);
-                    }
-                }
-                Ok(())
-            },
-            Err(e) => Err(e),
-        },
+        UsersCommands::ListAdmins => list_admins(app).await,
     };
 
     if let Err(e) = result {
