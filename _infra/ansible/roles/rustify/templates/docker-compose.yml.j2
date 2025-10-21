@@ -18,7 +18,7 @@ services:
       {{ rustify_env_content | indent(6) }}
     restart: always
     entrypoint: /usr/local/bin/rustify
-    command: track_check
+    command: track-check
 
   queues:
     image: "{{ rustify_docker_image }}"
