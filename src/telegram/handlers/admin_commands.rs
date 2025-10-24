@@ -37,9 +37,6 @@ pub async fn handle(
                 )
                 .await?;
         },
-        AdminCommand::Whitelist(action, user_id) => {
-            return actions::whitelist::handle(app, m, action, user_id).await;
-        },
         AdminCommand::GlobalStats => {
             return actions::global_stats::handle(app, state, m).await;
         },

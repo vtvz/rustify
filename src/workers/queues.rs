@@ -1,13 +1,13 @@
 use anyhow::Context as _;
-use rustify::app::App;
-use rustify::queue::profanity_check;
-use rustify::utils;
 use tokio::task::JoinHandle;
 
 use crate as rustify;
+use crate::app::App;
+use crate::queue::profanity_check;
+use crate::utils;
 
 pub async fn work() {
-    rustify::logger::init()
+    rustify::infrastructure::logger::init()
         .await
         .expect("Logger should be built");
 

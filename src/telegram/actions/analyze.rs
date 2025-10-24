@@ -10,16 +10,13 @@ use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode, UserId};
 
 use crate::app::{AIConfig, App};
 use crate::profanity;
+use crate::services::{TrackStatusService, UserService, WordDefinitionService, WordStatsService};
 use crate::spotify::ShortTrack;
 use crate::telegram::MESSAGE_MAX_LEN;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
-use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
-use crate::user_service::UserService;
 use crate::utils::StringUtils;
-use crate::word_definition_service::WordDefinitionService;
-use crate::word_stats_service::WordStatsService;
 
 pub async fn handle_inline(
     app: &'static App,

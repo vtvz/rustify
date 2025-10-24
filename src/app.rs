@@ -11,13 +11,13 @@ use teloxide::Bot;
 use teloxide::dispatching::dialogue::RedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
 
+use crate::infrastructure::cache;
 use crate::metrics::influx::InfluxClient;
+use crate::services::UserService;
 use crate::user::UserState;
-use crate::user_service::UserService;
-use crate::{cache, lyrics, profanity, spotify, whitelist};
+use crate::{lyrics, profanity, spotify};
 
 pub struct App {
-    whitelist: whitelist::Manager,
     spotify_manager: spotify::Manager,
     lyrics: lyrics::Manager,
     bot: Bot,
@@ -44,10 +44,6 @@ impl AIConfig {
 }
 
 impl App {
-    pub fn whitelist(&self) -> &whitelist::Manager {
-        &self.whitelist
-    }
-
     pub fn spotify_manager(&self) -> &spotify::Manager {
         &self.spotify_manager
     }
@@ -237,7 +233,6 @@ impl App {
 
         // Make state global static variable to prevent hassle with Arc and cloning this mess
         let app = Box::new(Self {
-            whitelist: whitelist::Manager::from_env(),
             bot,
             spotify_manager,
             lyrics: lyrics_manager,

@@ -6,15 +6,14 @@ use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
+use crate::infrastructure::error_handler;
+use crate::services::{UserService, UserWordWhitelistService, WordStatsService};
 use crate::spotify::ShortTrack;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::user_service::UserService;
-use crate::user_word_whitelist_service::UserWordWhitelistService;
 use crate::utils::StringUtils;
-use crate::word_stats_service::WordStatsService;
-use crate::{error_handler, lyrics, profanity, telegram};
+use crate::{lyrics, profanity, telegram};
 
 #[derive(Serialize, Deserialize)]
 pub struct ProfanityCheckQueueTask {

@@ -5,11 +5,10 @@ use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
-use crate::error_handler;
+use crate::infrastructure::error_handler;
+use crate::services::{TrackStatusService, UserService};
 use crate::spotify::ShortTrack;
-use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
-use crate::user_service::UserService;
 
 #[tracing::instrument(
     skip_all,

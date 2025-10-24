@@ -16,7 +16,6 @@ use sea_orm::{
     QuerySelect,
 };
 
-use crate::app::AIConfig;
 use crate::entity::prelude::{
     WordDefinitionActiveModel,
     WordDefinitionColumn,
@@ -24,6 +23,7 @@ use crate::entity::prelude::{
     WordStatsColumn,
     WordStatsEntity,
 };
+use crate::app::AIConfig;
 
 pub struct WordDefinitionService {}
 

@@ -2,7 +2,7 @@ use rspotify::clients::OAuthClient;
 use rspotify::model::{Context as SpotifyContext, Id, PlaylistId, Type as SpotifyType};
 
 use crate::app::App;
-use crate::magic_service::MagicService;
+use crate::services::MagicService;
 use crate::spotify::ShortTrack;
 use crate::user::UserState;
 

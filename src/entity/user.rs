@@ -147,6 +147,8 @@ impl Related<super::spotify_auth::Entity> for Entity {
 pub enum Status {
     #[sea_orm(string_value = "active")]
     Active,
+    #[sea_orm(string_value = "pending")]
+    Pending,
     #[sea_orm(string_value = "blocked")]
     Blocked,
     #[sea_orm(string_value = "forbidden")]

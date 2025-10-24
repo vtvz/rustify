@@ -7,11 +7,11 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::UserStatus;
+use crate::services::UserService;
 use crate::spotify;
-use crate::spotify_auth_service::SpotifyAuthService;
+use crate::spotify::auth::SpotifyAuthService;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::keyboards::StartKeyboard;
-use crate::user_service::UserService;
 
 #[derive(Default)]
 pub struct ErrorHandlingResult {

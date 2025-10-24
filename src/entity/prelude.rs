@@ -21,13 +21,6 @@ pub use super::user::{
     Role as UserRole,
     Status as UserStatus,
 };
-pub use super::user_whitelist::{
-    ActiveModel as UserWhitelistActiveModel,
-    Column as UserWhitelistColumn,
-    Entity as UserWhitelistEntity,
-    Model as UserWhitelistModel,
-    Status as UserWhitelistStatus,
-};
 pub use super::user_word_whitelist::{
     ActiveModel as UserWordWhitelistActiveModel,
     Column as UserWordWhitelistColumn,

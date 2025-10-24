@@ -10,16 +10,15 @@ use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
-use crate::app::App;
 use crate::entity::prelude::*;
+use crate::app::App;
+use crate::services::{TrackStatusService, WordStatsService};
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
-use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 use crate::utils::StringUtils;
-use crate::word_stats_service::WordStatsService;
 use crate::{profanity, telegram};
 
 pub async fn handle_current(

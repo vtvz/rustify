@@ -1,12 +1,12 @@
 use anyhow::Context;
 
 use super::skippage;
-use crate::app::App;
 use crate::entity::prelude::*;
+use crate::app::App;
+use crate::infrastructure::error_handler;
+use crate::services::{TrackStatusService, UserService};
 use crate::spotify::CurrentlyPlaying;
-use crate::track_status_service::TrackStatusService;
-use crate::user_service::UserService;
-use crate::{error_handler, queue, rickroll, spotify};
+use crate::{queue, rickroll, spotify};
 
 #[allow(dead_code)]
 #[derive(Clone)]

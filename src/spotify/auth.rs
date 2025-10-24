@@ -6,7 +6,7 @@ use sea_orm::sea_query::Expr;
 use sea_orm::{ConnectionTrait, IntoActiveModel, QuerySelect, QueryTrait, UpdateResult};
 
 use crate::entity::prelude::*;
-use crate::user_service::UserService;
+use crate::services::UserService;
 use crate::utils::Clock;
 
 pub struct SpotifyAuthService;

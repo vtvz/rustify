@@ -8,13 +8,13 @@ use teloxide::prelude::Requester;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
+use crate::services::UserService;
 use crate::spotify::ShortPlaylist;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::user_service::UserService;
 
 async fn get_playlist(
     state: &UserState,

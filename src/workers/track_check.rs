@@ -1,11 +1,10 @@
-use rustify::app::App;
-
 use crate as rustify;
+use crate::app::App;
 
 pub async fn work() {
     // profanity::check_cases();
 
-    rustify::logger::init()
+    rustify::infrastructure::logger::init()
         .await
         .expect("Logger should be built");
 
