@@ -190,21 +190,126 @@ mod tests {
     use super::*;
 
     #[test]
-    fn get_profine_words() {
-        let line = "good Bad normal worst ok bad".to_owned();
-        let censored = "good *** normal ***** ok ***".to_owned();
+    fn test_extract_highlight_and_get_profine_words() {
+        struct TestCase {
+            line: &'static str,
+            censored: &'static str,
+            expected_bad_chars: Vec<usize>,
+            expected_highlighted: &'static str,
+            expected_profine_words: Vec<&'static str>,
+            description: &'static str,
+        }
 
-        let line = LineResult {
-            bad_chars: CheckResult::extract_bad_chars(&line, &censored),
-            line,
-            ..Default::default()
-        };
+        let test_cases = [
+            TestCase {
+                line: "good normal ok",
+                censored: "good normal ok",
+                expected_bad_chars: vec![],
+                expected_highlighted: "good normal ok",
+                expected_profine_words: vec![],
+                description: "no profanity",
+            },
+            TestCase {
+                line: "bad",
+                censored: "***",
+                expected_bad_chars: vec![0, 1, 2],
+                expected_highlighted: "<tg-spoiler><u>bad</u></tg-spoiler>",
+                expected_profine_words: vec!["bad"],
+                description: "all censored",
+            },
+            TestCase {
+                line: "badword",
+                censored: "***word",
+                expected_bad_chars: vec![0, 1, 2],
+                expected_highlighted: "<tg-spoiler><u>bad</u></tg-spoiler>word",
+                expected_profine_words: vec!["bad"],
+                description: "partially censored",
+            },
+            TestCase {
+                line: "",
+                censored: "",
+                expected_bad_chars: vec![],
+                expected_highlighted: "",
+                expected_profine_words: vec![],
+                description: "empty string",
+            },
+            TestCase {
+                line: "hëllo",
+                censored: "***lo",
+                expected_bad_chars: vec![0, 1, 2],
+                expected_highlighted: "<tg-spoiler><u>hël</u></tg-spoiler>lo",
+                expected_profine_words: vec!["hël"],
+                description: "unicode extraction",
+            },
+            TestCase {
+                line: "hello",
+                censored: "h***o",
+                expected_bad_chars: vec![1, 2, 3],
+                expected_highlighted: "h<tg-spoiler><u>ell</u></tg-spoiler>o",
+                expected_profine_words: vec!["ell"],
+                description: "consecutive chars",
+            },
+            TestCase {
+                line: "bad good worse",
+                censored: "*** good *****",
+                expected_bad_chars: vec![0, 1, 2, 9, 10, 11, 12, 13],
+                expected_highlighted: "<tg-spoiler><u>bad</u></tg-spoiler> good <tg-spoiler><u>worse</u></tg-spoiler>",
+                expected_profine_words: vec!["bad", "worse"],
+                description: "multiple separate words",
+            },
+            TestCase {
+                line: "héllo 世界",
+                censored: "h**lo 世界",
+                expected_bad_chars: vec![1, 2],
+                expected_highlighted: "h<tg-spoiler><u>él</u></tg-spoiler>lo 世界",
+                expected_profine_words: vec!["él"],
+                description: "unicode highlighting",
+            },
+            TestCase {
+                line: "good Bad normal worst ok bad",
+                censored: "good *** normal ***** ok ***",
+                expected_bad_chars: vec![5, 6, 7, 16, 17, 18, 19, 20, 25, 26, 27],
+                expected_highlighted: "good <tg-spoiler><u>Bad</u></tg-spoiler> normal <tg-spoiler><u>worst</u></tg-spoiler> ok <tg-spoiler><u>bad</u></tg-spoiler>",
+                expected_profine_words: vec!["bad", "worst"],
+                description: "multiple bad words with case normalization",
+            },
+        ];
 
-        let profine_words = line.get_profine_words();
-        assert_eq!(
-            profine_words,
-            HashSet::from(["bad".to_owned(), "worst".to_owned()])
-        );
+        for tc in test_cases {
+            // Test extraction
+            let bad_chars = CheckResult::extract_bad_chars(tc.line, tc.censored);
+            assert_eq!(
+                bad_chars, tc.expected_bad_chars,
+                "bad_chars extraction failed for: {}",
+                tc.description
+            );
+
+            // Test highlighting
+            let line_result = LineResult {
+                line: tc.line.to_owned(),
+                bad_chars,
+                ..Default::default()
+            };
+            let highlighted = line_result.highlighted();
+            assert_eq!(
+                highlighted, tc.expected_highlighted,
+                "highlighting failed for: {}",
+                tc.description
+            );
+
+            // Test get_profine_words
+            let profine_words = line_result.get_profine_words();
+            let expected_set: HashSet<String> = tc
+                .expected_profine_words
+                .iter()
+                .map(|s| s.to_string())
+                .collect();
+            assert_eq!(
+                profine_words, expected_set,
+                "get_profine_words failed for: {}",
+                tc.description
+            );
+        }
     }
 }
 

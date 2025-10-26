@@ -22,8 +22,8 @@ use teloxide::prelude::Requester;
 use teloxide::sugar::request::RequestLinkPreviewExt;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
-use crate::entity::prelude::TrackStatus;
 use crate::app::{AIConfig, App};
+use crate::entity::prelude::TrackStatus;
 use crate::services::{RecommendasionService, TrackStatusService};
 use crate::spotify::ShortTrack;
 use crate::telegram::actions;

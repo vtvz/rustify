@@ -11,8 +11,8 @@ use teloxide::types::{
 };
 
 use super::super::keyboards::StartKeyboard;
-use crate::entity::prelude::*;
 use crate::app::App;
+use crate::entity::prelude::*;
 use crate::services::UserService;
 use crate::spotify::auth::SpotifyAuthService;
 use crate::telegram::commands::UserCommandDisplay;

@@ -10,8 +10,8 @@ use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
-use crate::entity::prelude::*;
 use crate::app::App;
+use crate::entity::prelude::*;
 use crate::services::{TrackStatusService, WordStatsService};
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::telegram::handlers::HandleStatus;
@@ -277,36 +277,103 @@ mod tests {
 
     #[test]
     fn extract_id_success() {
-        let never_gonna_give_you_up =
-            "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8?si=b248017abca04ef0";
+        struct TestCase {
+            url: &'static str,
+            expected_id: &'static str,
+            description: &'static str,
+        }
 
-        let url = url::Url::parse(never_gonna_give_you_up).unwrap();
-        let id = extract_id(&url);
+        let test_cases = [
+            TestCase {
+                url: "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8?si=b248017abca04ef0",
+                expected_id: "4PTG3Z6ehGkBFwjybzWkR8",
+                description: "with query params",
+            },
+            TestCase {
+                url: "https://open.spotify.com/track/abc123DEF456",
+                expected_id: "abc123DEF456",
+                description: "without query params",
+            },
+            TestCase {
+                url: "https://open.spotify.com/track/AbC123DeF456",
+                expected_id: "AbC123DeF456",
+                description: "mixed case",
+            },
+            TestCase {
+                url: "https://open.spotify.com/track/123456789",
+                expected_id: "123456789",
+                description: "all numeric",
+            },
+            TestCase {
+                url: "https://open.spotify.com/track/abcdefghijk",
+                expected_id: "abcdefghijk",
+                description: "all letters",
+            },
+            TestCase {
+                url: "https://spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8",
+                expected_id: "4PTG3Z6ehGkBFwjybzWkR8",
+                description: "different domain",
+            },
+        ];
 
-        assert_eq!(
-            id,
-            Some(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8").unwrap())
-        );
+        for tc in test_cases {
+            let url = url::Url::parse(tc.url).unwrap();
+            let id = extract_id(&url);
+            assert_eq!(
+                id,
+                Some(TrackId::from_id(tc.expected_id).unwrap()),
+                "failed for: {}",
+                tc.description
+            );
+        }
     }
 
     #[test]
-    fn extract_id_broken() {
-        let gonna_give_you_up =
-            "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8_?si=b248017abca04ef0";
+    fn extract_id_failure() {
+        struct TestCase {
+            url: &'static str,
+            description: &'static str,
+        }
 
-        let url = url::Url::parse(gonna_give_you_up).unwrap();
-        let id = extract_id(&url);
+        let test_cases = [
+            TestCase {
+                url: "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8_?si=b248017abca04ef0",
+                description: "invalid character in ID (_)",
+            },
+            TestCase {
+                url: "https://rickastley.co.uk/index.php/tour-dates/",
+                description: "completely wrong URL",
+            },
+            TestCase {
+                url: "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8/",
+                description: "trailing slash",
+            },
+            TestCase {
+                url: "https://open.spotify.com/album/4PTG3Z6ehGkBFwjybzWkR8",
+                description: "album instead of track",
+            },
+            TestCase {
+                url: "https://open.spotify.com/playlist/4PTG3Z6ehGkBFwjybzWkR8",
+                description: "playlist instead of track",
+            },
+            TestCase {
+                url: "https://open.spotify.com/",
+                description: "empty path",
+            },
+            TestCase {
+                url: "https://open.spotify.com/track/",
+                description: "track path without ID",
+            },
+            TestCase {
+                url: "https://open.spotify.com/track/abc-123",
+                description: "special characters in ID",
+            },
+        ];
 
-        assert_eq!(id, None);
-    }
-
-    #[test]
-    fn extract_id_wrong() {
-        let gonna_give_you_up = "https://rickastley.co.uk/index.php/tour-dates/";
-
-        let url = url::Url::parse(gonna_give_you_up).unwrap();
-        let id = extract_id(&url);
-
-        assert_eq!(id, None);
+        for tc in test_cases {
+            let url = url::Url::parse(tc.url).unwrap();
+            let id = extract_id(&url);
+            assert_eq!(id, None, "should fail for: {}", tc.description);
+        }
     }
 }

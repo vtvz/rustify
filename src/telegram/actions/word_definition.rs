@@ -3,8 +3,8 @@ use itertools::Itertools as _;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, MessageId, ParseMode};
 
-use crate::entity::prelude::UserLocale;
 use crate::app::App;
+use crate::entity::prelude::UserLocale;
 use crate::services::WordDefinitionService;
 use crate::telegram::commands::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;

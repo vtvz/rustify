@@ -158,3 +158,119 @@ where
         self.as_ref().chars().take(len).collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Tests for StringUtils::chars_len()
+    #[test]
+    fn test_chars_len_ascii() {
+        assert_eq!("hello".chars_len(), 5);
+    }
+
+    #[test]
+    fn test_chars_len_empty() {
+        assert_eq!("".chars_len(), 0);
+    }
+
+    #[test]
+    fn test_chars_len_unicode_emoji() {
+        // Emoji are single characters in Unicode
+        assert_eq!("😀".chars_len(), 1);
+        assert_eq!("😀😁😂".chars_len(), 3);
+    }
+
+    #[test]
+    fn test_chars_len_unicode_chinese() {
+        assert_eq!("你好世界".chars_len(), 4);
+    }
+
+    #[test]
+    fn test_chars_len_unicode_mixed() {
+        assert_eq!("Hello 世界 😀".chars_len(), 10);
+    }
+
+    #[test]
+    fn test_chars_len_unicode_arabic() {
+        assert_eq!("مرحبا".chars_len(), 5);
+    }
+
+    // Tests for StringUtils::chars_crop()
+    #[test]
+    fn test_chars_crop_ascii() {
+        assert_eq!("hello world".chars_crop(5), "hello");
+    }
+
+    #[test]
+    fn test_chars_crop_empty() {
+        assert_eq!("".chars_crop(5), "");
+    }
+
+    #[test]
+    fn test_chars_crop_zero() {
+        assert_eq!("hello".chars_crop(0), "");
+    }
+
+    #[test]
+    fn test_chars_crop_longer_than_string() {
+        assert_eq!("hi".chars_crop(10), "hi");
+    }
+
+    #[test]
+    fn test_chars_crop_unicode_emoji() {
+        // Should crop by characters, not bytes
+        assert_eq!("😀😁😂😃".chars_crop(2), "😀😁");
+    }
+
+    #[test]
+    fn test_chars_crop_unicode_chinese() {
+        assert_eq!("你好世界".chars_crop(2), "你好");
+    }
+
+    #[test]
+    fn test_chars_crop_unicode_mixed() {
+        assert_eq!("Hello 世界 😀".chars_crop(8), "Hello 世界");
+    }
+
+    #[test]
+    fn test_chars_crop_exact_length() {
+        let s = "hello";
+        assert_eq!(s.chars_crop(5), "hello");
+    }
+
+    #[test]
+    fn test_chars_crop_preserves_multibyte() {
+        // Ensure we don't break multibyte characters
+        let text = "café";
+        let cropped = text.chars_crop(3);
+        assert_eq!(cropped, "caf");
+        // Verify it's valid UTF-8
+        assert!(cropped.is_char_boundary(cropped.len()));
+    }
+
+    // Tests for Clock::now()
+    #[test]
+    fn test_clock_now_returns_valid_datetime() {
+        let now = Clock::now();
+        // Should return a valid datetime (doesn't panic)
+        // Year should be reasonable (between 2020 and 2100)
+        assert!(now.and_utc().timestamp() > 1_600_000_000);
+    }
+
+    #[test]
+    fn test_clock_now_subsecond_precision() {
+        let now = Clock::now();
+        // Nanoseconds should be rounded to 0 (round_subsecs(0))
+        assert_eq!(now.and_utc().timestamp_subsec_nanos(), 0);
+    }
+
+    #[test]
+    fn test_clock_now_multiple_calls() {
+        let time1 = Clock::now();
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        let time2 = Clock::now();
+        // time2 should be >= time1
+        assert!(time2 >= time1);
+    }
+}

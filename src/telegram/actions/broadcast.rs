@@ -3,8 +3,8 @@ use indoc::formatdoc;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
-use crate::entity::prelude::*;
 use crate::app::App;
+use crate::entity::prelude::*;
 use crate::services::UserService;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;

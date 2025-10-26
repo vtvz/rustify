@@ -1,8 +1,8 @@
 use anyhow::Context;
 
 use super::skippage;
-use crate::entity::prelude::*;
 use crate::app::App;
+use crate::entity::prelude::*;
 use crate::infrastructure::error_handler;
 use crate::services::{TrackStatusService, UserService};
 use crate::spotify::CurrentlyPlaying;

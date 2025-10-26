@@ -249,4 +249,38 @@ mod tests {
             AdminCommand::ListWordDefinitions { .. } => AdminCommandDisplay::ListWordDefinitions,
         };
     }
+
+    // Tests for localized_bot_commands()
+    #[test]
+    fn test_localized_bot_commands() {
+        let locales = vec!["en", "ru"];
+
+        for locale in locales {
+            let commands = UserCommand::localized_bot_commands(locale);
+            // Should return a non-empty list
+            assert!(!commands.is_empty());
+            // Each command should have a non-empty description
+            for command in commands {
+                assert!(!command.description.is_empty());
+            }
+        }
+    }
+
+    // Tests for localized_descriptions()
+    #[test]
+    fn test_localized_descriptions() {
+        let locales = vec!["en", "ru"];
+        for locale in locales {
+            let _descriptions = UserCommand::localized_descriptions(locale);
+        }
+    }
+
+    #[test]
+    fn test_localized_descriptions_caching() {
+        let locales = vec!["en", "ru"];
+        for locale in locales {
+            let _descriptions1 = UserCommand::localized_descriptions(locale);
+            let _descriptions2 = UserCommand::localized_descriptions(locale);
+        }
+    }
 }

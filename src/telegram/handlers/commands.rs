@@ -4,8 +4,8 @@ use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
 
 use super::HandleStatus;
-use crate::entity::prelude::*;
 use crate::app::App;
+use crate::entity::prelude::*;
 use crate::services::UserService;
 use crate::telegram::actions;
 use crate::telegram::commands::UserCommand;

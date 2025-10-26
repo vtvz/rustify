@@ -1,8 +1,8 @@
 use teloxide::prelude::*;
 use teloxide::types::{KeyboardRemove, ParseMode, ReplyMarkup};
 
-use crate::entity::prelude::*;
 use crate::app::App;
+use crate::entity::prelude::*;
 use crate::services::UserService;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;

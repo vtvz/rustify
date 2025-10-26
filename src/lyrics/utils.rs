@@ -66,3 +66,77 @@ impl Display for SearchResultConfidence {
         write!(f, "{:.0}", self.avg() * 100.0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_track_names_variations() {
+        let test_cases = vec![
+            // (input, expected_contains)
+            "Song",
+            "Song (feat. Artist)",
+            "Song (Feat. Artist)",
+            "Song [feat. Artist]",
+            "Song (with Artist)",
+            "Song - feat. Artist",
+            "Song - Remix",
+        ];
+
+        for input in test_cases {
+            let names = get_track_names(input);
+            assert!(
+                names.contains("Song"),
+                "Expected '{}' to contain '{}', but it didn't. Got: {:?}",
+                input,
+                "Song",
+                names
+            );
+
+            assert!(
+                names.contains(input),
+                "Expected '{}' to contain '{}', but it didn't. Got: {:?}",
+                input,
+                input,
+                names
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_track_names_empty_string() {
+        let names = get_track_names("");
+
+        // Should still return a set with the empty string
+        assert!(!names.is_empty());
+    }
+
+    #[test]
+    fn test_get_track_names_unicode() {
+        let names = get_track_names("歌曲 (feat. 艺术家)");
+
+        assert!(names.contains("歌曲 (feat. 艺术家)"));
+        assert!(names.contains("歌曲"));
+    }
+
+    #[test]
+    fn test_get_track_names_complex() {
+        let names = get_track_names("Song Name - Remix (feat. Artist)");
+
+        let expected_variations = vec![
+            "Song Name - Remix (feat. Artist)", // original
+            "Song Name",                        // no extra info + no feat
+            "Song Name - Remix",                // no feat
+        ];
+
+        for expected in expected_variations {
+            assert!(
+                names.contains(expected),
+                "Expected set to contain '{}', but it didn't. Got: {:?}",
+                expected,
+                names
+            );
+        }
+    }
+}

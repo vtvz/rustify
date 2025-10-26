@@ -1,0 +1,8 @@
+pre-commit:
+  jobs:
+    - name: Rust fmt
+      run: |-
+        cargo fmt -- {staged_files}
+      stage_fixed: true
+      glob:
+        - "*.rs"

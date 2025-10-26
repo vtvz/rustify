@@ -5,8 +5,8 @@ use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use super::super::inline_buttons::InlineButtons;
-use crate::entity::prelude::*;
 use crate::app::App;
+use crate::entity::prelude::*;
 use crate::services::TrackStatusService;
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::telegram::actions;
