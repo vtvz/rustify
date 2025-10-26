@@ -5,13 +5,12 @@ use teloxide::prelude::Requester;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
-use crate::skippage_service::SkippageService;
+use crate::services::{SkippageService, UserService};
 use crate::telegram::actions;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::user::UserState;
-use crate::user_service::UserService;
 
 pub async fn handle_inline(
     app: &'static App,

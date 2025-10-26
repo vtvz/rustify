@@ -62,7 +62,9 @@ async fn set_role(app: &App, user_id: &str, role: UserRole) -> anyhow::Result<()
 }
 
 pub async fn run(command: UsersCommands) {
-    crate::logger::init().await.expect("Logger should be built");
+    crate::infrastructure::logger::init()
+        .await
+        .expect("Logger should be built");
 
     tracing::info!(
         git_commit_timestamp = env!("GIT_COMMIT_TIMESTAMP"),

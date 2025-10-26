@@ -2,7 +2,7 @@ use anyhow::Context;
 use rspotify::clients::OAuthClient;
 
 use crate::app::App;
-use crate::skippage_service::SkippageService;
+use crate::services::SkippageService;
 use crate::spotify::ShortTrack;
 use crate::user::UserState;
 

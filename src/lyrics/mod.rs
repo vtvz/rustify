@@ -9,7 +9,7 @@ use serde::de::DeserializeOwned;
 use strum_macros::Display;
 use tokio::sync::RwLock;
 
-use crate::cache::CacheManager;
+use crate::infrastructure::cache::CacheManager;
 use crate::spotify::ShortTrack;
 
 pub mod azlyrics;

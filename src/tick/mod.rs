@@ -13,8 +13,9 @@ use tracing::Instrument;
 use user::CheckUserResult;
 
 use crate::app::App;
-use crate::spotify_auth_service::SpotifyAuthService;
-use crate::{error_handler, utils};
+use crate::infrastructure::error_handler;
+use crate::spotify::auth::SpotifyAuthService;
+use crate::utils;
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
 const PARALLEL_CHECKS: usize = 2;

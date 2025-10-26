@@ -11,13 +11,13 @@ use teloxide::types::{
 };
 
 use super::super::keyboards::StartKeyboard;
-use crate::app::App;
 use crate::entity::prelude::*;
-use crate::spotify_auth_service::SpotifyAuthService;
+use crate::app::App;
+use crate::services::UserService;
+use crate::spotify::auth::SpotifyAuthService;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
-use crate::user_service::UserService;
 
 pub async fn handle(
     app: &'static App,

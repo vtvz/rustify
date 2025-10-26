@@ -1,17 +1,17 @@
 use indoc::formatdoc;
-use rustify::app::App;
-use rustify::entity::prelude::UserWhitelistStatus;
-use rustify::telegram::commands::UserCommand;
-use rustify::telegram::utils::link_preview_disabled;
-use rustify::user::UserState;
-use rustify::user_service::UserService;
 use sea_orm::Iterable;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, ParseMode, User};
+use teloxide::types::{ParseMode, User};
 
+use crate::app::App;
 use crate::entity::prelude::UserLocale;
-use crate::{self as rustify, error_handler};
+use crate::infrastructure::error_handler;
+use crate::services::UserService;
+use crate::telegram::commands::UserCommand;
+use crate::telegram::utils::link_preview_disabled;
+use crate::user::UserState;
+use crate::{self as rustify};
 
 async fn sync_name(
     app: &'static App,
@@ -52,87 +52,11 @@ async fn sync_name(
     Ok(())
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
-async fn whitelisted(app: &'static App, state: &UserState) -> anyhow::Result<bool> {
-    let res = app
-        .whitelist()
-        .get_status(app.db(), state.user_id())
-        .await?;
-
-    let chat_id = ChatId(state.user_id().parse()?);
-    match res {
-        (UserWhitelistStatus::Allowed, _) => return Ok(true),
-        (UserWhitelistStatus::Denied, _) => {
-            tracing::info!("Denied user tried to use bot");
-
-            app.bot()
-                .send_message(chat_id, "Sorry, your join request was rejected...")
-                .parse_mode(ParseMode::Html)
-                .await?;
-        },
-        (UserWhitelistStatus::Pending, true) => {
-            tracing::info!("New user was sent a request to join");
-
-            let message = formatdoc!(
-                r#"
-                    This bot is in whitelist mode\\.
-                    Admin already notified that you want to join, but you also can contact <a href="tg://user?id={}">[admin]()</a> and send this message to him\\.
-
-                    User Id: <code>{}</code>"#,
-                app.whitelist().contact_admin(),
-                state.user_id(),
-            );
-
-            app.bot()
-                .send_message(chat_id, message)
-                .parse_mode(ParseMode::Html)
-                .await?;
-
-            let message = formatdoc!(
-                r#"
-                    New <a href="tg://user?id={user_id}">user</a> wants to join\\!
-
-                    <code>/whitelist allow {user_id}</code>
-                    <code>/whitelist deny {user_id}</code>
-                "#,
-                user_id = state.user_id(),
-            );
-
-            app.bot()
-                .send_message(ChatId(app.whitelist().contact_admin().parse()?), message)
-                .parse_mode(ParseMode::Html)
-                .await?;
-        },
-        (UserWhitelistStatus::Pending, false) => {
-            tracing::info!("Pending user tried to use bot");
-
-            let message = formatdoc!(
-                r#"
-                    This bot is in whitelist mode\\.
-                    Your request was already sent, but admin didn't decided yet\\.
-                    You can contact <a href="tg://user?id={}">him</a> to speedup the process\\.
-                    Send him this message, this will drastically help\\.
-
-                    User Id: <code>{}</code>"#,
-                app.whitelist().contact_admin(),
-                state.user_id(),
-            );
-
-            app.bot()
-                .send_message(chat_id, message)
-                .parse_mode(ParseMode::Html)
-                .await?;
-        },
-    };
-
-    Ok(false)
-}
-
 #[tracing::instrument(skip_all)]
 pub async fn work() {
     // profanity::check_cases();
 
-    rustify::logger::init()
+    rustify::infrastructure::logger::init()
         .await
         .expect("Logger should be built");
 
@@ -158,10 +82,6 @@ pub async fn work() {
         .branch(
             Update::filter_message().endpoint(move |m: Message| async move {
                 let state = app.user_state(&m.chat.id.to_string()).await?;
-
-                if !whitelisted(app, &state).await? {
-                    return Ok(());
-                }
 
                 if let Err(err) = sync_name(app, &state, m.from.as_ref()).await {
                     tracing::error!(err = ?err, user_id = state.user_id(), "Failed syncing user name");

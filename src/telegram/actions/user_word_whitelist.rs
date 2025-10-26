@@ -4,11 +4,11 @@ use teloxide::prelude::Requester as _;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
+use crate::services::UserWordWhitelistService;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
-use crate::user_word_whitelist_service::UserWordWhitelistService;
 use crate::utils::StringUtils;
 
 pub async fn handle_add_word(

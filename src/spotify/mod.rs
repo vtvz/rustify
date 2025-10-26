@@ -1,8 +1,10 @@
+pub mod auth;
 pub mod errors;
 
 use std::borrow::Cow;
 
 use anyhow::{Context, anyhow};
+use auth::SpotifyAuthService;
 pub use errors::SpotifyError;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
@@ -22,8 +24,7 @@ use sea_orm::{DbConn, TransactionTrait};
 use teloxide::utils::html;
 
 use crate::entity::prelude::*;
-use crate::spotify_auth_service::SpotifyAuthService;
-use crate::user_service::UserService;
+use crate::services::UserService;
 
 pub struct ShortPlaylist {
     id: PlaylistId<'static>,

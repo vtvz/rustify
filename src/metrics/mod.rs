@@ -7,11 +7,10 @@ use tokio::sync::broadcast::error::RecvError;
 use tokio::time::Instant;
 use tracing::Instrument;
 
-use crate::app::App;
 use crate::entity::prelude::*;
+use crate::app::App;
+use crate::services::{TrackStatusService, UserService, UserStats};
 use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
-use crate::track_status_service::TrackStatusService;
-use crate::user_service::{UserService, UserStats};
 use crate::utils;
 
 pub mod influx;

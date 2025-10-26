@@ -1,13 +1,13 @@
 use teloxide::prelude::*;
 use teloxide::types::{KeyboardRemove, ParseMode, ReplyMarkup};
 
-use crate::app::App;
 use crate::entity::prelude::*;
+use crate::app::App;
+use crate::services::UserService;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
-use crate::user_service::UserService;
 
 pub async fn handle(
     app: &'static App,

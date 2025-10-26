@@ -167,9 +167,6 @@ pub enum AdminCommand {
     #[command(description = "Show this help")]
     Admin,
 
-    #[command(description = "Manage user whitelist")]
-    Whitelist(String, String),
-
     #[command(description = "Show global statistics")]
     GlobalStats,
 
@@ -188,7 +185,6 @@ pub enum AdminCommand {
 
 pub enum AdminCommandDisplay {
     Admin,
-    Whitelist,
     GlobalStats,
     Broadcast,
     GetWordDefinition,
@@ -200,7 +196,6 @@ impl std::fmt::Display for AdminCommandDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let string = match self {
             AdminCommandDisplay::Admin => "admin",
-            AdminCommandDisplay::Whitelist => "whitelist",
             AdminCommandDisplay::GlobalStats => "global_stats",
             AdminCommandDisplay::Broadcast => "broadcast",
             AdminCommandDisplay::GetWordDefinition => "get_word_definition",
@@ -247,7 +242,6 @@ mod tests {
 
         match admin_command {
             AdminCommand::Admin => AdminCommandDisplay::Admin,
-            AdminCommand::Whitelist(..) => AdminCommandDisplay::Whitelist,
             AdminCommand::GlobalStats => AdminCommandDisplay::GlobalStats,
             AdminCommand::Broadcast { .. } => AdminCommandDisplay::Broadcast,
             AdminCommand::GetWordDefinition { .. } => AdminCommandDisplay::GetWordDefinition,

@@ -22,14 +22,13 @@ use teloxide::prelude::Requester;
 use teloxide::sugar::request::RequestLinkPreviewExt;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
-use crate::app::{AIConfig, App};
 use crate::entity::prelude::TrackStatus;
-use crate::recommendasion_service::RecommendasionService;
+use crate::app::{AIConfig, App};
+use crate::services::{RecommendasionService, TrackStatusService};
 use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

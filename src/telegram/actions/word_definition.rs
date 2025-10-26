@@ -3,12 +3,12 @@ use itertools::Itertools as _;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, MessageId, ParseMode};
 
-use crate::app::App;
 use crate::entity::prelude::UserLocale;
+use crate::app::App;
+use crate::services::WordDefinitionService;
 use crate::telegram::commands::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::word_definition_service::WordDefinitionService;
 
 async fn generate_and_send_definition(
     app: &'static App,

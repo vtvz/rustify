@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, from_value};
 use tokio::sync::Mutex;
 
-use crate::serde_utils::{bool_from_int, lines_from_string};
 use crate::spotify::ShortTrack;
+use crate::utils::serde::{bool_from_int, lines_from_string};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

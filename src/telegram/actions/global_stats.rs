@@ -1,14 +1,14 @@
 use indoc::formatdoc;
 use itertools::Itertools;
+use sea_orm::Iterable;
 use teloxide::prelude::*;
 use teloxide::types::{ParseMode, ReplyParameters};
 
 use crate::app::App;
 use crate::entity::prelude::*;
+use crate::services::{TrackStatusService, UserService, UserStats};
 use crate::telegram::handlers::HandleStatus;
-use crate::track_status_service::TrackStatusService;
 use crate::user::UserState;
-use crate::user_service::{UserService, UserStats};
 
 pub async fn handle(
     app: &'static App,
@@ -54,8 +54,14 @@ pub async fn handle(
     let lyrics_profane_ratio = 100.0 * lyrics_profane as f32 / lyrics_found as f32;
 
     let users_count = UserService::count_users(app.db(), None).await?;
-    let users_active = UserService::count_users(app.db(), Some(UserStatus::Active)).await?;
-    let users_active_ratio = 100.0 * users_active as f32 / users_count as f32;
+
+    let mut user_stats = vec![];
+    for status in UserStatus::iter() {
+        let users = UserService::count_users(app.db(), Some(status.clone())).await?;
+        let ratio = 100.0 * users as f32 / users_count as f32;
+        user_stats.push(format!("• {status:?} <code>{users} ({ratio:.2}%)</code>"))
+    }
+    let user_stats = user_stats.join("\n");
 
     let message = formatdoc!(
         r#"
@@ -73,7 +79,7 @@ pub async fn handle(
             🤷<b>Users stats</b>
 
             • Amount <code>{users_count}</code>
-            • Active <code>{users_active} ({users_active_ratio:.2}%)</code>
+            {user_stats}
 
             <b>Lyrics provider stats</b>
 
