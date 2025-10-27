@@ -53,7 +53,6 @@ impl UserStatsIncreaseQueryBuilder {
             Some(lyrics::Provider::Genius) => UserColumn::LyricsGenius,
             Some(lyrics::Provider::Musixmatch) => UserColumn::LyricsMusixmatch,
             Some(lyrics::Provider::LrcLib) => UserColumn::LyricsLrcLib,
-            Some(lyrics::Provider::AZLyrics) => UserColumn::LyricsAZLyrics,
             None => return self,
         };
 
@@ -89,7 +88,6 @@ pub struct UserStats {
     pub lyrics_genius: i64,
     pub lyrics_musixmatch: i64,
     pub lyrics_lrclib: i64,
-    pub lyrics_azlyrics: i64,
     pub lyrics_analyzed: i64,
 }
 
@@ -352,18 +350,10 @@ impl UserService {
             )
             .expr_as(
                 Func::coalesce([
-                    UserColumn::LyricsAZLyrics.sum().cast_as(bigint()),
-                    Expr::val(0).into(),
-                ]),
-                "lyrics_azlyrics",
-            )
-            .expr_as(
-                Func::coalesce([
                     UserColumn::LyricsGenius
                         .sum()
                         .add(UserColumn::LyricsMusixmatch.sum())
                         .add(UserColumn::LyricsLrcLib.sum())
-                        .add(UserColumn::LyricsAZLyrics.sum())
                         .cast_as(bigint()),
                     Expr::val(0).into(),
                 ]),

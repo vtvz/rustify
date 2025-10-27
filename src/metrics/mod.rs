@@ -35,7 +35,6 @@ struct LyricsStats {
     genius: u64,
     musixmatch: u64,
     lrclib: u64,
-    azlyrics: u64,
 }
 
 #[derive(InfluxDbWriteable, Debug)]
@@ -91,7 +90,6 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
         lyrics_genius,
         lyrics_musixmatch,
         lyrics_lrclib,
-        lyrics_azlyrics,
         lyrics_analyzed,
     } = UserService::get_stats(app.db(), None).await?;
 
@@ -118,7 +116,6 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
             genius: lyrics_genius as u64,
             musixmatch: lyrics_musixmatch as u64,
             lrclib: lyrics_lrclib as u64,
-            azlyrics: lyrics_azlyrics as u64,
         }
         .into_query("lyrics"),
         TickHealthStats {

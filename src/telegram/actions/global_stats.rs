@@ -30,7 +30,6 @@ pub async fn handle(
         lyrics_genius,
         lyrics_musixmatch,
         lyrics_lrclib,
-        lyrics_azlyrics,
         lyrics_analyzed,
     } = UserService::get_stats(app.db(), None).await?;
 
@@ -50,7 +49,6 @@ pub async fn handle(
     let lyrics_genius_ratio = 100.0 * lyrics_genius as f32 / lyrics_found as f32;
     let lyrics_musixmatch_ratio = 100.0 * lyrics_musixmatch as f32 / lyrics_found as f32;
     let lyrics_lrclib_ratio = 100.0 * lyrics_lrclib as f32 / lyrics_found as f32;
-    let lyrics_azlyrics_ratio = 100.0 * lyrics_azlyrics as f32 / lyrics_found as f32;
     let lyrics_profane_ratio = 100.0 * lyrics_profane as f32 / lyrics_found as f32;
 
     let users_count = UserService::count_users(app.db(), None).await?;
@@ -87,7 +85,6 @@ pub async fn handle(
             • Genius <code>{lyrics_genius} ({lyrics_genius_ratio:.2}%)</code>
             • MusixMatch <code>{lyrics_musixmatch} ({lyrics_musixmatch_ratio:.2}%)</code>
             • LrcLib <code>{lyrics_lrclib} ({lyrics_lrclib_ratio:.2}%)</code>
-            • AZLyrics <code>{lyrics_azlyrics} ({lyrics_azlyrics_ratio:.2}%)</code>
 
             <b>Locales stats</b>
 
