@@ -47,7 +47,7 @@ run-bot:
   proxychains4 -q cargo run "bot"
 
 run-track-check:
-  proxychains4 -q cargo run "track_check"
+  proxychains4 -q cargo run "track-check"
 
 run-queues:
   proxychains4 -q cargo run "queues"
