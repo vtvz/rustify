@@ -270,31 +270,22 @@ pub struct Manager {
     spotify: AuthCodeSpotify,
 }
 
-impl Default for Manager {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Manager {
-    pub fn new() -> Self {
+    pub fn new(
+        spotify_id: &str,
+        spotify_secret: &str,
+        spotify_redirect_uri: Option<String>,
+    ) -> Self {
         let config = rspotify::Config {
             token_refreshing: false,
             ..Default::default()
         };
 
-        let creds = rspotify::Credentials::new(
-            dotenv::var("SPOTIFY_ID")
-                .expect("Env variable SPOTIFY_ID is required")
-                .as_ref(),
-            dotenv::var("SPOTIFY_SECRET")
-                .expect("Env variable SPOTIFY_SECRET is required")
-                .as_ref(),
-        );
+        let creds = rspotify::Credentials::new(spotify_id, spotify_secret);
 
         let oauth = rspotify::OAuth {
-            redirect_uri: dotenv::var("SPOTIFY_REDIRECT_URI")
-                .unwrap_or_else(|_| "http://localhost:8080/callback".into()),
+            redirect_uri: spotify_redirect_uri
+                .unwrap_or_else(|| "http://localhost:8080/callback".into()),
             // TODO Reduce to minimum
             scopes: scopes!(
                 "ugc-image-upload",

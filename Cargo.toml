@@ -17,6 +17,7 @@ convert_case = "0.8.0"
 deadpool-redis = "0.22.0"
 derive_more = { version = "2.0.1", features = ["full"] }
 dotenv = "0.15.0"
+envy = "0.4.2"
 futures = "0.3.31"
 indoc = "2.0.6"
 # WARNING: Do not upgrade. It will break metrics
