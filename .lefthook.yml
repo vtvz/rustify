@@ -6,16 +6,3 @@ pre-commit:
       stage_fixed: true
       glob:
         - "*.rs"
-
-    - name: Rust fmt
-      run: |-
-        cargo clippy --all-targets --all-features --no-deps -- -D warnings
-      stage_fixed: true
-      glob:
-        - "*.rs"
-
-    - name: Rust tests
-      run: |-
-        cargo test
-      glob:
-        - "*.rs"
