@@ -1,13 +1,12 @@
 use chrono::Duration;
 use redis::AsyncCommands;
-use redis::aio::MultiplexedConnection;
 
 pub struct MagicService {}
 
 impl MagicService {
     #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn is_already_removed(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<bool> {
@@ -20,7 +19,7 @@ impl MagicService {
 
     #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn set_already_removed(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<()> {

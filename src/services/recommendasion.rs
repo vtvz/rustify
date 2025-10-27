@@ -1,7 +1,6 @@
 use chrono::Duration;
 use itertools::Itertools;
 use redis::AsyncCommands;
-use redis::aio::MultiplexedConnection;
 
 use crate::spotify::ShortTrack;
 
@@ -10,7 +9,7 @@ pub struct RecommendasionService {}
 impl RecommendasionService {
     #[tracing::instrument(skip_all, fields(user_id))]
     pub async fn get_already_recommended(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
     ) -> anyhow::Result<Vec<ShortTrack>> {
         let recommended_key = format!("rustify:recommendasion:{user_id}:recommended");
@@ -26,7 +25,7 @@ impl RecommendasionService {
 
     #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn save_already_recommended(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
         recommended: &[ShortTrack],
     ) -> anyhow::Result<()> {

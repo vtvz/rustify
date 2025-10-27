@@ -715,6 +715,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "deadpool-redis"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0965b977f1244bc3783bb27cd79cfcff335a8341da18f79232d00504b18eb1a"
+dependencies = [
+ "deadpool",
+ "redis 0.32.4",
+]
+
+[[package]]
 name = "deadpool-runtime"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3133,6 +3143,7 @@ dependencies = [
  "chrono",
  "clap",
  "convert_case 0.8.0",
+ "deadpool-redis 0.22.0",
  "derive_more 2.0.1",
  "dotenv",
  "futures",
@@ -4099,7 +4110,7 @@ dependencies = [
  "aquamarine",
  "bincode",
  "bytes",
- "deadpool-redis",
+ "deadpool-redis 0.20.0",
  "derive_more 1.0.0",
  "dptree",
  "either",

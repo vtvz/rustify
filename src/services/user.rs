@@ -127,7 +127,7 @@ impl UserService {
     }
 
     pub async fn sync_current_playing(
-        mut redis: redis::aio::MultiplexedConnection,
+        mut redis: deadpool_redis::Connection,
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<bool> {

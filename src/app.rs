@@ -23,7 +23,7 @@ pub struct App {
     bot: Bot,
     db: DatabaseConnection,
     influx: Option<InfluxClient>,
-    redis: redis::Client,
+    redis: deadpool_redis::Pool,
     ai: Option<AIConfig>,
     dialogue_storage: Arc<RedisStorage<Bincode>>,
 }
@@ -60,8 +60,8 @@ impl App {
         &self.db
     }
 
-    pub async fn redis_conn(&self) -> anyhow::Result<redis::aio::MultiplexedConnection> {
-        Ok(self.redis.get_multiplexed_tokio_connection().await?)
+    pub async fn redis_conn(&self) -> anyhow::Result<deadpool_redis::Connection> {
+        Ok(self.redis.get().await?)
     }
 
     pub fn influx(&self) -> &Option<InfluxClient> {
@@ -168,15 +168,14 @@ fn init_rustrict() {
     }
 }
 
-async fn init_redis(redis_url: &str) -> anyhow::Result<redis::Client> {
-    let client = redis::Client::open(redis_url)?;
+async fn init_redis(redis_url: &str) -> anyhow::Result<deadpool_redis::Pool> {
+    let cfg = deadpool_redis::Config::from_url(redis_url);
+    let pool = cfg.create_pool(Some(deadpool_redis::Runtime::Tokio1))?;
 
-    client
-        .get_multiplexed_tokio_connection()
-        .await
-        .context("Issue with connection")?;
+    // Test the connection
+    pool.get().await.context("Issue with connection")?;
 
-    Ok(client)
+    Ok(pool)
 }
 
 async fn init_ai() -> anyhow::Result<Option<AIConfig>> {

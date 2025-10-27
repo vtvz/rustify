@@ -1,12 +1,11 @@
 use redis::AsyncCommands;
-use redis::aio::MultiplexedConnection;
 
 pub struct SkippageService {}
 
 impl SkippageService {
     #[tracing::instrument(skip_all, fields(user_id))]
     pub async fn get_current_playing(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
     ) -> anyhow::Result<String> {
         let playing_key = format!("rustify:skippage:{user_id}:playing");
@@ -19,7 +18,7 @@ impl SkippageService {
 
     #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn save_current_playing(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<()> {
@@ -31,7 +30,7 @@ impl SkippageService {
 
     #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn save_track_played(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
         track_id: &str,
         skippage_secs: u64,
@@ -44,7 +43,7 @@ impl SkippageService {
 
     #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn get_track_played(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
         track_id: &str,
     ) -> anyhow::Result<bool> {
@@ -57,7 +56,7 @@ impl SkippageService {
 
     #[tracing::instrument(skip_all, fields(user_id))]
     pub async fn update_skippage_entries_ttl(
-        redis_conn: &mut MultiplexedConnection,
+        redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
         old_skippage_secs: i64,
         new_skippage_secs: i64,

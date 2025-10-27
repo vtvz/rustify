@@ -32,7 +32,7 @@ const REDIS_QUEUE_CHANNEL: &str = "rustify:profanity_check";
     )
 )]
 pub async fn queue(
-    mut redis: redis::aio::MultiplexedConnection,
+    mut redis: deadpool_redis::Connection,
     user_id: &str,
     track: &ShortTrack,
 ) -> anyhow::Result<()> {
@@ -49,7 +49,7 @@ pub async fn queue(
 #[tracing::instrument(skip_all)]
 pub async fn consume(
     app: &'static App,
-    mut redis: redis::aio::MultiplexedConnection,
+    mut redis: deadpool_redis::Connection,
 ) -> anyhow::Result<()> {
     let message: Option<(String, String)> = redis.brpop(REDIS_QUEUE_CHANNEL, 0.0).await?;
 
