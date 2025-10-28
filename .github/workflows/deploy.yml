@@ -70,9 +70,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: test
-        run: echo "Repo ${{ github.repository }}, Actor ${{ github.actor }}"
-
       - name: Generate metadata
         id: meta
         run: |
