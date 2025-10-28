@@ -93,8 +93,8 @@ jobs:
             GIT_SHA=${{ steps.meta.outputs.git_commit }}
             GIT_COMMIT_TIMESTAMP=${{ steps.meta.outputs.git_commit_timestamp }}
             GIT_DESCRIBE=${{ steps.meta.outputs.git_describe }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache-lyrics-provider
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache-lyrics-provider,mode=max
 
       - name: Build and push main image
         uses: docker/build-push-action@v5
@@ -106,8 +106,8 @@ jobs:
             GIT_SHA=${{ steps.meta.outputs.git_commit }}
             GIT_COMMIT_TIMESTAMP=${{ steps.meta.outputs.git_commit_timestamp }}
             GIT_DESCRIBE=${{ steps.meta.outputs.git_describe }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
   deploy:
     name: Deploy with Ansible
@@ -149,7 +149,6 @@ jobs:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_DISPLAY_ARGS_TO_STDOUT: "False"
           ANSIBLE_DISPLAY_SKIPPED_HOSTS: "False"
-          ANSIBLE_STDOUT_CALLBACK: "actionable"
           ANSIBLE_ANY_ERRORS_FATAL: "true"
         run: |
           ansible-playbook \
