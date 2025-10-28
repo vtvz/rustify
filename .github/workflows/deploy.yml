@@ -83,12 +83,12 @@ jobs:
           echo "git_describe=${GIT_DESCRIBE}" >> $GITHUB_OUTPUT
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
-      - name: Build and push main image
+      - name: Build and push lyrics-provider image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./lyrics-provider
           push: true
-          tags: ${{ steps.meta.outputs.image_tag }}
+          tags: ${{ steps.meta.outputs.image_tag }}-lyrics-provider
           build-args: |
             GIT_SHA=${{ steps.meta.outputs.git_commit }}
             GIT_COMMIT_TIMESTAMP=${{ steps.meta.outputs.git_commit_timestamp }}
@@ -96,12 +96,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push lyrics-provider image
+      - name: Build and push main image
         uses: docker/build-push-action@v5
         with:
-          context: ./lyrics-provider
+          context: .
           push: true
-          tags: ${{ steps.meta.outputs.image_tag }}-lyrics-provider
+          tags: ${{ steps.meta.outputs.image_tag }}
           build-args: |
             GIT_SHA=${{ steps.meta.outputs.git_commit }}
             GIT_COMMIT_TIMESTAMP=${{ steps.meta.outputs.git_commit_timestamp }}
