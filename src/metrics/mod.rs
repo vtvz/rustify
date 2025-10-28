@@ -76,9 +76,9 @@ impl Uptime {
 
 pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
     let disliked =
-        TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await? as u64;
+        TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await?;
     let ignored =
-        TrackStatusService::count_status(app.db(), TrackStatus::Ignore, None, None).await? as u64;
+        TrackStatusService::count_status(app.db(), TrackStatus::Ignore, None, None).await?;
     let skipped = TrackStatusService::sum_skips(app.db(), None).await? as u64;
 
     let UserStats {

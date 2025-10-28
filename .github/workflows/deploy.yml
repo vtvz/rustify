@@ -16,9 +16,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2024-12-01
+        run: rustup show
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -119,7 +117,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install Ansible
         run: |
@@ -144,10 +142,10 @@ jobs:
       - name: Run Ansible playbook
         working-directory: _infra/ansible
         env:
-          ANSIBLE_HOST_KEY_CHECKING: 'False'
-          ANSIBLE_DISPLAY_ARGS_TO_STDOUT: 'False'
-          ANSIBLE_DISPLAY_SKIPPED_HOSTS: 'False'
-          ANSIBLE_STDOUT_CALLBACK: 'yaml'
+          ANSIBLE_HOST_KEY_CHECKING: "False"
+          ANSIBLE_DISPLAY_ARGS_TO_STDOUT: "False"
+          ANSIBLE_DISPLAY_SKIPPED_HOSTS: "False"
+          ANSIBLE_STDOUT_CALLBACK: "yaml"
         run: |
           ansible-playbook \
             -i inventory/main/hosts.ini \
