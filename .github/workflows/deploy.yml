@@ -136,6 +136,7 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.ANSIBLE_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          echo "${{ secrets.ANSIBLE_SSH_CONFIG }}" > ~/.ssh/config
           chmod 600 ~/.ssh/deploy_key
 
       - name: Install Ansible Galaxy requirements
