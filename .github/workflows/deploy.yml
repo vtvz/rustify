@@ -148,7 +148,8 @@ jobs:
           ANSIBLE_HOST_KEY_CHECKING: "False"
           ANSIBLE_DISPLAY_ARGS_TO_STDOUT: "False"
           ANSIBLE_DISPLAY_SKIPPED_HOSTS: "False"
-          ANSIBLE_STDOUT_CALLBACK: "yaml"
+          ANSIBLE_STDOUT_CALLBACK: "actionable"
+          ANSIBLE_ANY_ERRORS_FATAL: "true"
         run: |
           ansible-playbook \
             -i inventory/main/hosts.ini \
