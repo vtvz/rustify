@@ -38,6 +38,7 @@ pub struct DefinitionWithStats {
 }
 
 impl WordDefinitionService {
+    #[tracing::instrument(skip_all, fields(locale, profane_word))]
     pub async fn get_definition(
         db: &impl ConnectionTrait,
         locale: &str,
@@ -71,6 +72,7 @@ impl WordDefinitionService {
         Ok(definition)
     }
 
+    #[tracing::instrument(skip_all, fields(locale, profane_word))]
     pub async fn get_definition_internal(
         config: &AIConfig,
         locale: &str,
@@ -113,6 +115,7 @@ impl WordDefinitionService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all, fields(locale, profane_word))]
     pub async fn clear_definition(
         db: &impl ConnectionTrait,
         locale: &str,
@@ -127,6 +130,7 @@ impl WordDefinitionService {
         Ok(result)
     }
 
+    #[tracing::instrument(skip_all, fields(locale, page, page_size))]
     pub async fn list_definitions_with_stats(
         db: &impl ConnectionTrait,
         locale: &str,
@@ -175,6 +179,7 @@ impl WordDefinitionService {
         Ok(result)
     }
 
+    #[tracing::instrument(skip_all, fields(locale))]
     pub async fn count_definitions_with_stats(
         db: &impl ConnectionTrait,
         locale: &str,

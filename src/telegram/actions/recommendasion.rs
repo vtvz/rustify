@@ -267,6 +267,7 @@ pub async fn handle_inline(
     Ok(HandleStatus::Handled)
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn get_recommendations(
     app: &'static App,
     state: &UserState,
@@ -313,6 +314,7 @@ async fn get_recommendations(
     Ok(recommendations)
 }
 
+#[tracing::instrument(skip_all)]
 async fn get_liked_tracks(
     spotify: &tokio::sync::RwLockReadGuard<'_, rspotify::AuthCodeSpotify>,
 ) -> Result<Vec<ShortTrack>, anyhow::Error> {
@@ -329,6 +331,7 @@ async fn get_liked_tracks(
     Ok(liked_tracks)
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn get_recommendations_attempt(
     app: &App,
     state: &UserState,
@@ -398,6 +401,7 @@ async fn get_recommendations_attempt(
     Ok(recommendations)
 }
 
+#[tracing::instrument(skip_all)]
 async fn get_raw_recommendations(
     config: &AIConfig,
     user_data: &UserData,

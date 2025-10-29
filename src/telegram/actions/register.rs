@@ -19,6 +19,7 @@ use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
     app: &'static App,
     state: &UserState,
@@ -37,6 +38,7 @@ pub async fn handle(
     process_spotify_code(app, state, m, code).await
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn process_spotify_code(
     app: &'static App,
     state: &UserState,
@@ -120,6 +122,7 @@ async fn process_spotify_code(
     Ok(HandleStatus::Handled)
 }
 
+#[tracing::instrument(skip_all)]
 pub async fn send_register_invite(
     app: &'static App,
     chat_id: ChatId,

@@ -12,6 +12,7 @@ use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::user::UserState;
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
@@ -54,6 +55,7 @@ pub async fn handle_inline(
     Ok(())
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
     app: &'static App,
     state: &UserState,

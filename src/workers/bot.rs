@@ -13,6 +13,7 @@ use crate::telegram::utils::link_preview_disabled;
 use crate::user::UserState;
 use crate::{self as rustify};
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn sync_name(
     app: &'static App,
     state: &UserState,

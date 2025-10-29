@@ -12,6 +12,7 @@ use crate::spotify::ShortTrack;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
