@@ -31,7 +31,7 @@ Rustify is an intelligent Telegram bot that integrates with Spotify to provide r
 - **👍 Like/Dislike System** - Quick reactions to tracks, with automatic skipping of disliked songs
 - **✨ Magic Playlist™** - Shuffled playlist of your liked songs that automatically removes tracks as you listen, ensuring no repeats
 - **⏭️ Skippage** - Skip tracks you've recently listened to (configurable time window)
-- # **🤖 Recommendasion™** - Get personalized track recommendations
+- **🤖 Recommendasion™** - Get personalized track recommendations
 - **👍 Like/Dislike System** - Quick reactions to tracks
 - **🎪 Magic Playlist™** - Shuffled playlist of your liked songs that automatically removes tracks as you listen, ensuring no repeats
 - **⏸️ Skippage** - Skip tracks you've recently listened to (configurable time window)
