@@ -23,7 +23,6 @@ Rustify is an intelligent Telegram bot that integrates with Spotify to provide r
 - **⏭️ Auto-Skip** - Instantly skips tracks you've marked with dislike (can be toggled)
 - **📊 Multi-Provider Lyrics** - Fetches lyrics from multiple sources (Musixmatch, Genius, LrcLib) for maximum coverage
 - **🤖 AI-Powered Analysis** - Optional OpenAI integration for analyzing song lyrics meaning, storyline, and content themes, plus individual word analysis
-- **🤖 AI-Powered Analysis** - Optional OpenAI integration for analyzing individual words and detecting their appearance in lyrics
 - **🌍 Multi-Language Support** - Interface available in multiple languages with localized profanity detection
 
 ### 🎛️ User Features
@@ -32,10 +31,6 @@ Rustify is an intelligent Telegram bot that integrates with Spotify to provide r
 - **✨ Magic Playlist™** - Shuffled playlist of your liked songs that automatically removes tracks as you listen, ensuring no repeats
 - **⏭️ Skippage** - Skip tracks you've recently listened to (configurable time window)
 - **🤖 Recommendasion™** - Get personalized track recommendations
-- **👍 Like/Dislike System** - Quick reactions to tracks
-- **🎪 Magic Playlist™** - Shuffled playlist of your liked songs that automatically removes tracks as you listen, ensuring no repeats
-- **⏸️ Skippage** - Skip tracks you've recently listened to (configurable time window)
-- **🎯 Recommendasion™** - Get personalized track recommendations
 - **📱 Interactive Keyboards** - Quick access to common actions via Telegram inline keyboards
 - **🔔 Real-time Notifications** - Get notified when profane tracks are detected
 
