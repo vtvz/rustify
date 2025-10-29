@@ -1,4 +1,8 @@
-# 🎵 Rustify
+<div align="center">
+  <img src="media/logo.png" alt="Rustify Logo" width="200"/>
+
+  # 🎵 Rustify
+</div>
 
 > **📢 Subscribe to the author's telegram channel for updates and more projects:** [**@vtvz_dev**](https://t.me/vtvz_dev)
 
