@@ -1,7 +1,8 @@
 <div align="center">
-  <img src="media/logo.png" alt="Rustify Logo" width="200"/>
+  <img src="media/logo-sm.png" alt="Rustify Logo" width="300"/>
 
-  # 🎵 Rustify
+# 🎵 Rustify
+
 </div>
 
 > **📢 Subscribe to the author's telegram channel for updates and more projects:** [**@vtvz_dev**](https://t.me/vtvz_dev)
