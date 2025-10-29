@@ -11,6 +11,7 @@
 
 [![Rust](https://img.shields.io/badge/rust-1.83.0%2B-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Build and Deploy](https://github.com/vtvz/rustify/actions/workflows/deploy.yml/badge.svg)](https://github.com/vtvz/rustify/actions/workflows/deploy.yml)
 
 Rustify is an intelligent Telegram bot that integrates with Spotify to provide real-time profanity filtering and track management. It continuously monitors what you're listening to, analyzes lyrics for inappropriate content, and automatically skips tracks you've marked with the dislike button.
 
