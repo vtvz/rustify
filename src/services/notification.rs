@@ -1,5 +1,5 @@
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, ParseMode};
+use teloxide::types::{ChatId, ParseMode, User};
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -31,11 +31,24 @@ impl NotificationService {
         Ok(())
     }
 
-    pub async fn notify_user_joined(app: &'static App, user: &UserModel) -> anyhow::Result<()> {
-        let message = format!(
-            "🆕 <b>New user joined</b>\n\nName: {}\nID: <code>{}</code>",
-            user.name, user.id
-        );
+    pub async fn notify_user_joined(app: &'static App, user: Option<&User>) -> anyhow::Result<()> {
+        let user = user
+            .map(|user| {
+                format!(
+                    "{} {} {}",
+                    user.first_name,
+                    user.last_name.as_deref().unwrap_or_default(),
+                    user.username
+                        .as_deref()
+                        .map(|username| format!("(@{username})"))
+                        .unwrap_or_default()
+                )
+                .trim()
+                .to_string()
+            })
+            .unwrap_or("Unknown".into());
+
+        let message = format!("🆕 <b>New user joined</b>\n\n{}", user);
 
         Self::notify_admins(app, &message).await
     }

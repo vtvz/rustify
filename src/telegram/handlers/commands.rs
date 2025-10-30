@@ -69,7 +69,7 @@ pub async fn handle(
 
                 if (Clock::now() - state.user().created_at) < Duration::minutes(1) {
                     if let Err(err) =
-                        NotificationService::notify_user_joined(app, state.user()).await
+                        NotificationService::notify_user_joined(app, m.from.as_ref()).await
                     {
                         tracing::error!(err = ?err, user_id = state.user_id(), "Failed to notify admins about joined user");
                     };
