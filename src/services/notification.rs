@@ -35,7 +35,8 @@ impl NotificationService {
         let user = user
             .map(|user| {
                 format!(
-                    "{} {} {}",
+                    "<code>{}</code> {} {} {}",
+                    user.id,
                     user.first_name,
                     user.last_name.as_deref().unwrap_or_default(),
                     user.username
