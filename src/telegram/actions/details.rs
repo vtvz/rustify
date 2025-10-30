@@ -21,6 +21,7 @@ use crate::user::UserState;
 use crate::utils::StringUtils;
 use crate::{profanity, telegram};
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_current(
     app: &'static App,
     state: &UserState,
@@ -54,6 +55,7 @@ fn extract_id(url: &url::Url) -> Option<TrackId<'static>> {
     id.ok()
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_url(
     app: &'static App,
     state: &UserState,
@@ -69,6 +71,7 @@ pub async fn handle_url(
     common(app, state, &m.chat.id, track).await
 }
 
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id = track.id(), track_name = track.name_with_artists()))]
 async fn common(
     app: &'static App,
     state: &UserState,

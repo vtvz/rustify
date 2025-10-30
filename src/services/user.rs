@@ -108,6 +108,7 @@ impl UserService {
         query
     }
 
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn sync_name(
         db: &impl ConnectionTrait,
         id: &str,
@@ -126,6 +127,7 @@ impl UserService {
         Ok(update_result)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn sync_current_playing(
         mut redis: deadpool_redis::Connection,
         user_id: &str,
@@ -147,6 +149,7 @@ impl UserService {
         Ok(!played)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> anyhow::Result<UserModel> {
         let user = Self::query(Some(id), None).one(db).await?;
 
@@ -165,6 +168,7 @@ impl UserService {
         Ok(user)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn set_status(
         db: &impl ConnectionTrait,
         id: &str,
@@ -179,6 +183,7 @@ impl UserService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn set_cfg_skippage_secs(
         db: &impl ConnectionTrait,
         id: &str,
@@ -196,6 +201,7 @@ impl UserService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn set_cfg_skippage_enabled(
         db: &impl ConnectionTrait,
         id: &str,
@@ -210,6 +216,7 @@ impl UserService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn set_locale(
         db: &impl ConnectionTrait,
         id: &str,
@@ -224,6 +231,7 @@ impl UserService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn get_users_for_locale(
         db: &impl ConnectionTrait,
         locale: UserLocale,
@@ -236,6 +244,7 @@ impl UserService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn count_users_locales(
         db: &impl ConnectionTrait,
     ) -> anyhow::Result<Vec<(UserLocale, i64)>> {
@@ -251,6 +260,7 @@ impl UserService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn set_magic_playlist(
         db: &impl ConnectionTrait,
         id: &str,
@@ -269,6 +279,7 @@ impl UserService {
         UserStatsIncreaseQueryBuilder::new(user_id)
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn count_users(
         db: &impl ConnectionTrait,
         status: Option<UserStatus>,
@@ -292,6 +303,7 @@ impl UserService {
         Ok(skips.count.unwrap_or_default())
     }
 
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn get_stats(
         db: &impl ConnectionTrait,
         id: Option<&str>,

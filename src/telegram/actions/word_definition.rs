@@ -10,6 +10,7 @@ use crate::telegram::commands::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 
+#[tracing::instrument(skip_all, fields(locale, word))]
 async fn generate_and_send_definition(
     app: &'static App,
     chat_id: ChatId,
@@ -70,6 +71,7 @@ async fn generate_and_send_definition(
     Ok(())
 }
 
+#[tracing::instrument(skip_all, fields(locale, word))]
 pub async fn handle_definition(
     app: &'static App,
     m: &Message,
@@ -101,6 +103,7 @@ pub async fn handle_definition(
     Ok(HandleStatus::Handled)
 }
 
+#[tracing::instrument(skip_all, fields(locale, word))]
 pub async fn handle_inline_regenerate(
     app: &'static App,
     q: CallbackQuery,
@@ -116,6 +119,7 @@ pub async fn handle_inline_regenerate(
     Ok(())
 }
 
+#[tracing::instrument(skip_all, fields(locale_filter))]
 pub async fn handle_list(
     app: &'static App,
     m: &Message,
@@ -126,6 +130,7 @@ pub async fn handle_list(
     Ok(HandleStatus::Handled)
 }
 
+#[tracing::instrument(skip_all, fields(locale_filter, page))]
 pub async fn handle_inline_list(
     app: &'static App,
     q: CallbackQuery,
@@ -143,6 +148,7 @@ pub async fn handle_inline_list(
     Ok(())
 }
 
+#[tracing::instrument(skip_all, fields(locale_filter, page))]
 async fn send_definitions_page(
     app: &'static App,
     chat_id: teloxide::types::ChatId,

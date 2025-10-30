@@ -49,6 +49,7 @@ impl TrackStatusService {
         TrackStatusQueryBuilder::new()
     }
 
+    #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn count_status(
         db: &impl ConnectionTrait,
         status: TrackStatus,
@@ -66,6 +67,7 @@ impl TrackStatusService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id))]
     pub async fn sum_skips(
         db: &impl ConnectionTrait,
         user_id: Option<&str>,
@@ -91,6 +93,7 @@ impl TrackStatusService {
         Ok(skips.count.unwrap_or_default())
     }
 
+    #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn set_status(
         db: &impl ConnectionTrait,
         user_id: &str,
@@ -121,6 +124,7 @@ impl TrackStatusService {
         Ok(track_status.save(db).await?)
     }
 
+    #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn get_status(
         db: &impl ConnectionTrait,
         user_id: &str,
@@ -139,6 +143,7 @@ impl TrackStatusService {
         }
     }
 
+    #[tracing::instrument(skip_all, fields(user_id, track_id))]
     pub async fn increase_skips(
         db: &impl ConnectionTrait,
         user_id: &str,

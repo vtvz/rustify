@@ -10,6 +10,7 @@ use crate::utils::Clock;
 pub struct WordStatsService {}
 
 impl WordStatsService {
+    #[tracing::instrument(skip_all)]
     pub async fn increase_check_occurence(
         db: &impl ConnectionTrait,
         words: impl IntoIterator<Item = impl Into<String>>,
@@ -19,6 +20,7 @@ impl WordStatsService {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn increase_details_occurence(
         db: &impl ConnectionTrait,
         words: impl IntoIterator<Item = impl Into<String>>,
@@ -28,6 +30,7 @@ impl WordStatsService {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn increase_analyze_occurence(
         db: &impl ConnectionTrait,
         words: impl IntoIterator<Item = impl Into<String>>,
@@ -37,6 +40,7 @@ impl WordStatsService {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn increase_occurence(
         db: &impl ConnectionTrait,
         words: impl IntoIterator<Item = impl Into<String>>,
