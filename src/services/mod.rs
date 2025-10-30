@@ -1,4 +1,5 @@
 mod magic;
+mod notification;
 mod recommendasion;
 mod skippage;
 mod track_status;
@@ -8,6 +9,7 @@ mod word_definition;
 mod word_stats;
 
 pub use magic::MagicService;
+pub use notification::NotificationService;
 pub use recommendasion::RecommendasionService;
 pub use skippage::SkippageService;
 pub use track_status::TrackStatusService;
