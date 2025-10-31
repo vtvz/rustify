@@ -244,6 +244,19 @@ impl UserService {
         Ok(res)
     }
 
+    #[tracing::instrument(skip_all, fields(role = ?role))]
+    pub async fn get_users_by_role(
+        db: &impl ConnectionTrait,
+        role: UserRole,
+    ) -> anyhow::Result<Vec<UserModel>> {
+        let res = Self::query(None, None)
+            .filter(UserColumn::Role.eq(role))
+            .all(db)
+            .await?;
+
+        Ok(res)
+    }
+
     #[tracing::instrument(skip_all)]
     pub async fn count_users_locales(
         db: &impl ConnectionTrait,

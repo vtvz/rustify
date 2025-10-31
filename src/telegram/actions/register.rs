@@ -13,7 +13,7 @@ use teloxide::types::{
 use super::super::keyboards::StartKeyboard;
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::UserService;
+use crate::services::{NotificationService, UserService};
 use crate::spotify::auth::SpotifyAuthService;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
@@ -118,6 +118,14 @@ async fn process_spotify_code(
         .parse_mode(ParseMode::Html)
         .reply_markup(StartKeyboard::markup(state.locale()))
         .await?;
+
+    if let Err(err) = NotificationService::notify_spotify_connected(app, state.user()).await {
+        tracing::error!(
+            err = ?err,
+            user_id = state.user_id(),
+            "Failed to send Spotify connected notification"
+        );
+    }
 
     Ok(HandleStatus::Handled)
 }

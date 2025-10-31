@@ -1,4 +1,5 @@
 use anyhow::Context;
+use chrono::Duration;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
@@ -6,11 +7,12 @@ use teloxide::utils::command::{BotCommands, ParseError};
 use super::HandleStatus;
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::UserService;
+use crate::services::{NotificationService, UserService};
 use crate::telegram::actions;
 use crate::telegram::commands::UserCommand;
 use crate::telegram::keyboards::{LanguageKeyboard, StartKeyboard};
 use crate::user::UserState;
+use crate::utils::Clock;
 
 pub async fn handle(
     app: &'static App,
@@ -64,6 +66,14 @@ pub async fn handle(
                     .send_message(m.chat.id, t!("language.command", locale = state.locale()))
                     .reply_markup(LanguageKeyboard::markup())
                     .await?;
+
+                if (Clock::now() - state.user().created_at) < Duration::minutes(1) {
+                    if let Err(err) =
+                        NotificationService::notify_user_joined(app, m.from.as_ref()).await
+                    {
+                        tracing::error!(err = ?err, user_id = state.user_id(), "Failed to notify admins about joined user");
+                    };
+                };
             }
         },
         UserCommand::Dislike => {
