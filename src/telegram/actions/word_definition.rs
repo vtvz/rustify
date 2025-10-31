@@ -228,7 +228,7 @@ async fn send_definitions_page(
             def.word,
             def.definition
                 .as_deref()
-                .unwrap_or("word have no definition yet")
+                .unwrap_or("<i>word have no definition yet</i>")
         ));
         lines.push("".into());
         lines.push(format!(
