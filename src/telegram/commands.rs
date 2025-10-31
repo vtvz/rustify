@@ -181,6 +181,9 @@ pub enum AdminCommand {
 
     #[command(description = "List word definitions by locale (en, ru, etc)")]
     ListWordDefinitions { locale: String },
+
+    #[command(description = "List users")]
+    Users,
 }
 
 pub enum AdminCommandDisplay {
@@ -190,6 +193,7 @@ pub enum AdminCommandDisplay {
     GetWordDefinition,
     ResetWordDefinition,
     ListWordDefinitions,
+    Users,
 }
 
 impl std::fmt::Display for AdminCommandDisplay {
@@ -201,6 +205,7 @@ impl std::fmt::Display for AdminCommandDisplay {
             AdminCommandDisplay::GetWordDefinition => "get_word_definition",
             AdminCommandDisplay::ResetWordDefinition => "reset_word_definition",
             AdminCommandDisplay::ListWordDefinitions => "list_word_definitions",
+            AdminCommandDisplay::Users => "users",
         };
 
         f.write_str(string)
@@ -247,6 +252,7 @@ mod tests {
             AdminCommand::GetWordDefinition { .. } => AdminCommandDisplay::GetWordDefinition,
             AdminCommand::ResetWordDefinition { .. } => AdminCommandDisplay::ResetWordDefinition,
             AdminCommand::ListWordDefinitions { .. } => AdminCommandDisplay::ListWordDefinitions,
+            AdminCommand::Users => AdminCommandDisplay::Users,
         };
     }
 

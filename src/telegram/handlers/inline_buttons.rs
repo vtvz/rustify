@@ -4,7 +4,7 @@ use teloxide::prelude::*;
 
 use crate::app::App;
 use crate::telegram::actions;
-use crate::telegram::inline_buttons::InlineButtons;
+use crate::telegram::inline_buttons::{AdminInlineButtons, InlineButtons};
 use crate::user::UserState;
 
 #[tracing::instrument(
@@ -29,7 +29,45 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
 
     let data = q.data.as_ref().context("Callback needs data")?;
 
-    let button: InlineButtons = data.parse()?;
+    let admin_button: Result<AdminInlineButtons, _> = data.parse();
+
+    if let Ok(button) = admin_button {
+        if !state.user().is_admin() {
+            app.bot()
+                .answer_callback_query(q.id.clone())
+                .text("Button is broken. Try another one")
+                .await?;
+
+            return Ok(());
+        }
+
+        match button {
+            AdminInlineButtons::RegenerateWordDefinition { locale, word } => {
+                actions::word_definition::handle_inline_regenerate(app, q, locale, word).await?;
+            },
+            AdminInlineButtons::WordDefinitionsPage { locale, page, .. } => {
+                actions::word_definition::handle_inline_list(app, q, locale, page).await?;
+            },
+        }
+
+        return Ok(());
+    }
+
+    let button: Result<InlineButtons, _> = data.parse();
+
+    let button = match button {
+        Ok(button) => button,
+        Err(err) => {
+            app.bot()
+                .answer_callback_query(q.id.clone())
+                .text("Button is broken. Try another one")
+                .await?;
+
+            tracing::error!(err = ?err, data, "Error parsing user inline button");
+
+            return Ok(());
+        },
+    };
 
     match button {
         InlineButtons::Dislike(id) => {
@@ -49,12 +87,6 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         },
         InlineButtons::SkippageEnable(to_enable) => {
             actions::skippage::handle_inline(app, state, q, to_enable).await?;
-        },
-        InlineButtons::RegenerateWordDefinition { locale, word } => {
-            actions::word_definition::handle_inline_regenerate(app, q, locale, word).await?;
-        },
-        InlineButtons::WordDefinitionsPage { locale, page, .. } => {
-            actions::word_definition::handle_inline_list(app, q, locale, page).await?;
         },
     }
 

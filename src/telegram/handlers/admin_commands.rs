@@ -52,6 +52,9 @@ pub async fn handle(
         AdminCommand::ListWordDefinitions { locale } => {
             return actions::word_definition::handle_list(app, m, locale).await;
         },
+        AdminCommand::Users => {
+            return actions::admin_users::handle(app, state, m).await;
+        },
     }
 
     Ok(HandleStatus::Handled)

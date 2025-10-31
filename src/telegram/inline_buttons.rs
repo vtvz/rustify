@@ -14,22 +14,6 @@ pub enum InlineButtons {
     Magic,
     SkippageEnable(bool),
     Recommendasion,
-    #[serde(rename = "wd")]
-    RegenerateWordDefinition {
-        #[serde(rename = "l")]
-        locale: String,
-        #[serde(rename = "w")]
-        word: String,
-    },
-    #[serde(rename = "wp")]
-    WordDefinitionsPage {
-        #[serde(rename = "l")]
-        locale: String,
-        #[serde(rename = "p")]
-        page: usize,
-        #[serde(skip, default)]
-        is_next: bool,
-    },
 }
 
 impl InlineButtons {
@@ -40,16 +24,6 @@ impl InlineButtons {
             InlineButtons::Analyze(_) => t!("inline-buttons.analyze", locale = locale),
             InlineButtons::Magic => t!("magic.button", locale = locale),
             InlineButtons::Recommendasion => t!("recommendasion.button", locale = locale),
-            InlineButtons::RegenerateWordDefinition { .. } => {
-                t!("inline-buttons.regenerate-word-definition", locale = locale)
-            },
-            InlineButtons::WordDefinitionsPage { page, is_next, .. } => {
-                if *is_next {
-                    Cow::Owned(format!("Page {} ▶", page + 1))
-                } else {
-                    Cow::Owned(format!("◀ Page {}", page + 1))
-                }
-            },
             InlineButtons::SkippageEnable(to_enable) => {
                 if *to_enable {
                     t!("skippage.enable-button", locale = locale)
@@ -115,6 +89,76 @@ impl FromStr for InlineButtons {
 }
 
 impl Display for InlineButtons {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str(
+            serde_json::to_string(self)
+                .map_err(|_| std::fmt::Error)?
+                .as_ref(),
+        )
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub enum AdminInlineButtons {
+    #[serde(rename = "wd")]
+    RegenerateWordDefinition {
+        #[serde(rename = "l")]
+        locale: String,
+        #[serde(rename = "w")]
+        word: String,
+    },
+    #[serde(rename = "wp")]
+    WordDefinitionsPage {
+        #[serde(rename = "l")]
+        locale: String,
+        #[serde(rename = "p")]
+        page: usize,
+        #[serde(skip, default)]
+        is_next: bool,
+    },
+}
+
+impl AdminInlineButtons {
+    pub fn label(&self, locale: &str) -> Cow<'_, str> {
+        match self {
+            Self::RegenerateWordDefinition { .. } => {
+                t!("inline-buttons.regenerate-word-definition", locale = locale)
+            },
+            Self::WordDefinitionsPage { page, is_next, .. } => {
+                if *is_next {
+                    Cow::Owned(format!("Page {} ▶", page + 1))
+                } else {
+                    Cow::Owned(format!("◀ Page {}", page + 1))
+                }
+            },
+        }
+    }
+}
+
+impl AdminInlineButtons {
+    pub fn into_inline_keyboard_button(self, locale: &str) -> InlineKeyboardButton {
+        let label = self.label(locale);
+
+        InlineKeyboardButton::new(label, self.clone().into())
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<InlineKeyboardButtonKind> for AdminInlineButtons {
+    fn into(self) -> InlineKeyboardButtonKind {
+        InlineKeyboardButtonKind::CallbackData(self.to_string())
+    }
+}
+
+impl FromStr for AdminInlineButtons {
+    type Err = serde_json::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        serde_json::from_str(s)
+    }
+}
+
+impl Display for AdminInlineButtons {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(
             serde_json::to_string(self)

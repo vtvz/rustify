@@ -1,3 +1,4 @@
+pub mod admin_users;
 pub mod analyze;
 pub mod broadcast;
 pub mod details;
