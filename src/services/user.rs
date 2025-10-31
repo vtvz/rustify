@@ -2,7 +2,16 @@ use chrono::Duration;
 use redis::AsyncCommands;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr, Func};
-use sea_orm::{ConnectionTrait, FromQueryResult, QuerySelect, Set, UpdateMany, UpdateResult};
+use sea_orm::{
+    ConnectionTrait,
+    FromQueryResult,
+    Order,
+    QueryOrder,
+    QuerySelect,
+    Set,
+    UpdateMany,
+    UpdateResult,
+};
 
 use crate::entity::prelude::*;
 use crate::lyrics;
@@ -397,5 +406,25 @@ impl UserService {
             .unwrap_or_default();
 
         Ok(res)
+    }
+
+    #[tracing::instrument(skip_all, fields(page, limit, sort_by = ?sort_by, sort_order = ?sort_order))]
+    pub async fn get_users_paginated(
+        db: &impl ConnectionTrait,
+        page: u64,
+        limit: u64,
+        sort_by: UserColumn,
+        sort_order: Order,
+    ) -> anyhow::Result<Vec<UserModel>> {
+        let offset = page * limit;
+
+        let users = UserEntity::find()
+            .order_by(sort_by, sort_order)
+            .offset(offset)
+            .limit(limit)
+            .all(db)
+            .await?;
+
+        Ok(users)
     }
 }

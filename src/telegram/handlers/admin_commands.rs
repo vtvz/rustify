@@ -5,7 +5,7 @@ use teloxide::utils::command::{BotCommands, ParseError};
 use super::HandleStatus;
 use crate::app::App;
 use crate::telegram::actions;
-use crate::telegram::commands::AdminCommand;
+use crate::telegram::commands_admin::AdminCommand;
 use crate::user::UserState;
 
 pub async fn handle(
@@ -52,8 +52,8 @@ pub async fn handle(
         AdminCommand::ListWordDefinitions { locale } => {
             return actions::word_definition::handle_list(app, m, locale).await;
         },
-        AdminCommand::Users => {
-            return actions::admin_users::handle(app, state, m).await;
+        AdminCommand::Users { user_id } => {
+            return actions::admin_users::handle_command(app, state, m, user_id).await;
         },
     }
 

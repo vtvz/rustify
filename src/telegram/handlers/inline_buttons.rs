@@ -4,7 +4,8 @@ use teloxide::prelude::*;
 
 use crate::app::App;
 use crate::telegram::actions;
-use crate::telegram::inline_buttons::{AdminInlineButtons, InlineButtons};
+use crate::telegram::inline_buttons::InlineButtons;
+use crate::telegram::inline_buttons_admin::AdminInlineButtons;
 use crate::user::UserState;
 
 #[tracing::instrument(
@@ -47,6 +48,15 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
             },
             AdminInlineButtons::WordDefinitionsPage { locale, page, .. } => {
                 actions::word_definition::handle_inline_list(app, q, locale, page).await?;
+            },
+            AdminInlineButtons::AdminUsersPage {
+                page,
+                sort_by,
+                sort_order,
+                ..
+            } => {
+                actions::admin_users::handle_inline(app, state, q, page, sort_by, sort_order)
+                    .await?;
             },
         }
 

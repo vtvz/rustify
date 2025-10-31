@@ -6,9 +6,9 @@ use teloxide::types::{ChatId, InlineKeyboardMarkup, MessageId, ParseMode};
 use crate::app::App;
 use crate::entity::prelude::UserLocale;
 use crate::services::{WordDefinitionService, WordStatsService};
-use crate::telegram::commands::AdminCommandDisplay;
+use crate::telegram::commands_admin::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
-use crate::telegram::inline_buttons::AdminInlineButtons;
+use crate::telegram::inline_buttons_admin::AdminInlineButtons;
 
 #[tracing::instrument(skip_all, fields(locale, word))]
 async fn generate_and_send_definition(
