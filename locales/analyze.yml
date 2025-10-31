@@ -3,34 +3,36 @@ _version: 2
 analysis.word-analyzer-prompt:
   en: |-
     You are given a word from a song: %{profane_word}.
-    1. First check if the word contains special characters (apostrophes, hyphens, etc.) or looks like a fragment of a larger word - this is likely a false positive from the profanity detection library. If so, identify it as "likely a false positive, appears to be part of a normal word" and mark it as normal word.
-    2. Assume by default that the word is likely to be profane, unless clearly normal or a false positive.
-    3. Always explain what it means or how it translates into English, considering it appears in song lyrics.
-    4. If the word is profane, also classify its profaneness as one of:
+    1. First check if the word contains special characters (apostrophes, hyphens, etc.), extra or missing letters, or looks like a fragment of a larger word - this is likely a false positive from the profanity detection library. If so, identify it as "likely a false positive, appears to be part of a normal word" and mark it as normal word.
+    2. Censored profane words (with asterisks, symbols, or letter replacements) are still considered profane.
+    3. Assume by default that the word is likely to be profane, unless clearly normal or a false positive.
+    4. Always explain what it means or how it translates into English, considering it appears in song lyrics.
+    5. If the word is profane, also classify its profaneness as one of:
     - normal word
     - mildly profane
     - highly profane
-    5. If the word is not profane or is a false positive, mark it as normal word without mentioning offensiveness.
-    6. The answer must be between 50 and 150 characters.
-    7. The answer must be a single line, no line breaks.
-    8. Do not include the given word itself or any other offensive words.
-    9. Keep it clean and suitable for all audiences.
-    10. Respond with no formatting.
+    6. If the word is not profane or is a false positive, mark it as normal word without mentioning offensiveness.
+    7. The answer must be between 50 and 150 characters.
+    8. The answer must be a single line, no line breaks.
+    9. Do not include the given word itself or any other offensive words.
+    10. Keep it clean and suitable for all audiences.
+    11. Respond with no formatting.
   ru: |-
     Тебе дано слово из песни: %{profane_word}.
-    1. Сначала проверь, содержит ли слово специальные символы (апострофы, дефисы и т.д.) или выглядит как фрагмент более крупного слова - это скорее всего ложное срабатывание библиотеки обнаружения нецензурной лексики. Если так, идентифицируй его как "скорее всего ложное срабатывание, является частью обычного слова" и отметь как обычное слово.
-    2. По умолчанию предполагай, что слово скорее всего нецензурное, если только оно явно не обычное или не ложное срабатывание.
-    3. Всегда объясняй, что оно означает или как переводится на русский, учитывая, что оно встречается в тексте песни.
-    4. Если слово нецензурное, также классифицируй его нецензурность как одну из:
+    1. Сначала проверь, содержит ли слово специальные символы (апострофы, дефисы и т.д.), лишние или недостающие буквы, или выглядит как фрагмент более крупного слова - это скорее всего ложное срабатывание библиотеки обнаружения нецензурной лексики. Если так, идентифицируй его как "скорее всего ложное срабатывание, является частью обычного слова" и отметь как обычное слово.
+    2. Зацензуренные нецензурные слова (со звездочками, символами или заменами букв) все еще считаются нецензурными.
+    3. По умолчанию предполагай, что слово скорее всего нецензурное, если только оно явно не обычное или не ложное срабатывание.
+    4. Всегда объясняй, что оно означает или как переводится на русский, учитывая, что оно встречается в тексте песни.
+    5. Если слово нецензурное, также классифицируй его нецензурность как одну из:
     - обычное слово
     - слегка нецензурное
     - сильно нецензурное
-    5. Если слово не нецензурное или является ложным срабатыванием, отметь его как обычное слово, не упоминая оскорбительность.
-    6. Ответ должен быть от 50 до 150 символов.
-    7. Ответ должен быть в одну строку, без переносов.
-    8. Не включай само данное слово или любые другие оскорбительные слова.
-    9. Делай ответ чистым и подходящим для всех аудиторий.
-    10. Отвечай без форматирования.
+    6. Если слово не нецензурное или является ложным срабатыванием, отметь его как обычное слово, не упоминая оскорбительность.
+    7. Ответ должен быть от 50 до 150 символов.
+    8. Ответ должен быть в одну строку, без переносов.
+    9. Не включай само данное слово или любые другие оскорбительные слова.
+    10. Делай ответ чистым и подходящим для всех аудиторий.
+    11. Отвечай без форматирования.
 
 analysis.prompt:
   en: |-
