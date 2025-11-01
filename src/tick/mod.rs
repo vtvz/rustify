@@ -14,12 +14,12 @@ use user::CheckUserResult;
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
+use crate::services::SpotifyPollingBackoffService;
 use crate::spotify::auth::SpotifyAuthService;
 use crate::utils;
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
 const PARALLEL_CHECKS: usize = 2;
-const SUSPEND_FOR_ON_IDLE: chrono::Duration = chrono::Duration::seconds(10);
 
 lazy_static::lazy_static! {
     pub static ref PROCESS_TIME_CHANNEL: (
@@ -78,30 +78,28 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
     }
 
     let mut users_checked = 0;
-    let mut users_to_suspend = Vec::new();
+    let mut redis_conn = app.redis_conn().await?;
+
     for handle in join_handles {
         match handle.await.expect("Shouldn't fail") {
-            Ok((_, CheckUserResult::Complete)) => {
+            Ok((user_id, CheckUserResult::Complete)) => {
                 users_checked += 1;
+
+                SpotifyPollingBackoffService::reset_idle(&mut redis_conn, &user_id).await?;
             },
             Ok((user_id, CheckUserResult::None(_))) => {
-                users_to_suspend.push(user_id);
+                SpotifyPollingBackoffService::inc_idle(&mut redis_conn, &user_id).await?;
+
+                let suspend_for =
+                    SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, &user_id)
+                        .await?;
+
+                dbg!(&suspend_for);
+
+                SpotifyAuthService::suspend_for(app.db(), &[&user_id], suspend_for).await?;
             },
             _ => {},
         }
-    }
-
-    // TODO: Prevent overflow on large amount of users
-    if !users_to_suspend.is_empty() {
-        SpotifyAuthService::suspend_for(
-            app.db(),
-            &users_to_suspend
-                .iter()
-                .map(AsRef::as_ref)
-                .collect::<Vec<_>>(),
-            SUSPEND_FOR_ON_IDLE,
-        )
-        .await?;
     }
 
     let report = CheckReport {
