@@ -31,7 +31,7 @@ pub enum AdminInlineButtons {
         #[serde(rename = "s")]
         sort_info: AdminUsersSortInfo,
 
-        #[serde(skip_serializing, default)]
+        #[serde(skip, default)]
         button_type: AdminUsersPageButtonType,
     },
 }
@@ -44,7 +44,7 @@ pub struct AdminUsersSortInfo {
     pub sort_order: AdminUsersSortOrder,
 
     // Only for display
-    #[serde(skip_serializing, default)]
+    #[serde(skip, default)]
     pub sort_selected: bool,
 }
 
