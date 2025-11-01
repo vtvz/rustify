@@ -26,16 +26,25 @@ pub enum AdminInlineButtons {
     AdminUsersPage {
         #[serde(rename = "p")]
         page: u64,
-        #[serde(rename = "s", default)]
-        sort_by: AdminUsersSortBy,
-        #[serde(rename = "o", default)]
-        sort_order: AdminUsersSortOrder,
+
+        #[serde(rename = "s")]
+        sort_info: AdminUsersSortInfo,
 
         #[serde(skip_serializing, default)]
         button_type: AdminUsersPageButtonType,
-        #[serde(skip_serializing, default)]
-        selected_order: bool,
     },
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct AdminUsersSortInfo {
+    #[serde(rename = "s", default)]
+    pub sort_by: AdminUsersSortBy,
+    #[serde(rename = "o", default)]
+    pub sort_order: AdminUsersSortOrder,
+
+    // Only for display
+    #[serde(skip_serializing, default)]
+    pub sort_selected: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
@@ -98,17 +107,15 @@ impl AdminInlineButtons {
             Self::AdminUsersPage {
                 page: _,
                 button_type,
-                sort_by,
-                sort_order,
-                selected_order,
+                sort_info,
             } => match button_type {
                 AdminUsersPageButtonType::First => Cow::Borrowed("⏮ First"),
                 AdminUsersPageButtonType::Last => Cow::Borrowed("Last ⏭"),
                 AdminUsersPageButtonType::Previous => Cow::Borrowed("◀ Previous"),
                 AdminUsersPageButtonType::Next => Cow::Borrowed("Next ▶"),
                 AdminUsersPageButtonType::Sorting => {
-                    let arrow = if *selected_order {
-                        match !*sort_order {
+                    let arrow = if sort_info.sort_selected {
+                        match !sort_info.sort_order {
                             AdminUsersSortOrder::Asc => " ▲",
                             AdminUsersSortOrder::Desc => " ▼",
                         }
@@ -116,7 +123,7 @@ impl AdminInlineButtons {
                         ""
                     };
 
-                    match sort_by {
+                    match sort_info.sort_by {
                         AdminUsersSortBy::CreatedAt => Cow::Owned(format!("Created{}", arrow)),
                         AdminUsersSortBy::LyricsChecked => Cow::Owned(format!("Lyrics{}", arrow)),
                     }

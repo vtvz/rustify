@@ -13,6 +13,7 @@ use crate::telegram::inline_buttons_admin::{
     AdminInlineButtons,
     AdminUsersPageButtonType,
     AdminUsersSortBy,
+    AdminUsersSortInfo,
     AdminUsersSortOrder,
 };
 use crate::user::UserState;
@@ -131,20 +132,20 @@ async fn build_users_page(
     for (idx, user) in users.iter().enumerate() {
         let user_info = formatdoc!(
             r#"
-            {}. <b>{}</b>
-            • ID: <code>{}</code>
-            • Status: <code>{:?}</code>
-            • Lyrics Checked: <code>{}</code>
-            • Locale: <code>{}</code>
-            • Created: <code>{}</code>
+                {index}. <b>{name}</b>
+                • ID: <code>{id}</code> <a href="tg://user?id={id}">link</a>
+                • Status: <code>{status:?}</code>
+                • Lyrics Checked: <code>{lyrics_checked}</code>
+                • Locale: <code>{locale}</code>
+                • Created: <code>{created_at}</code>
             "#,
-            page * USERS_PER_PAGE + idx as u64 + 1,
-            user.name,
-            user.id,
-            user.status,
-            user.lyrics_checked,
-            user.locale,
-            user.created_at.format("%Y-%m-%d %H:%M:%S")
+            index = page * USERS_PER_PAGE + idx as u64 + 1,
+            name = user.name,
+            id = user.id,
+            status = user.status,
+            lyrics_checked = user.lyrics_checked,
+            locale = user.locale,
+            created_at = user.created_at.format("%Y-%m-%d %H:%M:%S")
         );
 
         message.push(user_info);
@@ -179,11 +180,13 @@ fn create_pages_keyboard(
 
     sort_buttons.push(
         AdminInlineButtons::AdminUsersPage {
-            page,
+            page: 0,
             button_type: AdminUsersPageButtonType::Sorting,
-            sort_by: AdminUsersSortBy::CreatedAt,
-            sort_order: created_order,
-            selected_order: matches!(sort_by, AdminUsersSortBy::CreatedAt),
+            sort_info: AdminUsersSortInfo {
+                sort_by: AdminUsersSortBy::CreatedAt,
+                sort_order: created_order,
+                sort_selected: matches!(sort_by, AdminUsersSortBy::CreatedAt),
+            },
         }
         .into_inline_keyboard_button(state.locale()),
     );
@@ -196,11 +199,13 @@ fn create_pages_keyboard(
 
     sort_buttons.push(
         AdminInlineButtons::AdminUsersPage {
-            page,
+            page: 0,
             button_type: AdminUsersPageButtonType::Sorting,
-            sort_by: AdminUsersSortBy::LyricsChecked,
-            sort_order: lyrics_order,
-            selected_order: matches!(sort_by, AdminUsersSortBy::LyricsChecked),
+            sort_info: AdminUsersSortInfo {
+                sort_by: AdminUsersSortBy::LyricsChecked,
+                sort_order: lyrics_order,
+                sort_selected: matches!(sort_by, AdminUsersSortBy::LyricsChecked),
+            },
         }
         .into_inline_keyboard_button(state.locale()),
     );
@@ -214,9 +219,11 @@ fn create_pages_keyboard(
             AdminInlineButtons::AdminUsersPage {
                 page: page - 1,
                 button_type: AdminUsersPageButtonType::Previous,
-                sort_by,
-                sort_order,
-                selected_order: false,
+                sort_info: AdminUsersSortInfo {
+                    sort_by,
+                    sort_order,
+                    sort_selected: false,
+                },
             }
             .into_inline_keyboard_button(state.locale()),
         );
@@ -227,9 +234,11 @@ fn create_pages_keyboard(
             AdminInlineButtons::AdminUsersPage {
                 page: page + 1,
                 button_type: AdminUsersPageButtonType::Next,
-                sort_by,
-                sort_order,
-                selected_order: false,
+                sort_info: AdminUsersSortInfo {
+                    sort_by,
+                    sort_order,
+                    sort_selected: false,
+                },
             }
             .into_inline_keyboard_button(state.locale()),
         );
@@ -250,58 +259,58 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
 
     let message = formatdoc!(
         r#"
-        👤 <b>User Details</b>
+            👤 <b>User Details</b>
 
-        <b>Basic Info:</b>
-        • Name: <b>{}</b>
-        • ID: <code>{}</code>
-        • Status: <code>{:?}</code>
-        • Role: <code>{:?}</code>
-        • Locale: <code>{}</code>
-        • Created: <code>{}</code>
-        • Updated: <code>{}</code>
+            <b>Basic Info:</b>
+            • Name: <b>{name}</b>
+            • ID: <code>{id}</code> <a href="tg://user?id={id}">link</a>
+            • Status: <code>{status:?}</code>
+            • Role: <code>{role:?}</code>
+            • Locale: <code>{locale}</code>
+            • Created: <code>{created_at}</code>
+            • Updated: <code>{updated_at}</code>
 
-        <b>Configuration:</b>
-        • Profanity Check: <code>{}</code>
-        • Track Skip: <code>{}</code>
-        • Skippage Enabled: <code>{}</code>
-        • Skippage Duration: <code>{} seconds</code>
-        • Magic Playlist: <code>{}</code>
+            <b>Configuration:</b>
+            • Profanity Check: <code>{check_profanity}</code>
+            • Track Skip: <code>{skip_tracks}</code>
+            • Skippage Enabled: <code>{skippage_enabled}</code>
+            • Skippage Duration: <code>{skippage_secs} seconds</code>
+            • Magic Playlist: <code>{magic_playlist}</code>
 
-        <b>Statistics:</b>
-        • Removed from Playlists: <code>{}</code>
-        • Removed from Collection: <code>{}</code>
-        • Lyrics Checked: <code>{}</code>
-        • Lyrics Found: <code>{}</code>
-        • Lyrics Profane: <code>{}</code>
-        • Lyrics Analyzed: <code>{}</code>
+            <b>Statistics:</b>
+            • Removed from Playlists: <code>{removed_playlists}</code>
+            • Removed from Collection: <code>{removed_collection}</code>
+            • Lyrics Checked: <code>{lyrics_checked}</code>
+            • Lyrics Found: <code>{lyrics_found}</code>
+            • Lyrics Profane: <code>{lyrics_profane}</code>
+            • Lyrics Analyzed: <code>{lyrics_analyzed}</code>
 
-        <b>Lyrics Providers:</b>
-        • Genius: <code>{}</code>
-        • MusixMatch: <code>{}</code>
-        • LrcLib: <code>{}</code>
+            <b>Lyrics Providers:</b>
+            • Genius: <code>{lyrics_genius}</code>
+            • MusixMatch: <code>{lyrics_musixmatch}</code>
+            • LrcLib: <code>{lyrics_lrclib}</code>
         "#,
-        user.name,
-        user.id,
-        user.status,
-        user.role,
-        user.locale,
-        user.created_at.format("%Y-%m-%d %H:%M:%S"),
-        user.updated_at.format("%Y-%m-%d %H:%M:%S"),
-        render_bool(user.cfg_check_profanity),
-        render_bool(user.cfg_skip_tracks),
-        render_bool(user.cfg_skippage_enabled),
-        user.cfg_skippage_secs,
-        user.magic_playlist.as_deref().unwrap_or("Not set"),
-        stats.removed_playlists,
-        stats.removed_collection,
-        stats.lyrics_checked,
-        stats.lyrics_found,
-        stats.lyrics_profane,
-        stats.lyrics_analyzed,
-        stats.lyrics_genius,
-        stats.lyrics_musixmatch,
-        stats.lyrics_lrclib,
+        name = user.name,
+        id = user.id,
+        status = user.status,
+        role = user.role,
+        locale = user.locale,
+        created_at = user.created_at.format("%Y-%m-%d %H:%M:%S"),
+        updated_at = user.updated_at.format("%Y-%m-%d %H:%M:%S"),
+        check_profanity = render_bool(user.cfg_check_profanity),
+        skip_tracks = render_bool(user.cfg_skip_tracks),
+        skippage_enabled = render_bool(user.cfg_skippage_enabled),
+        skippage_secs = user.cfg_skippage_secs,
+        magic_playlist = user.magic_playlist.as_deref().unwrap_or("Not set"),
+        removed_playlists = stats.removed_playlists,
+        removed_collection = stats.removed_collection,
+        lyrics_checked = stats.lyrics_checked,
+        lyrics_found = stats.lyrics_found,
+        lyrics_profane = stats.lyrics_profane,
+        lyrics_analyzed = stats.lyrics_analyzed,
+        lyrics_genius = stats.lyrics_genius,
+        lyrics_musixmatch = stats.lyrics_musixmatch,
+        lyrics_lrclib = stats.lyrics_lrclib,
     );
 
     app.bot()

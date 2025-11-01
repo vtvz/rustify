@@ -5,7 +5,7 @@ use teloxide::prelude::*;
 use crate::app::App;
 use crate::telegram::actions;
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::telegram::inline_buttons_admin::AdminInlineButtons;
+use crate::telegram::inline_buttons_admin::{AdminInlineButtons, AdminUsersSortInfo};
 use crate::user::UserState;
 
 #[tracing::instrument(
@@ -51,8 +51,12 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
             },
             AdminInlineButtons::AdminUsersPage {
                 page,
-                sort_by,
-                sort_order,
+                sort_info:
+                    AdminUsersSortInfo {
+                        sort_by,
+                        sort_order,
+                        ..
+                    },
                 ..
             } => {
                 actions::admin_users::handle_inline(app, state, q, page, sort_by, sort_order)
