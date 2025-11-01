@@ -89,11 +89,9 @@ impl std::ops::Not for AdminUsersSortOrder {
 }
 
 impl AdminInlineButtons {
-    pub fn label(&self, locale: &str) -> Cow<'_, str> {
+    pub fn label(&self, _locale: &str) -> Cow<'_, str> {
         match self {
-            Self::RegenerateWordDefinition { .. } => {
-                t!("inline-buttons.regenerate-word-definition", locale = locale)
-            },
+            Self::RegenerateWordDefinition { .. } => Cow::Borrowed("Regenerate 🔄"),
             Self::WordDefinitionsPage { page, is_next, .. } => {
                 if *is_next {
                     Cow::Owned(format!("Page {} ▶", page + 1))
