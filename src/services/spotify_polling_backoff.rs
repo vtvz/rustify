@@ -1,9 +1,9 @@
 use chrono::Duration;
 use redis::AsyncCommands;
 
-pub struct ThrottleService {}
+pub struct SpotifyPollingBackoffService {}
 
-impl ThrottleService {
+impl SpotifyPollingBackoffService {
     pub async fn inc_idle(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
@@ -59,6 +59,6 @@ impl ThrottleService {
     }
 
     fn get_key(user_id: &str) -> String {
-        format!("rustify:spotify-throttle:{user_id}")
+        format!("rustify:spotify-polling-backoff:{user_id}")
     }
 }

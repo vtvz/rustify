@@ -14,7 +14,7 @@ use user::CheckUserResult;
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
-use crate::services::ThrottleService;
+use crate::services::SpotifyPollingBackoffService;
 use crate::spotify::auth::SpotifyAuthService;
 use crate::utils;
 
@@ -85,13 +85,16 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
             Ok((user_id, CheckUserResult::Complete)) => {
                 users_checked += 1;
 
-                ThrottleService::reset_idle(&mut redis_conn, &user_id).await?;
+                SpotifyPollingBackoffService::reset_idle(&mut redis_conn, &user_id).await?;
             },
             Ok((user_id, CheckUserResult::None(_))) => {
-                ThrottleService::inc_idle(&mut redis_conn, &user_id).await?;
+                SpotifyPollingBackoffService::inc_idle(&mut redis_conn, &user_id).await?;
 
                 let suspend_for =
-                    ThrottleService::get_suspend_time(&mut redis_conn, &user_id).await?;
+                    SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, &user_id)
+                        .await?;
+
+                dbg!(&suspend_for);
 
                 SpotifyAuthService::suspend_for(app.db(), &[&user_id], suspend_for).await?;
             },
