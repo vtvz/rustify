@@ -50,10 +50,6 @@ pub struct AdminUsersSortInfo {
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub enum AdminUsersPageButtonType {
-    #[serde(rename = "f")]
-    First,
-    #[serde(rename = "l")]
-    Last,
     #[serde(rename = "p")]
     Previous,
     #[serde(rename = "n")]
@@ -110,8 +106,6 @@ impl AdminInlineButtons {
                 button_type,
                 sort_info,
             } => match button_type {
-                AdminUsersPageButtonType::First => Cow::Borrowed("⏮ First"),
-                AdminUsersPageButtonType::Last => Cow::Borrowed("Last ⏭"),
                 AdminUsersPageButtonType::Previous => Cow::Borrowed("◀ Previous"),
                 AdminUsersPageButtonType::Next => Cow::Borrowed("Next ▶"),
                 AdminUsersPageButtonType::Sorting => {
