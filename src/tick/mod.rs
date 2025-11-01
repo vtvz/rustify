@@ -78,9 +78,9 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
     }
 
     let mut users_checked = 0;
-    for handle in join_handles {
-        let mut redis_conn = app.redis_conn().await?;
+    let mut redis_conn = app.redis_conn().await?;
 
+    for handle in join_handles {
         match handle.await.expect("Shouldn't fail") {
             Ok((user_id, CheckUserResult::Complete)) => {
                 users_checked += 1;
