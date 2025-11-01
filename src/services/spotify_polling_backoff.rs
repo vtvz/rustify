@@ -24,7 +24,7 @@ impl SpotifyPollingBackoffService {
         Ok(())
     }
 
-    pub async fn get_idle(
+    pub async fn get_idle_ticks(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
     ) -> anyhow::Result<u64> {
@@ -38,7 +38,7 @@ impl SpotifyPollingBackoffService {
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
     ) -> anyhow::Result<Duration> {
-        let count = Self::get_idle(redis_conn, user_id).await?;
+        let count = Self::get_idle_ticks(redis_conn, user_id).await?;
 
         let interval_10s = Duration::seconds(10);
         let after_10_min = Duration::minutes(5).num_seconds() / interval_10s.num_seconds();

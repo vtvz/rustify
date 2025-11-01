@@ -6,7 +6,7 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::UserColumn;
-use crate::services::UserService;
+use crate::services::{SpotifyPollingBackoffService, UserService};
 use crate::telegram::commands_admin::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons_admin::{
@@ -255,6 +255,11 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
     let user = UserService::obtain_by_id(app.db(), user_id).await?;
     let stats = UserService::get_stats(app.db(), Some(user_id)).await?;
 
+    let mut redis_conn = app.redis_conn().await?;
+    let idle_ticks = SpotifyPollingBackoffService::get_idle_ticks(&mut redis_conn, user_id).await?;
+    let suspend_time =
+        SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, user_id).await?;
+
     let render_bool = |bool| if bool { "✅" } else { "❌" };
 
     let message = formatdoc!(
@@ -276,6 +281,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
             • Skippage Enabled: <code>{skippage_enabled}</code>
             • Skippage Duration: <code>{skippage_secs} seconds</code>
             • Magic Playlist: <code>{magic_playlist}</code>
+            • Idle Info: <code>{idle_ticks} ticks</code>, <code>{suspend_time} sec</code>
 
             <b>Statistics:</b>
             • Removed from Playlists: <code>{removed_playlists}</code>
@@ -311,6 +317,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
         lyrics_genius = stats.lyrics_genius,
         lyrics_musixmatch = stats.lyrics_musixmatch,
         lyrics_lrclib = stats.lyrics_lrclib,
+        suspend_time = suspend_time.num_seconds(),
     );
 
     app.bot()
