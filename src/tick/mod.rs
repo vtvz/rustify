@@ -94,8 +94,6 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
                     SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, &user_id)
                         .await?;
 
-                dbg!(&suspend_for);
-
                 SpotifyAuthService::suspend_for(app.db(), &[&user_id], suspend_for).await?;
             },
             _ => {},
