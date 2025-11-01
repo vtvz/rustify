@@ -14,22 +14,6 @@ pub enum InlineButtons {
     Magic,
     SkippageEnable(bool),
     Recommendasion,
-    #[serde(rename = "wd")]
-    RegenerateWordDefinition {
-        #[serde(rename = "l")]
-        locale: String,
-        #[serde(rename = "w")]
-        word: String,
-    },
-    #[serde(rename = "wp")]
-    WordDefinitionsPage {
-        #[serde(rename = "l")]
-        locale: String,
-        #[serde(rename = "p")]
-        page: usize,
-        #[serde(skip, default)]
-        is_next: bool,
-    },
 }
 
 impl InlineButtons {
@@ -40,16 +24,6 @@ impl InlineButtons {
             InlineButtons::Analyze(_) => t!("inline-buttons.analyze", locale = locale),
             InlineButtons::Magic => t!("magic.button", locale = locale),
             InlineButtons::Recommendasion => t!("recommendasion.button", locale = locale),
-            InlineButtons::RegenerateWordDefinition { .. } => {
-                t!("inline-buttons.regenerate-word-definition", locale = locale)
-            },
-            InlineButtons::WordDefinitionsPage { page, is_next, .. } => {
-                if *is_next {
-                    Cow::Owned(format!("Page {} ▶", page + 1))
-                } else {
-                    Cow::Owned(format!("◀ Page {}", page + 1))
-                }
-            },
             InlineButtons::SkippageEnable(to_enable) => {
                 if *to_enable {
                     t!("skippage.enable-button", locale = locale)

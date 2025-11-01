@@ -5,10 +5,10 @@ use teloxide::types::{ChatId, InlineKeyboardMarkup, MessageId, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::UserLocale;
-use crate::services::WordDefinitionService;
-use crate::telegram::commands::AdminCommandDisplay;
+use crate::services::{WordDefinitionService, WordStatsService};
+use crate::telegram::commands_admin::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
-use crate::telegram::inline_buttons::InlineButtons;
+use crate::telegram::inline_buttons_admin::AdminInlineButtons;
 
 #[tracing::instrument(skip_all, fields(locale, word))]
 async fn generate_and_send_definition(
@@ -49,7 +49,7 @@ async fn generate_and_send_definition(
         WordDefinitionService::get_definition(app.db(), &locale, ai_config, &word).await?;
 
     let keyboard = InlineKeyboardMarkup::new(vec![vec![
-        InlineButtons::RegenerateWordDefinition {
+        AdminInlineButtons::RegenerateWordDefinition {
             locale: locale.clone(),
             word: word.clone(),
         }
@@ -181,8 +181,7 @@ async fn send_definitions_page(
         return Ok(());
     }
 
-    let total_items =
-        WordDefinitionService::count_definitions_with_stats(app.db(), &locale_filter).await?;
+    let total_items = WordStatsService::count_stats(app.db()).await?;
 
     if total_items == 0 {
         let message = format!("No word definitions found for locale: <code>{locale_filter}</code>");
@@ -205,14 +204,9 @@ async fn send_definitions_page(
     let total_pages = total_items.div_ceil(PAGE_SIZE);
     let page = page.min(total_pages.saturating_sub(1));
 
-    // Get paginated results from database
-    let definitions = WordDefinitionService::list_definitions_with_stats(
-        app.db(),
-        &locale_filter,
-        page,
-        PAGE_SIZE,
-    )
-    .await?;
+    let definitions =
+        WordStatsService::list_stats_with_definitions(app.db(), &locale_filter, page, PAGE_SIZE)
+            .await?;
 
     let mut lines = vec![];
 
@@ -231,7 +225,10 @@ async fn send_definitions_page(
     for def in &definitions {
         lines.push(format!(
             "<blockquote>• <code>{}</code>: {}",
-            def.word, def.definition
+            def.word,
+            def.definition
+                .as_deref()
+                .unwrap_or("<i>word have no definition yet</i>")
         ));
         lines.push("".into());
         lines.push(format!(
@@ -252,7 +249,7 @@ async fn send_definitions_page(
 
     if page > 0 {
         buttons.push(
-            InlineButtons::WordDefinitionsPage {
+            AdminInlineButtons::WordDefinitionsPage {
                 locale: locale_filter.clone(),
                 page: page - 1,
                 is_next: false,
@@ -263,7 +260,7 @@ async fn send_definitions_page(
 
     if page < total_pages - 1 {
         buttons.push(
-            InlineButtons::WordDefinitionsPage {
+            AdminInlineButtons::WordDefinitionsPage {
                 locale: locale_filter.clone(),
                 page: page + 1,
                 is_next: true,

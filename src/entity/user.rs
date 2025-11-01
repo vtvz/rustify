@@ -28,6 +28,8 @@ pub struct Model {
     pub lyrics_analyzed: i64,
     pub lyrics_genius: i64,
     pub lyrics_musixmatch: i64,
+    #[sea_orm(enum_name = "LyricsLrcLib")]
+    pub lyrics_lrclib: i64,
     pub lyrics_profane: i64,
     pub status: Status,
     pub created_at: chrono::NaiveDateTime,

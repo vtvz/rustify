@@ -2,12 +2,36 @@ use itertools::Itertools;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Expr;
 use sea_orm::sea_query::{Alias, OnConflict};
-use sea_orm::{ConnectionTrait, EntityTrait as _};
+use sea_orm::{
+    ColumnTrait as _,
+    ConnectionTrait,
+    EntityTrait as _,
+    PaginatorTrait as _,
+    QueryFilter,
+    QueryOrder as _,
+    QuerySelect as _,
+};
 
-use crate::entity::prelude::{WordStatsActiveModel, WordStatsColumn, WordStatsEntity};
+use crate::entity::prelude::{
+    WordDefinitionColumn,
+    WordDefinitionEntity,
+    WordStatsActiveModel,
+    WordStatsColumn,
+    WordStatsEntity,
+};
 use crate::utils::Clock;
 
 pub struct WordStatsService {}
+
+#[derive(Debug)]
+pub struct StatsWithDefinition {
+    pub word: String,
+    pub locale: String,
+    pub definition: Option<String>,
+    pub check_occurrences: i32,
+    pub details_occurrences: i32,
+    pub analyze_occurrences: i32,
+}
 
 impl WordStatsService {
     #[tracing::instrument(skip_all)]
@@ -97,5 +121,58 @@ impl WordStatsService {
             .await?;
 
         Ok(())
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub async fn count_stats(db: &impl ConnectionTrait) -> anyhow::Result<usize> {
+        let count = WordStatsEntity::find().count(db).await? as usize;
+
+        Ok(count)
+    }
+
+    #[tracing::instrument(skip_all, fields(locale, page, page_size))]
+    pub async fn list_stats_with_definitions(
+        db: &impl ConnectionTrait,
+        locale: &str,
+        page: usize,
+        page_size: usize,
+    ) -> anyhow::Result<Vec<StatsWithDefinition>> {
+        let offset = page * page_size;
+
+        let stats = WordStatsEntity::find()
+            .order_by_desc(WordStatsColumn::CheckOccurrences)
+            .order_by_desc(WordStatsColumn::DetailsOccurrences)
+            .order_by_desc(WordStatsColumn::AnalyzeOccurrences)
+            .limit(page_size as u64)
+            .offset(offset as u64)
+            .all(db)
+            .await?;
+
+        let definitions = WordDefinitionEntity::find()
+            .filter(WordDefinitionColumn::Locale.eq(locale))
+            .filter(WordDefinitionColumn::Word.is_in(stats.iter().map(|item| &item.word)))
+            .all(db)
+            .await?;
+
+        let mut result = Vec::new();
+        for stat in stats {
+            let definition = definitions
+                .iter()
+                .find(|definition| definition.word == stat.word)
+                .map(|model| model.definition.clone());
+
+            let with_stats = StatsWithDefinition {
+                word: stat.word.clone(),
+                locale: locale.to_string(),
+                definition,
+                check_occurrences: stat.check_occurrences,
+                details_occurrences: stat.details_occurrences,
+                analyze_occurrences: stat.analyze_occurrences,
+            };
+
+            result.push(with_stats);
+        }
+
+        Ok(result)
     }
 }
