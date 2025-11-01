@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
+use serde::{Deserialize, Serialize};
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -115,6 +116,9 @@ impl AdminInlineButtons {
                 AdminUsersPageButtonType::Next => Cow::Borrowed("Next ▶"),
                 AdminUsersPageButtonType::Sorting => {
                     let arrow = if sort_info.sort_selected {
+                        // We need to reverse order
+                        // as this value represents "future" order
+                        // if button be pressed
                         match !sort_info.sort_order {
                             AdminUsersSortOrder::Asc => " ▲",
                             AdminUsersSortOrder::Desc => " ▼",

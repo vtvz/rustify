@@ -123,7 +123,7 @@ impl WordStatsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, fields(locale))]
+    #[tracing::instrument(skip_all)]
     pub async fn count_stats(db: &impl ConnectionTrait) -> anyhow::Result<usize> {
         let count = WordStatsEntity::find().count(db).await? as usize;
 

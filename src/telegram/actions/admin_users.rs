@@ -156,7 +156,7 @@ async fn build_users_page(
         command = AdminCommandDisplay::Users
     ));
 
-    let keyboard = create_pages_keyboard(state, page, sort_by, sort_order, total_pages);
+    let keyboard = create_pages_keyboard(state, page, total_pages, sort_by, sort_order);
 
     Ok((message.join("\n"), keyboard))
 }
@@ -164,9 +164,9 @@ async fn build_users_page(
 fn create_pages_keyboard(
     state: &UserState,
     page: u64,
+    total_pages: u64,
     sort_by: AdminUsersSortBy,
     sort_order: AdminUsersSortOrder,
-    total_pages: u64,
 ) -> InlineKeyboardMarkup {
     let mut rows = vec![];
 
