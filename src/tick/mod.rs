@@ -41,7 +41,7 @@ pub struct CheckReport {
 async fn process(app: &'static App) -> anyhow::Result<()> {
     let start = Instant::now();
 
-    let user_ids = SpotifyAuthService::get_registered_user_ids(app.db())
+    let user_ids = SpotifyAuthService::get_active_unsuspended_user_ids(app.db())
         .await
         .context("Get users for processing")?;
 
