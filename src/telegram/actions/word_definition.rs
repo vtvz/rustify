@@ -93,9 +93,9 @@ pub async fn handle_definition(
         return Ok(HandleStatus::Handled);
     }
 
-    let msg = app.bot().send_message(m.chat.id, "Starting...").await?;
+    let message = app.bot().send_message(m.chat.id, "Starting...").await?;
 
-    generate_and_send_definition(app, &msg, locale, word, refresh).await?;
+    generate_and_send_definition(app, &message, locale, word, refresh).await?;
 
     Ok(HandleStatus::Handled)
 }
