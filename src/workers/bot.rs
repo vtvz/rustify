@@ -2,6 +2,7 @@ use indoc::formatdoc;
 use sea_orm::Iterable;
 use teloxide::payloads::SendMessageSetters;
 use teloxide::prelude::*;
+use teloxide::sugar::request::RequestLinkPreviewExt as _;
 use teloxide::types::{ParseMode, User};
 
 use crate::app::App;
@@ -9,7 +10,6 @@ use crate::entity::prelude::UserLocale;
 use crate::infrastructure::error_handler;
 use crate::services::UserService;
 use crate::telegram::commands::UserCommand;
-use crate::telegram::utils::link_preview_disabled;
 use crate::user::UserState;
 use crate::{self as rustify};
 
@@ -104,9 +104,7 @@ pub async fn work() {
                             )
                         )
                             .parse_mode(ParseMode::Html)
-                            // TODO: wait for teloxide::sugar::request::RequestLinkPreviewExt to release
-                            // .disable_link_preview()
-                            .link_preview_options(link_preview_disabled())
+                            .disable_link_preview(true)
                             .await?;
                     };
                 }

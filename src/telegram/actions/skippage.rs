@@ -1,7 +1,11 @@
-use anyhow::Context;
 use chrono::Duration;
-use teloxide::payloads::{EditMessageTextSetters, SendMessageSetters};
+use teloxide::payloads::{
+    AnswerCallbackQuerySetters as _,
+    EditMessageTextSetters,
+    SendMessageSetters,
+};
 use teloxide::prelude::Requester;
+use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
@@ -11,6 +15,7 @@ use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::user::UserState;
+use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_inline(
@@ -19,8 +24,14 @@ pub async fn handle_inline(
     q: CallbackQuery,
     to_enable: bool,
 ) -> anyhow::Result<()> {
-    let chat_id = q.from.id;
-    let message_id = q.message.clone().context("Message is empty")?.id();
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
+
+        return Ok(());
+    };
 
     UserService::set_cfg_skippage_enabled(app.db(), state.user_id(), to_enable).await?;
 
@@ -36,9 +47,8 @@ pub async fn handle_inline(
     };
 
     app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
+        .edit_text(
+            &message,
             t!(
                 "skippage.main",
                 locale = state.locale(),

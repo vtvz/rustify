@@ -1,10 +1,14 @@
-use anyhow::Context;
 use futures::StreamExt;
 use rand::seq::SliceRandom;
 use rspotify::model::{Id, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
-use teloxide::payloads::{EditMessageTextSetters, SendMessageSetters};
+use teloxide::payloads::{
+    AnswerCallbackQuerySetters as _,
+    EditMessageTextSetters,
+    SendMessageSetters,
+};
 use teloxide::prelude::Requester;
+use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
@@ -15,6 +19,7 @@ use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
+use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn get_playlist(
@@ -60,6 +65,15 @@ pub async fn handle_inline(
 ) -> anyhow::Result<()> {
     let chat_id = q.from.id;
 
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
+
+        return Ok(());
+    };
+
     if !state.is_spotify_authed().await {
         actions::register::send_register_invite(app, chat_id.into(), state.locale()).await?;
 
@@ -70,14 +84,11 @@ pub async fn handle_inline(
         return Ok(());
     };
 
-    let message_id = q.message.clone().context("Message is empty")?.id();
-
     let header = t!("magic.header", locale = state.locale());
 
     app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
+        .edit_text(
+            &message,
             t!("magic.generating", header = header, locale = state.locale()),
         )
         .parse_mode(ParseMode::Html)
@@ -88,9 +99,8 @@ pub async fn handle_inline(
     match playlist {
         Ok(playlist) => {
             app.bot()
-                .edit_message_text(
-                    chat_id,
-                    message_id,
+                .edit_text(
+                    &message,
                     t!(
                         "magic.generated",
                         header = header,
@@ -107,9 +117,8 @@ pub async fn handle_inline(
 
         Err(err) => {
             app.bot()
-                .edit_message_text(
-                    chat_id,
-                    message_id,
+                .edit_text(
+                    &message,
                     t!("magic.failed", header = header, locale = state.locale()),
                 )
                 .parse_mode(ParseMode::Html)

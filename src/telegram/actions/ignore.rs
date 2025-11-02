@@ -1,7 +1,7 @@
-use anyhow::Context as _;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
+use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use super::super::inline_buttons::InlineButtons;
@@ -11,6 +11,7 @@ use crate::services::TrackStatusService;
 use crate::spotify::ShortTrack;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
+use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id))]
 pub async fn handle_inline(
@@ -19,6 +20,15 @@ pub async fn handle_inline(
     q: CallbackQuery,
     track_id: &str,
 ) -> anyhow::Result<()> {
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
+
+        return Ok(());
+    };
+
     let track = state
         .spotify()
         .await
@@ -33,9 +43,8 @@ pub async fn handle_inline(
         InlineButtons::from_track_status(TrackStatus::Ignore, track.id(), state.locale());
 
     app.bot()
-        .edit_message_text(
-            q.from.id,
-            q.message.context("Message is empty")?.id(),
+        .edit_text(
+            &message,
             t!(
                 "actions.ignore",
                 track_link = track.track_tg_link(),

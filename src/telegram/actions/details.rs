@@ -8,6 +8,7 @@ use regex::Regex;
 use rspotify::clients::BaseClient as _;
 use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
+use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
@@ -78,7 +79,7 @@ async fn common(
     chat_id: &ChatId,
     track: ShortTrack,
 ) -> anyhow::Result<HandleStatus> {
-    let m = app
+    let message = app
         .bot()
         .send_message(
             *chat_id,
@@ -205,9 +206,8 @@ async fn common(
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
-            .edit_message_text(
-                *chat_id,
-                m.id,
+            .edit_text(
+                &message,
                 t!(
                     "details.no-lyrics",
                     locale = state.locale(),
@@ -233,7 +233,7 @@ async fn common(
 
     let mut lines = lyrics.len();
     // This requires to fit lyrics to tg message
-    let message = loop {
+    let text = loop {
         if lines == 0 {
             return Err(anyhow!("Issues with lyrics"));
         }
@@ -265,7 +265,7 @@ async fn common(
     }
 
     app.bot()
-        .edit_message_text(*chat_id, m.id, message)
+        .edit_text(&message, text)
         .parse_mode(ParseMode::Html)
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .link_preview_options(link_preview_small_top(track.url()))

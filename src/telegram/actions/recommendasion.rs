@@ -17,8 +17,13 @@ use rspotify::model::SearchType;
 use rspotify::prelude::{BaseClient, OAuthClient as _};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use teloxide::payloads::{EditMessageTextSetters, SendMessageSetters};
+use teloxide::payloads::{
+    AnswerCallbackQuerySetters as _,
+    EditMessageTextSetters,
+    SendMessageSetters,
+};
 use teloxide::prelude::Requester;
+use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::sugar::request::RequestLinkPreviewExt;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
@@ -30,6 +35,7 @@ use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::user::UserState;
+use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RecommendationsRaw {
@@ -136,29 +142,33 @@ pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
     q: CallbackQuery,
-) -> anyhow::Result<HandleStatus> {
-    let chat_id = q.from.id;
+) -> anyhow::Result<()> {
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
 
-    let message_id = q.message.clone().context("Message is empty")?.id();
+        return Ok(());
+    };
 
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, chat_id.into(), state.locale()).await?;
+        actions::register::send_register_invite(app, message.chat.id, state.locale()).await?;
 
-        return Ok(HandleStatus::Handled);
+        return Ok(());
     }
 
     let mut redis_conn = app.redis_conn().await?;
 
     let Some(config) = app.ai() else {
         app.bot()
-            .edit_message_text(
-                chat_id,
-                message_id,
+            .edit_text(
+                &message,
                 t!("recommendasion.disabled", locale = state.locale()),
             )
             .await?;
 
-        return Ok(HandleStatus::Handled);
+        return Ok(());
     };
 
     tracing::info!("User called Recommendasion");
@@ -170,9 +180,8 @@ pub async fn handle_inline(
         .await?
     else {
         app.bot()
-            .edit_message_text(
-                chat_id,
-                message_id,
+            .edit_text(
+                &message,
                 t!("recommendasion.device-not-found", locale = state.locale()),
             )
             .reply_markup(InlineKeyboardMarkup::new(vec![vec![
@@ -180,13 +189,12 @@ pub async fn handle_inline(
             ]]))
             .await?;
 
-        return Ok(HandleStatus::Handled);
+        return Ok(());
     };
 
     app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
+        .edit_text(
+            &message,
             t!(
                 "recommendasion.collecting-favorites",
                 locale = state.locale()
@@ -205,9 +213,8 @@ pub async fn handle_inline(
     };
 
     app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
+        .edit_text(
+            &message,
             t!("recommendasion.ask-ai", locale = state.locale()),
         )
         .await?;
@@ -218,9 +225,8 @@ pub async fn handle_inline(
         / (recommendations.slop.len() + recommendations.recommended.len() + 1);
 
     app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
+        .edit_text(
+            &message,
             t!("recommendasion.queue", locale = state.locale()),
         )
         .await?;
@@ -247,7 +253,7 @@ pub async fn handle_inline(
 
     disliked_links.extend(slop_links);
 
-    let msg = t!(
+    let text = t!(
         "recommendasion.result",
         recommendation_links = recommendation_links.join("\n"),
         slop_rate = slop_rate,
@@ -256,7 +262,7 @@ pub async fn handle_inline(
     );
 
     app.bot()
-        .edit_message_text(chat_id, message_id, msg)
+        .edit_text(&message, text)
         .parse_mode(ParseMode::Html)
         .disable_link_preview(true)
         .reply_markup(InlineKeyboardMarkup::new(vec![vec![
@@ -264,7 +270,7 @@ pub async fn handle_inline(
         ]]))
         .await?;
 
-    Ok(HandleStatus::Handled)
+    Ok(())
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]

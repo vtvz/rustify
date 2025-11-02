@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use genius::GeniusLocal;
 use isolang::Language;
 use lazy_static::lazy_static;
@@ -133,7 +135,7 @@ impl LyricsCacheManager {
     ) -> anyhow::Result<cached::AsyncRedisCache<String, T>> {
         CacheManager::redis_cached_build(
             &format!("lyrics:{provider}"),
-            *LYRICS_CACHE_TTL.read().await,
+            Duration::from_secs(*LYRICS_CACHE_TTL.read().await),
         )
         .await
     }

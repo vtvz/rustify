@@ -1,7 +1,7 @@
-use anyhow::Context as _;
 use indoc::formatdoc;
 use sea_orm::Order;
 use teloxide::prelude::*;
+use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
@@ -17,6 +17,7 @@ use crate::telegram::inline_buttons_admin::{
     AdminUsersSortOrder,
 };
 use crate::user::UserState;
+use crate::utils::teloxide::CallbackQueryExt as _;
 
 const USERS_PER_PAGE: u64 = 10;
 
@@ -78,17 +79,19 @@ pub async fn handle_inline(
     sort_by: AdminUsersSortBy,
     sort_order: AdminUsersSortOrder,
 ) -> anyhow::Result<()> {
-    app.bot().answer_callback_query(q.id).await?;
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
 
-    let m = q.message.context("Should have message")?;
-
-    let chat_id = m.chat().id;
-    let message_id = m.id();
+        return Ok(());
+    };
 
     let (text, keyboard) = build_users_page(app, state, page, sort_by, sort_order).await?;
 
     app.bot()
-        .edit_message_text(chat_id, message_id, text)
+        .edit_text(&message, text)
         .parse_mode(ParseMode::Html)
         .reply_markup(keyboard)
         .await?;
