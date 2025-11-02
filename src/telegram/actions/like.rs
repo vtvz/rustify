@@ -24,9 +24,9 @@ pub async fn handle(
 
     let track = match CurrentlyPlaying::get(&*state.spotify().await).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
-        CurrentlyPlaying::None(message) => {
+        CurrentlyPlaying::None(reason) => {
             app.bot()
-                .send_message(m.chat.id, message.localize(state.locale()))
+                .send_message(m.chat.id, reason.localize(state.locale()))
                 .await?;
 
             return Ok(HandleStatus::Handled);

@@ -74,7 +74,7 @@ pub async fn handle(
         return Ok(());
     }
 
-    let message = t!(
+    let text = t!(
         "error.cannot-skip",
         locale = state.locale(),
         track_name = track.track_tg_link(),
@@ -82,7 +82,7 @@ pub async fn handle(
 
     let result = app
         .bot()
-        .send_message(ChatId(state.user_id().parse()?), message)
+        .send_message(ChatId(state.user_id().parse()?), text)
         .parse_mode(ParseMode::Html)
         .await;
 

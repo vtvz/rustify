@@ -20,14 +20,14 @@ pub async fn handle_toggle_profanity_check(
     user_model.cfg_check_profanity = Set(new_status);
     user_model.save(app.db()).await?;
 
-    let message = if new_status {
+    let text = if new_status {
         t!("settings.profanity-check-on", locale = state.locale())
     } else {
         t!("settings.profanity-check-off", locale = state.locale())
     };
 
     app.bot()
-        .send_message(chat_id, message)
+        .send_message(chat_id, text)
         .parse_mode(ParseMode::Html)
         .await?;
 
@@ -47,14 +47,14 @@ pub async fn handle_toggle_skip_tracks(
     user_model.cfg_skip_tracks = Set(new_status);
     user_model.save(app.db()).await?;
 
-    let message = if new_status {
+    let text = if new_status {
         t!("settings.skip-on", locale = state.locale())
     } else {
         t!("settings.skip-off", locale = state.locale())
     };
 
     app.bot()
-        .send_message(chat_id, message)
+        .send_message(chat_id, text)
         .parse_mode(ParseMode::Html)
         .await?;
 

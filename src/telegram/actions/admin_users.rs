@@ -52,7 +52,7 @@ pub async fn handle_command(
         return Ok(HandleStatus::Handled);
     }
 
-    let (message, keyboard) = build_users_page(
+    let (text, keyboard) = build_users_page(
         app,
         state,
         0,
@@ -62,7 +62,7 @@ pub async fn handle_command(
     .await?;
 
     app.bot()
-        .send_message(m.chat.id, message)
+        .send_message(m.chat.id, text)
         .parse_mode(ParseMode::Html)
         .reply_markup(keyboard)
         .await?;
@@ -265,7 +265,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
 
     let render_bool = |bool| if bool { "✅" } else { "❌" };
 
-    let message = formatdoc!(
+    let text = formatdoc!(
         r#"
             👤 <b>User Details</b>
 
@@ -324,7 +324,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
     );
 
     app.bot()
-        .send_message(m.chat.id, message)
+        .send_message(m.chat.id, text)
         .parse_mode(ParseMode::Html)
         .await?;
 

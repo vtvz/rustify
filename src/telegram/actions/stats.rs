@@ -40,7 +40,7 @@ pub async fn handle(
         ..
     } = UserService::get_stats(app.db(), Some(state.user_id())).await?;
 
-    let message = t!(
+    let text = t!(
         "actions.stats",
         locale = state.locale(),
         dislikes = dislikes,
@@ -54,7 +54,7 @@ pub async fn handle(
     );
 
     app.bot()
-        .send_message(m.chat.id, message)
+        .send_message(m.chat.id, text)
         .reply_parameters(ReplyParameters::new(m.id))
         .parse_mode(ParseMode::Html)
         .await?;

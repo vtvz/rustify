@@ -182,7 +182,7 @@ async fn perform(
         )
     };
 
-    let message_gen = |analysis_result: &str, profane_words_block: &str| {
+    let message_text_gen = |analysis_result: &str, profane_words_block: &str| {
         t!(
             "analysis.result",
             locale = state.locale(),
@@ -193,18 +193,18 @@ async fn perform(
         )
     };
 
-    let mut text = message_gen(&analysis_result, &profane_words_block);
+    let mut text = message_text_gen(&analysis_result, &profane_words_block);
 
     // Remove profane block if message is too long
     if text.chars_len() > MESSAGE_MAX_LEN {
-        text = message_gen(&analysis_result, &profane_words_doesnt_fit_block);
+        text = message_text_gen(&analysis_result, &profane_words_doesnt_fit_block);
     }
 
     // If this didn't help, crop analysis result as well
     if text.chars_len() > MESSAGE_MAX_LEN {
         let analysis_len = analysis_result.chars_len() - (text.chars_len() - MESSAGE_MAX_LEN);
 
-        text = message_gen(
+        text = message_text_gen(
             &analysis_result.chars_crop(analysis_len),
             &profane_words_doesnt_fit_block,
         );

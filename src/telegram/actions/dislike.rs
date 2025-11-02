@@ -29,9 +29,9 @@ pub async fn handle(
 
     let track = match CurrentlyPlaying::get(&*state.spotify().await).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
-        CurrentlyPlaying::None(message) => {
+        CurrentlyPlaying::None(reason) => {
             app.bot()
-                .send_message(m.chat.id, message.localize(state.locale()))
+                .send_message(m.chat.id, reason.localize(state.locale()))
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -46,7 +46,7 @@ pub async fn handle(
         InlineButtons::from_track_status(TrackStatus::Disliked, track.id(), state.locale());
 
     app.bot()
-        .send_message(m.chat.id, compose_message(&track, state.locale()))
+        .send_message(m.chat.id, compose_message_text(&track, state.locale()))
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
@@ -88,7 +88,7 @@ pub async fn handle_inline(
     };
 
     app.bot()
-        .edit_text(&message, compose_message(&track, state.locale()))
+        .edit_text(&message, compose_message_text(&track, state.locale()))
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
@@ -97,7 +97,7 @@ pub async fn handle_inline(
     Ok(())
 }
 
-fn compose_message(track: &ShortTrack, locale: &str) -> String {
+fn compose_message_text(track: &ShortTrack, locale: &str) -> String {
     t!(
         "actions.dislike",
         locale = locale,
