@@ -9,27 +9,37 @@
 
 > A Telegram bot that monitors your Spotify playback, detects profane lyrics, integrates with AI for text analysis, and automatically skips tracks you've disliked
 
-[![Rust](https://img.shields.io/badge/rust-1.83.0%2B-orange.svg)](https://www.rust-lang.org/)
+[![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Build and Deploy](https://github.com/vtvz/rustify/actions/workflows/deploy.yml/badge.svg)](https://github.com/vtvz/rustify/actions/workflows/deploy.yml)
 
-Rustify is an intelligent Telegram bot that integrates with Spotify to provide real-time profanity filtering and track management. It continuously monitors what you're listening to, analyzes lyrics for inappropriate content, and automatically skips tracks you've marked with the dislike button.
+---
+
+<div align="center">
+
+🤖 **Try the live bot:** **[@RustifyBot](https://t.me/RustifyBot)**
+
+</div>
+
+---
+
+Rustify is an intelligent Telegram bot that integrates with Spotify to provide real-time profanity detection and track management. It continuously monitors what you're listening to, analyzes lyrics for inappropriate content, and automatically skips tracks you've marked with the dislike button.
 
 ## ✨ Features
 
 ### 🎯 Core Features
 
 - **🔍 Real-time Profanity Detection** - Automatically analyzes song lyrics as you listen using advanced profanity detection algorithms
-- **⏭️ Auto-Skip** - Instantly skips tracks you've marked with dislike (can be toggled)
+- **⏭️ Auto-Skip** - Instantly skips tracks you've marked with dislike
 - **📊 Multi-Provider Lyrics** - Fetches lyrics from multiple sources (Musixmatch, Genius, LrcLib) for maximum coverage
-- **🤖 AI-Powered Analysis** - Optional OpenAI integration for analyzing song lyrics meaning, storyline, and content themes, plus individual word analysis
-- **🌍 Multi-Language Support** - Interface available in multiple languages with localized profanity detection
+- **🤖 AI-Powered Analysis** - Optional OpenAI-compatible API integration for analyzing song lyrics meaning, storyline, and content themes, plus individual word analysis
+- **🌍 Multi-Language Support** - Interface available in multiple languages (profanity detection in English only)
 
 ### 🎛️ User Features
 
 - **👍 Like/Dislike System** - Quick reactions to tracks, with automatic skipping of disliked songs
 - **✨ Magic Playlist™** - Shuffled playlist of your liked songs that automatically removes tracks as you listen, ensuring no repeats
-- **⏭️ Skippage** - Skip tracks you've recently listened to (configurable time window)
+- **⏭️ Skippage™** - Skip tracks you've recently listened to (configurable time window)
 - **🤖 Recommendasion™** - Get personalized track recommendations
 - **📱 Interactive Keyboards** - Quick access to common actions via Telegram inline keyboards
 - **🔔 Real-time Notifications** - Get notified when profane tracks are detected
@@ -37,15 +47,9 @@ Rustify is an intelligent Telegram bot that integrates with Spotify to provide r
 ### 🛡️ Admin Features
 
 - **📊 Global Statistics** - View usage statistics across all users
+- **👥 User Information** - View detailed information about users
+- **🔔 New User Notifications** - Get notified when new users join
 - **📢 Broadcast Messages** - Send announcements to all users
-
-## 🏗️ Architecture
-
-Rustify uses a multi-worker architecture for optimal performance:
-
-- **Bot Worker** - Handles Telegram interactions and user commands
-- **Track Check Worker** - Polls Spotify API every 3 seconds to monitor playback
-- **Queue Worker** - Processes background tasks (lyrics fetching, profanity analysis)
 
 ### Technology Stack
 
@@ -61,13 +65,14 @@ Rustify uses a multi-worker architecture for optimal performance:
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 📞 Support
 
 - 🐛 [Report Issues](https://github.com/vtvz/rustify/issues/new)
 - 💬 [Discussions](https://github.com/vtvz/rustify/discussions)
 - 📧 Contact: [@vtvz](https://github.com/vtvz)
+- 💬 Telegram: [@vtvz_me](https://t.me/vtvz_me)
 
 ---
 
