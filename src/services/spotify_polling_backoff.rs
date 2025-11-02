@@ -46,7 +46,8 @@ impl SpotifyPollingBackoffService {
             ( Duration::minutes(5),  Duration::seconds(10) ),
             ( Duration::minutes(10), Duration::seconds(15) ),
             ( Duration::hours(1),    Duration::seconds(20) ),
-            ( Duration::days(1),     Duration::minutes(1)  ),
+            ( Duration::days(1),     Duration::seconds(30) ),
+            ( Duration::days(3),     Duration::minutes(1)  ),
             ( Duration::weeks(1),    Duration::minutes(3)  ),
         ];
 
