@@ -25,6 +25,9 @@ pub enum AdminCommand {
 
     #[command(description = "List users")]
     Users { user_id: String },
+
+    #[command(description = "Build Info")]
+    BuildInfo,
 }
 
 pub enum AdminCommandDisplay {
@@ -35,6 +38,7 @@ pub enum AdminCommandDisplay {
     ResetWordDefinition,
     ListWordDefinitions,
     Users,
+    BuildInfo,
 }
 
 impl std::fmt::Display for AdminCommandDisplay {
@@ -47,6 +51,7 @@ impl std::fmt::Display for AdminCommandDisplay {
             AdminCommandDisplay::ResetWordDefinition => "reset_word_definition",
             AdminCommandDisplay::ListWordDefinitions => "list_word_definitions",
             AdminCommandDisplay::Users => "users",
+            AdminCommandDisplay::BuildInfo => "build_info",
         };
 
         f.write_str(string)
@@ -68,6 +73,7 @@ mod tests {
             AdminCommand::ResetWordDefinition { .. } => AdminCommandDisplay::ResetWordDefinition,
             AdminCommand::ListWordDefinitions { .. } => AdminCommandDisplay::ListWordDefinitions,
             AdminCommand::Users { .. } => AdminCommandDisplay::Users,
+            AdminCommand::BuildInfo => AdminCommandDisplay::BuildInfo,
         };
     }
 }

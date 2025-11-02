@@ -55,6 +55,18 @@ pub async fn handle(
         AdminCommand::Users { user_id } => {
             return actions::admin_users::handle_command(app, state, m, user_id).await;
         },
+        AdminCommand::BuildInfo => {
+            app.bot()
+                .send_message(
+                    m.chat.id,
+                    format!(
+                        "Git Commit SHA: {sha}\nGit Commit Timestamp: {timestamp}",
+                        sha = env!("GIT_SHA"),
+                        timestamp = env!("GIT_COMMIT_TIMESTAMP")
+                    ),
+                )
+                .await?;
+        },
     }
 
     Ok(HandleStatus::Handled)
