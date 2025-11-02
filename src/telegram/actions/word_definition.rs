@@ -1,7 +1,7 @@
-use anyhow::Context;
 use itertools::Itertools as _;
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, InlineKeyboardMarkup, MessageId, ParseMode};
+use teloxide::sugar::bot::BotMessagesExt as _;
+use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::UserLocale;
@@ -9,21 +9,20 @@ use crate::services::{WordDefinitionService, WordStatsService};
 use crate::telegram::commands_admin::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons_admin::AdminInlineButtons;
+use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(locale, word))]
 async fn generate_and_send_definition(
     app: &'static App,
-    chat_id: ChatId,
-    message_id: MessageId,
+    message: &Message,
     locale: String,
     word: String,
     refresh: bool,
 ) -> anyhow::Result<()> {
     let Some(ai_config) = app.ai() else {
         app.bot()
-            .edit_message_text(
-                chat_id,
-                message_id,
+            .edit_text(
+                message,
                 "AI configuration is not available. Word definitions cannot be retrieved.",
             )
             .await?;
@@ -31,9 +30,8 @@ async fn generate_and_send_definition(
     };
 
     app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
+        .edit_text(
+            message,
             format!(
                 "Generating definition for <code>{word}</code> (locale: <code>{locale}</code>)...",
             ),
@@ -57,9 +55,8 @@ async fn generate_and_send_definition(
     ]]);
 
     app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
+            .edit_text(
+                message,
             format!(
                 "Definition for <code>{word}</code> (locale: <code>{locale}</code>):\n\n{definition}",
             ),
@@ -96,9 +93,9 @@ pub async fn handle_definition(
         return Ok(HandleStatus::Handled);
     }
 
-    let msg = app.bot().send_message(m.chat.id, "Starting...").await?;
+    let message = app.bot().send_message(m.chat.id, "Starting...").await?;
 
-    generate_and_send_definition(app, msg.chat.id, msg.id, locale, word, refresh).await?;
+    generate_and_send_definition(app, &message, locale, word, refresh).await?;
 
     Ok(HandleStatus::Handled)
 }
@@ -110,11 +107,16 @@ pub async fn handle_inline_regenerate(
     locale: String,
     word: String,
 ) -> anyhow::Result<()> {
-    let message = q.message.clone().context("Message is empty")?;
-    let message_id = message.id();
-    let chat_id = message.chat().id;
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
 
-    generate_and_send_definition(app, chat_id, message_id, locale, word, true).await?;
+        return Ok(());
+    };
+
+    generate_and_send_definition(app, &message, locale, word, true).await?;
 
     Ok(())
 }
@@ -139,11 +141,16 @@ pub async fn handle_inline_list(
 ) -> anyhow::Result<()> {
     app.bot().answer_callback_query(q.id.clone()).await?;
 
-    let message = q.message.clone().context("Message is empty")?;
-    let message_id = message.id();
-    let chat_id = message.chat().id;
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
 
-    send_definitions_page(app, chat_id, Some(message_id), locale_filter, page).await?;
+        return Ok(());
+    };
+
+    send_definitions_page(app, message.chat.id, Some(message), locale_filter, page).await?;
 
     Ok(())
 }
@@ -152,7 +159,7 @@ pub async fn handle_inline_list(
 async fn send_definitions_page(
     app: &'static App,
     chat_id: teloxide::types::ChatId,
-    message_id: Option<teloxide::types::MessageId>,
+    message: Option<Message>,
     locale_filter: String,
     page: usize,
 ) -> anyhow::Result<()> {
@@ -184,16 +191,16 @@ async fn send_definitions_page(
     let total_items = WordStatsService::count_stats(app.db()).await?;
 
     if total_items == 0 {
-        let message = format!("No word definitions found for locale: <code>{locale_filter}</code>");
+        let text = format!("No word definitions found for locale: <code>{locale_filter}</code>");
 
-        if let Some(msg_id) = message_id {
+        if let Some(message) = &message {
             app.bot()
-                .edit_message_text(chat_id, msg_id, message)
+                .edit_text(message, text)
                 .parse_mode(ParseMode::Html)
                 .await?;
         } else {
             app.bot()
-                .send_message(chat_id, message)
+                .send_message(chat_id, text)
                 .parse_mode(ParseMode::Html)
                 .await?;
         }
@@ -275,10 +282,10 @@ async fn send_definitions_page(
         None
     };
 
-    if let Some(msg_id) = message_id {
+    if let Some(message) = &message {
         let mut req = app
             .bot()
-            .edit_message_text(chat_id, msg_id, lines.join("\n"))
+            .edit_text(message, lines.join("\n"))
             .parse_mode(ParseMode::Html);
 
         if let Some(kb) = keyboard {

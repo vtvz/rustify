@@ -8,7 +8,7 @@ use crate::services::UserService;
 pub struct NotificationService;
 
 impl NotificationService {
-    async fn notify_admins(app: &'static App, message: &str) -> anyhow::Result<()> {
+    async fn notify_admins(app: &'static App, text: &str) -> anyhow::Result<()> {
         let admins = UserService::get_users_by_role(app.db(), UserRole::Admin).await?;
 
         for admin in admins {
@@ -16,7 +16,7 @@ impl NotificationService {
 
             if let Err(err) = app
                 .bot()
-                .send_message(chat_id, message)
+                .send_message(chat_id, text)
                 .parse_mode(ParseMode::Html)
                 .await
             {

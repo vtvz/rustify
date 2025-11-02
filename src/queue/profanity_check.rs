@@ -167,7 +167,7 @@ pub async fn check(
     ret.profane = true;
 
     let mut lines = bad_lines.len();
-    let message = loop {
+    let text = loop {
         let message = t!(
             "profanity-check.message",
             locale = state.locale(),
@@ -186,7 +186,7 @@ pub async fn check(
 
     let result: Result<Message, teloxide::RequestError> = app
         .bot()
-        .send_message(ChatId(state.user_id().parse()?), message)
+        .send_message(ChatId(state.user_id().parse()?), text)
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(

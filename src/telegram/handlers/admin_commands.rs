@@ -1,5 +1,6 @@
 use anyhow::Context;
 use teloxide::prelude::*;
+use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
 
 use super::HandleStatus;
@@ -54,6 +55,19 @@ pub async fn handle(
         },
         AdminCommand::Users { user_id } => {
             return actions::admin_users::handle_command(app, state, m, user_id).await;
+        },
+        AdminCommand::BuildInfo => {
+            app.bot()
+                .send_message(
+                    m.chat.id,
+                    format!(
+                        "Git Commit SHA: <code>{sha}</code>\nGit Commit Timestamp: <code>{timestamp}</code>",
+                        sha = env!("GIT_SHA"),
+                        timestamp = env!("GIT_COMMIT_TIMESTAMP")
+                    ),
+                )
+                .parse_mode(ParseMode::Html)
+                .await?;
         },
     }
 

@@ -49,9 +49,9 @@ pub async fn handle_add_word(
         None
     };
 
-    if let Some(message) = validate(&word) {
+    if let Some(text) = validate(&word) {
         app.bot()
-            .send_message(chat_id, message)
+            .send_message(chat_id, text)
             .reply_markup(StartKeyboard::markup(state.locale()))
             .parse_mode(ParseMode::Html)
             .await?;
@@ -66,7 +66,7 @@ pub async fn handle_add_word(
     )
     .await?;
 
-    let message = if added {
+    let text = if added {
         t!(
             "user-word-whitelist.word-added",
             locale = state.locale(),
@@ -83,7 +83,7 @@ pub async fn handle_add_word(
     };
 
     app.bot()
-        .send_message(chat_id, message)
+        .send_message(chat_id, text)
         .reply_markup(StartKeyboard::markup(state.locale()))
         .parse_mode(ParseMode::Html)
         .await?;
@@ -99,14 +99,14 @@ pub async fn handle_remove_word(
     word: String,
 ) -> anyhow::Result<HandleStatus> {
     if word.is_empty() {
-        let message = t!(
+        let text = t!(
             "user-word-whitelist.remove-provide-word",
             locale = state.locale(),
             command = UserCommandDisplay::RemoveWhitelistWord,
         );
 
         app.bot()
-            .send_message(chat_id, message)
+            .send_message(chat_id, text)
             .reply_markup(StartKeyboard::markup(state.locale()))
             .parse_mode(ParseMode::Html)
             .await?;
@@ -117,7 +117,7 @@ pub async fn handle_remove_word(
     let removed =
         UserWordWhitelistService::remove_ok_word_for_user(app.db(), state.user_id(), &word).await?;
 
-    let message = if removed {
+    let text = if removed {
         t!(
             "user-word-whitelist.removed",
             locale = state.locale(),
@@ -133,7 +133,7 @@ pub async fn handle_remove_word(
     };
 
     app.bot()
-        .send_message(chat_id, message)
+        .send_message(chat_id, text)
         .reply_markup(StartKeyboard::markup(state.locale()))
         .parse_mode(ParseMode::Html)
         .await?;
@@ -149,7 +149,7 @@ pub async fn handle_list_words(
 ) -> anyhow::Result<HandleStatus> {
     let words = UserWordWhitelistService::get_ok_words_for_user(app.db(), state.user_id()).await?;
 
-    let message = if words.is_empty() {
+    let text = if words.is_empty() {
         t!(
             "user-word-whitelist.empty",
             locale = state.locale(),
@@ -172,7 +172,7 @@ pub async fn handle_list_words(
     };
 
     app.bot()
-        .send_message(chat_id, message.trim())
+        .send_message(chat_id, text.trim())
         .reply_markup(StartKeyboard::markup(state.locale()))
         .parse_mode(ParseMode::Html)
         .await?;

@@ -1,4 +1,3 @@
-use anyhow::Context as _;
 use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
 use backon::{ExponentialBuilder, Retryable};
 use itertools::Itertools;
@@ -6,7 +5,8 @@ use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
 use teloxide::prelude::Requester as _;
-use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode, UserId};
+use teloxide::sugar::bot::BotMessagesExt as _;
+use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, Message, ParseMode};
 
 use crate::app::{AIConfig, App};
 use crate::profanity;
@@ -17,6 +17,7 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::StringUtils;
+use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id))]
 pub async fn handle_inline(
@@ -25,7 +26,14 @@ pub async fn handle_inline(
     q: CallbackQuery,
     track_id: &str,
 ) -> anyhow::Result<()> {
-    let chat_id = q.from.id;
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
+
+        return Ok(());
+    };
 
     let Some(config) = app.ai() else {
         app.bot()
@@ -35,8 +43,6 @@ pub async fn handle_inline(
 
         return Ok(());
     };
-
-    let message_id = q.message.clone().context("Message is empty")?.id();
 
     let track = state
         .spotify()
@@ -48,9 +54,8 @@ pub async fn handle_inline(
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
-            .edit_message_text(
-                chat_id,
-                message_id,
+            .edit_text(
+                &message,
                 t!("analysis.lyrics-not-found", locale = state.locale()),
             )
             .await?;
@@ -59,9 +64,8 @@ pub async fn handle_inline(
     };
 
     app.bot()
-        .edit_message_text(
-            chat_id,
-            message_id,
+        .edit_text(
+            &message,
             t!(
                 "analysis.waiting",
                 locale = state.locale(),
@@ -73,16 +77,7 @@ pub async fn handle_inline(
         .parse_mode(ParseMode::Html)
         .await?;
 
-    let res = perform(
-        app,
-        state,
-        chat_id,
-        message_id,
-        config,
-        &track,
-        &hit.lyrics(),
-    )
-    .await;
+    let res = perform(app, state, &message, config, &track, &hit.lyrics()).await;
 
     match res {
         Ok(_) => {
@@ -93,9 +88,8 @@ pub async fn handle_inline(
         },
         Err(err) => {
             app.bot()
-                .edit_message_text(
-                    chat_id,
-                    message_id,
+                .edit_text(
+                    &message,
                     t!(
                         "analysis.failed",
                         locale = state.locale(),
@@ -121,8 +115,7 @@ pub async fn handle_inline(
 async fn perform(
     app: &App,
     state: &UserState,
-    chat_id: UserId,
-    message_id: teloxide::types::MessageId,
+    message: &Message,
     config: &AIConfig,
     track: &ShortTrack,
     lyrics: &[&str],
@@ -189,7 +182,7 @@ async fn perform(
         )
     };
 
-    let message_gen = |analysis_result: &str, profane_words_block: &str| {
+    let message_text_gen = |analysis_result: &str, profane_words_block: &str| {
         t!(
             "analysis.result",
             locale = state.locale(),
@@ -200,25 +193,25 @@ async fn perform(
         )
     };
 
-    let mut message = message_gen(&analysis_result, &profane_words_block);
+    let mut text = message_text_gen(&analysis_result, &profane_words_block);
 
     // Remove profane block if message is too long
-    if message.chars_len() > MESSAGE_MAX_LEN {
-        message = message_gen(&analysis_result, &profane_words_doesnt_fit_block);
+    if text.chars_len() > MESSAGE_MAX_LEN {
+        text = message_text_gen(&analysis_result, &profane_words_doesnt_fit_block);
     }
 
     // If this didn't help, crop analysis result as well
-    if message.chars_len() > MESSAGE_MAX_LEN {
-        let analysis_len = analysis_result.chars_len() - (message.chars_len() - MESSAGE_MAX_LEN);
+    if text.chars_len() > MESSAGE_MAX_LEN {
+        let analysis_len = analysis_result.chars_len() - (text.chars_len() - MESSAGE_MAX_LEN);
 
-        message = message_gen(
+        text = message_text_gen(
             &analysis_result.chars_crop(analysis_len),
             &profane_words_doesnt_fit_block,
         );
     }
 
     app.bot()
-        .edit_message_text(chat_id, message_id, message)
+        .edit_text(message, text)
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .reply_markup(InlineKeyboardMarkup::new(keyboard))

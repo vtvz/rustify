@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use lazy_static::lazy_static;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -18,7 +20,7 @@ impl CacheManager {
 
     pub async fn redis_cached_build<T>(
         namespace: &str,
-        cache_ttl: u64,
+        cache_ttl: Duration,
     ) -> anyhow::Result<cached::AsyncRedisCache<String, T>>
     where
         T: Sync + Send + Serialize + DeserializeOwned,

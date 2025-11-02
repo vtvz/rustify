@@ -62,7 +62,7 @@ pub async fn handle(
     }
     let user_stats = user_stats.join("\n");
 
-    let message = formatdoc!(
+    let text = formatdoc!(
         r#"
             📉 <b>Global stats</b> 📈
 
@@ -94,7 +94,7 @@ pub async fn handle(
     );
 
     app.bot()
-        .send_message(m.chat.id, message)
+        .send_message(m.chat.id, text)
         .reply_parameters(ReplyParameters::new(m.id))
         .parse_mode(ParseMode::Html)
         .await?;

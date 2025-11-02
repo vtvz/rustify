@@ -19,13 +19,3 @@ pub fn link_preview_small_top(url: impl Into<String>) -> LinkPreviewOptions {
         show_above_text: true,
     }
 }
-
-pub fn link_preview_disabled() -> LinkPreviewOptions {
-    LinkPreviewOptions {
-        is_disabled: true,
-        url: None,
-        prefer_small_media: false,
-        prefer_large_media: false,
-        show_above_text: false,
-    }
-}

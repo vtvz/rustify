@@ -1,7 +1,7 @@
-use anyhow::Context as _;
 use rspotify::model::TrackId;
 use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
+use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use super::super::inline_buttons::InlineButtons;
@@ -13,6 +13,7 @@ use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
+use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
@@ -28,9 +29,9 @@ pub async fn handle(
 
     let track = match CurrentlyPlaying::get(&*state.spotify().await).await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
-        CurrentlyPlaying::None(message) => {
+        CurrentlyPlaying::None(reason) => {
             app.bot()
-                .send_message(m.chat.id, message.localize(state.locale()))
+                .send_message(m.chat.id, reason.localize(state.locale()))
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -45,7 +46,7 @@ pub async fn handle(
         InlineButtons::from_track_status(TrackStatus::Disliked, track.id(), state.locale());
 
     app.bot()
-        .send_message(m.chat.id, compose_message(&track, state.locale()))
+        .send_message(m.chat.id, compose_message_text(&track, state.locale()))
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
@@ -77,12 +78,17 @@ pub async fn handle_inline(
     let keyboard =
         InlineButtons::from_track_status(TrackStatus::Disliked, track.id(), state.locale());
 
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
+
+        return Ok(());
+    };
+
     app.bot()
-        .edit_message_text(
-            q.from.id,
-            q.message.context("Message is empty")?.id(),
-            compose_message(&track, state.locale()),
-        )
+        .edit_text(&message, compose_message_text(&track, state.locale()))
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
@@ -91,7 +97,7 @@ pub async fn handle_inline(
     Ok(())
 }
 
-fn compose_message(track: &ShortTrack, locale: &str) -> String {
+fn compose_message_text(track: &ShortTrack, locale: &str) -> String {
     t!(
         "actions.dislike",
         locale = locale,
