@@ -4,6 +4,7 @@ use backon::{ExponentialBuilder, Retryable};
 use cached::proc_macro::io_cached;
 use indoc::formatdoc;
 use isolang::Language;
+use itertools::Itertools as _;
 use reqwest::{Client, ClientBuilder};
 use serde::{Deserialize, Serialize};
 use strsim::normalized_damerau_levenshtein;
@@ -26,12 +27,14 @@ pub struct Lyrics {
     pub album_name: String,
     pub instrumental: bool,
     pub plain_lyrics: Option<String>,
+    pub synced_lyrics: Option<String>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct SearchResult {
     confidence: SearchResultConfidence,
     lyrics: Vec<String>,
+    indexes: Vec<String>,
     language: Language,
     artist_name: String,
     track_name: String,
@@ -44,6 +47,13 @@ impl super::SearchResult for SearchResult {
 
     fn lyrics(&self) -> Vec<&str> {
         self.lyrics.iter().map(|lyrics| lyrics.as_str()).collect()
+    }
+
+    fn line_index_name(&self, index: usize) -> String {
+        self.indexes
+            .get(index)
+            .cloned()
+            .unwrap_or(index.to_string())
     }
 
     fn link(&self) -> String {
@@ -150,9 +160,31 @@ impl LrcLib {
             hits_count += hits.len();
 
             for (hit_i, hit) in hits.into_iter().enumerate() {
-                let Some(hit_plain_lyrics) = hit.plain_lyrics else {
-                    continue;
+                let index_lyrics = match (&hit.synced_lyrics, &hit.plain_lyrics) {
+                    (Some(lyrics), _) => {
+                        lazy_static::lazy_static! {
+                            static ref RE: regex::Regex = regex::Regex::new(r"^\[(.*?)\.\d{2}\] (.*)$")
+                                .expect("Valid regex pattern");
+                        };
+                        lyrics
+                            .lines()
+                            .enumerate()
+                            .map(|(index, line)| {
+                                RE.captures(line)
+                                    .map(|caps| (caps[1].to_string(), caps[2].to_string()))
+                                    .unwrap_or_else(|| (index.to_string(), line.to_string()))
+                            })
+                            .collect()
+                    },
+                    (_, Some(lyrics)) => lyrics
+                        .lines()
+                        .enumerate()
+                        .map(|(index, line)| (index.to_string(), line.to_string()))
+                        .collect_vec(),
+                    _ => continue,
                 };
+
+                let (indexes, lyrics): (Vec<_>, Vec<_>) = index_lyrics.into_iter().unzip();
 
                 let confidence = SearchResultConfidence::new(
                     normalized_damerau_levenshtein(
@@ -175,10 +207,11 @@ impl LrcLib {
 
                     return Ok(Some(SearchResult {
                         confidence,
-                        language: whatlang::detect_lang(&hit_plain_lyrics)
+                        language: whatlang::detect_lang(&lyrics.join("\n"))
                             .and_then(|lang| Language::from_639_3(lang.code()))
                             .unwrap_or_default(),
-                        lyrics: hit_plain_lyrics.lines().map(str::to_string).collect(),
+                        indexes,
+                        lyrics,
                         artist_name: artist_name.into(),
                         track_name: track_name.into(),
                     }));
