@@ -114,7 +114,7 @@ pub async fn spotify_resp_error(
                                 t!(
                                     "error.unavailable-in-country",
                                     locale = locale,
-                                    command = UserCommandDisplay::Register,
+                                    command = UserCommandDisplay::Login,
                                 ),
                             )
                             .reply_markup(StartKeyboard::markup(locale))
@@ -139,7 +139,7 @@ pub async fn spotify_resp_error(
                             t!(
                                 "error.spotify-auth-failed",
                                 locale = locale,
-                                command = UserCommandDisplay::Register,
+                                command = UserCommandDisplay::Login,
                                 error = serr.error_description,
                             ),
                         )
@@ -181,7 +181,7 @@ pub async fn spotify_client_error(
                     t!(
                         "error.spotify-invalid-token",
                         locale = locale,
-                        command = UserCommandDisplay::Register
+                        command = UserCommandDisplay::Login
                     ),
                 )
                 .reply_markup(StartKeyboard::markup(locale))

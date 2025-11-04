@@ -88,7 +88,7 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
         .send_message(
             ChatId(state.user_id().parse()?),
             t!(
-                "register.success",
+                "login.success",
                 magic_command = UserCommandDisplay::Magic,
                 skippage_command = UserCommandDisplay::Skippage,
                 dislike_button = t!("start-keyboard.dislike", locale = state.locale()),

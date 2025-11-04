@@ -13,7 +13,7 @@ pub async fn handle(
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
     if let Some(url) = extract_url_from_message(m) {
-        return_if_handled!(actions::register::handle(app, state, &url, m).await?);
+        return_if_handled!(actions::login::handle(app, state, &url, m).await?);
         return_if_handled!(actions::details::handle_url(app, state, &url, m).await?);
     };
 

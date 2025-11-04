@@ -29,7 +29,7 @@ pub async fn handle(
             .parse_mode(ParseMode::Html)
             .await?;
 
-        actions::register::send_register_invite(app, &state).await?;
+        actions::login::send_login_invite(app, &state).await?;
     } else {
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))

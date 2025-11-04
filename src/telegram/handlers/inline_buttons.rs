@@ -17,10 +17,10 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
     if !state.is_spotify_authed().await {
         app.bot()
             .answer_callback_query(q.id.clone())
-            .text("You need to register first")
+            .text(t!("inline-buttons.alert-login", locale = state.locale()))
             .await?;
 
-        actions::register::send_register_invite(app, state).await?;
+        actions::login::send_login_invite(app, state).await?;
 
         return Ok(());
     }
@@ -33,7 +33,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         if !state.user().is_admin() {
             app.bot()
                 .answer_callback_query(q.id.clone())
-                .text("Button is broken. Try another one")
+                .text(t!("inline-buttons.alert-broaken", locale = state.locale()))
                 .await?;
 
             return Ok(());
