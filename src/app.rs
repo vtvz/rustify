@@ -26,6 +26,7 @@ pub struct App {
     redis: deadpool_redis::Pool,
     ai: Option<AIConfig>,
     dialogue_storage: Arc<RedisStorage<Bincode>>,
+    server_http_address: String,
 }
 
 pub struct AIConfig {
@@ -70,6 +71,8 @@ struct EnvConfig {
     influx_bucket: Option<String>,
     influx_org: Option<String>,
     influx_instance: Option<String>,
+
+    server_http_address: Option<String>,
 }
 
 impl App {
@@ -103,6 +106,10 @@ impl App {
 
     pub fn dialogue_storage(&self) -> &RedisStorage<Bincode> {
         &self.dialogue_storage
+    }
+
+    pub fn server_http_address(&self) -> &str {
+        &self.server_http_address
     }
 }
 
@@ -276,6 +283,7 @@ impl App {
             redis,
             ai,
             dialogue_storage: RedisStorage::open(redis_url, Bincode).await?,
+            server_http_address: env.server_http_address.unwrap_or("0.0.0.0:3000".into()),
         });
 
         let app = &*Box::leak(app);

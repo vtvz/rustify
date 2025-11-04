@@ -52,8 +52,11 @@ run-track-check:
 run-queues:
   proxychains4 -q cargo run "queues"
 
+run-server:
+  proxychains4 -q cargo run "server"
+
 run:
-  parallel --tagstring "[{}]" --line-buffer -j4 --halt now,fail=1 just ::: "run-bot" "run-track-check" "run-queues"
+  parallel --tagstring "[{}]" --line-buffer -j4 --halt now,fail=1 just ::: "run-bot" "run-track-check" "run-queues" "run-server"
 
 watch:
   cargo watch -s 'just run'

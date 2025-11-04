@@ -177,6 +177,19 @@ impl UserService {
         Ok(user)
     }
 
+    #[tracing::instrument(skip_all)]
+    pub async fn find_by_spotify_state(
+        db: &impl ConnectionTrait,
+        state: &uuid::Uuid,
+    ) -> anyhow::Result<Option<UserModel>> {
+        let user = UserEntity::find()
+            .filter(UserColumn::SpotifyState.eq(*state))
+            .one(db)
+            .await?;
+
+        Ok(user)
+    }
+
     #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn set_status(
         db: &impl ConnectionTrait,
