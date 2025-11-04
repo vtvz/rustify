@@ -1,5 +1,3 @@
-use rspotify::clients::OAuthClient;
-use sea_orm::TransactionTrait;
 use teloxide::prelude::*;
 use teloxide::types::{
     ChatId,
@@ -10,125 +8,9 @@ use teloxide::types::{
     ReplyMarkup,
 };
 
-use super::super::keyboards::StartKeyboard;
 use crate::app::App;
-use crate::entity::prelude::*;
-use crate::services::{NotificationService, UserService};
-use crate::spotify::auth::SpotifyAuthService;
-use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
-
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
-pub async fn handle(
-    app: &'static App,
-    state: &UserState,
-    url: &url::Url,
-    m: &Message,
-) -> anyhow::Result<HandleStatus> {
-    let value = url
-        .query_pairs()
-        .find(|(key, _)| key == "code")
-        .map(|(_, value)| value.to_string());
-
-    let Some(code) = value else {
-        return Ok(HandleStatus::Skipped);
-    };
-
-    process_spotify_code(app, state, m, code).await
-}
-
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
-async fn process_spotify_code(
-    app: &'static App,
-    state: &UserState,
-    m: &Message,
-    code: String,
-) -> anyhow::Result<HandleStatus> {
-    let instance = state.spotify_write().await;
-
-    if let Err(_err) = instance.request_token(&code).await {
-        app.bot()
-            .send_message(
-                m.chat.id,
-                t!(
-                    "login.error",
-                    command = UserCommandDisplay::Login,
-                    locale = state.locale()
-                ),
-            )
-            .await?;
-
-        return Ok(HandleStatus::Handled);
-    }
-
-    let token = instance.token.lock().await;
-
-    let Ok(token) = token else {
-        app.bot()
-            .send_message(
-                m.chat.id,
-                t!(
-                    "login.error",
-                    command = UserCommandDisplay::Login,
-                    locale = state.locale()
-                ),
-            )
-            .await?;
-
-        return Ok(HandleStatus::Handled);
-    };
-
-    let Some(token) = token.clone() else {
-        app.bot()
-            .send_message(
-                m.chat.id,
-                t!(
-                    "login.error",
-                    command = UserCommandDisplay::Login,
-                    locale = state.locale()
-                ),
-            )
-            .await?;
-
-        return Ok(HandleStatus::Handled);
-    };
-
-    {
-        let txn = app.db().begin().await?;
-
-        SpotifyAuthService::set_token(&txn, state.user_id(), token).await?;
-        UserService::set_status(&txn, state.user_id(), UserStatus::Active).await?;
-
-        txn.commit().await?;
-    }
-
-    app.bot()
-        .send_message(
-            m.chat.id,
-            t!(
-                "login.success",
-                magic_command = UserCommandDisplay::Magic,
-                skippage_command = UserCommandDisplay::Skippage,
-                dislike_button = t!("start-keyboard.dislike", locale = state.locale()),
-                details_button = t!("start-keyboard.details", locale = state.locale()),
-                locale = state.locale()
-            ),
-        )
-        .parse_mode(ParseMode::Html)
-        .reply_markup(StartKeyboard::markup(state.locale()))
-        .await?;
-
-    if let Err(err) = NotificationService::notify_spotify_connected(app, state.user()).await {
-        tracing::error!(
-            err = ?err,
-            user_id = state.user_id(),
-            "Failed to send Spotify connected notification"
-        );
-    }
-
-    Ok(HandleStatus::Handled)
-}
 
 #[tracing::instrument(skip_all)]
 pub async fn send_login_invite(

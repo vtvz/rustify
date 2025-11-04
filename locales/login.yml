@@ -1,11 +1,5 @@
 _version: 2
 
-login.error:
-  en: |-
-    ❌ Cannot retrieve token. The code is probably broken. Please run the /%{command} command and try again
-  ru: |-
-    ❌ Не удается получить токен. Код, вероятно, сломан. Выполните команду /%{command} и попробуйте снова
-
 login.success:
   en: |-
     🎉 Great! You registered successfully!
