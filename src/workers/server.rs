@@ -81,6 +81,7 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
         let txn = app.db().begin().await?;
         SpotifyAuthService::set_token(&txn, &user.id, token).await?;
         UserService::set_status(&txn, &user.id, UserStatus::Active).await?;
+        UserService::reset_spotify_state(&txn, &user.id).await?;
         txn.commit().await?;
     }
 

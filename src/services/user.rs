@@ -191,6 +191,20 @@ impl UserService {
     }
 
     #[tracing::instrument(skip_all, fields(user_id = id))]
+    pub async fn reset_spotify_state(
+        db: &impl ConnectionTrait,
+        id: &str,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::SpotifyState, Expr::cust("uuid_generate_v4()"))
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
+    #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn set_status(
         db: &impl ConnectionTrait,
         id: &str,
