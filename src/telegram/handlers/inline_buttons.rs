@@ -1,5 +1,4 @@
 use anyhow::Context as _;
-use teloxide::dispatching::dialogue::GetChatId as _;
 use teloxide::prelude::*;
 
 use crate::app::App;
@@ -21,9 +20,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
             .text("You need to register first")
             .await?;
 
-        if let Some(chat_id) = q.chat_id() {
-            actions::register::send_register_invite(app, chat_id, state.locale()).await?;
-        }
+        actions::register::send_register_invite(app, state).await?;
 
         return Ok(());
     }

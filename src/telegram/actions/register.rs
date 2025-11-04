@@ -133,18 +133,20 @@ async fn process_spotify_code(
 #[tracing::instrument(skip_all)]
 pub async fn send_register_invite(
     app: &'static App,
-    chat_id: ChatId,
-    locale: &str,
+    state: &UserState,
 ) -> anyhow::Result<HandleStatus> {
     let url = app.spotify_manager().get_authorize_url().await?;
     app.bot()
-        .send_message(chat_id, t!("register.invite", locale = locale))
+        .send_message(
+            ChatId(state.user_id().parse()?),
+            t!("register.invite", locale = state.locale()),
+        )
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
                 vec![InlineKeyboardButton {
-                    text: t!("register.button", locale = locale).into(),
+                    text: t!("register.button", locale = state.locale()).into(),
                     kind: InlineKeyboardButtonKind::Url(url.parse()?),
                 }]
             ],
