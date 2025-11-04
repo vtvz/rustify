@@ -58,6 +58,7 @@ features = [
     "sqlx-postgres",
     "debug-print",
     "with-chrono",
+    "with-uuid",
 ]
 
 [dependencies.teloxide]

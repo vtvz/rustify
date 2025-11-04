@@ -135,7 +135,7 @@ pub async fn send_register_invite(
     app: &'static App,
     state: &UserState,
 ) -> anyhow::Result<HandleStatus> {
-    let url = app.spotify_manager().get_authorize_url().await?;
+    let url = app.spotify_manager().get_authorize_url(state).await?;
     app.bot()
         .send_message(
             ChatId(state.user_id().parse()?),

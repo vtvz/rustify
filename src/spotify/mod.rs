@@ -25,6 +25,7 @@ use teloxide::utils::html;
 
 use crate::entity::prelude::*;
 use crate::services::UserService;
+use crate::user::UserState;
 
 pub struct ShortPlaylist {
     id: PlaylistId<'static>,
@@ -393,8 +394,11 @@ impl Manager {
         Ok(instance)
     }
 
-    #[allow(dead_code)]
-    pub async fn get_authorize_url(&self) -> anyhow::Result<String> {
-        self.spotify.get_authorize_url(false).context("Get auth")
+    pub async fn get_authorize_url(&self, state: &UserState) -> anyhow::Result<String> {
+        let mut spotify = state.spotify().await.clone();
+
+        spotify.oauth.state = state.user().spotify_state.to_string();
+
+        spotify.get_authorize_url(false).context("Get auth")
     }
 }
