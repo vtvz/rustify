@@ -33,7 +33,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         if !state.user().is_admin() {
             app.bot()
                 .answer_callback_query(q.id.clone())
-                .text(t!("inline-buttons.alert-broaken", locale = state.locale()))
+                .text(t!("inline-buttons.alert-broken", locale = state.locale()))
                 .await?;
 
             return Ok(());

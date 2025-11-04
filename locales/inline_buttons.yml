@@ -24,7 +24,7 @@ inline-buttons.alert-login:
   ru: |-
     Сначала нужно войти в систему
 
-inline-buttons.alert-broaken:
+inline-buttons.alert-broken:
   en: |-
     Button is broken. Try another one
   ru: |-
