@@ -28,6 +28,41 @@ services:
     entrypoint: /usr/local/bin/rustify
     command: queues
 
+  server:
+    image: "{{ rustify_docker_image }}"
+    environment:
+      {{ rustify_env_content | indent(6) }}
+    restart: always
+    entrypoint: /usr/local/bin/rustify
+    command: server
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rustify-server.rule=Host(`{{ rustify_domain_name }}`)"
+      - "traefik.http.routers.rustify-server.entrypoints=websecure"
+      - "traefik.http.routers.rustify-server.tls=true"
+      - "traefik.http.routers.rustify-server.tls.certresolver=letsencrypt"
+      - "traefik.http.services.rustify-server.loadbalancer.server.port=3000"
+
+  traefik:
+    image: traefik:v3.6.0
+    restart: always
+    ports:
+      - "{{ rustify_port }}:{{ rustify_port }}"
+    environment:
+      HURRICANE_TOKENS: "{{ rustify_hurricane_tokens | default('') }}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./var/traefik/acme.json:/acme.json
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.websecure.address=:{{ rustify_port }}"
+      - "--certificatesresolvers.letsencrypt.acme.email={{ rustify_letsencrypt_email }}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.provider=hurricane"
+      - "--certificatesresolvers.letsencrypt.acme.dnschallenge.resolvers=1.1.1.1:53,8.8.8.8:53"
+
   db:
     image: postgres:16
     restart: always
