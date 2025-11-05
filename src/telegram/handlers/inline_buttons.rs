@@ -1,5 +1,4 @@
 use anyhow::Context as _;
-use teloxide::dispatching::dialogue::GetChatId as _;
 use teloxide::prelude::*;
 
 use crate::app::App;
@@ -18,12 +17,10 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
     if !state.is_spotify_authed().await {
         app.bot()
             .answer_callback_query(q.id.clone())
-            .text("You need to register first")
+            .text(t!("inline-buttons.alert-login", locale = state.locale()))
             .await?;
 
-        if let Some(chat_id) = q.chat_id() {
-            actions::register::send_register_invite(app, chat_id, state.locale()).await?;
-        }
+        actions::login::send_login_invite(app, state).await?;
 
         return Ok(());
     }
@@ -36,7 +33,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         if !state.user().is_admin() {
             app.bot()
                 .answer_callback_query(q.id.clone())
-                .text("Button is broken. Try another one")
+                .text(t!("inline-buttons.alert-broken", locale = state.locale()))
                 .await?;
 
             return Ok(());

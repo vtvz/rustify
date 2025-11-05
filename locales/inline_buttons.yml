@@ -17,3 +17,15 @@ inline-buttons.analyze:
     Analyze text 🔍
   ru: |-
     Анализировать текст 🔍
+
+inline-buttons.alert-login:
+  en: |-
+    You need to login first
+  ru: |-
+    Сначала нужно войти в систему
+
+inline-buttons.alert-broken:
+  en: |-
+    Button is broken. Try another one
+  ru: |-
+    Кнопка не работает. Попробуйте другую

@@ -86,8 +86,8 @@ pub async fn handle(
         UserCommand::Details => {
             return actions::details::handle_current(app, state, &m.chat.id).await;
         },
-        UserCommand::Register => {
-            return actions::register::send_register_invite(app, m.chat.id, state.locale()).await;
+        UserCommand::Login => {
+            return actions::login::send_login_invite(app, state).await;
         },
         UserCommand::Help => {
             app.bot()

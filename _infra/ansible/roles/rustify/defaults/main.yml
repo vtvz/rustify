@@ -16,3 +16,8 @@ rustify_db_database:
 rustify_db_port: 5432
 rustify_db_host: db
 rustify_docker_network: rustify
+
+rustify_letsencrypt_email:
+rustify_hurricane_tokens:
+rustify_domain_name:
+rustify_port: 443

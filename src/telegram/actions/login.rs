@@ -52,8 +52,8 @@ async fn process_spotify_code(
             .send_message(
                 m.chat.id,
                 t!(
-                    "register.error",
-                    command = UserCommandDisplay::Register,
+                    "login.error",
+                    command = UserCommandDisplay::Login,
                     locale = state.locale()
                 ),
             )
@@ -69,8 +69,8 @@ async fn process_spotify_code(
             .send_message(
                 m.chat.id,
                 t!(
-                    "register.error",
-                    command = UserCommandDisplay::Register,
+                    "login.error",
+                    command = UserCommandDisplay::Login,
                     locale = state.locale()
                 ),
             )
@@ -84,8 +84,8 @@ async fn process_spotify_code(
             .send_message(
                 m.chat.id,
                 t!(
-                    "register.error",
-                    command = UserCommandDisplay::Register,
+                    "login.error",
+                    command = UserCommandDisplay::Login,
                     locale = state.locale()
                 ),
             )
@@ -107,7 +107,7 @@ async fn process_spotify_code(
         .send_message(
             m.chat.id,
             t!(
-                "register.success",
+                "login.success",
                 magic_command = UserCommandDisplay::Magic,
                 skippage_command = UserCommandDisplay::Skippage,
                 dislike_button = t!("start-keyboard.dislike", locale = state.locale()),
@@ -131,20 +131,22 @@ async fn process_spotify_code(
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn send_register_invite(
+pub async fn send_login_invite(
     app: &'static App,
-    chat_id: ChatId,
-    locale: &str,
+    state: &UserState,
 ) -> anyhow::Result<HandleStatus> {
-    let url = app.spotify_manager().get_authorize_url().await?;
+    let url = app.spotify_manager().get_authorize_url(state).await?;
     app.bot()
-        .send_message(chat_id, t!("register.invite", locale = locale))
+        .send_message(
+            ChatId(state.user_id().parse()?),
+            t!("login.invite", locale = state.locale()),
+        )
         .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
                 vec![InlineKeyboardButton {
-                    text: t!("register.button", locale = locale).into(),
+                    text: t!("login.button", locale = state.locale()).into(),
                     kind: InlineKeyboardButtonKind::Url(url.parse()?),
                 }]
             ],

@@ -63,8 +63,6 @@ pub async fn handle_inline(
     state: &UserState,
     q: CallbackQuery,
 ) -> anyhow::Result<()> {
-    let chat_id = q.from.id;
-
     let Some(message) = q.get_message() else {
         app.bot()
             .answer_callback_query(q.id.clone())
@@ -75,7 +73,7 @@ pub async fn handle_inline(
     };
 
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, chat_id.into(), state.locale()).await?;
+        actions::login::send_login_invite(app, state).await?;
 
         return Ok(());
     }
@@ -167,7 +165,7 @@ pub async fn handle(
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
     if !state.is_spotify_authed().await {
-        actions::register::send_register_invite(app, chat_id, state.locale()).await?;
+        actions::login::send_login_invite(app, state).await?;
 
         return Ok(HandleStatus::Handled);
     }

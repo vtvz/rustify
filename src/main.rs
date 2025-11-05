@@ -43,6 +43,8 @@ enum CliCommands {
     TrackCheck,
     /// Run the background queues worker
     Queues,
+    /// Run http server
+    Server,
     /// Manage users
     #[command(subcommand)]
     Users(cli::users::UsersCommands),
@@ -56,6 +58,7 @@ async fn main() {
         CliCommands::Bot => workers::bot::work().await,
         CliCommands::TrackCheck => workers::track_check::work().await,
         CliCommands::Queues => workers::queues::work().await,
+        CliCommands::Server => workers::server::work().await,
         CliCommands::Users(cmd) => cli::users::run(cmd).await,
     }
 }

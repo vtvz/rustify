@@ -177,6 +177,33 @@ impl UserService {
         Ok(user)
     }
 
+    #[tracing::instrument(skip_all)]
+    pub async fn find_by_spotify_state(
+        db: &impl ConnectionTrait,
+        state: &uuid::Uuid,
+    ) -> anyhow::Result<Option<UserModel>> {
+        let user = UserEntity::find()
+            .filter(UserColumn::SpotifyState.eq(*state))
+            .one(db)
+            .await?;
+
+        Ok(user)
+    }
+
+    #[tracing::instrument(skip_all, fields(user_id = id))]
+    pub async fn reset_spotify_state(
+        db: &impl ConnectionTrait,
+        id: &str,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::SpotifyState, Expr::cust("uuid_generate_v4()"))
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
     #[tracing::instrument(skip_all, fields(user_id = id))]
     pub async fn set_status(
         db: &impl ConnectionTrait,

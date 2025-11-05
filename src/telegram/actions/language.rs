@@ -18,6 +18,8 @@ pub async fn handle(
 ) -> anyhow::Result<HandleStatus> {
     UserService::set_locale(app.db(), state.user_id(), locale.clone()).await?;
 
+    let state = app.user_state(state.user_id()).await?;
+
     let locale = locale.as_ref();
 
     if !state.is_spotify_authed().await {
@@ -27,7 +29,7 @@ pub async fn handle(
             .parse_mode(ParseMode::Html)
             .await?;
 
-        actions::register::send_register_invite(app, m.chat.id, locale).await?;
+        actions::login::send_login_invite(app, &state).await?;
     } else {
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))

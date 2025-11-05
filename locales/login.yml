@@ -1,12 +1,12 @@
 _version: 2
 
-register.error:
+login.error:
   en: |-
     ❌ Cannot retrieve token. The code is probably broken. Please run the /%{command} command and try again
   ru: |-
     ❌ Не удается получить токен. Код, вероятно, сломан. Выполните команду /%{command} и попробуйте снова
 
-register.success:
+login.success:
   en: |-
     🎉 Great! You registered successfully!
 
@@ -26,7 +26,7 @@ register.success:
     • Вызвать команду /%{magic_command}, чтобы сгенерировать <i>Magic Playlist™</i>✨
     • Вызвать команду /%{skippage_command}, чтобы активировать функцию <i>Skippage™</i>
 
-register.invite:
+login.invite:
   en: |-
     <b>Welcome to Rustify!</b>
 
@@ -34,8 +34,7 @@ register.invite:
 
     • Click the button below 👇
     • Authenticate through Spotify 🔐
-    • Copy the link from your browser's address bar 📋
-    • Send this link to me 💌
+    • Enjoy! 🎵
 
     <b>Features:</b>
     • Block unwanted songs ("Dislike")
@@ -50,8 +49,7 @@ register.invite:
 
     • Нажмите кнопку ниже 👇
     • Авторизуйтесь через Spotify 🔐
-    • Скопируйте ссылку из адресной строки браузера 📋
-    • Отправьте эту ссылку мне 💌
+    • Наслаждайтесь! 🎵
 
     <b>Возможности:</b>
     • Блокировка нежелательных песен ("Дизлайк")
@@ -60,7 +58,7 @@ register.invite:
     • Создание <i>Magic Playlist™</i>✨ из любимых треков
     • Функция <i>Skippage™</i> разнообразит ваши впечатления от прослушивания
 
-register.button:
+login.button:
   en: |-
     🎵 Login with Spotify
   ru: |-

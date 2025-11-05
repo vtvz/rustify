@@ -30,8 +30,8 @@ pub enum UserCommand {
     Details,
     #[command(description = "command.stats")]
     Stats,
-    #[command(description = "command.register")]
-    Register,
+    #[command(description = "command.login")]
+    Login,
 
     #[command(description = "command.toggle-track-skip")]
     ToggleTrackSkip,
@@ -122,7 +122,7 @@ pub enum UserCommandDisplay {
     Like,
     Details,
     Stats,
-    Register,
+    Login,
     ToggleTrackSkip,
     ToggleProfanityCheck,
     Help,
@@ -144,7 +144,7 @@ impl std::fmt::Display for UserCommandDisplay {
             Self::Like => "like",
             Self::Details => "details",
             Self::Stats => "stats",
-            Self::Register => "register",
+            Self::Login => "login",
             Self::ToggleTrackSkip => "toggle_track_skip",
             Self::ToggleProfanityCheck => "toggle_profanity_check",
             Self::Help => "help",
@@ -177,7 +177,7 @@ mod tests {
             UserCommand::Recommendasion => UserCommandDisplay::Recommendasion,
             UserCommand::Details => UserCommandDisplay::Details,
             UserCommand::Stats => UserCommandDisplay::Stats,
-            UserCommand::Register => UserCommandDisplay::Register,
+            UserCommand::Login => UserCommandDisplay::Login,
             UserCommand::ToggleTrackSkip => UserCommandDisplay::ToggleTrackSkip,
             UserCommand::ToggleProfanityCheck => UserCommandDisplay::ToggleProfanityCheck,
             UserCommand::Help => UserCommandDisplay::Help,

@@ -58,7 +58,7 @@ command.stats:
   ru: |-
     Показать статистику треков
 
-command.register:
+command.login:
   en: |-
     Log in to Spotify
   ru: |-
