@@ -340,7 +340,6 @@ impl Manager {
             {
                 let txn = db.begin().await?;
 
-                SpotifyAuthService::remove_token(&txn, user_id).await?;
                 UserService::set_status(&txn, user_id, UserStatus::TokenInvalid).await?;
 
                 txn.commit().await?;

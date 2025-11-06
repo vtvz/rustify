@@ -65,15 +65,6 @@ impl SpotifyAuthService {
         }))
     }
 
-    pub async fn remove_token(
-        db: &impl ConnectionTrait,
-        user_id: &str,
-    ) -> Result<sea_orm::DeleteResult, sea_orm::DbErr> {
-        SpotifyAuthEntity::delete_by_id(user_id.to_owned())
-            .exec(db)
-            .await
-    }
-
     pub async fn suspend_until(
         db: &impl ConnectionTrait,
         user_ids: &[&str],
