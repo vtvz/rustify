@@ -35,11 +35,12 @@ impl NotificationService {
         let user = user
             .map(|user| {
                 format!(
-                    "<code>{}</code> {} {} {}",
-                    user.id,
-                    user.first_name,
-                    user.last_name.as_deref().unwrap_or_default(),
-                    user.username
+                    "<code>{id}</code> <a href=\"tg://user?id={id}\">link</a> {name} {surname} {username}",
+                    id = user.id,
+                    name = user.first_name,
+                    surname = user.last_name.as_deref().unwrap_or_default(),
+                    username = user
+                        .username
                         .as_deref()
                         .map(|username| format!("(@{username})"))
                         .unwrap_or_default()
@@ -59,8 +60,9 @@ impl NotificationService {
         user: &UserModel,
     ) -> anyhow::Result<()> {
         let message = format!(
-            "✅ <b>User connected Spotify</b>\n\nName: {}\nID: <code>{}</code>",
-            user.name, user.id
+            "✅ <b>User connected Spotify</b>\n\nName: {name}\nID: <code>{id}</code> <a href=\"tg://user?id={id}\">link</a>",
+            id = user.id,
+            name = user.name
         );
 
         Self::notify_admins(app, &message).await
