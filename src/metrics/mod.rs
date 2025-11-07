@@ -9,7 +9,7 @@ use tracing::Instrument;
 
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::{TrackStatusService, UserService, UserStats};
+use crate::services::{MetricsService, TrackStatusService, UserService, UserStats};
 use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::utils;
 
@@ -55,6 +55,12 @@ struct TickHealthStats {
     lagging_count: u64,
 }
 
+#[derive(InfluxDbWriteable, Debug)]
+struct ErrorsStats {
+    time: Timestamp,
+    spotify_429: u64,
+}
+
 lazy_static::lazy_static! {
     static ref START_TIME: Instant = Instant::now();
 }
@@ -75,6 +81,9 @@ impl Uptime {
 }
 
 pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
+    // TODO: Remove
+    tracing::debug!("test");
+
     let disliked =
         TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await?;
     let ignored =
@@ -96,6 +105,8 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
     let tick_health_status = utils::tick_health().await;
 
     let time = Timestamp::Seconds(Utc::now().timestamp() as u128);
+
+    let mut redis_conn = app.redis_conn().await?;
 
     let metrics = vec![
         TrackStatusStats {
@@ -125,10 +136,23 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
             lagging_count: tick_health_status.lagging.len() as u64,
         }
         .into_query("tick_health"),
+        ErrorsStats {
+            time,
+            spotify_429: MetricsService::spotify_429_get(&mut redis_conn).await?,
+        }
+        .into_query("errors"),
         Uptime::new(time).into_query("uptime"),
     ];
 
-    client.write(metrics.into_iter()).await?;
+    let result = client
+        .write(metrics.into_iter())
+        .await?
+        .error_for_status()?;
+
+    // TODO: remove
+    let test = result.text().await?;
+
+    tracing::debug!(test, "res");
 
     Ok(())
 }

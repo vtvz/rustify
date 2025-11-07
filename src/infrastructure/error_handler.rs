@@ -1,4 +1,4 @@
-use anyhow::Context;
+// use anyhow::Context;
 use reqwest::StatusCode;
 use teloxide::ApiError;
 use teloxide::payloads::SendMessageSetters;
@@ -7,9 +7,9 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::UserStatus;
-use crate::services::UserService;
+use crate::services::{MetricsService, UserService};
 use crate::spotify;
-use crate::spotify::auth::SpotifyAuthService;
+// use crate::spotify::auth::SpotifyAuthService;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::keyboards::StartKeyboard;
 
@@ -75,7 +75,9 @@ pub async fn spotify_resp_error(
     if response.status() == StatusCode::TOO_MANY_REQUESTS {
         tracing::info!("User got a 429 error (too many requests)");
 
-        let header = response
+        MetricsService::spotify_429_inc(&mut app.redis_conn().await?).await?;
+
+        /* let header = response
             .headers()
             .get("Retry-After")
             .context("Need Retry-After header to proceed")?;
@@ -87,7 +89,7 @@ pub async fn spotify_resp_error(
             &[user_id],
             chrono::Duration::seconds(retry_after),
         )
-        .await?;
+        .await?; */
     }
 
     match spotify::SpotifyError::from_anyhow(err).await {
