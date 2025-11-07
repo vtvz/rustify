@@ -141,7 +141,7 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
         Uptime::new(time).into_query("uptime"),
     ];
 
-    let result = client
+    client
         .write(metrics.into_iter())
         .await?
         .error_for_status()?;
