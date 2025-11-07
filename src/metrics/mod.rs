@@ -81,9 +81,6 @@ impl Uptime {
 }
 
 pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
-    // TODO: Remove
-    tracing::debug!("test");
-
     let disliked =
         TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await?;
     let ignored =
@@ -148,11 +145,6 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
         .write(metrics.into_iter())
         .await?
         .error_for_status()?;
-
-    // TODO: remove
-    let test = result.text().await?;
-
-    tracing::debug!(test, "res");
 
     Ok(())
 }
