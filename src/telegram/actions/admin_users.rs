@@ -259,7 +259,8 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
     let stats = UserService::get_stats(app.db(), Some(user_id)).await?;
 
     let mut redis_conn = app.redis_conn().await?;
-    let idle_ticks = SpotifyPollingBackoffService::get_idle_ticks(&mut redis_conn, user_id).await?;
+    let idle_duration =
+        SpotifyPollingBackoffService::get_idle_duration(&mut redis_conn, user_id).await?;
     let suspend_time =
         SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, user_id).await?;
 
@@ -292,7 +293,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
             • Skippage Enabled: <code>{skippage_enabled}</code>
             • Skippage Duration: <code>{skippage_secs} seconds</code>
             • Magic Playlist: <code>{magic_playlist}</code>
-            • Idle Info: <code>{idle_ticks} ticks</code>, <code>{suspend_time} sec</code>
+            • Idle Info: <code>{idle_duration} sec</code>, <code>{suspend_time} sec</code>
 
             <b>Statistics:</b>
             • Removed from Playlists: <code>{removed_playlists}</code>
@@ -321,6 +322,8 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
         skippage_enabled = render_bool(user.cfg_skippage_enabled),
         skippage_secs = user.cfg_skippage_secs,
         magic_playlist = user.magic_playlist.as_deref().unwrap_or("Not set"),
+        idle_duration = idle_duration.num_seconds(),
+        suspend_time = suspend_time.num_seconds(),
         removed_playlists = stats.removed_playlists,
         removed_collection = stats.removed_collection,
         lyrics_checked = stats.lyrics_checked,
@@ -330,7 +333,6 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
         lyrics_genius = stats.lyrics_genius,
         lyrics_musixmatch = stats.lyrics_musixmatch,
         lyrics_lrclib = stats.lyrics_lrclib,
-        suspend_time = suspend_time.num_seconds(),
     );
 
     app.bot()

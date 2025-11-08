@@ -1,63 +1,54 @@
 use chrono::Duration;
 use redis::AsyncCommands;
 
+use crate::utils::Clock;
+
 pub struct SpotifyPollingBackoffService {}
 
 impl SpotifyPollingBackoffService {
-    pub async fn inc_idle(
+    pub async fn update_activity(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
     ) -> anyhow::Result<()> {
         let key = Self::get_key(user_id);
-        let _: () = redis_conn.incr(key, 1).await?;
+        let now = Clock::now().and_utc().timestamp();
+        let _: () = redis_conn.set(key, now).await?;
 
         Ok(())
     }
 
-    pub async fn reset_idle(
+    pub async fn get_idle_duration(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<Duration> {
         let key = Self::get_key(user_id);
-        let _: () = redis_conn.set(key, 0).await?;
+        let last_activity: Option<i64> = redis_conn.get(key).await?;
+        let now = Clock::now().and_utc().timestamp();
 
-        Ok(())
-    }
+        let dur = Duration::seconds(now - last_activity.unwrap_or(now));
 
-    pub async fn get_idle_ticks(
-        redis_conn: &mut deadpool_redis::Connection,
-        user_id: &str,
-    ) -> anyhow::Result<u64> {
-        let key = Self::get_key(user_id);
-        let count: Option<u64> = redis_conn.get(key).await?;
-
-        Ok(count.unwrap_or_default())
+        Ok(dur)
     }
 
     pub async fn get_suspend_time(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
     ) -> anyhow::Result<Duration> {
-        let count = Self::get_idle_ticks(redis_conn, user_id).await?;
+        let idle_duration = Self::get_idle_duration(redis_conn, user_id).await?;
 
         #[rustfmt::skip]
         let intervals = [
-            ( Duration::minutes(1),  Duration::seconds(5)  ),
-            ( Duration::minutes(5),  Duration::seconds(10) ),
+            ( Duration::minutes(1),  Duration::seconds(6)  ),
+            ( Duration::minutes(5),  Duration::seconds(9) ),
             ( Duration::minutes(10), Duration::seconds(15) ),
-            ( Duration::hours(1),    Duration::seconds(20) ),
+            ( Duration::hours(1),    Duration::seconds(21) ),
             ( Duration::days(1),     Duration::seconds(30) ),
             ( Duration::days(3),     Duration::minutes(1)  ),
             ( Duration::weeks(1),    Duration::minutes(3)  ),
         ];
 
-        let mut accumulated_ticks = 0u64;
-
         for (period, interval) in intervals {
-            let ticks_in_period = period.num_seconds() / interval.num_seconds();
-            accumulated_ticks += ticks_in_period as u64;
-
-            if count < accumulated_ticks {
+            if idle_duration < period {
                 return Ok(interval);
             }
         }

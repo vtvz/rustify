@@ -83,16 +83,14 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
     for handle in join_handles {
         match handle.await.expect("Shouldn't fail") {
             Ok((user_id, CheckUserResult::SkipSame)) => {
-                SpotifyPollingBackoffService::reset_idle(&mut redis_conn, &user_id).await?;
+                SpotifyPollingBackoffService::update_activity(&mut redis_conn, &user_id).await?;
             },
             Ok((user_id, CheckUserResult::Complete)) => {
                 users_checked += 1;
 
-                SpotifyPollingBackoffService::reset_idle(&mut redis_conn, &user_id).await?;
+                SpotifyPollingBackoffService::update_activity(&mut redis_conn, &user_id).await?;
             },
             Ok((user_id, CheckUserResult::None(_))) => {
-                SpotifyPollingBackoffService::inc_idle(&mut redis_conn, &user_id).await?;
-
                 let suspend_for =
                     SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, &user_id)
                         .await?;
