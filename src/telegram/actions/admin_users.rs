@@ -123,18 +123,16 @@ async fn build_users_page(
     )
     .await?;
 
-    let filter_text = match status_filter {
-        Some(status) => format!(" | Filter: <code>{:?}</code>", status),
-        None => String::new(),
-    };
-
     let mut message = vec![formatdoc!(
         r#"
         👥 <b>Recent Users</b>
         Page {page}/{total_pages} (Total: {total_users} users)
 
-        Sorted by: <code>{sort_by:?} {sort_order:?}</code>{filter_text}
+        Sorted by: <code>{sort_by:?} {sort_order:?}</code> | Filter: <code>{status}</code>
         "#,
+        status = status_filter
+            .map(|status| format!("{status:?}"))
+            .unwrap_or("All".into()),
         page = page + 1,
     )];
 
