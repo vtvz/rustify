@@ -141,21 +141,29 @@ impl Related<super::spotify_auth::Entity> for Entity {
     }
 }
 
-#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default)]
+#[derive(
+    Debug, Copy, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default, Serialize, Deserialize,
+)]
 #[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum Status {
     #[sea_orm(string_value = "active")]
+    #[serde(rename = "a")]
     Active,
     #[sea_orm(string_value = "pending")]
+    #[serde(rename = "p")]
     Pending,
     #[sea_orm(string_value = "bot_blocked")]
+    #[serde(rename = "bb")]
     BotBlocked,
     #[sea_orm(string_value = "spotify_forbidden")]
+    #[serde(rename = "sf")]
     SpotifyForbidden,
     #[sea_orm(string_value = "spotify_token_invalid")]
+    #[serde(rename = "sti")]
     SpotifyTokenInvalid,
     #[sea_orm(string_value = "none")]
     #[default]
+    #[serde(rename = "n")]
     None,
 }
 

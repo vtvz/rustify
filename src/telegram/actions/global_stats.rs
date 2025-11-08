@@ -56,7 +56,7 @@ pub async fn handle(
 
     let mut user_stats = vec![];
     for status in UserStatus::iter() {
-        let users = UserService::count_users(app.db(), Some(status.clone())).await?;
+        let users = UserService::count_users(app.db(), Some(status)).await?;
         let ratio = 100.0 * users as f32 / users_count as f32;
         user_stats.push(format!("• {status:?} <code>{users} ({ratio:.2}%)</code>"))
     }

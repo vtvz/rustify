@@ -151,7 +151,7 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
     ];
 
     for status in UserStatus::iter() {
-        let users = UserService::count_users(app.db(), Some(status.clone())).await?;
+        let users = UserService::count_users(app.db(), Some(status)).await?;
         metrics.push(
             UsersStatusStats {
                 time,

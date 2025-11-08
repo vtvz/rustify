@@ -435,17 +435,24 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(page, limit, sort_by = ?sort_by, sort_order = ?sort_order))]
+    #[tracing::instrument(skip_all, fields(page, limit, sort_by = ?sort_by, sort_order = ?sort_order, status = ?status))]
     pub async fn get_users_paginated(
         db: &impl ConnectionTrait,
         page: u64,
         limit: u64,
         sort_by: UserColumn,
         sort_order: Order,
+        status: Option<UserStatus>,
     ) -> anyhow::Result<Vec<UserModel>> {
         let offset = page * limit;
 
-        let users = UserEntity::find()
+        let mut query = UserEntity::find();
+
+        if let Some(status) = status {
+            query = query.filter(UserColumn::Status.eq(status));
+        }
+
+        let users = query
             .order_by(sort_by, sort_order)
             .offset(offset)
             .limit(limit)

@@ -54,10 +54,19 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
                         sort_order,
                         ..
                     },
+                status_filter,
                 ..
             } => {
-                actions::admin_users::handle_inline(app, state, q, page, sort_by, sort_order)
-                    .await?;
+                actions::admin_users::handle_inline(
+                    app,
+                    state,
+                    q,
+                    page,
+                    sort_by,
+                    sort_order,
+                    status_filter,
+                )
+                .await?;
             },
         }
 

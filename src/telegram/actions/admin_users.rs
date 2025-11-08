@@ -1,11 +1,11 @@
 use indoc::formatdoc;
-use sea_orm::Order;
+use sea_orm::{Iterable, Order};
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
-use crate::entity::prelude::{TrackStatus, UserColumn};
+use crate::entity::prelude::{TrackStatus, UserColumn, UserStatus};
 use crate::services::{SpotifyPollingBackoffService, TrackStatusService, UserService};
 use crate::telegram::commands_admin::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
@@ -58,6 +58,7 @@ pub async fn handle_command(
         0,
         AdminUsersSortBy::default(),
         AdminUsersSortOrder::default(),
+        None,
     )
     .await?;
 
@@ -70,7 +71,7 @@ pub async fn handle_command(
     Ok(HandleStatus::Handled)
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), page, sort_by = ?sort_by, sort_order = ?sort_order))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), page, sort_by = ?sort_by, sort_order = ?sort_order, status_filter = ?status_filter))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
@@ -78,6 +79,7 @@ pub async fn handle_inline(
     page: u64,
     sort_by: AdminUsersSortBy,
     sort_order: AdminUsersSortOrder,
+    status_filter: Option<UserStatus>,
 ) -> anyhow::Result<()> {
     let Some(message) = q.get_message() else {
         app.bot()
@@ -88,7 +90,8 @@ pub async fn handle_inline(
         return Ok(());
     };
 
-    let (text, keyboard) = build_users_page(app, state, page, sort_by, sort_order).await?;
+    let (text, keyboard) =
+        build_users_page(app, state, page, sort_by, sort_order, status_filter).await?;
 
     app.bot()
         .edit_text(&message, text)
@@ -105,8 +108,9 @@ async fn build_users_page(
     page: u64,
     sort_by: AdminUsersSortBy,
     sort_order: AdminUsersSortOrder,
+    status_filter: Option<UserStatus>,
 ) -> anyhow::Result<(String, InlineKeyboardMarkup)> {
-    let total_users = UserService::count_users(app.db(), None).await?;
+    let total_users = UserService::count_users(app.db(), status_filter).await?;
     let total_pages = (total_users as f64 / USERS_PER_PAGE as f64).ceil() as u64;
 
     let users = UserService::get_users_paginated(
@@ -115,21 +119,23 @@ async fn build_users_page(
         USERS_PER_PAGE,
         sort_by.into(),
         sort_order.into(),
+        status_filter,
     )
     .await?;
+
+    let filter_text = match status_filter {
+        Some(status) => format!(" | Filter: <code>{:?}</code>", status),
+        None => String::new(),
+    };
 
     let mut message = vec![formatdoc!(
         r#"
         👥 <b>Recent Users</b>
-        Page {}/{} (Total: {} users)
+        Page {page}/{total_pages} (Total: {total_users} users)
 
-        Sorted by: <code>{:?} {:?}</code>
+        Sorted by: <code>{sort_by:?} {sort_order:?}</code>{filter_text}
         "#,
-        page + 1,
-        total_pages,
-        total_users,
-        sort_by,
-        sort_order,
+        page = page + 1,
     )];
 
     for (idx, user) in users.iter().enumerate() {
@@ -159,7 +165,8 @@ async fn build_users_page(
         command = AdminCommandDisplay::Users
     ));
 
-    let keyboard = create_pages_keyboard(state, page, total_pages, sort_by, sort_order);
+    let keyboard =
+        create_pages_keyboard(state, page, total_pages, sort_by, sort_order, status_filter);
 
     Ok((message.join("\n"), keyboard))
 }
@@ -170,10 +177,33 @@ fn create_pages_keyboard(
     total_pages: u64,
     sort_by: AdminUsersSortBy,
     sort_order: AdminUsersSortOrder,
+    status_filter: Option<UserStatus>,
 ) -> InlineKeyboardMarkup {
     let mut rows = vec![];
 
-    let mut sort_buttons = vec![];
+    let mut buttons = vec![];
+
+    let next_filter = match status_filter {
+        None => UserStatus::iter().next(),
+        Some(current_status) => UserStatus::iter()
+            .skip_while(|&s| s != current_status)
+            .nth(1)
+            .or(None),
+    };
+
+    buttons.push(
+        AdminInlineButtons::AdminUsersPage {
+            page: 0,
+            button_type: AdminUsersPageButtonType::Filter,
+            sort_info: AdminUsersSortInfo {
+                sort_by,
+                sort_order,
+                sort_selected: false,
+            },
+            status_filter: next_filter,
+        }
+        .into_inline_keyboard_button(state.locale()),
+    );
 
     let created_order = if sort_by == AdminUsersSortBy::CreatedAt {
         !sort_order
@@ -181,7 +211,7 @@ fn create_pages_keyboard(
         AdminUsersSortOrder::default()
     };
 
-    sort_buttons.push(
+    buttons.push(
         AdminInlineButtons::AdminUsersPage {
             page: 0,
             button_type: AdminUsersPageButtonType::Sorting,
@@ -190,6 +220,7 @@ fn create_pages_keyboard(
                 sort_order: created_order,
                 sort_selected: matches!(sort_by, AdminUsersSortBy::CreatedAt),
             },
+            status_filter,
         }
         .into_inline_keyboard_button(state.locale()),
     );
@@ -200,7 +231,7 @@ fn create_pages_keyboard(
         AdminUsersSortOrder::default()
     };
 
-    sort_buttons.push(
+    buttons.push(
         AdminInlineButtons::AdminUsersPage {
             page: 0,
             button_type: AdminUsersPageButtonType::Sorting,
@@ -209,11 +240,12 @@ fn create_pages_keyboard(
                 sort_order: lyrics_order,
                 sort_selected: matches!(sort_by, AdminUsersSortBy::LyricsChecked),
             },
+            status_filter,
         }
         .into_inline_keyboard_button(state.locale()),
     );
 
-    rows.push(sort_buttons);
+    rows.push(buttons);
 
     let mut navigation_buttons = vec![];
 
@@ -227,6 +259,7 @@ fn create_pages_keyboard(
                     sort_order,
                     sort_selected: false,
                 },
+                status_filter,
             }
             .into_inline_keyboard_button(state.locale()),
         );
@@ -242,6 +275,7 @@ fn create_pages_keyboard(
                     sort_order,
                     sort_selected: false,
                 },
+                status_filter,
             }
             .into_inline_keyboard_button(state.locale()),
         );
