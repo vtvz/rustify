@@ -5,8 +5,8 @@ use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
-use crate::entity::prelude::UserColumn;
-use crate::services::{SpotifyPollingBackoffService, UserService};
+use crate::entity::prelude::{TrackStatus, UserColumn};
+use crate::services::{SpotifyPollingBackoffService, TrackStatusService, UserService};
 use crate::telegram::commands_admin::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons_admin::{
@@ -263,6 +263,14 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
     let suspend_time =
         SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, user_id).await?;
 
+    let dislikes =
+        TrackStatusService::count_status(app.db(), TrackStatus::Disliked, Some(user_id), None)
+            .await?;
+
+    let ignored =
+        TrackStatusService::count_status(app.db(), TrackStatus::Ignore, Some(user_id), None)
+            .await?;
+
     let render_bool = |bool| if bool { "✅" } else { "❌" };
 
     let text = formatdoc!(
@@ -293,6 +301,8 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
             • Lyrics Found: <code>{lyrics_found}</code>
             • Lyrics Profane: <code>{lyrics_profane}</code>
             • Lyrics Analyzed: <code>{lyrics_analyzed}</code>
+            • Disliked Tracks: <code>{dislikes}</code>
+            • Ignored Tracks: <code>{ignored}</code>
 
             <b>Lyrics Providers:</b>
             • Genius: <code>{lyrics_genius}</code>
