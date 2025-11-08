@@ -150,10 +150,10 @@ pub enum Status {
     Pending,
     #[sea_orm(string_value = "bot_blocked")]
     BotBlocked,
-    #[sea_orm(string_value = "forbidden")]
-    Forbidden,
-    #[sea_orm(string_value = "token_invalid")]
-    TokenInvalid,
+    #[sea_orm(string_value = "spotify_forbidden")]
+    SpotifyForbidden,
+    #[sea_orm(string_value = "spotify_token_invalid")]
+    SpotifyTokenInvalid,
     #[sea_orm(string_value = "none")]
     #[default]
     None,
