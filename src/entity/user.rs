@@ -148,8 +148,8 @@ pub enum Status {
     Active,
     #[sea_orm(string_value = "pending")]
     Pending,
-    #[sea_orm(string_value = "blocked")]
-    Blocked,
+    #[sea_orm(string_value = "bot_blocked")]
+    BotBlocked,
     #[sea_orm(string_value = "forbidden")]
     Forbidden,
     #[sea_orm(string_value = "token_invalid")]

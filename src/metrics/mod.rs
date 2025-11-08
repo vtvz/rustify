@@ -3,6 +3,7 @@ use std::time::Duration;
 use chrono::Utc;
 use influx::InfluxClient;
 use influxdb::{InfluxDbWriteable, Timestamp};
+use sea_orm::{ActiveEnum as _, Iterable as _};
 use tokio::sync::broadcast::error::RecvError;
 use tokio::time::Instant;
 use tracing::Instrument;
@@ -61,6 +62,14 @@ struct ErrorsStats {
     spotify_429: u64,
 }
 
+#[derive(InfluxDbWriteable, Debug)]
+struct UsersStatusStats {
+    time: Timestamp,
+    count: u64,
+    #[influxdb(tag)]
+    status: String,
+}
+
 lazy_static::lazy_static! {
     static ref START_TIME: Instant = Instant::now();
 }
@@ -105,7 +114,7 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
 
     let mut redis_conn = app.redis_conn().await?;
 
-    let metrics = vec![
+    let mut metrics = vec![
         TrackStatusStats {
             time,
             disliked,
@@ -140,6 +149,18 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
         .into_query("errors"),
         Uptime::new(time).into_query("uptime"),
     ];
+
+    for status in UserStatus::iter() {
+        let users = UserService::count_users(app.db(), Some(status.clone())).await?;
+        metrics.push(
+            UsersStatusStats {
+                time,
+                count: users as u64,
+                status: status.to_value(),
+            }
+            .into_query("user_status"),
+        );
+    }
 
     client
         .write(metrics.into_iter())

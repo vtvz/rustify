@@ -53,7 +53,7 @@ pub async fn handle_blocked_bot(
     };
 
     if let teloxide::RequestError::Api(ApiError::BotBlocked) = err {
-        UserService::set_status(app.db(), user_id, UserStatus::Blocked).await?;
+        UserService::set_status(app.db(), user_id, UserStatus::BotBlocked).await?;
 
         return Ok(ErrorHandlingResult::handled_notified());
     }
