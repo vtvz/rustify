@@ -88,7 +88,7 @@ impl InfluxClient {
         let resp = self
             .req
             .post(self.write_url())
-            .body(queries.build()?.get())
+            .body(queries.build_with_opts(true)?.get())
             .query(&[("precision", precision)])
             .send()
             .await?;

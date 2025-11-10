@@ -159,6 +159,41 @@ where
     }
 }
 
+pub trait DurationPrettyFormat {
+    fn pretty_format(&self) -> String;
+}
+
+impl DurationPrettyFormat for chrono::Duration {
+    fn pretty_format(&self) -> String {
+        let total_seconds = self.num_seconds();
+        let days = total_seconds / 86400;
+        let hours = (total_seconds % 86400) / 3600;
+        let minutes = (total_seconds % 3600) / 60;
+        let seconds = total_seconds % 60;
+        let centiseconds = (self.num_milliseconds() % 1000) / 10;
+
+        let subsec_suffix = if centiseconds > 0 {
+            format!(".{:02}", centiseconds)
+        } else {
+            String::new()
+        };
+
+        if days > 0 {
+            format!(
+                "{:02}:{:02}:{:02}:{:02}{}",
+                days, hours, minutes, seconds, subsec_suffix
+            )
+        } else if hours > 0 {
+            format!(
+                "{:02}:{:02}:{:02}{}",
+                hours, minutes, seconds, subsec_suffix
+            )
+        } else {
+            format!("{:02}:{:02}{}", minutes, seconds, subsec_suffix)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -272,5 +307,104 @@ mod tests {
         let time2 = Clock::now();
         // time2 should be >= time1
         assert!(time2 >= time1);
+    }
+
+    // Tests for DurationFormat::pretty_format()
+    #[test]
+    fn test_duration_format_less_than_minute() {
+        // Test duration < 1 minute (should show ss.nn)
+        let duration = chrono::Duration::seconds(45) + chrono::Duration::milliseconds(500);
+        assert_eq!(duration.pretty_format(), "00:45.50");
+    }
+
+    #[test]
+    fn test_duration_format_less_than_minute_zero() {
+        let duration = chrono::Duration::milliseconds(100);
+        assert_eq!(duration.pretty_format(), "00:00.10");
+    }
+
+    #[test]
+    fn test_duration_format_exactly_one_minute() {
+        // Test duration = 1 minute (should show mm:ss without centiseconds)
+        let duration = chrono::Duration::minutes(1);
+        assert_eq!(duration.pretty_format(), "01:00");
+    }
+
+    #[test]
+    fn test_duration_format_minutes_range() {
+        // Test duration >= 1 minute but < 1 hour (should show mm:ss.nn)
+        let duration = chrono::Duration::minutes(15)
+            + chrono::Duration::seconds(30)
+            + chrono::Duration::milliseconds(750);
+        assert_eq!(duration.pretty_format(), "15:30.75");
+    }
+
+    #[test]
+    fn test_duration_format_exactly_one_hour() {
+        // Test duration = 1 hour (should show hh:mm:ss without centiseconds)
+        let duration = chrono::Duration::hours(1);
+        assert_eq!(duration.pretty_format(), "01:00:00");
+    }
+
+    #[test]
+    fn test_duration_format_hours_range() {
+        // Test duration >= 1 hour but < 1 day (should show hh:mm:ss.nn)
+        let duration = chrono::Duration::hours(5)
+            + chrono::Duration::minutes(23)
+            + chrono::Duration::seconds(45)
+            + chrono::Duration::milliseconds(120);
+        assert_eq!(duration.pretty_format(), "05:23:45.12");
+    }
+
+    #[test]
+    fn test_duration_format_exactly_one_day() {
+        // Test duration = 1 day (should show dd:hh:mm:ss without centiseconds)
+        let duration = chrono::Duration::days(1);
+        assert_eq!(duration.pretty_format(), "01:00:00:00");
+    }
+
+    #[test]
+    fn test_duration_format_days_range() {
+        // Test duration >= 1 day (should show dd:hh:mm:ss.nn)
+        let duration = chrono::Duration::days(3)
+            + chrono::Duration::hours(12)
+            + chrono::Duration::minutes(45)
+            + chrono::Duration::seconds(30)
+            + chrono::Duration::milliseconds(990);
+        assert_eq!(duration.pretty_format(), "03:12:45:30.99");
+    }
+
+    #[test]
+    fn test_duration_format_large_duration() {
+        // Test very large duration
+        let duration = chrono::Duration::days(99)
+            + chrono::Duration::hours(23)
+            + chrono::Duration::minutes(59)
+            + chrono::Duration::seconds(59)
+            + chrono::Duration::milliseconds(999);
+        assert_eq!(duration.pretty_format(), "99:23:59:59.99");
+    }
+
+    #[test]
+    fn test_duration_format_centiseconds_rounding() {
+        // Test centisecond precision (milliseconds / 10)
+        let duration = chrono::Duration::milliseconds(456);
+        assert_eq!(duration.pretty_format(), "00:00.45"); // 456ms = 45 centiseconds (truncated)
+    }
+
+    #[test]
+    fn test_duration_format_zero_duration() {
+        let duration = chrono::Duration::zero();
+        assert_eq!(duration.pretty_format(), "00:00");
+    }
+
+    #[test]
+    fn test_duration_format_padding() {
+        // Test that single-digit values are zero-padded
+        let duration = chrono::Duration::hours(1)
+            + chrono::Duration::minutes(2)
+            + chrono::Duration::seconds(3)
+            + chrono::Duration::milliseconds(40);
+        assert_eq!(duration.pretty_format(), "01:02:03.04");
     }
 }

@@ -5,6 +5,8 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 
+use crate::entity::prelude::UserStatus;
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum AdminInlineButtons {
     #[serde(rename = "wd")]
@@ -30,6 +32,9 @@ pub enum AdminInlineButtons {
 
         #[serde(rename = "s")]
         sort_info: AdminUsersSortInfo,
+
+        #[serde(rename = "f", skip_serializing_if = "Option::is_none")]
+        status_filter: Option<UserStatus>,
 
         #[serde(skip, default)]
         button_type: AdminUsersPageButtonType,
@@ -57,6 +62,8 @@ pub enum AdminUsersPageButtonType {
     #[serde(rename = "s")]
     #[default]
     Sorting,
+    #[serde(rename = "f")]
+    Filter,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -103,6 +110,7 @@ impl AdminInlineButtons {
                 page: _,
                 button_type,
                 sort_info,
+                status_filter,
             } => match button_type {
                 AdminUsersPageButtonType::Previous => Cow::Borrowed("◀ Previous"),
                 AdminUsersPageButtonType::Next => Cow::Borrowed("Next ▶"),
@@ -122,6 +130,13 @@ impl AdminInlineButtons {
                     match sort_info.sort_by {
                         AdminUsersSortBy::CreatedAt => Cow::Owned(format!("Created{}", arrow)),
                         AdminUsersSortBy::LyricsChecked => Cow::Owned(format!("Lyrics{}", arrow)),
+                    }
+                },
+                AdminUsersPageButtonType::Filter => {
+                    if let Some(status) = status_filter {
+                        Cow::Owned(format!("Next filter: {:?}", status))
+                    } else {
+                        Cow::Borrowed("Next filter: All")
                     }
                 },
             },

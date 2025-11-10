@@ -1,4 +1,4 @@
-use anyhow::Context;
+// use anyhow::Context;
 use reqwest::StatusCode;
 use teloxide::ApiError;
 use teloxide::payloads::SendMessageSetters;
@@ -7,9 +7,9 @@ use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::UserStatus;
-use crate::services::UserService;
+use crate::services::{MetricsService, UserService};
 use crate::spotify;
-use crate::spotify::auth::SpotifyAuthService;
+// use crate::spotify::auth::SpotifyAuthService;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::keyboards::StartKeyboard;
 
@@ -53,7 +53,7 @@ pub async fn handle_blocked_bot(
     };
 
     if let teloxide::RequestError::Api(ApiError::BotBlocked) = err {
-        UserService::set_status(app.db(), user_id, UserStatus::Blocked).await?;
+        UserService::set_status(app.db(), user_id, UserStatus::BotBlocked).await?;
 
         return Ok(ErrorHandlingResult::handled_notified());
     }
@@ -75,6 +75,9 @@ pub async fn spotify_resp_error(
     if response.status() == StatusCode::TOO_MANY_REQUESTS {
         tracing::info!("User got a 429 error (too many requests)");
 
+        MetricsService::spotify_429_inc(&mut app.redis_conn().await?).await?;
+
+        /*
         let header = response
             .headers()
             .get("Retry-After")
@@ -88,6 +91,7 @@ pub async fn spotify_resp_error(
             chrono::Duration::seconds(retry_after),
         )
         .await?;
+        */
     }
 
     match spotify::SpotifyError::from_anyhow(err).await {
@@ -106,7 +110,8 @@ pub async fn spotify_resp_error(
                     {
                         tracing::error!(err = ?serr, "Spotify is unavailable in this country. Stopping user checks");
 
-                        UserService::set_status(app.db(), user_id, UserStatus::Forbidden).await?;
+                        UserService::set_status(app.db(), user_id, UserStatus::SpotifyForbidden)
+                            .await?;
 
                         app.bot()
                             .send_message(
@@ -131,7 +136,8 @@ pub async fn spotify_resp_error(
                 spotify::SpotifyError::Auth(serr) => {
                     tracing::error!(err = ?serr, "Auth Spotify Error");
 
-                    UserService::set_status(app.db(), user_id, UserStatus::TokenInvalid).await?;
+                    UserService::set_status(app.db(), user_id, UserStatus::SpotifyTokenInvalid)
+                        .await?;
 
                     app.bot()
                         .send_message(
@@ -173,7 +179,7 @@ pub async fn spotify_client_error(
     match err {
         rspotify::ClientError::InvalidToken => {
             tracing::error!(err = ?err, "User has Invalid Spotify Token");
-            UserService::set_status(app.db(), user_id, UserStatus::TokenInvalid).await?;
+            UserService::set_status(app.db(), user_id, UserStatus::SpotifyTokenInvalid).await?;
 
             app.bot()
                 .send_message(

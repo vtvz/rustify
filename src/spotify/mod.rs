@@ -340,7 +340,7 @@ impl Manager {
             {
                 let txn = db.begin().await?;
 
-                UserService::set_status(&txn, user_id, UserStatus::TokenInvalid).await?;
+                UserService::set_status(&txn, user_id, UserStatus::SpotifyTokenInvalid).await?;
 
                 txn.commit().await?;
             }
