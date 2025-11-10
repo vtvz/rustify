@@ -77,7 +77,8 @@ pub async fn spotify_resp_error(
 
         MetricsService::spotify_429_inc(&mut app.redis_conn().await?).await?;
 
-        /* let header = response
+        /*
+        let header = response
             .headers()
             .get("Retry-After")
             .context("Need Retry-After header to proceed")?;
@@ -89,7 +90,8 @@ pub async fn spotify_resp_error(
             &[user_id],
             chrono::Duration::seconds(retry_after),
         )
-        .await?; */
+        .await?;
+        */
     }
 
     match spotify::SpotifyError::from_anyhow(err).await {
