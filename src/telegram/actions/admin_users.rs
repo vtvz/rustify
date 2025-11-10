@@ -136,6 +136,10 @@ async fn build_users_page(
         page = page + 1,
     )];
 
+    if users.is_empty() {
+        message.push("<i>No users found</i>\n".into());
+    }
+
     for (idx, user) in users.iter().enumerate() {
         let user_info = formatdoc!(
             r#"
@@ -181,28 +185,6 @@ fn create_pages_keyboard(
 
     let mut buttons = vec![];
 
-    let next_filter = match status_filter {
-        None => UserStatus::iter().next(),
-        Some(current_status) => UserStatus::iter()
-            .skip_while(|&s| s != current_status)
-            .nth(1)
-            .or(None),
-    };
-
-    buttons.push(
-        AdminInlineButtons::AdminUsersPage {
-            page: 0,
-            button_type: AdminUsersPageButtonType::Filter,
-            sort_info: AdminUsersSortInfo {
-                sort_by,
-                sort_order,
-                sort_selected: false,
-            },
-            status_filter: next_filter,
-        }
-        .into_inline_keyboard_button(state.locale()),
-    );
-
     let created_order = if sort_by == AdminUsersSortBy::CreatedAt {
         !sort_order
     } else {
@@ -244,6 +226,28 @@ fn create_pages_keyboard(
     );
 
     rows.push(buttons);
+
+    let next_filter = match status_filter {
+        None => UserStatus::iter().next(),
+        Some(current_status) => UserStatus::iter()
+            .skip_while(|&s| s != current_status)
+            .nth(1)
+            .or(None),
+    };
+
+    rows.push(vec![
+        AdminInlineButtons::AdminUsersPage {
+            page: 0,
+            button_type: AdminUsersPageButtonType::Filter,
+            sort_info: AdminUsersSortInfo {
+                sort_by,
+                sort_order,
+                sort_selected: false,
+            },
+            status_filter: next_filter,
+        }
+        .into_inline_keyboard_button(state.locale()),
+    ]);
 
     let mut navigation_buttons = vec![];
 
