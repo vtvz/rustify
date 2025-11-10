@@ -7,15 +7,19 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
+use teloxide::prelude::Requester;
+use teloxide::types::ChatId;
 use tokio::sync::{Semaphore, broadcast};
 use tokio::time::Instant;
 use tracing::Instrument;
 use user::CheckUserResult;
 
 use crate::app::App;
+use crate::entity::prelude::UserStatus;
 use crate::infrastructure::error_handler;
-use crate::services::SpotifyPollingBackoffService;
+use crate::services::{SpotifyPollingBackoffService, UserService};
 use crate::spotify::auth::SpotifyAuthService;
+use crate::telegram::commands::UserCommandDisplay;
 use crate::utils;
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
@@ -95,7 +99,24 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
                     SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, &user_id)
                         .await?;
 
-                SpotifyAuthService::suspend_for(app.db(), &[&user_id], suspend_for).await?;
+                if let Some(suspend_for) = suspend_for {
+                    SpotifyAuthService::suspend_for(app.db(), &user_id, suspend_for).await?;
+                } else {
+                    UserService::set_status(app.db(), &user_id, UserStatus::Inactive).await?;
+
+                    let user = UserService::obtain_by_id(app.db(), &user_id).await?;
+
+                    app.bot()
+                        .send_message(
+                            ChatId(user_id.parse()?),
+                            t!(
+                                "status.inactive-notification",
+                                locale = user.locale.as_ref(),
+                                start = UserCommandDisplay::Start
+                            ),
+                        )
+                        .await?;
+                }
             },
             _ => {},
         }

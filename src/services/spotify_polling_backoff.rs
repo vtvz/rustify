@@ -47,7 +47,7 @@ impl SpotifyPollingBackoffService {
     pub async fn get_suspend_time(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
-    ) -> anyhow::Result<Duration> {
+    ) -> anyhow::Result<Option<Duration>> {
         let idle_duration = Self::get_idle_duration(redis_conn, user_id).await?;
 
         #[rustfmt::skip]
@@ -63,11 +63,11 @@ impl SpotifyPollingBackoffService {
 
         for (period, interval) in intervals {
             if idle_duration < period {
-                return Ok(interval);
+                return Ok(Some(interval));
             }
         }
 
-        Ok(Duration::minutes(5))
+        Ok(None)
     }
 
     fn get_key(user_id: &str) -> String {

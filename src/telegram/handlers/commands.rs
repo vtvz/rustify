@@ -52,15 +52,25 @@ pub async fn handle(
     match command {
         UserCommand::Start | UserCommand::Keyboard => {
             if state.is_spotify_authed().await {
+                let was_inactive = matches!(state.user().status, UserStatus::Inactive);
+
                 UserService::set_status(app.db(), state.user_id(), UserStatus::Active).await?;
 
-                app.bot()
-                    .send_message(
-                        m.chat.id,
-                        t!("actions.here-is-your-keyboard", locale = state.locale()),
-                    )
-                    .reply_markup(StartKeyboard::markup(state.locale()))
-                    .await?;
+                if was_inactive {
+                    app.bot()
+                        .send_message(m.chat.id, t!("status.reactivated", locale = state.locale()))
+                        .reply_markup(StartKeyboard::markup(state.locale()))
+                        .parse_mode(ParseMode::Html)
+                        .await?;
+                } else {
+                    app.bot()
+                        .send_message(
+                            m.chat.id,
+                            t!("actions.here-is-your-keyboard", locale = state.locale()),
+                        )
+                        .reply_markup(StartKeyboard::markup(state.locale()))
+                        .await?;
+                }
             } else {
                 app.bot()
                     .send_message(m.chat.id, t!("language.command", locale = state.locale()))
