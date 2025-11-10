@@ -23,9 +23,16 @@ impl SpotifyPollingBackoffService {
     ) -> anyhow::Result<Duration> {
         let key = Self::get_key(user_id);
         let last_activity: Option<i64> = redis_conn.get(key).await?;
+
+        if last_activity.is_none() {
+            Self::update_activity(redis_conn, user_id).await?;
+        }
+
         let now = Clock::now().and_utc().timestamp();
 
-        let dur = Duration::seconds(now - last_activity.unwrap_or(now));
+        let last_activity = last_activity.unwrap_or(now);
+
+        let dur = Duration::seconds(now - last_activity);
 
         Ok(dur)
     }
