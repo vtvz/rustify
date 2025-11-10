@@ -131,10 +131,10 @@ async fn build_users_page(
 
         Sorted by: <code>{sort_by:?} {sort_order:?}</code> | Filter: <code>{status}</code>
         "#,
+        page = page + 1,
         status = status_filter
             .map(|status| format!("{status:?}"))
             .unwrap_or("All".into()),
-        page = page + 1,
     )];
 
     if users.is_empty() {
