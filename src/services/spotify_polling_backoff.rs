@@ -28,9 +28,7 @@ impl SpotifyPollingBackoffService {
             Self::update_activity(redis_conn, user_id).await?;
         }
 
-        let now = Clock::now().and_utc().timestamp();
-
-        Ok(last_activity.unwrap_or(now))
+        Ok(last_activity.unwrap_or_else(|| Clock::now().and_utc().timestamp()))
     }
 
     pub async fn get_idle_duration(
