@@ -293,6 +293,10 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
     let mut redis_conn = app.redis_conn().await?;
     let idle_duration =
         SpotifyPollingBackoffService::get_idle_duration(&mut redis_conn, user_id).await?;
+    let last_activity =
+        SpotifyPollingBackoffService::get_last_activity(&mut redis_conn, user_id).await?;
+    let last_activity = chrono::DateTime::from_timestamp(last_activity, 0).unwrap_or_default();
+
     let suspend_time =
         SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, user_id).await?;
 
@@ -325,6 +329,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
             • Skippage Enabled: <code>{skippage_enabled}</code>
             • Skippage Duration: <code>{skippage_secs} seconds</code>
             • Magic Playlist: <code>{magic_playlist}</code>
+            • Last Activity: <code>{last_activity}</code>
             • Idle Info: <code>{idle_duration} sec</code>, <code>{suspend_time} sec</code>
 
             <b>Statistics:</b>
@@ -354,6 +359,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
         skippage_enabled = render_bool(user.cfg_skippage_enabled),
         skippage_secs = user.cfg_skippage_secs,
         magic_playlist = user.magic_playlist.as_deref().unwrap_or("Not set"),
+        last_activity = last_activity.format("%Y-%m-%d %H:%M:%S"),
         idle_duration = idle_duration.num_seconds(),
         suspend_time = suspend_time.num_seconds(),
         removed_playlists = stats.removed_playlists,

@@ -17,10 +17,10 @@ impl SpotifyPollingBackoffService {
         Ok(())
     }
 
-    pub async fn get_idle_duration(
+    pub async fn get_last_activity(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
-    ) -> anyhow::Result<Duration> {
+    ) -> anyhow::Result<i64> {
         let key = Self::get_key(user_id);
         let last_activity: Option<i64> = redis_conn.get(key).await?;
 
@@ -30,7 +30,16 @@ impl SpotifyPollingBackoffService {
 
         let now = Clock::now().and_utc().timestamp();
 
-        let last_activity = last_activity.unwrap_or(now);
+        Ok(last_activity.unwrap_or(now))
+    }
+
+    pub async fn get_idle_duration(
+        redis_conn: &mut deadpool_redis::Connection,
+        user_id: &str,
+    ) -> anyhow::Result<Duration> {
+        let now = Clock::now().and_utc().timestamp();
+
+        let last_activity = Self::get_last_activity(redis_conn, user_id).await?;
 
         let dur = Duration::seconds(now - last_activity);
 
