@@ -18,12 +18,12 @@ pub struct Manager;
 impl Manager {
     pub fn add_word(word: &str) {
         unsafe { Trie::customize_default().set(word, *TYPE_CUSTOM) }
-        tracing::debug!(word, "Added custom word");
+        tracing::trace!(word, "Added custom word");
     }
 
     pub fn remove_word(word: &str) {
         unsafe { Trie::customize_default().set(word, Type::NONE) }
-        tracing::debug!(word, "Removed custom word");
+        tracing::trace!(word, "Removed custom word");
     }
 
     pub fn check(text: &[&str]) -> CheckResult {

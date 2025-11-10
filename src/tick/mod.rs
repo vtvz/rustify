@@ -104,6 +104,8 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
                 } else {
                     UserService::set_status(app.db(), &user_id, UserStatus::Inactive).await?;
 
+                    tracing::info!(user_id, "User marked as inactive");
+
                     let user = UserService::obtain_by_id(app.db(), &user_id).await?;
 
                     app.bot()

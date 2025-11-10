@@ -12,6 +12,7 @@ pub mod magic;
 pub mod recommendasion;
 pub mod settings;
 pub mod skippage;
+pub mod start;
 pub mod stats;
 pub mod user_word_whitelist;
 pub mod word_definition;

@@ -171,7 +171,7 @@ pub async fn handle_inline(
         return Ok(());
     };
 
-    tracing::info!("User called Recommendasion");
+    tracing::info!(user_id = state.user_id(), "User called Recommendasion");
 
     let spotify = state.spotify().await;
 
