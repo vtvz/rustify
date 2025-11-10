@@ -22,7 +22,10 @@ impl SpotifyPollingBackoffService {
         user_id: &str,
     ) -> anyhow::Result<i64> {
         let key = Self::get_key(user_id);
-        let last_activity: Option<i64> = redis_conn.get(key).await?;
+        let last_activity: Result<Option<i64>, _> = redis_conn.get(key).await;
+
+        // Protection from trash in the db
+        let last_activity = last_activity.unwrap_or_default();
 
         if last_activity.is_none() {
             Self::update_activity(redis_conn, user_id).await?;

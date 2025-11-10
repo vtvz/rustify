@@ -108,7 +108,8 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
 
                     let user = UserService::obtain_by_id(app.db(), &user_id).await?;
 
-                    app.bot()
+                    let res = app
+                        .bot()
                         .send_message(
                             ChatId(user_id.parse()?),
                             t!(
@@ -117,7 +118,12 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
                                 start = UserCommandDisplay::Start
                             ),
                         )
-                        .await?;
+                        .await;
+
+                    if let Err(err) = res {
+                        let mut err = err.into();
+                        error_handler::handle(&mut err, app, &user_id, user.locale.as_ref()).await;
+                    }
                 }
             },
             _ => {},
