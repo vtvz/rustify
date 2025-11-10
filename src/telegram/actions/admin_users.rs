@@ -17,6 +17,7 @@ use crate::telegram::inline_buttons_admin::{
     AdminUsersSortOrder,
 };
 use crate::user::UserState;
+use crate::utils::DurationPrettyFormat as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
 const USERS_PER_PAGE: u64 = 10;
@@ -334,7 +335,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
             • Skippage Duration: <code>{skippage_secs} seconds</code>
             • Magic Playlist: <code>{magic_playlist}</code>
             • Last Activity: <code>{last_activity}</code>
-            • Idle Info: <code>{idle_duration} sec</code>, <code>{suspend_time} sec</code>
+            • Idle Info: <code>{idle_duration}</code> / <code>{suspend_time}</code>
 
             <b>Statistics:</b>
             • Removed from Playlists: <code>{removed_playlists}</code>
@@ -364,8 +365,8 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
         skippage_secs = user.cfg_skippage_secs,
         magic_playlist = user.magic_playlist.as_deref().unwrap_or("Not set"),
         last_activity = last_activity.format("%Y-%m-%d %H:%M:%S"),
-        idle_duration = idle_duration.num_seconds(),
-        suspend_time = suspend_time.num_seconds(),
+        idle_duration = idle_duration.pretty_format(),
+        suspend_time = suspend_time.pretty_format(),
         removed_playlists = stats.removed_playlists,
         removed_collection = stats.removed_collection,
         lyrics_checked = stats.lyrics_checked,
