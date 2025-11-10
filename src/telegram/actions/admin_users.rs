@@ -228,12 +228,15 @@ fn create_pages_keyboard(
 
     rows.push(sort_buttons);
 
+    // Cycle through status filters: None (All) -> Active -> Pending -> ... -> None (All)
+    // - If no filter (None): start with first status
+    // - If filtered by a status: skip to current status, then take the next one
+    // - If at the end: wrap around to None (showing all users)
     let next_filter = match status_filter {
         None => UserStatus::iter().next(),
         Some(current_status) => UserStatus::iter()
             .skip_while(|&s| s != current_status)
-            .nth(1)
-            .or(None),
+            .nth(1),
     };
 
     rows.push(vec![
