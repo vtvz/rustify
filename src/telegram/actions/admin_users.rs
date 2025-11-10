@@ -184,7 +184,7 @@ fn create_pages_keyboard(
 ) -> InlineKeyboardMarkup {
     let mut rows = vec![];
 
-    let mut buttons = vec![];
+    let mut sort_buttons = vec![];
 
     let created_order = if sort_by == AdminUsersSortBy::CreatedAt {
         !sort_order
@@ -192,7 +192,7 @@ fn create_pages_keyboard(
         AdminUsersSortOrder::default()
     };
 
-    buttons.push(
+    sort_buttons.push(
         AdminInlineButtons::AdminUsersPage {
             page: 0,
             button_type: AdminUsersPageButtonType::Sorting,
@@ -212,7 +212,7 @@ fn create_pages_keyboard(
         AdminUsersSortOrder::default()
     };
 
-    buttons.push(
+    sort_buttons.push(
         AdminInlineButtons::AdminUsersPage {
             page: 0,
             button_type: AdminUsersPageButtonType::Sorting,
@@ -226,7 +226,7 @@ fn create_pages_keyboard(
         .into_inline_keyboard_button(state.locale()),
     );
 
-    rows.push(buttons);
+    rows.push(sort_buttons);
 
     let next_filter = match status_filter {
         None => UserStatus::iter().next(),
