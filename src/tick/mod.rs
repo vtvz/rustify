@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
+use sea_orm::TransactionTrait;
 use teloxide::prelude::Requester;
 use teloxide::types::ChatId;
 use tokio::sync::{Semaphore, broadcast};
@@ -83,6 +84,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
 
     let mut users_checked = 0;
     let mut redis_conn = app.redis_conn().await?;
+    let mut users_to_suspend = vec![];
 
     for handle in join_handles {
         match handle.await.expect("Shouldn't fail") {
@@ -100,7 +102,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
                         .await?;
 
                 if let Some(suspend_for) = suspend_for {
-                    SpotifyAuthService::suspend_for(app.db(), &user_id, suspend_for).await?;
+                    users_to_suspend.push((user_id, suspend_for));
                 } else {
                     UserService::set_status(app.db(), &user_id, UserStatus::Inactive).await?;
 
@@ -128,6 +130,16 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
             },
             _ => {},
         }
+    }
+
+    if !users_to_suspend.is_empty() {
+        let txn = app.db().begin().await?;
+
+        for (user_id, suspend_for) in users_to_suspend {
+            SpotifyAuthService::suspend_for(&txn, &user_id, suspend_for).await?;
+        }
+
+        txn.commit().await?;
     }
 
     let report = CheckReport {
