@@ -91,7 +91,7 @@ impl Manager {
                         );
                     },
                     _ => {
-                        tracing::debug!("{} text not found", $name);
+                        tracing::trace!("{} text not found", $name);
                     },
                 };
             };

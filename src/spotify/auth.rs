@@ -67,13 +67,13 @@ impl SpotifyAuthService {
 
     pub async fn suspend_until(
         db: &impl ConnectionTrait,
-        user_ids: &[&str],
+        user_id: &str,
         time: chrono::NaiveDateTime,
     ) -> anyhow::Result<UpdateResult> {
         let update_result: UpdateResult = SpotifyAuthEntity::update_many()
             .col_expr(SpotifyAuthColumn::UpdatedAt, Expr::value(Clock::now()))
             .col_expr(SpotifyAuthColumn::SuspendUntil, Expr::value(time))
-            .filter(SpotifyAuthColumn::UserId.is_in(user_ids.to_vec()))
+            .filter(SpotifyAuthColumn::UserId.eq(user_id))
             .exec(db)
             .await?;
 
@@ -82,12 +82,12 @@ impl SpotifyAuthService {
 
     pub async fn suspend_for(
         db: &impl ConnectionTrait,
-        user_ids: &[&str],
+        user_id: &str,
         duration: chrono::Duration,
     ) -> anyhow::Result<UpdateResult> {
         let suspend_until = Clock::now() + duration;
 
-        SpotifyAuthService::suspend_until(db, user_ids, suspend_until).await
+        SpotifyAuthService::suspend_until(db, user_id, suspend_until).await
     }
 
     pub async fn get_active_unsuspended_user_ids(

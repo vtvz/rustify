@@ -152,6 +152,9 @@ pub enum Status {
     #[sea_orm(string_value = "pending")]
     #[serde(rename = "p")]
     Pending,
+    #[sea_orm(string_value = "inactive")]
+    #[serde(rename = "ia")]
+    Inactive,
     #[sea_orm(string_value = "bot_blocked")]
     #[serde(rename = "bb")]
     BotBlocked,

@@ -1,18 +1,14 @@
 use anyhow::Context;
-use chrono::Duration;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands, ParseError};
 
 use super::HandleStatus;
 use crate::app::App;
-use crate::entity::prelude::*;
-use crate::services::{NotificationService, UserService};
 use crate::telegram::actions;
 use crate::telegram::commands::UserCommand;
 use crate::telegram::keyboards::{LanguageKeyboard, StartKeyboard};
 use crate::user::UserState;
-use crate::utils::Clock;
 
 pub async fn handle(
     app: &'static App,
@@ -51,30 +47,7 @@ pub async fn handle(
 
     match command {
         UserCommand::Start | UserCommand::Keyboard => {
-            if state.is_spotify_authed().await {
-                UserService::set_status(app.db(), state.user_id(), UserStatus::Active).await?;
-
-                app.bot()
-                    .send_message(
-                        m.chat.id,
-                        t!("actions.here-is-your-keyboard", locale = state.locale()),
-                    )
-                    .reply_markup(StartKeyboard::markup(state.locale()))
-                    .await?;
-            } else {
-                app.bot()
-                    .send_message(m.chat.id, t!("language.command", locale = state.locale()))
-                    .reply_markup(LanguageKeyboard::markup())
-                    .await?;
-
-                if (Clock::now() - state.user().created_at) < Duration::minutes(1) {
-                    if let Err(err) =
-                        NotificationService::notify_user_joined(app, m.from.as_ref()).await
-                    {
-                        tracing::error!(err = ?err, user_id = state.user_id(), "Failed to notify admins about joined user");
-                    };
-                };
-            }
+            return actions::start::handle(app, state, m).await;
         },
         UserCommand::Dislike => {
             return actions::dislike::handle(app, state, m).await;

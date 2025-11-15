@@ -369,7 +369,9 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
         magic_playlist = user.magic_playlist.as_deref().unwrap_or("Not set"),
         last_activity = last_activity.format("%Y-%m-%d %H:%M:%S"),
         idle_duration = idle_duration.pretty_format(),
-        suspend_time = suspend_time.pretty_format(),
+        suspend_time = suspend_time
+            .map(|time| time.pretty_format())
+            .unwrap_or("Inactive".into()),
         removed_playlists = stats.removed_playlists,
         removed_collection = stats.removed_collection,
         lyrics_checked = stats.lyrics_checked,
