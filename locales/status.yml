@@ -1,0 +1,17 @@
+_version: 2
+
+status.inactive-notification:
+  en: |-
+    💤 Your account has been marked as inactive due to inactivity. Use /%{start} to reactivate and resume all bot functions.
+  ru: |-
+    💤 Ваш аккаунт был помечен как неактивный из-за бездействия. Используйте /%{start}, чтобы реактивировать и возобновить все функции бота.
+
+status.reactivated:
+  en: |-
+    <b>🎉 Welcome back!</b>
+
+    Your account is now active again. All bot functions have been resumed.
+  ru: |-
+    <b>🎉 С возвращением!</b>
+
+    Ваш аккаунт снова активен. Все функции бота возобновлены.

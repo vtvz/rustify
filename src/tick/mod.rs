@@ -7,15 +7,20 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Context;
+use sea_orm::TransactionTrait;
+use teloxide::prelude::Requester;
+use teloxide::types::ChatId;
 use tokio::sync::{Semaphore, broadcast};
 use tokio::time::Instant;
 use tracing::Instrument;
 use user::CheckUserResult;
 
 use crate::app::App;
+use crate::entity::prelude::UserStatus;
 use crate::infrastructure::error_handler;
-use crate::services::SpotifyPollingBackoffService;
+use crate::services::{SpotifyPollingBackoffService, UserService};
 use crate::spotify::auth::SpotifyAuthService;
+use crate::telegram::commands::UserCommandDisplay;
 use crate::utils;
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
@@ -79,6 +84,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
 
     let mut users_checked = 0;
     let mut redis_conn = app.redis_conn().await?;
+    let mut users_to_suspend = vec![];
 
     for handle in join_handles {
         match handle.await.expect("Shouldn't fail") {
@@ -95,10 +101,45 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
                     SpotifyPollingBackoffService::get_suspend_time(&mut redis_conn, &user_id)
                         .await?;
 
-                SpotifyAuthService::suspend_for(app.db(), &[&user_id], suspend_for).await?;
+                if let Some(suspend_for) = suspend_for {
+                    users_to_suspend.push((user_id, suspend_for));
+                } else {
+                    UserService::set_status(app.db(), &user_id, UserStatus::Inactive).await?;
+
+                    tracing::info!(user_id, "User marked as inactive");
+
+                    let user = UserService::obtain_by_id(app.db(), &user_id).await?;
+
+                    let res = app
+                        .bot()
+                        .send_message(
+                            ChatId(user_id.parse()?),
+                            t!(
+                                "status.inactive-notification",
+                                locale = user.locale.as_ref(),
+                                start = UserCommandDisplay::Start
+                            ),
+                        )
+                        .await;
+
+                    if let Err(err) = res {
+                        let mut err = err.into();
+                        error_handler::handle(&mut err, app, &user_id, user.locale.as_ref()).await;
+                    }
+                }
             },
             _ => {},
         }
+    }
+
+    if !users_to_suspend.is_empty() {
+        let txn = app.db().begin().await?;
+
+        for (user_id, suspend_for) in users_to_suspend {
+            SpotifyAuthService::suspend_for(&txn, &user_id, suspend_for).await?;
+        }
+
+        txn.commit().await?;
     }
 
     let report = CheckReport {

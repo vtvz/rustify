@@ -24,7 +24,7 @@ pub async fn queue(app: &'static App, state: &UserState) -> anyhow::Result<()> {
         .add_item_to_queue(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8")?.into(), None)
         .await?;
 
-    tracing::debug!(user_id = state.user_id(), "The victim of Rickroll");
+    tracing::info!(user_id = state.user_id(), "The victim of Rickroll");
 
     let _: () = redis.set_ex(key, true, ttl).await?;
 
