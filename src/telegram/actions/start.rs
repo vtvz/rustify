@@ -4,7 +4,7 @@ use teloxide::types::ParseMode;
 
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::{NotificationService, UserService};
+use crate::services::{NotificationService, SpotifyPollingBackoffService, UserService};
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::{LanguageKeyboard, StartKeyboard};
 use crate::user::UserState;
@@ -19,6 +19,8 @@ pub async fn handle(
         let was_inactive = matches!(state.user().status, UserStatus::Inactive);
 
         UserService::set_status(app.db(), state.user_id(), UserStatus::Active).await?;
+        let mut redis_conn = app.redis_conn().await?;
+        SpotifyPollingBackoffService::update_activity(&mut redis_conn, state.user_id()).await?;
 
         if was_inactive {
             tracing::info!(user_id = state.user_id(), "User were reactivated");
