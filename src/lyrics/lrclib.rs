@@ -163,7 +163,7 @@ impl LrcLib {
                 let index_lyrics = match (&hit.synced_lyrics, &hit.plain_lyrics) {
                     (Some(lyrics), _) => {
                         lazy_static::lazy_static! {
-                            static ref RE: regex::Regex = regex::Regex::new(r"^\[(.*?)\.\d{2}\] (.*)$")
+                            static ref RE: regex::Regex = regex::Regex::new(r"^\[(.*?)\.\d{2}\](.*)$")
                                 .expect("Valid regex pattern");
                         };
                         lyrics
@@ -171,7 +171,7 @@ impl LrcLib {
                             .enumerate()
                             .map(|(index, line)| {
                                 RE.captures(line)
-                                    .map(|caps| (caps[1].to_string(), caps[2].to_string()))
+                                    .map(|caps| (caps[1].to_string(), caps[2].trim().to_string()))
                                     .unwrap_or_else(|| (index.to_string(), line.to_string()))
                             })
                             .collect()
