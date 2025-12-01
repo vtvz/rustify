@@ -481,7 +481,7 @@ async fn get_raw_recommendations(
 
     let req = CreateChatCompletionRequestArgs::default()
         .model(config.model())
-        .temperature(2.0)
+        // .temperature(2.0)
         .messages([
             ChatCompletionRequestSystemMessageArgs::default()
                 .content(system_prompt.as_str())
