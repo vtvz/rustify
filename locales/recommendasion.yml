@@ -18,9 +18,9 @@ recommendasion.welcome:
 
 recommendasion.disabled:
   en: |-
-    🚫 <i>Recommendasion™</i> is disabled
+    🚫 <i>Recommendasion™</i> is temporarily disabled. Work is underway to restore it
   ru: |-
-    🚫 <i>Recommendasion™</i> отключен
+    🚫 <i>Recommendasion™</i> пока отключен. Ведутся работы по его восстановлению
 
 recommendasion.device-not-found:
   en: |-
