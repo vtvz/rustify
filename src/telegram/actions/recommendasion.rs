@@ -119,7 +119,7 @@ pub async fn handle(
     };
 
     // TODO: Disabled for now
-    if true {
+    if false {
         app.bot()
             .send_message(
                 chat_id,
@@ -188,7 +188,7 @@ pub async fn handle_inline(
     };
 
     // TODO: Disabled for now
-    if true {
+    if false {
         app.bot()
             .edit_text(
                 &message,
