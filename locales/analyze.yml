@@ -44,7 +44,7 @@ analysis.prompt:
     4. Does this song reference any form of occultism or spiritism? If yes, explain.
     5. Are there any mentions of violence in this song? If yes, describe them.
 
-    IMPORTANT: When quoting parts of lyrics in a foreign language, always provide English translation in parentheses immediately after the quote. Keep response strictly within 1500 characters. Respond with no formatting. Here are the lyrics:
+    IMPORTANT: Respond in English. When quoting parts of lyrics in a foreign language, always provide English translation in parentheses immediately after the quote. Keep response strictly within 1500 characters. Respond with no formatting. Here are the lyrics:
 
     %{lyrics}
   ru: |-
@@ -56,7 +56,7 @@ analysis.prompt:
     4. Ссылается ли эта песня на какую-либо форму оккультизма или спиритизма? Если да, объясни.
     5. Есть ли в этой песне упоминания о насилии? Если да, опиши их.
 
-    ВАЖНО: При цитировании частей текста на иностранном языке, всегда предоставляй перевод на русский в скобках сразу после цитаты. Ответ должен быть строго в пределах 1500 символов. Отвечай без форматирования. Вот текст песни:
+    ВАЖНО: Отвечай на русском языке. При цитировании частей текста на иностранном языке, всегда предоставляй перевод на русский в скобках сразу после цитаты. Ответ должен быть строго в пределах 1500 символов. Отвечай без форматирования. Вот текст песни:
 
     %{lyrics}
 
