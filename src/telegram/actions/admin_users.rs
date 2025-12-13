@@ -295,7 +295,17 @@ fn create_pages_keyboard(
 }
 
 async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> anyhow::Result<()> {
-    let user = UserService::obtain_by_id(app.db(), user_id).await?;
+    let Some(user) = UserService::get_by_id(app.db(), user_id).await? else {
+        let text = format!("User with ID <code>{user_id}</code> is not found");
+
+        app.bot()
+            .send_message(m.chat.id, text)
+            .parse_mode(ParseMode::Html)
+            .await?;
+
+        return Ok(());
+    };
+
     let stats = UserService::get_stats(app.db(), Some(user_id)).await?;
 
     let mut redis_conn = app.redis_conn().await?;

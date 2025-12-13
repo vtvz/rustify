@@ -1,4 +1,3 @@
-use chrono::Duration;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
@@ -8,12 +7,12 @@ use crate::services::{NotificationService, SpotifyPollingBackoffService, UserSer
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::{LanguageKeyboard, StartKeyboard};
 use crate::user::UserState;
-use crate::utils::Clock;
 
 pub async fn handle(
     app: &'static App,
     state: &UserState,
     m: &Message,
+    ref_code: Option<String>,
 ) -> anyhow::Result<HandleStatus> {
     if state.is_spotify_authed().await {
         let was_inactive = matches!(state.user().status, UserStatus::Inactive);
@@ -46,8 +45,10 @@ pub async fn handle(
         .reply_markup(LanguageKeyboard::markup())
         .await?;
 
-    if (Clock::now() - state.user().created_at) < Duration::minutes(1) {
-        if let Err(err) = NotificationService::notify_user_joined(app, m.from.as_ref()).await {
+    if state.newly_created() {
+        if let Err(err) =
+            NotificationService::notify_user_joined(app, m.from.as_ref(), ref_code).await
+        {
             tracing::error!(err = ?err, user_id = state.user_id(), "Failed to notify admins about joined user");
         };
     };

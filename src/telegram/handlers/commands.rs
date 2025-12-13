@@ -46,8 +46,11 @@ pub async fn handle(
     };
 
     match command {
-        UserCommand::Start | UserCommand::Keyboard => {
-            return actions::start::handle(app, state, m).await;
+        UserCommand::Start(ref_code) => {
+            return actions::start::handle(app, state, m, Some(ref_code)).await;
+        },
+        UserCommand::Keyboard => {
+            return actions::start::handle(app, state, m, None).await;
         },
         UserCommand::Dislike => {
             return actions::dislike::handle(app, state, m).await;
