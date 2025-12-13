@@ -118,19 +118,6 @@ pub async fn handle(
         return Ok(HandleStatus::Handled);
     };
 
-    // TODO: Disabled for now
-    if false {
-        app.bot()
-            .send_message(
-                chat_id,
-                t!("recommendasion.disabled", locale = state.locale()),
-            )
-            .parse_mode(ParseMode::Html)
-            .await?;
-
-        return Ok(HandleStatus::Handled);
-    }
-
     app.bot()
         .send_message(
             chat_id,
@@ -186,19 +173,6 @@ pub async fn handle_inline(
 
         return Ok(());
     };
-
-    // TODO: Disabled for now
-    if false {
-        app.bot()
-            .edit_text(
-                &message,
-                t!("recommendasion.disabled", locale = state.locale()),
-            )
-            .parse_mode(ParseMode::Html)
-            .await?;
-
-        return Ok(());
-    }
 
     tracing::info!(user_id = state.user_id(), "User called Recommendasion");
 
