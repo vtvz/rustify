@@ -40,6 +40,7 @@ pub struct Model {
     pub cfg_skippage_enabled: bool,
     pub magic_playlist: Option<String>,
     pub spotify_state: Uuid,
+    pub ref_code: Option<String>,
 }
 
 impl Model {
@@ -84,6 +85,7 @@ pub enum Column {
     CfgSkippageEnabled,
     MagicPlaylist,
     SpotifyState,
+    RefCode,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -125,6 +127,7 @@ impl ColumnTrait for Column {
             Self::CfgSkippageEnabled => ColumnType::Boolean.def(),
             Self::MagicPlaylist => ColumnType::Text.def().null(),
             Self::SpotifyState => ColumnType::Uuid.def(),
+            Self::RefCode => ColumnType::Text.def().null(),
         }
     }
 }

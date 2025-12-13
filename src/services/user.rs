@@ -229,6 +229,23 @@ impl UserService {
         let res = UserEntity::update_many()
             .filter(UserColumn::Id.eq(id))
             .col_expr(UserColumn::Status, Expr::value(status))
+            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
+    #[tracing::instrument(skip_all, fields(user_id = id))]
+    pub async fn set_ref_code(
+        db: &impl ConnectionTrait,
+        id: &str,
+        ref_code: Option<String>,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::RefCode, Expr::value(ref_code))
+            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
             .exec(db)
             .await?;
 

@@ -46,6 +46,8 @@ pub async fn handle(
         .await?;
 
     if state.newly_created() {
+        UserService::set_ref_code(app.db(), state.user_id(), ref_code.clone()).await?;
+
         if let Err(err) =
             NotificationService::notify_user_joined(app, m.from.as_ref(), ref_code).await
         {
