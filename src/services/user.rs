@@ -159,19 +159,35 @@ impl UserService {
     }
 
     #[tracing::instrument(skip_all, fields(user_id = id))]
-    pub async fn obtain_by_id(db: &impl ConnectionTrait, id: &str) -> anyhow::Result<UserModel> {
+    pub async fn get_by_id(
+        db: &impl ConnectionTrait,
+        id: &str,
+    ) -> anyhow::Result<Option<UserModel>> {
         let user = Self::query(Some(id), None).one(db).await?;
 
+        Ok(user)
+    }
+
+    /// Gets user by ID from database. If not found, creates a new user with that ID.
+    /// Returns tuple of `(UserModel, bool)` where bool is `true` if user was newly created.
+    #[tracing::instrument(skip_all, fields(user_id = id))]
+    pub async fn upsert_by_id(
+        db: &impl ConnectionTrait,
+        id: &str,
+    ) -> anyhow::Result<(UserModel, bool)> {
+        let user = Self::get_by_id(db, id).await?;
+
         let user = match user {
-            Some(user) => user,
-            None => {
+            Some(user) => (user, false),
+            None => (
                 UserActiveModel {
                     id: Set(id.to_owned()),
                     ..Default::default()
                 }
                 .insert(db)
-                .await?
-            },
+                .await?,
+                true,
+            ),
         };
 
         Ok(user)
@@ -213,6 +229,23 @@ impl UserService {
         let res = UserEntity::update_many()
             .filter(UserColumn::Id.eq(id))
             .col_expr(UserColumn::Status, Expr::value(status))
+            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
+    #[tracing::instrument(skip_all, fields(user_id = id))]
+    pub async fn set_ref_code(
+        db: &impl ConnectionTrait,
+        id: &str,
+        ref_code: Option<String>,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::RefCode, Expr::value(ref_code))
+            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
             .exec(db)
             .await?;
 

@@ -10,19 +10,25 @@ pub struct UserState {
     spotify: RwLock<AuthCodeSpotify>,
     spotify_user: Mutex<Option<Option<PrivateUser>>>,
     user: UserModel,
+    newly_created: bool,
 }
 
 impl UserState {
-    pub fn new(user: UserModel, spotify: AuthCodeSpotify) -> Self {
+    pub fn new(user: UserModel, newly_created: bool, spotify: AuthCodeSpotify) -> Self {
         Self {
             spotify: RwLock::new(spotify),
             spotify_user: Default::default(),
             user,
+            newly_created,
         }
     }
 
     pub fn user(&self) -> &UserModel {
         &self.user
+    }
+
+    pub fn newly_created(&self) -> bool {
+        self.newly_created
     }
 
     pub fn locale(&self) -> &str {

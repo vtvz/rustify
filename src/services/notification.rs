@@ -31,11 +31,15 @@ impl NotificationService {
         Ok(())
     }
 
-    pub async fn notify_user_joined(app: &'static App, user: Option<&User>) -> anyhow::Result<()> {
+    pub async fn notify_user_joined(
+        app: &'static App,
+        user: Option<&User>,
+        ref_code: Option<String>,
+    ) -> anyhow::Result<()> {
         let user = user
             .map(|user| {
                 format!(
-                    "<code>{id}</code> <a href=\"tg://user?id={id}\">link</a> {name} {surname} {username}",
+                    "<code>{id}</code> <a href=\"tg://user?id={id}\">link</a> {name} {surname} {username}\nRef Code: {ref_code}",
                     id = user.id,
                     name = user.first_name,
                     surname = user.last_name.as_deref().unwrap_or_default(),
@@ -43,7 +47,10 @@ impl NotificationService {
                         .username
                         .as_deref()
                         .map(|username| format!("(@{username})"))
-                        .unwrap_or_default()
+                        .unwrap_or_default(),
+                    ref_code = ref_code
+                        .map(|text| format!("<code>{text}</code>"))
+                        .unwrap_or("<i>None</i>".into()),
                 )
                 .trim()
                 .to_string()

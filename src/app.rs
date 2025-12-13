@@ -293,8 +293,8 @@ impl App {
 
     pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {
         let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
-        let user = UserService::obtain_by_id(self.db(), user_id).await?;
-        let state = UserState::new(user, spotify);
+        let (user, newly_created) = UserService::upsert_by_id(self.db(), user_id).await?;
+        let state = UserState::new(user, newly_created, spotify);
 
         Ok(state)
     }

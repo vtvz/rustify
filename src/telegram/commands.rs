@@ -13,7 +13,7 @@ pub enum UserCommand {
     Help,
 
     #[command(description = "command.start")]
-    Start,
+    Start(String),
 
     #[command(description = "command.language")]
     Language,
@@ -167,10 +167,10 @@ mod tests {
 
     #[test]
     fn check_user_commands() {
-        let user_command = UserCommand::Start;
+        let user_command = UserCommand::Help;
 
         match user_command {
-            UserCommand::Start => UserCommandDisplay::Start,
+            UserCommand::Start(_) => UserCommandDisplay::Start,
             UserCommand::Keyboard => UserCommandDisplay::Keyboard,
             UserCommand::Dislike => UserCommandDisplay::Dislike,
             UserCommand::Like => UserCommandDisplay::Like,
