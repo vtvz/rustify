@@ -22,7 +22,10 @@ impl SpotifyPollingBackoffService {
         user_id: &str,
     ) -> anyhow::Result<i64> {
         let key = Self::get_key(user_id);
-        let last_activity: Option<i64> = redis_conn.get(key).await?;
+        let last_activity: Result<Option<i64>, _> = redis_conn.get(key).await;
+
+        // Protection from trash in the db
+        let last_activity = last_activity.unwrap_or_default();
 
         if last_activity.is_none() {
             Self::update_activity(redis_conn, user_id).await?;
@@ -47,7 +50,7 @@ impl SpotifyPollingBackoffService {
     pub async fn get_suspend_time(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
-    ) -> anyhow::Result<Duration> {
+    ) -> anyhow::Result<Option<Duration>> {
         let idle_duration = Self::get_idle_duration(redis_conn, user_id).await?;
 
         #[rustfmt::skip]
@@ -63,11 +66,11 @@ impl SpotifyPollingBackoffService {
 
         for (period, interval) in intervals {
             if idle_duration < period {
-                return Ok(interval);
+                return Ok(Some(interval));
             }
         }
 
-        Ok(Duration::minutes(5))
+        Ok(None)
     }
 
     fn get_key(user_id: &str) -> String {

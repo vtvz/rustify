@@ -184,26 +184,24 @@ pub async fn check(
         lines -= 1;
     };
 
+    let mut keyboard = vec![
+        vec![InlineButtons::Dislike(track.id().into()).into_inline_keyboard_button(state.locale())],
+        vec![InlineButtons::Ignore(track.id().into()).into_inline_keyboard_button(state.locale())],
+    ];
+
+    if app.ai().is_some() {
+        keyboard.push(vec![
+            InlineButtons::Analyze(track.id().into()).into_inline_keyboard_button(state.locale()),
+        ]);
+    }
+
     let result: Result<Message, teloxide::RequestError> = app
         .bot()
         .send_message(ChatId(state.user_id().parse()?), text)
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            vec![
-                vec![
-                    InlineButtons::Dislike(track.id().into())
-                        .into_inline_keyboard_button(state.locale()),
-                ],
-                vec![
-                    InlineButtons::Ignore(track.id().into())
-                        .into_inline_keyboard_button(state.locale()),
-                ],
-                vec![
-                    InlineButtons::Analyze(track.id().into())
-                        .into_inline_keyboard_button(state.locale()),
-                ],
-            ],
+            keyboard,
         )))
         .await;
 

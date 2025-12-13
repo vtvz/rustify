@@ -202,7 +202,7 @@ impl GeniusLocal {
                 );
 
                 if confidence.confident(BEST_FIT_THRESHOLD) {
-                    tracing::debug!(
+                    tracing::trace!(
                         confidence = %confidence,
                         "Found text at {} hit with {} name variant ({} - {}) with name '{}'",
                         hit_i + 1,
@@ -224,7 +224,7 @@ impl GeniusLocal {
             }
         }
 
-        tracing::debug!(
+        tracing::trace!(
             "Found no text in {} hits in {} name variants ({} - {})",
             hits_count,
             names_len,

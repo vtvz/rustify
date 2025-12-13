@@ -57,8 +57,6 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
         .await?
         .context("No user found with this state - possible CSRF attack")?;
 
-    tracing::info!(user_id = %user.id, "Processing Spotify callback for user");
-
     let state = app.user_state(&user.id).await?;
     let instance = state.spotify_write().await;
 
@@ -84,6 +82,8 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
         UserService::reset_spotify_state(&txn, &user.id).await?;
         txn.commit().await?;
     }
+
+    tracing::info!(user_id = %user.id, "User successfuly logged in");
 
     app.bot()
         .send_message(

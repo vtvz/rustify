@@ -72,7 +72,7 @@ impl WordDefinitionService {
 
         let req = CreateChatCompletionRequestArgs::default()
             .model(config.model())
-            .temperature(0.5)
+            // .temperature(0.5)
             .messages([
                 ChatCompletionRequestSystemMessageArgs::default()
                     .content("You are a helpful assistant.")

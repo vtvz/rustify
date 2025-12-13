@@ -35,6 +35,7 @@ use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::user::UserState;
+use crate::utils::StringUtils as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -111,6 +112,7 @@ pub async fn handle(
                 chat_id,
                 t!("recommendasion.disabled", locale = state.locale()),
             )
+            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -166,12 +168,13 @@ pub async fn handle_inline(
                 &message,
                 t!("recommendasion.disabled", locale = state.locale()),
             )
+            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(());
     };
 
-    tracing::info!("User called Recommendasion");
+    tracing::info!(user_id = state.user_id(), "User called Recommendasion");
 
     let spotify = state.spotify().await;
 
@@ -314,6 +317,7 @@ async fn get_recommendations(
 
         tracing::debug!(
             attempt = attempt + 1,
+            len = recommendations.recommended.len(),
             "AI recommended less than {attempts} tracks. Continue"
         );
     }
@@ -351,13 +355,15 @@ async fn get_recommendations_attempt(
     let mut recommendations = Recommendations::default();
 
     for track_recommendation in recommendations_raw.recommendations {
+        // Truncate track and artist names to avoid 414 URI Too Long errors
+        // Spotify search URLs have length limits, especially after URL encoding
+        let track = track_recommendation.track_title.chars_crop(100);
+
+        let artist = track_recommendation.artist_name.chars_crop(100);
+
         let rspotify::model::SearchResult::Tracks(res) = spotify
             .search(
-                &format!(
-                    "track:{track} artist:{artist}",
-                    track = track_recommendation.track_title,
-                    artist = track_recommendation.artist_name
-                ),
+                &format!("track:{track} artist:{artist}"),
                 SearchType::Track,
                 None,
                 None,
@@ -449,7 +455,7 @@ async fn get_raw_recommendations(
 
     let req = CreateChatCompletionRequestArgs::default()
         .model(config.model())
-        .temperature(2.0)
+        // .temperature(2.0)
         .messages([
             ChatCompletionRequestSystemMessageArgs::default()
                 .content(system_prompt.as_str())
@@ -477,6 +483,7 @@ async fn get_raw_recommendations(
                             "properties": {
                                 "recommendations": {
                                     "type": "array",
+                                    "minItems": amount,
                                     "description": format!("List of {amount} recommended music tracks"),
                                     "items": {
                                         "type": "object",
