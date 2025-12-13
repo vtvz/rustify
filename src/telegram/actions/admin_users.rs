@@ -338,6 +338,7 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
             • Status: <code>{status:?}</code>
             • Role: <code>{role:?}</code>
             • Locale: <code>{locale}</code>
+            • Ref Code: {ref_code}
             • Created: <code>{created_at}</code>
             • Updated: <code>{updated_at}</code>
 
@@ -370,6 +371,10 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
         status = user.status,
         role = user.role,
         locale = user.locale,
+        ref_code = user
+            .ref_code
+            .map(|code| format!("<code>{code}</code>"))
+            .unwrap_or("<i>None</i>".into()),
         created_at = user.created_at.format("%Y-%m-%d %H:%M:%S"),
         updated_at = user.updated_at.format("%Y-%m-%d %H:%M:%S"),
         check_profanity = render_bool(user.cfg_check_profanity),
