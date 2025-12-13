@@ -47,7 +47,13 @@ pub async fn handle(
 
     match command {
         UserCommand::Start(ref_code) => {
-            return actions::start::handle(app, state, m, Some(ref_code)).await;
+            let ref_code = if ref_code.is_empty() {
+                None
+            } else {
+                Some(ref_code)
+            };
+
+            return actions::start::handle(app, state, m, ref_code).await;
         },
         UserCommand::Keyboard => {
             return actions::start::handle(app, state, m, None).await;
