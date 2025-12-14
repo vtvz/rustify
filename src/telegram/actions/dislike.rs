@@ -1,5 +1,4 @@
 use rspotify::model::TrackId;
-use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
@@ -27,7 +26,7 @@ pub async fn handle(
         return Ok(HandleStatus::Handled);
     }
 
-    let track = match CurrentlyPlaying::get(&*state.spotify().await).await {
+    let track = match state.spotify().await.current_playing_wrapped().await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(reason) => {
             app.bot()
@@ -67,10 +66,8 @@ pub async fn handle_inline(
     let track = state
         .spotify()
         .await
-        .track(TrackId::from_id(track_id)?, None)
+        .short_track_cached(&mut app.redis_conn().await?, TrackId::from_id(track_id)?)
         .await?;
-
-    let track = ShortTrack::new(track);
 
     TrackStatusService::set_status(app.db(), state.user_id(), track_id, TrackStatus::Disliked)
         .await?;

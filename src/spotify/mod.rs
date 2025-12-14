@@ -2,10 +2,13 @@ pub mod auth;
 pub mod errors;
 
 use std::borrow::Cow;
+use std::ops::Deref;
 
 use anyhow::{Context, anyhow};
 use auth::SpotifyAuthService;
+use chrono::Duration;
 pub use errors::SpotifyError;
+use redis::AsyncCommands;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
 use rspotify::model::{
@@ -230,43 +233,6 @@ impl From<ClientError> for CurrentlyPlaying {
     }
 }
 
-impl CurrentlyPlaying {
-    pub async fn get(spotify: &AuthCodeSpotify) -> Self {
-        let playing = spotify.current_playing(None, None::<&[_]>).await;
-
-        let playing = match playing {
-            Ok(playing) => playing,
-            Err(err) => return err.into(),
-        };
-
-        let (item, context) = match playing {
-            Some(playing) => {
-                if !playing.is_playing {
-                    return Self::None(CurrentlyPlayingNoneReason::Pause);
-                }
-
-                (playing.item, playing.context)
-            },
-            None => return Self::None(CurrentlyPlayingNoneReason::Nothing),
-        };
-
-        let item = match item {
-            Some(item) => item,
-            None => return Self::None(CurrentlyPlayingNoneReason::Nothing),
-        };
-
-        let track = match item {
-            PlayableItem::Track(item) => item,
-            _ => return Self::None(CurrentlyPlayingNoneReason::Podcast),
-        };
-
-        match &track.id {
-            Some(_) => Self::Ok(Box::new(track.into()), context),
-            None => Self::None(CurrentlyPlayingNoneReason::Local),
-        }
-    }
-}
-
 pub struct Manager {
     spotify: AuthCodeSpotify,
 }
@@ -399,5 +365,85 @@ impl Manager {
         spotify.oauth.state = state.user().spotify_state.to_string();
 
         spotify.get_authorize_url(false).context("Get auth")
+    }
+}
+
+pub struct SpotifyWrapper<S> {
+    spotify: S,
+}
+
+impl<S> SpotifyWrapper<S> {
+    pub fn new(spotify: S) -> Self {
+        Self { spotify }
+    }
+}
+
+impl<S: Deref<Target = AuthCodeSpotify>> SpotifyWrapper<S> {
+    pub async fn short_track_cached(
+        &self,
+        redis_conn: &mut deadpool_redis::Connection,
+        track_id: TrackId<'_>,
+    ) -> anyhow::Result<ShortTrack> {
+        let key = format!("rustify:track_data:{}", track_id.id());
+        let ttl = Duration::hours(1);
+
+        let data: Option<String> = redis_conn.get(&key).await?;
+
+        if let Some(data) = data {
+            if let Ok(track) = serde_json::from_str(&data) {
+                return Ok(track);
+            }
+        }
+
+        let track: ShortTrack = self.spotify.track(track_id, None).await?.into();
+
+        let _: () = redis_conn
+            .set_ex(key, serde_json::to_string(&track)?, ttl.num_seconds() as _)
+            .await?;
+
+        Ok(track)
+    }
+
+    pub async fn current_playing_wrapped(&self) -> CurrentlyPlaying {
+        let playing = self.current_playing(None, None::<&[_]>).await;
+
+        let playing = match playing {
+            Ok(playing) => playing,
+            Err(err) => return err.into(),
+        };
+
+        let (item, context) = match playing {
+            Some(playing) => {
+                if !playing.is_playing {
+                    return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Pause);
+                }
+
+                (playing.item, playing.context)
+            },
+            None => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing),
+        };
+
+        let item = match item {
+            Some(item) => item,
+            None => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing),
+        };
+
+        let track = match item {
+            PlayableItem::Track(item) => item,
+            _ => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Podcast),
+        };
+
+        match &track.id {
+            Some(_) => CurrentlyPlaying::Ok(Box::new(track.into()), context),
+            None => CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Local),
+        }
+    }
+}
+
+impl<T: Deref<Target = AuthCodeSpotify>> Deref for SpotifyWrapper<T> {
+    type Target = AuthCodeSpotify;
+
+    fn deref(&self) -> &AuthCodeSpotify {
+        self.spotify.deref()
     }
 }

@@ -1,5 +1,4 @@
 use rspotify::model::TrackId;
-use rspotify::prelude::BaseClient as _;
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
@@ -8,7 +7,6 @@ use super::super::inline_buttons::InlineButtons;
 use crate::app::App;
 use crate::entity::prelude::*;
 use crate::services::TrackStatusService;
-use crate::spotify::ShortTrack;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::teloxide::CallbackQueryExt as _;
@@ -32,9 +30,8 @@ pub async fn handle_inline(
     let track = state
         .spotify()
         .await
-        .track(TrackId::from_id(track_id)?, None)
+        .short_track_cached(&mut app.redis_conn().await?, TrackId::from_id(track_id)?)
         .await?;
-    let track = ShortTrack::new(track);
 
     TrackStatusService::set_status(app.db(), state.user_id(), track_id, TrackStatus::Ignore)
         .await?;

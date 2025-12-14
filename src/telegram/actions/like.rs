@@ -22,7 +22,7 @@ pub async fn handle(
         return Ok(HandleStatus::Handled);
     }
 
-    let track = match CurrentlyPlaying::get(&*state.spotify().await).await {
+    let track = match state.spotify().await.current_playing_wrapped().await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(reason) => {
             app.bot()

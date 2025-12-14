@@ -34,7 +34,7 @@ use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
-use crate::user::UserState;
+use crate::user::{SpotifyWrapperType, UserState};
 use crate::utils::StringUtils as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
@@ -326,7 +326,7 @@ async fn get_recommendations(
 
 #[tracing::instrument(skip_all)]
 async fn get_liked_tracks(
-    spotify: &tokio::sync::RwLockReadGuard<'_, rspotify::AuthCodeSpotify>,
+    spotify: &SpotifyWrapperType<'_>,
 ) -> Result<Vec<ShortTrack>, anyhow::Error> {
     let mut saved_tracks = spotify.current_user_saved_tracks(None);
     let mut liked_tracks: Vec<ShortTrack> = vec![];

@@ -5,6 +5,7 @@ use rspotify::model::{PrivateUser, SubscriptionLevel};
 use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::entity::prelude::UserModel;
+use crate::spotify::SpotifyWrapper;
 
 pub struct UserState {
     spotify: RwLock<AuthCodeSpotify>,
@@ -12,6 +13,8 @@ pub struct UserState {
     user: UserModel,
     newly_created: bool,
 }
+
+pub type SpotifyWrapperType<'a> = SpotifyWrapper<RwLockReadGuard<'a, AuthCodeSpotify>>;
 
 impl UserState {
     pub fn new(user: UserModel, newly_created: bool, spotify: AuthCodeSpotify) -> Self {
@@ -39,8 +42,10 @@ impl UserState {
         self.user().locale.language()
     }
 
-    pub async fn spotify(&self) -> RwLockReadGuard<'_, AuthCodeSpotify> {
-        self.spotify.read().await
+    pub async fn spotify(&self) -> SpotifyWrapperType<'_> {
+        let lock = self.spotify.read().await;
+
+        SpotifyWrapper::new(lock)
     }
 
     pub async fn spotify_write(&self) -> RwLockWriteGuard<'_, AuthCodeSpotify> {
