@@ -42,7 +42,7 @@ pub async fn handle_command(
         .reply_markup(keyboard)
         .await?;
 
-    return Ok(());
+    Ok(())
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), page, sort_by = ?sort_by, sort_order = ?sort_order, status_filter = ?status_filter))]
