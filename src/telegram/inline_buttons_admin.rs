@@ -39,6 +39,32 @@ pub enum AdminInlineButtons {
         #[serde(skip, default)]
         button_type: AdminUsersPageButtonType,
     },
+    #[serde(rename = "aus")]
+    AdminUserSelect {
+        #[serde(skip, default)]
+        idx: u8,
+        #[serde(rename = "u")]
+        user_id: String,
+        #[serde(rename = "p")]
+        page: u64,
+        #[serde(rename = "s")]
+        sort_by: AdminUsersSortBy,
+        #[serde(rename = "o")]
+        sort_order: AdminUsersSortOrder,
+        #[serde(rename = "f", skip_serializing_if = "Option::is_none")]
+        status_filter: Option<UserStatus>,
+    },
+    #[serde(rename = "aub")]
+    AdminUsersBack {
+        #[serde(rename = "p")]
+        page: u64,
+        #[serde(rename = "s")]
+        sort_by: AdminUsersSortBy,
+        #[serde(rename = "o")]
+        sort_order: AdminUsersSortOrder,
+        #[serde(rename = "f", skip_serializing_if = "Option::is_none")]
+        status_filter: Option<UserStatus>,
+    },
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
@@ -106,6 +132,8 @@ impl AdminInlineButtons {
                     Cow::Owned(format!("◀ Page {}", page + 1))
                 }
             },
+            Self::AdminUserSelect { idx, .. } => Cow::Owned(format!("👤{}", idx + 1)),
+            Self::AdminUsersBack { .. } => Cow::Borrowed("◀ Back to List"),
             Self::AdminUsersPage {
                 page: _,
                 button_type,

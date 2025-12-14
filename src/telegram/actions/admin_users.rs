@@ -5,7 +5,7 @@ use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
-use crate::entity::prelude::{TrackStatus, UserColumn, UserStatus};
+use crate::entity::prelude::{TrackStatus, UserColumn, UserModel, UserStatus};
 use crate::services::{SpotifyPollingBackoffService, TrackStatusService, UserService};
 use crate::telegram::commands_admin::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
@@ -48,7 +48,7 @@ pub async fn handle_command(
     user_id: String,
 ) -> anyhow::Result<HandleStatus> {
     if !user_id.is_empty() {
-        show_user_details(app, m, &user_id).await?;
+        show_user_details(app, state, m, &user_id).await?;
 
         return Ok(HandleStatus::Handled);
     }
@@ -168,8 +168,15 @@ async fn build_users_page(
         command = AdminCommandDisplay::Users
     ));
 
-    let keyboard =
-        create_pages_keyboard(state, page, total_pages, sort_by, sort_order, status_filter);
+    let keyboard = create_pages_keyboard(
+        state,
+        page,
+        total_pages,
+        sort_by,
+        sort_order,
+        status_filter,
+        &users,
+    );
 
     Ok((message.join("\n"), keyboard))
 }
@@ -181,8 +188,31 @@ fn create_pages_keyboard(
     sort_by: AdminUsersSortBy,
     sort_order: AdminUsersSortOrder,
     status_filter: Option<UserStatus>,
+    users: &[UserModel],
 ) -> InlineKeyboardMarkup {
     let mut rows = vec![];
+
+    if !users.is_empty() {
+        let numbered_buttons: Vec<_> = users
+            .iter()
+            .enumerate()
+            .map(|(idx, user)| {
+                AdminInlineButtons::AdminUserSelect {
+                    idx: idx as u8,
+                    user_id: user.id.clone(),
+                    page,
+                    sort_by,
+                    sort_order,
+                    status_filter,
+                }
+                .into_inline_keyboard_button(state.locale())
+            })
+            .collect();
+
+        for chunk in numbered_buttons.chunks(5) {
+            rows.push(chunk.to_vec());
+        }
+    }
 
     let mut sort_buttons = vec![];
 
@@ -294,16 +324,9 @@ fn create_pages_keyboard(
     InlineKeyboardMarkup::new(rows)
 }
 
-async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> anyhow::Result<()> {
+async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result<String> {
     let Some(user) = UserService::get_by_id(app.db(), user_id).await? else {
-        let text = format!("User with ID <code>{user_id}</code> is not found");
-
-        app.bot()
-            .send_message(m.chat.id, text)
-            .parse_mode(ParseMode::Html)
-            .await?;
-
-        return Ok(());
+        return Ok(format!("User with ID <code>{user_id}</code> is not found"));
     };
 
     let stats = UserService::get_stats(app.db(), Some(user_id)).await?;
@@ -398,9 +421,73 @@ async fn show_user_details(app: &'static App, m: &Message, user_id: &str) -> any
         lyrics_lrclib = stats.lyrics_lrclib,
     );
 
+    Ok(text)
+}
+
+async fn show_user_details(
+    app: &'static App,
+    state: &UserState,
+    m: &Message,
+    user_id: &str,
+) -> anyhow::Result<()> {
+    let text = format_user_details(app, user_id).await?;
+
+    let keyboard = InlineKeyboardMarkup::new(vec![vec![
+        AdminInlineButtons::AdminUsersBack {
+            page: 0,
+            sort_by: AdminUsersSortBy::default(),
+            sort_order: AdminUsersSortOrder::default(),
+            status_filter: None,
+        }
+        .into_inline_keyboard_button(state.locale()),
+    ]]);
+
     app.bot()
         .send_message(m.chat.id, text)
         .parse_mode(ParseMode::Html)
+        .reply_markup(keyboard)
+        .await?;
+
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), target_user_id = %user_id))]
+pub async fn show_user_details_inline(
+    app: &'static App,
+    state: &UserState,
+    q: CallbackQuery,
+    user_id: String,
+    page: u64,
+    sort_by: AdminUsersSortBy,
+    sort_order: AdminUsersSortOrder,
+    status_filter: Option<UserStatus>,
+) -> anyhow::Result<()> {
+    let Some(message) = q.get_message() else {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text("Inaccessible Message")
+            .await?;
+        return Ok(());
+    };
+
+    let text = format_user_details(app, &user_id).await?;
+
+    // Create "Back to List" button - preserves full state
+    let keyboard = InlineKeyboardMarkup::new(vec![vec![
+        AdminInlineButtons::AdminUsersBack {
+            page,
+            sort_by,
+            sort_order,
+            status_filter,
+        }
+        .into_inline_keyboard_button(state.locale()),
+    ]]);
+
+    app.bot()
+        .edit_text(&message, text)
+        .parse_mode(ParseMode::Html)
+        .reply_markup(keyboard)
         .await?;
 
     Ok(())

@@ -46,6 +46,43 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
             AdminInlineButtons::WordDefinitionsPage { locale, page, .. } => {
                 actions::word_definition::handle_inline_list(app, q, locale, page).await?;
             },
+            AdminInlineButtons::AdminUserSelect {
+                user_id,
+                page,
+                sort_by,
+                sort_order,
+                status_filter,
+                ..
+            } => {
+                actions::admin_users::show_user_details_inline(
+                    app,
+                    state,
+                    q,
+                    user_id,
+                    page,
+                    sort_by,
+                    sort_order,
+                    status_filter,
+                )
+                .await?;
+            },
+            AdminInlineButtons::AdminUsersBack {
+                page,
+                sort_by,
+                sort_order,
+                status_filter,
+            } => {
+                actions::admin_users::handle_inline(
+                    app,
+                    state,
+                    q,
+                    page,
+                    sort_by,
+                    sort_order,
+                    status_filter,
+                )
+                .await?;
+            },
             AdminInlineButtons::AdminUsersPage {
                 page,
                 sort_info:
