@@ -54,7 +54,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
                 status_filter,
                 ..
             } => {
-                actions::admin_users::show_user_details_inline(
+                actions::admin_users::details::handle_inline(
                     app,
                     state,
                     q,
@@ -72,7 +72,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
                 sort_order,
                 status_filter,
             } => {
-                actions::admin_users::handle_inline(
+                actions::admin_users::list::handle_inline(
                     app,
                     state,
                     q,
@@ -94,7 +94,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
                 status_filter,
                 ..
             } => {
-                actions::admin_users::handle_inline(
+                actions::admin_users::list::handle_inline(
                     app,
                     state,
                     q,
