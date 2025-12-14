@@ -29,7 +29,7 @@ pub async fn handle_current(
     chat_id: &ChatId,
 ) -> anyhow::Result<HandleStatus> {
     let spotify = state.spotify().await;
-    let track = match CurrentlyPlaying::get(&spotify).await {
+    let track = match spotify.current_playing_wrapped().await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(reason) => {
             app.bot()
@@ -67,7 +67,11 @@ pub async fn handle_url(
         return Ok(HandleStatus::Skipped);
     };
 
-    let track = state.spotify().await.track(track_id, None).await?.into();
+    let track = state
+        .spotify()
+        .await
+        .short_track_cached(&mut app.redis_conn().await?, track_id)
+        .await?;
 
     common(app, state, &m.chat.id, track).await
 }

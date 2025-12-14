@@ -2,7 +2,6 @@ use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatComple
 use backon::{ExponentialBuilder, Retryable};
 use itertools::Itertools;
 use rspotify::model::TrackId;
-use rspotify::prelude::BaseClient as _;
 use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
@@ -47,10 +46,8 @@ pub async fn handle_inline(
     let track = state
         .spotify()
         .await
-        .track(TrackId::from_id(track_id)?, None)
+        .short_track_cached(&mut app.redis_conn().await?, TrackId::from_id(track_id)?)
         .await?;
-
-    let track = ShortTrack::new(track);
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {
         app.bot()
