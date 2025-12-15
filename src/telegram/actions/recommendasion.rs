@@ -166,6 +166,18 @@ pub async fn handle_inline(
         return Ok(());
     }
 
+    let Some(config) = app.ai() else {
+        app.bot()
+            .edit_text(
+                &message,
+                t!("recommendasion.disabled", locale = state.locale()),
+            )
+            .parse_mode(ParseMode::Html)
+            .await?;
+
+        return Ok(());
+    };
+
     let mut redis_conn = app.redis_conn().await?;
 
     if let RateLimitOutput::NeedToWait(duration) = RateLimitService::enforce_limit(
@@ -182,18 +194,6 @@ pub async fn handle_inline(
                 duration = duration.pretty_format(),
                 locale = state.locale()
             ))
-            .await?;
-
-        return Ok(());
-    };
-
-    let Some(config) = app.ai() else {
-        app.bot()
-            .edit_text(
-                &message,
-                t!("recommendasion.disabled", locale = state.locale()),
-            )
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(());

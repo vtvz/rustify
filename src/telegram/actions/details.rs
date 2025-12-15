@@ -115,7 +115,7 @@ pub async fn handle_url(
     let track = state
         .spotify()
         .await
-        .short_track_cached(&mut app.redis_conn().await?, track_id)
+        .short_track_cached(&mut redis_conn, track_id)
         .await?;
 
     common(app, state, m.chat.id, track).await
