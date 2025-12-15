@@ -35,7 +35,7 @@ pub async fn handle(
             StartKeyboard::Dislike => actions::dislike::handle(app, state, m).await?,
             StartKeyboard::Stats => actions::stats::handle(app, state, m).await?,
             StartKeyboard::Details => {
-                actions::details::handle_current(app, state, &m.chat.id).await?
+                actions::details::handle_current(app, state, m.chat.id).await?
             },
         };
         return Ok(HandleStatus::Handled);

@@ -1,0 +1,31 @@
+_version: 2
+
+rate-limit.analysis:
+  en: >-
+    ⏱️ You're going too fast!🙂 Please wait %{duration} to use analysis again
+  ru: >-
+    ⏱️ Не так быстро!🙂 Подождите %{duration}, чтобы снова использовать анализ
+
+rate-limit.magic:
+  en: >-
+    ⏱️ You're going too fast! Please wait %{duration} to use this feature again
+  ru: >-
+    ⏱️ Вы слишком быстро! Подождите %{duration}, чтобы снова использовать эту функцию
+
+rate-limit.details:
+  en: >-
+    ⏱️ You're going too fast!🙂 Please wait %{duration} to get track details
+  ru: >-
+    ⏱️ Не так быстро!🙂 Подождите %{duration}, чтобы снова получить данные трека
+
+rate-limit.recommendasion:
+  en: >-
+    ⏱️ You're going too fast!🙂 Please wait %{duration} to use Recommendasion
+  ru: >-
+    ⏱️ Не так быстро!🙂 Подождите %{duration}, чтобы запустить Recommendasion
+
+rate-limit.dislike:
+  en: >-
+    ⏱️ You're going too fast!🙂 Please wait %{duration} to press your next Dislike
+  ru: >-
+    ⏱️ Не так быстро!🙂 Подождите %{duration}, чтобы поставить Дизлайк песне

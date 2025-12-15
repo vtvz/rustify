@@ -3,12 +3,14 @@ use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
 use crate::app::App;
+use crate::services::{RateLimitOutput, RateLimitService};
 use crate::spotify::CurrentlyPlaying;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
+use crate::utils::DurationPrettyFormat as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
@@ -21,6 +23,25 @@ pub async fn handle(
 
         return Ok(HandleStatus::Handled);
     }
+
+    let mut redis_conn = app.redis_conn().await?;
+
+    if let RateLimitOutput::NeedToWait(duration) =
+        RateLimitService::track_like(&mut redis_conn, state.user_id()).await?
+    {
+        app.bot()
+            .send_message(
+                m.chat.id,
+                t!(
+                    "rate-limit.like",
+                    duration = duration.pretty_format(),
+                    locale = state.locale()
+                ),
+            )
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    };
 
     let track = match state.spotify().await.current_playing_wrapped().await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),

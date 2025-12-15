@@ -12,13 +12,14 @@ use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
-use crate::services::UserService;
+use crate::services::{RateLimitOutput, RateLimitService, UserService};
 use crate::spotify::ShortPlaylist;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
+use crate::utils::DurationPrettyFormat as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
@@ -77,6 +78,23 @@ pub async fn handle_inline(
 
         return Ok(());
     }
+
+    let mut redis_conn = app.redis_conn().await?;
+
+    if let RateLimitOutput::NeedToWait(duration) =
+        RateLimitService::magic_playlist(&mut redis_conn, state.user_id()).await?
+    {
+        app.bot()
+            .answer_callback_query(q.id)
+            .text(t!(
+                "rate-limit.magic",
+                duration = duration.pretty_format(),
+                locale = state.locale()
+            ))
+            .await?;
+
+        return Ok(());
+    };
 
     let Some(spotify_user) = state.spotify_user().await? else {
         return Ok(());
