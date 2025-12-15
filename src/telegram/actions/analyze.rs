@@ -10,6 +10,7 @@ use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, Message, ParseMode};
 use crate::app::{AIConfig, App};
 use crate::profanity;
 use crate::services::{
+    RateLimitAction,
     RateLimitOutput,
     RateLimitService,
     TrackStatusService,
@@ -53,7 +54,8 @@ pub async fn handle_inline(
     let mut redis_conn = app.redis_conn().await?;
 
     if let RateLimitOutput::NeedToWait(duration) =
-        RateLimitService::track_analyze(&mut redis_conn, state.user_id()).await?
+        RateLimitService::enforce_limit(&mut redis_conn, state.user_id(), RateLimitAction::Analyze)
+            .await?
     {
         app.bot()
             .answer_callback_query(q.id)

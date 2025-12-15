@@ -14,7 +14,7 @@ mod word_stats;
 pub use magic::MagicService;
 pub use metrics::MetricsService;
 pub use notification::NotificationService;
-pub use rate_limit::{RateLimitOutput, RateLimitService};
+pub use rate_limit::{RateLimitAction, RateLimitOutput, RateLimitService};
 pub use recommendasion::RecommendasionService;
 pub use skippage::SkippageService;
 pub use spotify_polling_backoff::SpotifyPollingBackoffService;

@@ -6,89 +6,42 @@ pub enum RateLimitOutput {
     NeedToWait(Duration),
 }
 
+pub enum RateLimitAction {
+    Analyze,
+    Details,
+    Dislike,
+    Like,
+    Recommendasion,
+    Magic,
+}
+
+impl RateLimitAction {
+    fn config(&self) -> (&str, u32, Duration) {
+        match self {
+            RateLimitAction::Analyze => ("analyze", 1, Duration::minutes(5)),
+            RateLimitAction::Details => ("details", 1, Duration::seconds(15)),
+            RateLimitAction::Dislike => ("dislike", 2, Duration::seconds(20)),
+            RateLimitAction::Like => ("like", 1, Duration::seconds(10)),
+            RateLimitAction::Recommendasion => ("recommendasion", 1, Duration::hours(1)),
+            RateLimitAction::Magic => ("magic", 1, Duration::hours(6)),
+        }
+    }
+}
+
 pub struct RateLimitService {}
 
 impl RateLimitService {
     #[tracing::instrument(skip_all, fields(user_id))]
-    pub async fn track_analyze(
+    pub async fn enforce_limit(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
+        action: RateLimitAction,
     ) -> anyhow::Result<RateLimitOutput> {
-        Self::rate_limit(
-            redis_conn,
-            user_id,
-            "track_analyze",
-            1,
-            Duration::minutes(5),
-        )
-        .await
-    }
+        let (action_name, limit, window_duration) = action.config();
 
-    #[tracing::instrument(skip_all, fields(user_id))]
-    pub async fn track_details(
-        redis_conn: &mut deadpool_redis::Connection,
-        user_id: &str,
-    ) -> anyhow::Result<RateLimitOutput> {
-        Self::rate_limit(
-            redis_conn,
-            user_id,
-            "track_details",
-            1,
-            Duration::seconds(15),
-        )
-        .await
-    }
+        let key = format!("rustify:ratelimit:{user_id}:{action_name}");
 
-    #[tracing::instrument(skip_all, fields(user_id))]
-    pub async fn track_dislike(
-        redis_conn: &mut deadpool_redis::Connection,
-        user_id: &str,
-    ) -> anyhow::Result<RateLimitOutput> {
-        Self::rate_limit(
-            redis_conn,
-            user_id,
-            "track_dislike",
-            1,
-            Duration::seconds(10),
-        )
-        .await
-    }
-
-    #[tracing::instrument(skip_all, fields(user_id))]
-    pub async fn track_like(
-        redis_conn: &mut deadpool_redis::Connection,
-        user_id: &str,
-    ) -> anyhow::Result<RateLimitOutput> {
-        Self::rate_limit(redis_conn, user_id, "track_like", 1, Duration::seconds(10)).await
-    }
-
-    #[tracing::instrument(skip_all, fields(user_id))]
-    pub async fn recommendasion(
-        redis_conn: &mut deadpool_redis::Connection,
-        user_id: &str,
-    ) -> anyhow::Result<RateLimitOutput> {
-        Self::rate_limit(redis_conn, user_id, "recommendasion", 1, Duration::hours(1)).await
-    }
-
-    #[tracing::instrument(skip_all, fields(user_id))]
-    pub async fn magic_playlist(
-        redis_conn: &mut deadpool_redis::Connection,
-        user_id: &str,
-    ) -> anyhow::Result<RateLimitOutput> {
-        Self::rate_limit(redis_conn, user_id, "magic_playlist", 1, Duration::hours(6)).await
-    }
-
-    #[tracing::instrument(skip_all, fields(user_id, func))]
-    async fn rate_limit(
-        redis_conn: &mut deadpool_redis::Connection,
-        user_id: &str,
-        func: &str,
-        max_attempts: u32,
-        time_window: Duration,
-    ) -> anyhow::Result<RateLimitOutput> {
-        let key = format!("rustify:ratelimit:{user_id}:{func}");
-
-        let ttl_seconds = time_window.num_seconds();
+        let ttl_seconds = window_duration.num_seconds();
 
         let count: u32 = redis_conn.incr(&key, 1).await?;
 
@@ -96,7 +49,7 @@ impl RateLimitService {
             let _: () = redis_conn.expire(&key, ttl_seconds).await?;
         }
 
-        if count > max_attempts {
+        if count > limit {
             let remaining_ttl: i64 = redis_conn.ttl(&key).await?;
 
             let wait_duration = if remaining_ttl > 0 {

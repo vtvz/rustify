@@ -12,7 +12,7 @@ use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
-use crate::services::{RateLimitOutput, RateLimitService, UserService};
+use crate::services::{RateLimitAction, RateLimitOutput, RateLimitService, UserService};
 use crate::spotify::ShortPlaylist;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
@@ -82,7 +82,8 @@ pub async fn handle_inline(
     let mut redis_conn = app.redis_conn().await?;
 
     if let RateLimitOutput::NeedToWait(duration) =
-        RateLimitService::magic_playlist(&mut redis_conn, state.user_id()).await?
+        RateLimitService::enforce_limit(&mut redis_conn, state.user_id(), RateLimitAction::Magic)
+            .await?
     {
         app.bot()
             .answer_callback_query(q.id)

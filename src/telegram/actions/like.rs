@@ -3,7 +3,7 @@ use teloxide::prelude::*;
 use teloxide::types::ParseMode;
 
 use crate::app::App;
-use crate::services::{RateLimitOutput, RateLimitService};
+use crate::services::{RateLimitAction, RateLimitOutput, RateLimitService};
 use crate::spotify::CurrentlyPlaying;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
@@ -27,7 +27,8 @@ pub async fn handle(
     let mut redis_conn = app.redis_conn().await?;
 
     if let RateLimitOutput::NeedToWait(duration) =
-        RateLimitService::track_like(&mut redis_conn, state.user_id()).await?
+        RateLimitService::enforce_limit(&mut redis_conn, state.user_id(), RateLimitAction::Like)
+            .await?
     {
         app.bot()
             .send_message(

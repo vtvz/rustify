@@ -6,7 +6,7 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 use super::super::inline_buttons::InlineButtons;
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::{RateLimitOutput, RateLimitService, TrackStatusService};
+use crate::services::{RateLimitAction, RateLimitOutput, RateLimitService, TrackStatusService};
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
@@ -30,7 +30,8 @@ pub async fn handle(
     let mut redis_conn = app.redis_conn().await?;
 
     if let RateLimitOutput::NeedToWait(duration) =
-        RateLimitService::track_dislike(&mut redis_conn, state.user_id()).await?
+        RateLimitService::enforce_limit(&mut redis_conn, state.user_id(), RateLimitAction::Dislike)
+            .await?
     {
         app.bot()
             .send_message(
