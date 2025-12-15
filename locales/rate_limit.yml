@@ -2,36 +2,36 @@ _version: 2
 
 rate-limit.analysis:
   en: >-
-    ⏱️ Slow down! 🙂 Wait %{duration} before analyzing again
+    ⏱️ Wait %{duration} before analyzing again
   ru: >-
-    ⏱️ Не так быстро! 🙂 Подождите %{duration} перед следующим анализом
+    ⏱️ Подождите %{duration} перед следующим анализом
 
 rate-limit.magic:
   en: >-
-    ⏱️ Slow down! Wait %{duration} before generating Magic Playlist™ ✨ again
+    ⏱️ Wait %{duration} before generating Magic Playlist™ ✨ again
   ru: >-
-    ⏱️ Не так быстро! Подождите %{duration} перед следующей генерацией Magic плейлиста™ ✨
+    ⏱️ Подождите %{duration} перед следующей генерацией Magic плейлиста™ ✨
 
 rate-limit.details:
   en: >-
-    ⏱️ Slow down! 🙂 Wait %{duration} before checking track details again
+    ⏱️ Wait %{duration} before checking track details again
   ru: >-
-    ⏱️ Не так быстро! 🙂 Подождите %{duration} перед следующим просмотром информации о треке
+    ⏱️ Подождите %{duration} перед следующим просмотром информации о треке
 
 rate-limit.recommendasion:
   en: >-
-    ⏱️ Slow down! 🙂 Wait %{duration} before using 🤖 Recommendasion again
+    ⏱️ Wait %{duration} before using 🤖 Recommendasion again
   ru: >-
-    ⏱️ Не так быстро! 🙂 Подождите %{duration} перед следующим запуском 🤖 Recommendasion
+    ⏱️ Подождите %{duration} перед следующим запуском 🤖 Recommendasion
 
 rate-limit.dislike:
   en: >-
-    ⏱️ Slow down! 🙂 Wait %{duration} before disliking another track
+    ⏱️ Wait %{duration} before disliking another track
   ru: >-
-    ⏱️ Не так быстро! 🙂 Подождите %{duration} перед следующим дизлайком
+    ⏱️ Подождите %{duration} перед следующим дизлайком
 
 rate-limit.like:
   en: >-
-    ⏱️ Slow down! 🙂 Wait %{duration} before liking another track
+    ⏱️ Wait %{duration} before liking another track
   ru: >-
-    ⏱️ Не так быстро! 🙂 Подождите %{duration} перед следующим лайком
+    ⏱️ Подождите %{duration} перед следующим лайком
