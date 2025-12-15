@@ -12,6 +12,23 @@ use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
 
+/// Handles a user's request to like the currently playing Spotify track and sends localized, user-facing feedback.
+///
+/// The handler will prompt the user to authenticate if they are not logged in, enforce per-user rate limits (sending a localized wait message when required), respond when nothing is playing, save the current track to the user's Spotify library, and send a confirmation message with appropriate markup and link preview.
+///
+/// # Returns
+///
+/// `HandleStatus::Handled` on successful handling (including early exits for unauthenticated or rate-limited cases).
+///
+/// # Examples
+///
+/// ```no_run
+/// # use crate::{App, UserState, Message};
+/// # async fn example(app: &'static App, state: &UserState, m: &Message) -> anyhow::Result<()> {
+/// handle(app, state, m).await?;
+/// # Ok(())
+/// # }
+/// ```
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
     app: &'static App,

@@ -15,6 +15,29 @@ use crate::user::UserState;
 use crate::utils::DurationPrettyFormat;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
+/// Handle a user's "dislike" action for the currently playing Spotify track.
+///
+/// Checks the user's Spotify authentication and invites login if missing, enforces a dislike
+/// rate limit and notifies the user if they must wait, retrieves the current playing track and
+/// informs the chat if no track is available, marks the track as Disliked for the user in the
+/// database, and sends an updated chat message with the composed track text, a small-top link
+/// preview, HTML parsing, and an inline keyboard reflecting the Disliked status.
+///
+/// # Returns
+///
+/// `Ok(HandleStatus::Handled)` when handling completes; an error otherwise.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use crate::{App, UserState};
+/// # use teloxide::types::Message;
+/// # async fn example(app: &'static App, state: &UserState, msg: &Message) -> anyhow::Result<()> {
+/// let result = super::handle(app, state, msg).await?;
+/// assert!(matches!(result, crate::handlers::HandleStatus::Handled));
+/// # Ok(())
+/// # }
+/// ```
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
     app: &'static App,

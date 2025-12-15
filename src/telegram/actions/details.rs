@@ -28,6 +28,30 @@ use crate::user::UserState;
 use crate::utils::{DurationPrettyFormat as _, StringUtils};
 use crate::{profanity, telegram};
 
+/// Handle the user's currently playing Spotify track and present its details to the chat.
+///
+/// Performs rate-limit enforcement for the "Details" action, fetches the user's currently
+/// playing track from their Spotify context, and delegates presentation to the common handler.
+/// If the user is rate-limited or nothing is playing, a localized message is sent and the
+/// function returns without further processing.
+///
+/// # Returns
+///
+/// `Ok(HandleStatus::Handled)` when the request was processed (including early exit due to rate
+/// limiting or no currently playing track), or an `Err` if an underlying service call fails.
+///
+/// # Examples
+///
+/// ```
+/// # use crate::{App, UserState, ChatId, HandleStatus};
+/// # async fn example(app: &'static App, state: &UserState, chat_id: ChatId) -> anyhow::Result<()> {
+/// let status = crate::telegram::actions::details::handle_current(app, state, chat_id).await?;
+/// match status {
+///     HandleStatus::Handled => println!("Handled"),
+///     HandleStatus::Skipped => println!("Skipped"),
+/// }
+/// # Ok(()) }
+/// ```
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_current(
     app: &'static App,
@@ -81,6 +105,32 @@ fn extract_id(url: &url::Url) -> Option<TrackId<'static>> {
     id.ok()
 }
 
+/// Handle a Spotify track URL by fetching the track and presenting its details to the message chat.
+///
+/// This enforces the per-user "Details" rate limit (sending a localized rate-limit message and
+/// returning `HandleStatus::Handled` when the caller must wait), attempts to extract a Spotify
+/// track ID from `url` (returning `HandleStatus::Skipped` if extraction fails), fetches a cached
+/// short track using the user's Spotify context, and delegates presentation to the shared `common`
+/// handler. Errors from Redis, rate limiting, or Spotify operations are propagated.
+///
+/// # Arguments
+///
+/// * `url` - The Spotify URL to extract a track ID from.
+/// * `m` - The incoming Telegram message; replies and edits are sent to `m.chat.id`.
+///
+/// # Returns
+///
+/// `HandleStatus` indicating whether the message was handled or skipped; underlying I/O or API
+/// errors are returned as `Err`.
+///
+/// # Examples
+///
+/// ```
+/// # async fn example_call(app: &'static crate::App, state: &crate::UserState, url: &url::Url, m: &teloxide::types::Message) {
+/// let result = crate::telegram::actions::details::handle_url(app, state, url, m).await;
+/// assert!(result.is_ok());
+/// # }
+/// ```
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_url(
     app: &'static App,
@@ -121,6 +171,31 @@ pub async fn handle_url(
     common(app, state, m.chat.id, track).await
 }
 
+/// Composes and sends a detailed message about a Spotify track (features, genres, status and lyrics)
+///
+/// This function prepares an initial "collecting info" message, fetches track features, artist genres,
+/// track status and counts, searches for lyrics, applies profanity checks and word-stat updates, builds
+/// an interactive inline keyboard (including an analyze button when AI is available), and edits the message
+/// to include either a "no lyrics" notice or the formatted lyrics (trimmed to fit Telegram limits).
+///
+/// On success the function returns a handled status indicating the message was sent/edited; errors from
+/// Spotify, database, or other services are propagated.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use std::sync::Arc;
+/// # async fn example() -> anyhow::Result<()> {
+/// #     // `app`, `state`, `chat_id` and `track` must be provided from your application context.
+/// #     let app: &'static crate::App = todo!();
+/// #     let state: crate::UserState = todo!();
+/// #     let chat_id: teloxide::types::ChatId = todo!();
+/// #     let track: crate::spotify::ShortTrack = todo!();
+/// #     // call the helper
+///     let _ = crate::telegram::actions::details::common(app, &state, chat_id, track).await?;
+/// #     Ok(())
+/// # }
+/// ```
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id = track.id(), track_name = track.name_with_artists()))]
 async fn common(
     app: &'static App,

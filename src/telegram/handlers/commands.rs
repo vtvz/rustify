@@ -10,6 +10,30 @@ use crate::telegram::commands::UserCommand;
 use crate::telegram::keyboards::{LanguageKeyboard, StartKeyboard};
 use crate::user::UserState;
 
+/// Routes an incoming Telegram message that starts with a slash-prefixed command to the appropriate handler or sends a user-facing reply for unknown/help commands.
+///
+/// Parses the message text as a `UserCommand` (bot name "RustifyBot") and:
+/// - Sends a localized "unknown command" reply with `StartKeyboard` if the command is not recognized.
+/// - Ignores the message (returns `Skipped`) if it does not start with `/` or the command format is incorrect.
+/// - Dispatches recognized commands to their respective action handlers and returns their outcome.
+///
+/// Returns `Ok(HandleStatus::Handled)` when a command was processed or a reply was sent, `Ok(HandleStatus::Skipped)` when the message is not a command or has incorrect command format, and `Err(...)` if an upstream operation failed.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use anyhow::Result;
+/// # use teloxide::types::Message;
+/// # use crate::{App, UserState, HandleStatus};
+/// # async fn example(app: &'static App, state: &UserState, m: &Message) -> Result<()> {
+/// let status = crate::handle(app, state, m).await?;
+/// match status {
+///     HandleStatus::Handled => println!("Command handled"),
+///     HandleStatus::Skipped => println!("Message skipped"),
+/// }
+/// # Ok(())
+/// # }
+/// ```
 pub async fn handle(
     app: &'static App,
     state: &UserState,

@@ -26,6 +26,28 @@ use crate::user::UserState;
 use crate::utils::teloxide::CallbackQueryExt as _;
 use crate::utils::{DurationPrettyFormat, StringUtils};
 
+/// Handle an inline "Analyze" callback for a track: enforce user rate limits, fetch the track and its lyrics,
+/// request an AI analysis, and edit the original Telegram message with progress, final analysis or error,
+/// updating user statistics on success.
+///
+/// The function will answer the callback query when the original message is inaccessible or when analysis
+/// is disabled or rate-limited. If lyrics for the track are not found it will edit the message to indicate so.
+/// On successful analysis it increments the user's analyzed-lyrics statistic; on failure it edits the message
+/// to allow retry and logs a warning.
+///
+/// # Examples
+///
+/// ```
+/// # async fn example() -> anyhow::Result<()> {
+/// # // `app`, `state`, `q`, and `track_id` would be provided by the bot runtime in real usage.
+/// # let app: &'static crate::App = unimplemented!();
+/// # let state: crate::user::UserState = unimplemented!();
+/// # let q: teloxide::types::CallbackQuery = unimplemented!();
+/// # let track_id: &str = "3n3Ppam7vgaVa1iaRUc9Lp";
+/// handle_inline(app, &state, q, track_id).await?;
+/// # Ok(())
+/// # }
+/// ```
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id))]
 pub async fn handle_inline(
     app: &'static App,

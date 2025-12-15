@@ -140,11 +140,24 @@ pub async fn handle(
     Ok(HandleStatus::Handled)
 }
 
+/// Handles an inline callback to generate and enqueue music recommendations, then updates the original Telegram message.
+///
+/// Verifies Spotify authentication and AI availability, enforces per-user rate limits, gathers the user's liked and already-recommended tracks, obtains recommendations from the AI, queues accepted tracks on the user's active Spotify device, and edits the callback message with the resulting recommendation links, slop/disliked items, and a retry button.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use anyhow::Result;
+/// # async fn example(app: &'static App, state: &UserState, q: CallbackQuery) -> Result<()> {
+/// handle_inline(app, state, q).await?;
+/// # Ok(())
+/// # }
+/// ```
 #[tracing::instrument(
-    skip_all,
-    fields(
-        user_id = state.user_id(),
-    )
+skip_all,
+fields(
+user_id = state.user_id(),
+)
 )]
 pub async fn handle_inline(
     app: &'static App,

@@ -58,6 +58,23 @@ async fn get_playlist(
     Ok(playlist.into())
 }
 
+/// Handles an inline "Magic" callback query: enforces access and rate limits, triggers playlist generation, and updates the original Telegram message with progress and the final result.
+///
+/// On invocation the function ensures the callback message is accessible and the user is authenticated with Spotify, enforces the Magic rate limit, edits the message to indicate generation is in progress, and then attempts to generate and populate the user's Magic playlist. If generation succeeds the original message is edited to include the playlist URL; if generation fails the message is edited to indicate failure.
+///
+/// # Returns
+///
+/// `Ok(())` if the callback was handled and the bot's message edits were sent successfully; `Err(...)` when playlist generation or Telegram API operations fail.
+///
+/// # Examples
+///
+/// ```
+/// # use your_crate::{App, UserState};
+/// # async fn example(app: &'static App, state: &UserState, q: teloxide::types::CallbackQuery) -> anyhow::Result<()> {
+/// handle_inline(app, state, q).await?;
+/// # Ok(())
+/// # }
+/// ```
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_inline(
     app: &'static App,
