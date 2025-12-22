@@ -44,6 +44,7 @@ pub struct Model {
 }
 
 impl Model {
+    #[must_use]
     pub fn is_admin(&self) -> bool {
         self.role.is_admin()
     }
@@ -200,6 +201,7 @@ pub enum Locale {
 }
 
 impl Locale {
+    #[must_use]
     pub fn language(&self) -> &str {
         match self {
             Self::Russian => "Russian",
@@ -207,6 +209,7 @@ impl Locale {
         }
     }
 
+    #[must_use]
     pub fn locale_codes() -> Vec<String> {
         Self::iter().map(|locale| locale.to_string()).collect()
     }
@@ -270,6 +273,7 @@ impl TryFrom<&str> for Role {
 }
 
 impl Role {
+    #[must_use]
     pub fn is_admin(&self) -> bool {
         matches!(self, Self::Admin)
     }

@@ -3,6 +3,7 @@ pub mod errors;
 
 use std::borrow::Cow;
 use std::ops::Deref;
+use std::sync::Arc;
 
 use anyhow::{Context, anyhow};
 use auth::SpotifyAuthService;
@@ -36,10 +37,12 @@ pub struct ShortPlaylist {
 }
 
 impl ShortPlaylist {
+    #[must_use]
     pub fn id(&self) -> &PlaylistId<'static> {
         &self.id
     }
 
+    #[must_use]
     pub fn url(&self) -> &str {
         &self.url
     }
@@ -80,6 +83,7 @@ pub struct ShortTrack {
 }
 
 impl ShortTrack {
+    #[must_use]
     pub fn new(full_track: FullTrack) -> Self {
         Self {
             id: full_track
@@ -118,44 +122,54 @@ impl ShortTrack {
         }
     }
 
+    #[must_use]
     pub fn id(&self) -> &str {
         self.id.id()
     }
 
+    #[must_use]
     pub fn raw_id(&self) -> &TrackId<'_> {
         &self.id
     }
 
+    #[must_use]
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    #[must_use]
     pub fn url(&self) -> &str {
         &self.url
     }
 
+    #[must_use]
     pub fn name_with_artists(&self) -> String {
         let artists = self.artist_names().join(", ");
 
-        format!(r#"{} — {}"#, artists, self.name())
+        format!("{} — {}", artists, self.name())
     }
 
+    #[must_use]
     pub fn duration_secs(&self) -> i64 {
         self.duration_secs
     }
 
+    #[must_use]
     pub fn artist_names(&self) -> Vec<&str> {
-        self.artist_names.iter().map(|item| item.as_str()).collect()
+        self.artist_names.iter().map(String::as_str).collect()
     }
 
+    #[must_use]
     pub fn artist_ids(&self) -> Vec<&str> {
-        self.artist_ids.iter().map(|artist| artist.id()).collect()
+        self.artist_ids.iter().map(Id::id).collect()
     }
 
+    #[must_use]
     pub fn artist_raw_ids(&self) -> &[ArtistId<'_>] {
         &self.artist_ids
     }
 
+    #[must_use]
     pub fn first_artist_name(&self) -> &str {
         self.artist_names()
             .first()
@@ -163,14 +177,17 @@ impl ShortTrack {
             .unwrap_or("Rick Astley")
     }
 
+    #[must_use]
     pub fn album_name(&self) -> &str {
         &self.album_name
     }
 
+    #[must_use]
     pub fn album_url(&self) -> &str {
         &self.album_url
     }
 
+    #[must_use]
     pub fn track_tg_link(&self) -> String {
         format!(
             r#"<a href="{link}">{name}</a>"#,
@@ -179,6 +196,7 @@ impl ShortTrack {
         )
     }
 
+    #[must_use]
     pub fn album_tg_link(&self) -> String {
         format!(
             r#"<a href="{link}">{name}</a>"#,
@@ -203,6 +221,7 @@ pub enum CurrentlyPlayingNoneReason {
 }
 
 impl CurrentlyPlayingNoneReason {
+    #[must_use]
     pub fn localize(&self, locale: &str) -> Cow<'_, str> {
         match self {
             Self::Pause => {
@@ -238,6 +257,7 @@ pub struct Manager {
 }
 
 impl Manager {
+    #[must_use]
     pub fn new(
         spotify_id: &str,
         spotify_secret: &str,
@@ -293,8 +313,7 @@ impl Manager {
             .await
             .expect("Cannot acquire lock")
             .as_ref()
-            .map(Token::is_expired)
-            .unwrap_or(false);
+            .is_some_and(Token::is_expired);
 
         if !should_reauth {
             return Ok(());
@@ -312,7 +331,7 @@ impl Manager {
             }
 
             return Err(anyhow!("Token is invalid"));
-        };
+        }
 
         let token = instance
             .get_token()
@@ -330,7 +349,7 @@ impl Manager {
 
     async fn is_token_valid(mut res: ClientResult<()>) -> anyhow::Result<bool> {
         let response = match res {
-            Ok(_) => return Ok(true),
+            Ok(()) => return Ok(true),
             Err(ClientError::Http(box HttpError::StatusCode(ref mut response))) => response,
             Err(err) => return Err(err.into()),
         };
@@ -345,7 +364,7 @@ impl Manager {
 
     pub async fn for_user(&self, db: &DbConn, user_id: &str) -> anyhow::Result<AuthCodeSpotify> {
         let mut instance = self.spotify.clone();
-        instance.token = Default::default();
+        instance.token = Arc::default();
         let token = SpotifyAuthService::get_token(db, user_id).await?;
 
         *instance
@@ -423,14 +442,12 @@ impl<S: Deref<Target = AuthCodeSpotify>> SpotifyWrapper<S> {
             None => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing),
         };
 
-        let item = match item {
-            Some(item) => item,
-            None => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing),
+        let Some(item) = item else {
+            return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Nothing);
         };
 
-        let track = match item {
-            PlayableItem::Track(item) => item,
-            _ => return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Podcast),
+        let PlayableItem::Track(track) = item else {
+            return CurrentlyPlaying::None(CurrentlyPlayingNoneReason::Podcast);
         };
 
         match &track.id {
@@ -444,6 +461,6 @@ impl<T: Deref<Target = AuthCodeSpotify>> Deref for SpotifyWrapper<T> {
     type Target = AuthCodeSpotify;
 
     fn deref(&self) -> &AuthCodeSpotify {
-        self.spotify.deref()
+        &self.spotify
     }
 }

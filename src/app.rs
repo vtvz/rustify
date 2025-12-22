@@ -35,10 +35,12 @@ pub struct AIConfig {
 }
 
 impl AIConfig {
+    #[must_use]
     pub fn openai_client(&self) -> &async_openai::Client<OpenAIConfig> {
         &self.openai_client
     }
 
+    #[must_use]
     pub fn model(&self) -> &str {
         &self.model
     }
@@ -226,7 +228,7 @@ async fn init_redis(redis_url: &str) -> anyhow::Result<deadpool_redis::Pool> {
     Ok(pool)
 }
 
-async fn init_ai(env: &EnvConfig) -> anyhow::Result<Option<AIConfig>> {
+fn init_ai(env: &EnvConfig) -> anyhow::Result<Option<AIConfig>> {
     let Some(api_key) = env.openai_api_key.as_deref() else {
         return Ok(None);
     };
@@ -263,7 +265,7 @@ impl App {
             env.spotify_redirect_uri.clone(),
         );
         let lyrics_manager = init_lyrics_manager(&env, redis_url).await?;
-        let ai = init_ai(&env).await?;
+        let ai = init_ai(&env)?;
 
         init_rustrict(&env);
 

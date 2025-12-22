@@ -31,15 +31,12 @@ async fn callback_handler(
     Query(params): Query<CallbackParams>,
 ) -> Response {
     match process_callback(app, params).await {
-        Ok(_) => Redirect::to("https://t.me/RustifyBot").into_response(),
+        Ok(()) => Redirect::to("https://t.me/RustifyBot").into_response(),
         Err(err) => {
             tracing::error!(error = ?err, "Failed to process Spotify callback");
             (
                 StatusCode::BAD_REQUEST,
-                format!(
-                    "Failed to authenticate with Spotify. Please try again.\n\n{}",
-                    err
-                ),
+                format!("Failed to authenticate with Spotify. Please try again.\n\n{err}"),
             )
                 .into_response()
         },
@@ -113,9 +110,7 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
 }
 
 pub async fn work() {
-    rustify::infrastructure::logger::init()
-        .await
-        .expect("Logger should be built");
+    rustify::infrastructure::logger::init().expect("Logger should be built");
 
     tracing::info!(
         git_commit_timestamp = env!("GIT_COMMIT_TIMESTAMP"),

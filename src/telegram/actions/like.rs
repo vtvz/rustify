@@ -42,7 +42,7 @@ pub async fn handle(
             .await?;
 
         return Ok(HandleStatus::Handled);
-    };
+    }
 
     let track = match state.spotify().await.current_playing_wrapped().await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),

@@ -57,9 +57,7 @@ async fn sync_name(
 pub async fn work() {
     // profanity::check_cases();
 
-    rustify::infrastructure::logger::init()
-        .await
-        .expect("Logger should be built");
+    rustify::infrastructure::logger::init().expect("Logger should be built");
 
     tracing::info!(
         git_commit_timestamp = env!("GIT_COMMIT_TIMESTAMP"),
@@ -106,7 +104,7 @@ pub async fn work() {
                             .parse_mode(ParseMode::Html)
                             .disable_link_preview(true)
                             .await?;
-                    };
+                    }
                 }
 
                 Ok(())

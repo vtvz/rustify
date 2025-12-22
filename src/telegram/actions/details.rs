@@ -13,6 +13,7 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::*;
+use crate::profanity::LineResult;
 use crate::services::{
     RateLimitAction,
     RateLimitOutput,
@@ -51,7 +52,7 @@ pub async fn handle_current(
             .await?;
 
         return Ok(HandleStatus::Handled);
-    };
+    }
 
     let spotify = state.spotify().await;
     let track = match spotify.current_playing_wrapped().await {
@@ -106,7 +107,7 @@ pub async fn handle_url(
             .await?;
 
         return Ok(HandleStatus::Handled);
-    };
+    }
 
     let Some(track_id) = extract_id(url) else {
         return Ok(HandleStatus::Skipped);
@@ -276,7 +277,7 @@ async fn common(
 
     WordStatsService::increase_details_occurence(app.db(), &checked.get_profine_words()).await?;
 
-    let lyrics: Vec<_> = checked.iter().map(|line| line.highlighted()).collect();
+    let lyrics: Vec<_> = checked.iter().map(LineResult::highlighted).collect();
 
     let typ = checked.typ.to_string();
 

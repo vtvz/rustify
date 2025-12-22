@@ -10,6 +10,7 @@ pub enum StartKeyboard {
 }
 
 impl StartKeyboard {
+    #[must_use]
     pub fn into_button(&self, locale: &str) -> KeyboardButton {
         let text = match self {
             StartKeyboard::Dislike => t!("start-keyboard.dislike", locale = locale),
@@ -20,6 +21,7 @@ impl StartKeyboard {
         KeyboardButton::new(text)
     }
 
+    #[must_use]
     pub fn markup(locale: &str) -> ReplyMarkup {
         ReplyMarkup::Keyboard(
             KeyboardMarkup::new(vec![
@@ -33,6 +35,7 @@ impl StartKeyboard {
         )
     }
 
+    #[must_use]
     pub fn from_str(text: &str, locale: &str) -> Option<StartKeyboard> {
         if text == t!("start-keyboard.dislike", locale = locale) {
             Some(StartKeyboard::Dislike)
@@ -53,6 +56,7 @@ pub enum LanguageKeyboard {
 }
 
 impl LanguageKeyboard {
+    #[must_use]
     pub fn into_button(&self) -> KeyboardButton {
         let text = match self {
             Self::English => t!("language.change", locale = "en"),
@@ -62,6 +66,7 @@ impl LanguageKeyboard {
         KeyboardButton::new(text)
     }
 
+    #[must_use]
     pub fn into_locale(&self) -> UserLocale {
         match self {
             Self::English => UserLocale::English,
@@ -69,6 +74,7 @@ impl LanguageKeyboard {
         }
     }
 
+    #[must_use]
     pub fn markup() -> ReplyMarkup {
         ReplyMarkup::Keyboard(
             KeyboardMarkup::new(vec![vec![
@@ -79,6 +85,7 @@ impl LanguageKeyboard {
         )
     }
 
+    #[must_use]
     pub fn parse(text: &str) -> Option<Self> {
         if text == t!("language.change", locale = "en") {
             Some(Self::English)

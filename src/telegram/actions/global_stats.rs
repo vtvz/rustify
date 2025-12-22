@@ -10,10 +10,10 @@ use crate::services::{TrackStatusService, UserService, UserStats};
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
 
-#[tracing::instrument(skip_all, fields(user_id = %_state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
     app: &'static App,
-    _state: &UserState,
+    state: &UserState,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
     let disliked =
@@ -58,12 +58,12 @@ pub async fn handle(
     for status in UserStatus::iter() {
         let users = UserService::count_users(app.db(), Some(status)).await?;
         let ratio = 100.0 * users as f32 / users_count as f32;
-        user_stats.push(format!("• {status:?} <code>{users} ({ratio:.2}%)</code>"))
+        user_stats.push(format!("• {status:?} <code>{users} ({ratio:.2}%)</code>"));
     }
     let user_stats = user_stats.join("\n");
 
     let text = formatdoc!(
-        r#"
+        r"
             📉 <b>Global stats</b> 📈
 
             👎 Disliked <code>{disliked}</code> songs
@@ -90,7 +90,7 @@ pub async fn handle(
             <b>Locales stats</b>
 
             {user_locales}
-        "#
+        "
     );
 
     app.bot()

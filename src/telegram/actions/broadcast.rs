@@ -51,10 +51,10 @@ pub async fn handle(
         let res = send_fn.retry(ExponentialBuilder::default()).await;
 
         match res {
-            Ok(_) => sent += 1,
+            Ok(()) => sent += 1,
             Err(err) => {
                 tracing::warn!(err = ?err, "Error on message broadcasting");
-                errors += 1
+                errors += 1;
             },
         }
     }

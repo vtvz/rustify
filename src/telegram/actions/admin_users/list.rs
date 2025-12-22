@@ -98,16 +98,14 @@ pub async fn build_users_page(
     .await?;
 
     let mut message = vec![formatdoc!(
-        r#"
+        r"
         👥 <b>Recent Users</b>
         Page {page}/{total_pages} (Total: {total_users} users)
 
         Sorted by: <code>{sort_by:?} {sort_order:?}</code> | Filter: <code>{status}</code>
-        "#,
+        ",
         page = page + 1,
-        status = status_filter
-            .map(|status| format!("{status:?}"))
-            .unwrap_or("All".into()),
+        status = status_filter.map_or("All".into(), |status| format!("{status:?}")),
     )];
 
     if users.is_empty() {

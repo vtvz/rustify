@@ -218,7 +218,7 @@ pub async fn collect_daemon(app: &'static App) {
                         tracing::error!(err = ?err, "Something went wrong on user timing metrics collection");
                     }
                 },
-                _ = utils::ctrl_c() => { return },
+                () = utils::ctrl_c() => { return },
             }
         }
     }.in_current_span());

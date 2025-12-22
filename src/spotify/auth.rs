@@ -52,9 +52,8 @@ impl SpotifyAuthService {
             .one(db)
             .await?;
 
-        let spotify_auth = match spotify_auth {
-            Some(spotify_auth) => spotify_auth,
-            None => return Ok(None),
+        let Some(spotify_auth) = spotify_auth else {
+            return Ok(None);
         };
 
         Ok(Some(Token {

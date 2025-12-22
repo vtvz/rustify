@@ -224,10 +224,10 @@ async fn send_definitions_page(
         total_pages,
         total_items
     ));
-    lines.push("".into());
+    lines.push(String::new());
 
     lines.push(format!("<b>Locale: {locale_filter}</b>"));
-    lines.push("".into());
+    lines.push(String::new());
 
     for def in &definitions {
         lines.push(format!(
@@ -237,7 +237,7 @@ async fn send_definitions_page(
                 .as_deref()
                 .unwrap_or("<i>word have no definition yet</i>")
         ));
-        lines.push("".into());
+        lines.push(String::new());
         lines.push(format!(
             "<code>[ check: {} | details:{} | analyze:{} ]</code>",
             def.check_occurrences, def.details_occurrences, def.analyze_occurrences
@@ -248,7 +248,7 @@ async fn send_definitions_page(
             locale_filter,
             def.word
         ));
-        lines.push("".into());
+        lines.push(String::new());
     }
 
     // Create pagination buttons
@@ -276,10 +276,10 @@ async fn send_definitions_page(
         );
     }
 
-    let keyboard = if !buttons.is_empty() {
-        Some(InlineKeyboardMarkup::new(vec![buttons]))
-    } else {
+    let keyboard = if buttons.is_empty() {
         None
+    } else {
+        Some(InlineKeyboardMarkup::new(vec![buttons]))
     };
 
     if let Some(message) = &message {

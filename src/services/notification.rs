@@ -37,7 +37,7 @@ impl NotificationService {
         ref_code: Option<String>,
     ) -> anyhow::Result<()> {
         let user = user
-            .map(|user| {
+            .map_or("Unknown".into(), |user| {
                 format!(
                     "<code>{id}</code> <a href=\"tg://user?id={id}\">link</a> {name} {surname} {username}\nRef Code: {ref_code}",
                     id = user.id,
@@ -49,15 +49,13 @@ impl NotificationService {
                         .map(|username| format!("(@{username})"))
                         .unwrap_or_default(),
                     ref_code = ref_code
-                        .map(|text| format!("<code>{text}</code>"))
-                        .unwrap_or("<i>None</i>".into()),
+                        .map_or("<i>None</i>".into(), |text| format!("<code>{text}</code>")),
                 )
                 .trim()
                 .to_string()
-            })
-            .unwrap_or("Unknown".into());
+            });
 
-        let message = format!("🆕 <b>New user joined</b>\n\n{}", user);
+        let message = format!("🆕 <b>New user joined</b>\n\n{user}");
 
         Self::notify_admins(app, &message).await
     }

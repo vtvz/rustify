@@ -78,3 +78,19 @@ panic = "abort"
 [profile.release]
 panic = "abort"
 debug = 1
+
+[lints.clippy]
+unwrap_used = "warn"
+
+pedantic = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+cast_sign_loss = "allow"
+cast_possible_truncation = "allow"
+cast_precision_loss = "allow"
+
+unnecessary_literal_bound = "allow"
+match_same_arms = "allow"
+struct_excessive_bools = "allow"
+too_many_lines = "allow"

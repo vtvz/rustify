@@ -135,6 +135,7 @@ pub async fn ctrl_c() {
 pub struct Clock;
 
 impl Clock {
+    #[must_use]
     pub fn now() -> NaiveDateTime {
         Utc::now().naive_local().round_subsecs(0)
     }
@@ -173,23 +174,17 @@ impl DurationPrettyFormat for chrono::Duration {
         let centiseconds = (self.num_milliseconds() % 1000) / 10;
 
         let subsec_suffix = if centiseconds > 0 {
-            format!(".{:02}", centiseconds)
+            format!(".{centiseconds:02}")
         } else {
             String::new()
         };
 
         if days > 0 {
-            format!(
-                "{:02}:{:02}:{:02}:{:02}{}",
-                days, hours, minutes, seconds, subsec_suffix
-            )
+            format!("{days:02}:{hours:02}:{minutes:02}:{seconds:02}{subsec_suffix}")
         } else if hours > 0 {
-            format!(
-                "{:02}:{:02}:{:02}{}",
-                hours, minutes, seconds, subsec_suffix
-            )
+            format!("{hours:02}:{minutes:02}:{seconds:02}{subsec_suffix}")
         } else {
-            format!("{:02}:{:02}{}", minutes, seconds, subsec_suffix)
+            format!("{minutes:02}:{seconds:02}{subsec_suffix}")
         }
     }
 }

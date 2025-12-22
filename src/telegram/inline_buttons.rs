@@ -17,6 +17,7 @@ pub enum InlineButtons {
 }
 
 impl InlineButtons {
+    #[must_use]
     pub fn label(&self, locale: &str) -> Cow<'_, str> {
         match self {
             InlineButtons::Dislike(_) => t!("inline-buttons.dislike", locale = locale),
@@ -36,6 +37,7 @@ impl InlineButtons {
 }
 
 impl InlineButtons {
+    #[must_use]
     pub fn from_track_status(
         status: TrackStatus,
         track_id: &str,
@@ -66,6 +68,7 @@ impl InlineButtons {
 }
 
 impl InlineButtons {
+    #[must_use]
     pub fn into_inline_keyboard_button(self, locale: &str) -> InlineKeyboardButton {
         let label = self.label(locale);
 

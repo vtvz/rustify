@@ -41,14 +41,12 @@ impl InfluxClient {
 
             // Check beforehand
             url.path_segments_mut()
-                .map_err(|_| anyhow!("Path segments should be parsable"))?;
+                .map_err(|()| anyhow!("Path segments should be parsable"))?;
 
             url
         };
 
-        let instance_tag = instance_tag
-            .map(String::from)
-            .unwrap_or_else(|| "unknown".into());
+        let instance_tag = instance_tag.map_or_else(|| "unknown".into(), String::from);
 
         Ok(Self {
             req,

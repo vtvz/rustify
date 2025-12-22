@@ -1,5 +1,6 @@
 use teloxide::types::{LinkPreviewOptions, Message, MessageEntityKind};
 
+#[must_use]
 pub fn extract_url_from_message(m: &Message) -> Option<url::Url> {
     let entities = m.parse_entities()?;
 

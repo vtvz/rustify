@@ -50,10 +50,10 @@ impl super::SearchResult for SearchResult {
         };
 
         formatdoc!(
-            r#"
+            r"
                 {text} (with {confidence}% confidence)
                 {title}
-            "#,
+            ",
             title = &self.title,
             confidence = self.confidence,
         )
@@ -217,8 +217,8 @@ impl GeniusLocal {
                         url: hit.url,
                         title,
                         confidence,
-                        lyrics: Default::default(),
-                        language: Default::default(),
+                        lyrics: vec![],
+                        language: Language::default(),
                     }));
                 }
             }
@@ -236,6 +236,11 @@ impl GeniusLocal {
     }
 
     async fn get_lyrics(&self, hit: &SearchResult) -> anyhow::Result<Vec<String>> {
+        #[derive(Serialize, Deserialize)]
+        struct LyricsResponse {
+            lyrics: String,
+        }
+
         let res = self
             .reqwest
             .get(format!("{}/{}/lyrics", self.service_url, hit.id))
@@ -245,11 +250,6 @@ impl GeniusLocal {
 
         if res.status() == StatusCode::NOT_FOUND {
             return Ok(vec![]);
-        }
-
-        #[derive(Serialize, Deserialize)]
-        pub struct LyricsResponse {
-            lyrics: String,
         }
 
         let res: LyricsResponse = res.error_for_status()?.json().await?;

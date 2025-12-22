@@ -9,6 +9,7 @@ use crate::spotify::SpotifyWrapper;
 
 pub struct UserState {
     spotify: RwLock<AuthCodeSpotify>,
+    #[allow(clippy::option_option)]
     spotify_user: Mutex<Option<Option<PrivateUser>>>,
     user: UserModel,
     newly_created: bool,
@@ -17,10 +18,11 @@ pub struct UserState {
 pub type SpotifyWrapperType<'a> = SpotifyWrapper<RwLockReadGuard<'a, AuthCodeSpotify>>;
 
 impl UserState {
+    #[must_use]
     pub fn new(user: UserModel, newly_created: bool, spotify: AuthCodeSpotify) -> Self {
         Self {
             spotify: RwLock::new(spotify),
-            spotify_user: Default::default(),
+            spotify_user: Mutex::default(),
             user,
             newly_created,
         }
@@ -85,16 +87,11 @@ impl UserState {
     }
 
     pub async fn is_spotify_premium(&self) -> anyhow::Result<bool> {
-        let res = self
-            .spotify_user()
-            .await?
-            .map(|spotify_user| {
-                spotify_user
-                    .product
-                    .map(|product| product == SubscriptionLevel::Premium)
-                    .unwrap_or_default()
-            })
-            .unwrap_or_default();
+        let res = self.spotify_user().await?.is_some_and(|spotify_user| {
+            spotify_user
+                .product
+                .is_some_and(|product| product == SubscriptionLevel::Premium)
+        });
 
         Ok(res)
     }

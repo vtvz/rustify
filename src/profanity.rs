@@ -26,6 +26,7 @@ impl Manager {
         tracing::trace!(word, "Removed custom word");
     }
 
+    #[must_use]
     pub fn check(text: &[&str]) -> CheckResult {
         CheckResult::perform(text)
     }
@@ -36,13 +37,21 @@ pub struct CheckResult {
     pub typ: TypeWrapper,
 }
 
-pub struct Checker;
+impl<'a> IntoIterator for &'a CheckResult {
+    type IntoIter = std::slice::Iter<'a, LineResult>;
+    type Item = &'a LineResult;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
 
 impl CheckResult {
     pub fn iter(&self) -> Iter<'_, LineResult> {
         self.lines.iter()
     }
 
+    #[must_use]
     pub fn should_trigger(&self) -> bool {
         self.typ.is(*TYPE_TRIGGER)
     }
@@ -52,10 +61,10 @@ impl CheckResult {
             .chars()
             .enumerate()
             .filter_map(|(i, c)| {
-                if censored.chars().nth(i) != Some(c) {
-                    Some(i)
-                } else {
+                if censored.chars().nth(i) == Some(c) {
                     None
+                } else {
+                    Some(i)
                 }
             })
             .collect();
@@ -99,7 +108,7 @@ impl CheckResult {
                         typ: Type::SAFE.into(),
                         censored: line.clone(),
                         line,
-                        bad_chars: Default::default(),
+                        bad_chars: vec![],
                     };
                 }
 
@@ -127,6 +136,7 @@ impl CheckResult {
         }
     }
 
+    #[must_use]
     pub fn get_profine_words(&self) -> HashSet<String> {
         let mut words = HashSet::new();
 
@@ -147,6 +157,7 @@ pub struct LineResult {
 }
 
 impl LineResult {
+    #[must_use]
     pub fn highlighted(&self) -> String {
         self.line
             .chars()
@@ -163,10 +174,10 @@ impl LineResult {
                     _ => c.into(),
                 }
             })
-            .collect::<Vec<_>>()
-            .join("")
+            .collect::<String>()
     }
 
+    #[must_use]
     pub fn get_profine_words(&self) -> HashSet<String> {
         lazy_static! {
             static ref RG_WRAPPER: Regex =
@@ -181,7 +192,7 @@ impl LineResult {
             word.to_lowercase()
         });
 
-        HashSet::from_iter(iter)
+        iter.collect()
     }
 }
 
@@ -302,7 +313,7 @@ mod tests {
             let expected_set: HashSet<String> = tc
                 .expected_profine_words
                 .iter()
-                .map(|s| s.to_string())
+                .map(ToString::to_string)
                 .collect();
             assert_eq!(
                 profine_words, expected_set,
@@ -317,7 +328,7 @@ mod tests {
 pub struct TypeWrapper(Type);
 
 impl TypeWrapper {
-    fn name(&self) -> String {
+    fn name(self) -> String {
         let typ = self.0;
 
         if typ.is(Type::SAFE) {

@@ -46,6 +46,7 @@ impl UserStatsIncreaseQueryBuilder {
         self
     }
 
+    #[allow(clippy::needless_pass_by_value)]
     pub fn checked_lyrics(mut self, profane: bool, provider: Option<lyrics::Provider>) -> Self {
         self.0 = self
             .0
@@ -55,7 +56,7 @@ impl UserStatsIncreaseQueryBuilder {
             )
             .col_expr(
                 UserColumn::LyricsProfane,
-                Expr::col(UserColumn::LyricsProfane).add(if profane { 1 } else { 0 }),
+                Expr::col(UserColumn::LyricsProfane).add(i32::from(profane)),
             );
 
         let col = match provider {
@@ -103,16 +104,17 @@ pub struct UserStats {
 pub struct UserService;
 
 impl UserService {
+    #[must_use]
     pub fn query(id: Option<&str>, status: Option<UserStatus>) -> Select<UserEntity> {
         let mut query: Select<_> = UserEntity::find();
 
         if let Some(status) = status {
             query = query.filter(UserColumn::Status.eq(status));
-        };
+        }
 
         if let Some(id) = id {
             query = query.filter(UserColumn::Id.eq(id));
-        };
+        }
 
         query
     }
@@ -357,6 +359,7 @@ impl UserService {
         Ok(res)
     }
 
+    #[must_use]
     pub fn increase_stats_query(user_id: &str) -> UserStatsIncreaseQueryBuilder {
         UserStatsIncreaseQueryBuilder::new(user_id)
     }

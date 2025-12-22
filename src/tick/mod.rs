@@ -159,7 +159,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
 pub async fn check_playing(app: &'static App) {
     utils::tick!(CHECK_INTERVAL, {
         if let Err(err) = process(app).await {
-            tracing::error!(err = ?err, "Something went wrong")
-        };
+            tracing::error!(err = ?err, "Something went wrong");
+        }
     });
 }
