@@ -9,14 +9,22 @@ use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, Message, ParseMode};
 
 use crate::app::{AIConfig, App};
 use crate::profanity;
-use crate::services::{TrackStatusService, UserService, WordDefinitionService, WordStatsService};
+use crate::services::{
+    RateLimitAction,
+    RateLimitOutput,
+    RateLimitService,
+    TrackStatusService,
+    UserService,
+    WordDefinitionService,
+    WordStatsService,
+};
 use crate::spotify::ShortTrack;
 use crate::telegram::MESSAGE_MAX_LEN;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::StringUtils;
 use crate::utils::teloxide::CallbackQueryExt as _;
+use crate::utils::{DurationPrettyFormat, StringUtils};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id))]
 pub async fn handle_inline(
@@ -43,10 +51,28 @@ pub async fn handle_inline(
         return Ok(());
     };
 
+    let mut redis_conn = app.redis_conn().await?;
+
+    if let RateLimitOutput::NeedToWait(duration) =
+        RateLimitService::enforce_limit(&mut redis_conn, state.user_id(), RateLimitAction::Analyze)
+            .await?
+    {
+        app.bot()
+            .answer_callback_query(q.id)
+            .text(t!(
+                "rate-limit.analysis",
+                duration = duration.pretty_format(),
+                locale = state.locale()
+            ))
+            .await?;
+
+        return Ok(());
+    };
+
     let track = state
         .spotify()
         .await
-        .short_track_cached(&mut app.redis_conn().await?, TrackId::from_id(track_id)?)
+        .short_track_cached(&mut redis_conn, TrackId::from_id(track_id)?)
         .await?;
 
     let Some(hit) = app.lyrics().search_for_track(&track).await? else {

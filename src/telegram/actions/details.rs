@@ -13,27 +13,52 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::{TrackStatusService, WordStatsService};
+use crate::services::{
+    RateLimitAction,
+    RateLimitOutput,
+    RateLimitService,
+    TrackStatusService,
+    WordStatsService,
+};
 use crate::spotify::{CurrentlyPlaying, ShortTrack};
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::StringUtils;
+use crate::utils::{DurationPrettyFormat as _, StringUtils};
 use crate::{profanity, telegram};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_current(
     app: &'static App,
     state: &UserState,
-    chat_id: &ChatId,
+    chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
+    let mut redis_conn = app.redis_conn().await?;
+    if let RateLimitOutput::NeedToWait(duration) =
+        RateLimitService::enforce_limit(&mut redis_conn, state.user_id(), RateLimitAction::Details)
+            .await?
+    {
+        app.bot()
+            .send_message(
+                chat_id,
+                t!(
+                    "rate-limit.details",
+                    duration = duration.pretty_format(),
+                    locale = state.locale()
+                ),
+            )
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    };
+
     let spotify = state.spotify().await;
     let track = match spotify.current_playing_wrapped().await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(reason) => {
             app.bot()
-                .send_message(*chat_id, reason.localize(state.locale()))
+                .send_message(chat_id, reason.localize(state.locale()))
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -63,6 +88,26 @@ pub async fn handle_url(
     url: &url::Url,
     m: &Message,
 ) -> anyhow::Result<HandleStatus> {
+    let mut redis_conn = app.redis_conn().await?;
+
+    if let RateLimitOutput::NeedToWait(duration) =
+        RateLimitService::enforce_limit(&mut redis_conn, state.user_id(), RateLimitAction::Details)
+            .await?
+    {
+        app.bot()
+            .send_message(
+                m.chat.id,
+                t!(
+                    "rate-limit.details",
+                    duration = duration.pretty_format(),
+                    locale = state.locale()
+                ),
+            )
+            .await?;
+
+        return Ok(HandleStatus::Handled);
+    };
+
     let Some(track_id) = extract_id(url) else {
         return Ok(HandleStatus::Skipped);
     };
@@ -70,23 +115,23 @@ pub async fn handle_url(
     let track = state
         .spotify()
         .await
-        .short_track_cached(&mut app.redis_conn().await?, track_id)
+        .short_track_cached(&mut redis_conn, track_id)
         .await?;
 
-    common(app, state, &m.chat.id, track).await
+    common(app, state, m.chat.id, track).await
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id = track.id(), track_name = track.name_with_artists()))]
 async fn common(
     app: &'static App,
     state: &UserState,
-    chat_id: &ChatId,
+    chat_id: ChatId,
     track: ShortTrack,
 ) -> anyhow::Result<HandleStatus> {
     let message = app
         .bot()
         .send_message(
-            *chat_id,
+            chat_id,
             t!(
                 "details.collecting-info",
                 locale = state.locale(),

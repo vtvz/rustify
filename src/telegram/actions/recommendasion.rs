@@ -29,14 +29,20 @@ use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, Re
 
 use crate::app::{AIConfig, App};
 use crate::entity::prelude::TrackStatus;
-use crate::services::{RecommendasionService, TrackStatusService};
+use crate::services::{
+    RateLimitAction,
+    RateLimitOutput,
+    RateLimitService,
+    RecommendasionService,
+    TrackStatusService,
+};
 use crate::spotify::ShortTrack;
 use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::user::{SpotifyWrapperType, UserState};
-use crate::utils::StringUtils as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
+use crate::utils::{DurationPrettyFormat as _, StringUtils as _};
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RecommendationsRaw {
@@ -160,8 +166,6 @@ pub async fn handle_inline(
         return Ok(());
     }
 
-    let mut redis_conn = app.redis_conn().await?;
-
     let Some(config) = app.ai() else {
         app.bot()
             .edit_text(
@@ -169,6 +173,27 @@ pub async fn handle_inline(
                 t!("recommendasion.disabled", locale = state.locale()),
             )
             .parse_mode(ParseMode::Html)
+            .await?;
+
+        return Ok(());
+    };
+
+    let mut redis_conn = app.redis_conn().await?;
+
+    if let RateLimitOutput::NeedToWait(duration) = RateLimitService::enforce_limit(
+        &mut redis_conn,
+        state.user_id(),
+        RateLimitAction::Recommendasion,
+    )
+    .await?
+    {
+        app.bot()
+            .answer_callback_query(q.id)
+            .text(t!(
+                "rate-limit.recommendasion",
+                duration = duration.pretty_format(),
+                locale = state.locale()
+            ))
             .await?;
 
         return Ok(());

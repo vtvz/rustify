@@ -66,7 +66,7 @@ pub async fn handle(
         },
         UserCommand::Stats => return actions::stats::handle(app, state, m).await,
         UserCommand::Details => {
-            return actions::details::handle_current(app, state, &m.chat.id).await;
+            return actions::details::handle_current(app, state, m.chat.id).await;
         },
         UserCommand::Login => {
             return actions::login::send_login_invite(app, state).await;
