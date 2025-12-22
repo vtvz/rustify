@@ -200,7 +200,7 @@ impl ShortTrack {
     pub fn album_tg_link(&self) -> String {
         format!(
             r#"<a href="{link}">{name}</a>"#,
-            name = self.album_name(),
+            name = html::escape(self.album_name()),
             link = self.album_url()
         )
     }
