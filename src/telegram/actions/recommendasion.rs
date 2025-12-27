@@ -63,6 +63,7 @@ pub struct Recommendations {
 }
 
 impl Recommendations {
+    #[must_use]
     pub fn disliked_formatted(&self) -> Vec<String> {
         self.disliked
             .iter()
@@ -70,6 +71,7 @@ impl Recommendations {
             .collect()
     }
 
+    #[must_use]
     pub fn slop_formatted(&self) -> Vec<String> {
         let search_url = url::Url::parse("https://open.spotify.com/search").expect("It's parsable");
 
@@ -197,7 +199,7 @@ pub async fn handle_inline(
             .await?;
 
         return Ok(());
-    };
+    }
 
     tracing::info!(user_id = state.user_id(), "User called Recommendasion");
 
@@ -422,7 +424,7 @@ async fn get_recommendations_attempt(
             .any(|item: &ShortTrack| item.id() == track.id())
         {
             continue;
-        };
+        }
 
         if user_data
             .liked
@@ -430,7 +432,7 @@ async fn get_recommendations_attempt(
             .any(|item: &ShortTrack| item.id() == track.id())
         {
             continue;
-        };
+        }
 
         recommendations.recommended.insert(0, track);
     }
@@ -446,7 +448,7 @@ async fn get_raw_recommendations(
     let liked_tracks = user_data
         .liked
         .iter()
-        .map(|track| track.name_with_artists())
+        .map(ShortTrack::name_with_artists)
         .join("\n");
 
     let amount = 30;

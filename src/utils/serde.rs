@@ -12,7 +12,7 @@ pub mod bool_from_int {
     where
         S: Serializer,
     {
-        serializer.serialize_u8(if *b { 1 } else { 0 })
+        serializer.serialize_u8(u8::from(*b))
     }
 }
 

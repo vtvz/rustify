@@ -53,7 +53,7 @@ pub async fn handle(
         {
             tracing::error!(err = ?err, user_id = state.user_id(), "Failed to notify admins about joined user");
         };
-    };
+    }
 
     Ok(HandleStatus::Handled)
 }

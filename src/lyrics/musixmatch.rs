@@ -45,7 +45,7 @@ impl super::SearchResult for Lyrics {
         if let Some(subtitle) = &self.subtitle {
             subtitle.iter().map(|(_, text)| text.as_str()).collect()
         } else {
-            self.lyrics.iter().map(|lyrics| lyrics.as_str()).collect()
+            self.lyrics.iter().map(String::as_str).collect()
         }
     }
 
@@ -201,9 +201,7 @@ impl Musixmatch {
             ["message"]["body"]["subtitle_list"][0]["subtitle"]["subtitle_body"]
             .clone();
 
-        let subtitle_json = if let Value::String(subtitle_json) = subtitle_json {
-            subtitle_json
-        } else {
+        let Value::String(subtitle_json) = subtitle_json else {
             return Ok(Some(lyrics));
         };
 

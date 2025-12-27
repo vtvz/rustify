@@ -86,7 +86,7 @@ pub async fn consume(
     let res = err_wrap().await;
 
     match res {
-        Ok(_) => {},
+        Ok(()) => {},
         Err(mut err) => {
             error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
         },

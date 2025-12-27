@@ -7,9 +7,7 @@ use crate::queue::profanity_check;
 use crate::utils;
 
 pub async fn work() {
-    rustify::infrastructure::logger::init()
-        .await
-        .expect("Logger should be built");
+    rustify::infrastructure::logger::init().expect("Logger should be built");
 
     tracing::info!(
         git_commit_timestamp = env!("GIT_COMMIT_TIMESTAMP"),
@@ -26,7 +24,7 @@ pub async fn work() {
             let redis = app.redis_conn().await.context("Connection anavailable")?;
 
             tokio::select! {
-                _ = utils::ctrl_c() => break,
+                () = utils::ctrl_c() => break,
 
                 res = profanity_check::consume(app, redis) => {
                     if let Err(err) = res {

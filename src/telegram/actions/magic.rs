@@ -95,7 +95,7 @@ pub async fn handle_inline(
             .await?;
 
         return Ok(());
-    };
+    }
 
     let Some(spotify_user) = state.spotify_user().await? else {
         return Ok(());
@@ -158,7 +158,7 @@ async fn generate_playlist(
     while let Some(track) = saved_tracks.next().await {
         let track = track?;
         if let Some(track_id) = track.track.id {
-            track_ids.push(track_id.into())
+            track_ids.push(track_id.into());
         }
     }
     track_ids.shuffle(&mut rand::rng());

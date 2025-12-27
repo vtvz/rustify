@@ -6,7 +6,7 @@ use tracing_subscriber::filter::Targets;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-pub async fn loki() -> anyhow::Result<Option<Layer>> {
+pub fn loki() -> anyhow::Result<Option<Layer>> {
     let Ok(loki_url) = dotenv::var("LOKI_URL") else {
         return Ok(None);
     };
@@ -34,8 +34,8 @@ pub async fn loki() -> anyhow::Result<Option<Layer>> {
     Ok(Some(layer))
 }
 
-pub async fn init() -> anyhow::Result<()> {
-    let loki = loki().await?;
+pub fn init() -> anyhow::Result<()> {
+    let loki = loki()?;
 
     let subscriber = tracing_subscriber::fmt()
         .with_file(false)

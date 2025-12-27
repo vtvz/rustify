@@ -87,7 +87,7 @@ impl RelationTrait for Relation {
     }
 }
 
-#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default, Copy)]
 #[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum Status {
     #[sea_orm(string_value = "disliked")]

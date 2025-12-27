@@ -46,7 +46,7 @@ impl super::SearchResult for SearchResult {
     }
 
     fn lyrics(&self) -> Vec<&str> {
-        self.lyrics.iter().map(|lyrics| lyrics.as_str()).collect()
+        self.lyrics.iter().map(String::as_str).collect()
     }
 
     fn line_index_name(&self, index: usize) -> String {
@@ -72,9 +72,9 @@ impl super::SearchResult for SearchResult {
         };
 
         formatdoc!(
-            r#"
+            r"
                 {text} (with {confidence}% confidence)
-                {artist_name} - {track_name}"#,
+                {artist_name} - {track_name}",
             confidence = self.confidence,
             artist_name = self.artist_name,
             track_name = self.track_name,
@@ -170,9 +170,10 @@ impl LrcLib {
                             .lines()
                             .enumerate()
                             .map(|(index, line)| {
-                                RE.captures(line)
-                                    .map(|caps| (caps[1].to_string(), caps[2].trim().to_string()))
-                                    .unwrap_or_else(|| (index.to_string(), line.to_string()))
+                                RE.captures(line).map_or_else(
+                                    || (index.to_string(), line.to_string()),
+                                    |caps| (caps[1].to_string(), caps[2].trim().to_string()),
+                                )
                             })
                             .collect()
                     },

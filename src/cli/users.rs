@@ -50,21 +50,19 @@ async fn set_role(app: &App, user_id: &str, role: UserRole) -> anyhow::Result<()
     let user = UserEntity::find_by_id(user_id)
         .one(app.db())
         .await?
-        .ok_or_else(|| anyhow::anyhow!("User not found: {}", user_id))?;
+        .ok_or_else(|| anyhow::anyhow!("User not found: {user_id}"))?;
 
     let mut user_active = user.into_active_model();
     user_active.role = Set(role.clone());
     user_active.save(app.db()).await?;
 
-    println!("User {} role set to {:?}", user_id, role);
+    println!("User {user_id} role set to {role:?}");
 
     Ok(())
 }
 
 pub async fn run(command: UsersCommands) {
-    crate::infrastructure::logger::init()
-        .await
-        .expect("Logger should be built");
+    crate::infrastructure::logger::init().expect("Logger should be built");
 
     tracing::info!(
         git_commit_timestamp = env!("GIT_COMMIT_TIMESTAMP"),
@@ -81,7 +79,7 @@ pub async fn run(command: UsersCommands) {
     };
 
     if let Err(e) = result {
-        eprintln!("Error: {}", e);
+        eprintln!("Error: {e}");
         std::process::exit(1);
     }
 }

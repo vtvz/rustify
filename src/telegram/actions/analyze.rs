@@ -67,7 +67,7 @@ pub async fn handle_inline(
             .await?;
 
         return Ok(());
-    };
+    }
 
     let track = state
         .spotify()
@@ -103,7 +103,7 @@ pub async fn handle_inline(
     let res = perform(app, state, &message, config, &track, &hit.lyrics()).await;
 
     match res {
-        Ok(_) => {
+        Ok(()) => {
             UserService::increase_stats_query(state.user_id())
                 .analyzed_lyrics()
                 .exec(app.db())
@@ -130,7 +130,7 @@ pub async fn handle_inline(
 
             tracing::warn!(err = ?err, "OpenAI request failed");
         },
-    };
+    }
     Ok(())
 }
 
@@ -192,7 +192,7 @@ async fn perform(
     }
 
     let (profane_words_block, profane_words_doesnt_fit_block) = if profane_words.is_empty() {
-        ("".to_string(), "".to_string())
+        (String::new(), String::new())
     } else {
         (
             t!(

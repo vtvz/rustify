@@ -14,7 +14,7 @@ pub async fn handle(
 ) -> anyhow::Result<HandleStatus> {
     if let Some(url) = extract_url_from_message(m) {
         return_if_handled!(actions::details::handle_url(app, state, &url, m).await?);
-    };
+    }
 
     Ok(HandleStatus::Skipped)
 }

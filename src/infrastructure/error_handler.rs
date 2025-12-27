@@ -20,6 +20,7 @@ pub struct ErrorHandlingResult {
 }
 
 impl ErrorHandlingResult {
+    #[must_use]
     pub fn unhandled() -> Self {
         ErrorHandlingResult {
             handled: false,
@@ -27,6 +28,7 @@ impl ErrorHandlingResult {
         }
     }
 
+    #[must_use]
     pub fn handled() -> Self {
         ErrorHandlingResult {
             handled: true,
@@ -34,6 +36,7 @@ impl ErrorHandlingResult {
         }
     }
 
+    #[must_use]
     pub fn handled_notified() -> Self {
         ErrorHandlingResult {
             handled: true,
@@ -176,27 +179,26 @@ pub async fn spotify_client_error(
         return Ok(ErrorHandlingResult::unhandled());
     };
 
-    match err {
-        rspotify::ClientError::InvalidToken => {
-            tracing::error!(err = ?err, "User has Invalid Spotify Token");
-            UserService::set_status(app.db(), user_id, UserStatus::SpotifyTokenInvalid).await?;
+    if let rspotify::ClientError::InvalidToken = err {
+        tracing::error!(err = ?err, user_id, "User has Invalid Spotify Token");
+        UserService::set_status(app.db(), user_id, UserStatus::SpotifyTokenInvalid).await?;
 
-            app.bot()
-                .send_message(
-                    ChatId(user_id.parse()?),
-                    t!(
-                        "error.spotify-invalid-token",
-                        locale = locale,
-                        command = UserCommandDisplay::Login
-                    ),
-                )
-                .reply_markup(StartKeyboard::markup(locale))
-                .await?;
+        app.bot()
+            .send_message(
+                ChatId(user_id.parse()?),
+                t!(
+                    "error.spotify-invalid-token",
+                    locale = locale,
+                    command = UserCommandDisplay::Login
+                ),
+            )
+            .reply_markup(StartKeyboard::markup(locale))
+            .await?;
 
-            return Ok(ErrorHandlingResult::handled_notified());
-        },
-        _ => tracing::error!(err = ?err, "Spotify Client Has an Issue"),
+        return Ok(ErrorHandlingResult::handled_notified());
     }
+
+    tracing::error!(err = ?err, "Spotify Client Has an Issue");
 
     Ok(ErrorHandlingResult::handled())
 }

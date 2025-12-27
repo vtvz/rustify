@@ -1,4 +1,3 @@
-#![warn(clippy::unwrap_used)]
 #![feature(
     stmt_expr_attributes,
     box_patterns,

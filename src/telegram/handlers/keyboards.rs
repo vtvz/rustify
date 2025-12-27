@@ -20,7 +20,7 @@ pub async fn handle(
         actions::language::handle(app, state, m, button.into_locale()).await?;
 
         return Ok(HandleStatus::Handled);
-    };
+    }
 
     if !state.is_spotify_authed().await {
         actions::login::send_login_invite(app, state).await?;
@@ -39,7 +39,7 @@ pub async fn handle(
             },
         };
         return Ok(HandleStatus::Handled);
-    };
+    }
 
     Ok(HandleStatus::Skipped)
 }

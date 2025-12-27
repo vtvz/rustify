@@ -29,6 +29,7 @@ fn remove_song_feat(name: &str) -> String {
         .to_owned()
 }
 
+#[must_use]
 pub fn get_track_names(name: &str) -> HashSet<String> {
     let no_extra = remove_extra_info(name);
     let names = vec![
@@ -48,14 +49,17 @@ pub struct SearchResultConfidence {
 }
 
 impl SearchResultConfidence {
+    #[must_use]
     pub fn new(artist: f64, title: f64) -> Self {
         Self { title, artist }
     }
 
+    #[must_use]
     pub fn confident(&self, threshold: f64) -> bool {
         self.artist >= threshold && self.title >= threshold
     }
 
+    #[must_use]
     pub fn avg(&self) -> f64 {
         (self.title + self.artist) / 2.0
     }
@@ -96,10 +100,7 @@ mod tests {
 
             assert!(
                 names.contains(input),
-                "Expected '{}' to contain '{}', but it didn't. Got: {:?}",
-                input,
-                input,
-                names
+                "Expected '{input}' to contain '{input}', but it didn't. Got: {names:?}",
             );
         }
     }
@@ -133,9 +134,7 @@ mod tests {
         for expected in expected_variations {
             assert!(
                 names.contains(expected),
-                "Expected set to contain '{}', but it didn't. Got: {:?}",
-                expected,
-                names
+                "Expected set to contain '{expected}', but it didn't. Got: {names:?}",
             );
         }
     }

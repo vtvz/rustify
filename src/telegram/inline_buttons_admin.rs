@@ -122,6 +122,7 @@ impl std::ops::Not for AdminUsersSortOrder {
 }
 
 impl AdminInlineButtons {
+    #[must_use]
     pub fn label(&self, _locale: &str) -> Cow<'_, str> {
         match self {
             Self::RegenerateWordDefinition { .. } => Cow::Borrowed("Regenerate 🔄"),
@@ -156,13 +157,13 @@ impl AdminInlineButtons {
                     };
 
                     match sort_info.sort_by {
-                        AdminUsersSortBy::CreatedAt => Cow::Owned(format!("Created{}", arrow)),
-                        AdminUsersSortBy::LyricsChecked => Cow::Owned(format!("Lyrics{}", arrow)),
+                        AdminUsersSortBy::CreatedAt => Cow::Owned(format!("Created{arrow}")),
+                        AdminUsersSortBy::LyricsChecked => Cow::Owned(format!("Lyrics{arrow}")),
                     }
                 },
                 AdminUsersPageButtonType::Filter => {
                     if let Some(status) = status_filter {
-                        Cow::Owned(format!("Next filter: {:?}", status))
+                        Cow::Owned(format!("Next filter: {status:?}"))
                     } else {
                         Cow::Borrowed("Next filter: All")
                     }
@@ -173,6 +174,7 @@ impl AdminInlineButtons {
 }
 
 impl AdminInlineButtons {
+    #[must_use]
     pub fn into_inline_keyboard_button(self, locale: &str) -> InlineKeyboardButton {
         let label = self.label(locale);
 
