@@ -1,0 +1,33 @@
+_version: 2
+
+song-links.button:
+  en: |
+    Track links 🔗
+  ru: |
+    Ссылки на трек 🔗
+
+song-links.fetch:
+  en: |
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    Fetching link data
+  ru: |
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    Получение данных о ссылках
+
+song-links.result:
+  en: |
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    Track links on other platforms:
+    %{links}
+  ru: |
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    Ссылки на трек на других ресурсах:
+    %{links}

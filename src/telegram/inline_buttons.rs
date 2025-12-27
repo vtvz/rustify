@@ -11,6 +11,7 @@ pub enum InlineButtons {
     Dislike(String),
     Ignore(String),
     Analyze(String),
+    SongLinks(String),
     Magic,
     SkippageEnable(bool),
     Recommendasion,
@@ -23,6 +24,7 @@ impl InlineButtons {
             InlineButtons::Dislike(_) => t!("inline-buttons.dislike", locale = locale),
             InlineButtons::Ignore(_) => t!("inline-buttons.ignore", locale = locale),
             InlineButtons::Analyze(_) => t!("inline-buttons.analyze", locale = locale),
+            InlineButtons::SongLinks(_) => t!("song-links.button", locale = locale),
             InlineButtons::Magic => t!("magic.button", locale = locale),
             InlineButtons::Recommendasion => t!("recommendasion.button", locale = locale),
             InlineButtons::SkippageEnable(to_enable) => {
