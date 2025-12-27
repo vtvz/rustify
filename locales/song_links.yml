@@ -11,27 +11,27 @@ song-links.fetch:
     🎵 %{track_name}
     Album: %{album_name}
 
-    Finding links to other platforms...
+    🔍 Finding links to other platforms...
   ru: |
     🎵 %{track_name}
     Альбом: %{album_name}
 
-    Поиск ссылок на другие платформы...
+    🔍 Поиск ссылок на другие платформы...
 
 song-links.result:
   en: |
     🎵 %{track_name}
     Album: %{album_name}
 
-    Available on:
+    🎧 Available on:
     %{links}
 
-    Powered by <a href="https://odesli.co/">SongLink</a>
+    ⚡ Powered by <a href="https://odesli.co/">SongLink</a>
   ru: |
     🎵 %{track_name}
     Альбом: %{album_name}
 
-    Доступно на:
+    🎧 Доступно на:
     %{links}
 
-    Работает на <a href="https://odesli.co/">SongLink</a>
+    ⚡ Работает на <a href="https://odesli.co/">SongLink</a>
