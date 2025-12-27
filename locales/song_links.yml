@@ -25,9 +25,13 @@ song-links.result:
 
     Track links on other platforms:
     %{links}
+
+    Powered by <a href="https://odesli.co/">SongLink</a>
   ru: |
     🎵 %{track_name}
     Альбом: %{album_name}
 
     Ссылки на трек на других ресурсах:
     %{links}
+
+    Работает на <a href="https://odesli.co/">SongLink</a>
