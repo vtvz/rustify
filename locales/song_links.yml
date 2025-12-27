@@ -2,28 +2,28 @@ _version: 2
 
 song-links.button:
   en: |
-    Track links 🔗
+    Links to other platforms 🔗
   ru: |
-    Ссылки на трек 🔗
+    Ссылки на другие платформы 🔗
 
 song-links.fetch:
   en: |
     🎵 %{track_name}
     Album: %{album_name}
 
-    Fetching link data
+    Finding links to other platforms...
   ru: |
     🎵 %{track_name}
     Альбом: %{album_name}
 
-    Получение данных о ссылках
+    Поиск ссылок на другие платформы...
 
 song-links.result:
   en: |
     🎵 %{track_name}
     Album: %{album_name}
 
-    Track links on other platforms:
+    Available on:
     %{links}
 
     Powered by <a href="https://odesli.co/">SongLink</a>
@@ -31,7 +31,7 @@ song-links.result:
     🎵 %{track_name}
     Альбом: %{album_name}
 
-    Ссылки на трек на других ресурсах:
+    Доступно на:
     %{links}
 
     Работает на <a href="https://odesli.co/">SongLink</a>
