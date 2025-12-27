@@ -94,6 +94,7 @@ impl SongLinkService {
     }
 
     pub async fn get(&self, track: &ShortTrack) -> anyhow::Result<SongLinkResponse> {
+        // https://odesli.co/
         let mut url = Url::parse("https://api.song.link/v1-alpha.1/links").expect("Parsable");
 
         {
