@@ -26,7 +26,7 @@ song-links.result:
     🎧 Available on:
     %{links}
 
-    ⚡ Powered by <a href="https://odesli.co/">SongLink</a>
+    ⚡ Links provided by <a href="https://odesli.co/">SongLink</a>
   ru: |
     🎵 %{track_name}
     Альбом: %{album_name}
@@ -34,4 +34,4 @@ song-links.result:
     🎧 Доступно на:
     %{links}
 
-    ⚡ Работает на <a href="https://odesli.co/">SongLink</a>
+    ⚡ Ссылки предоставлены <a href="https://odesli.co/">SongLink</a>
