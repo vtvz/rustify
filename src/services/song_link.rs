@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 use anyhow::Context;
+use backon::{ExponentialBuilder, Retryable as _};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -103,14 +104,20 @@ impl SongLinkService {
             pairs.append_pair("songIfSingle", "true");
         }
 
-        let res_text = self
-            .client
-            .get(url)
-            .send()
-            .await?
-            .error_for_status()?
-            .text()
-            .await?;
+        let res_text = (|| async {
+            let res_text = self
+                .client
+                .get(url.clone())
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?;
+
+            anyhow::Ok(res_text)
+        })
+        .retry(ExponentialBuilder::default())
+        .await?;
 
         let res = serde_json::from_str::<SongLinkResponse>(&res_text)
             .with_context(|| format!("Failed parsing json response:\n{res_text}"))?;
