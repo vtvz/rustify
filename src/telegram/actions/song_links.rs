@@ -72,5 +72,5 @@ pub async fn handle_inline(
         .parse_mode(ParseMode::Html)
         .await?;
 
-    return Ok(());
+    Ok(())
 }

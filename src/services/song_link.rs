@@ -68,7 +68,7 @@ impl Display for SongLinkPlatform {
             Self::Tidal => "Tidal",
             Self::AmazonStore => "Amazon Store",
             Self::AmazonMusic => "Amazon Music",
-            Self::Soundcloud => "Sound Cloud",
+            Self::Soundcloud => "SoundCloud",
             Self::Napster => "Napster",
             Self::Yandex => "Yandex",
             Self::Spinrilla => "Spinrilla",
@@ -102,10 +102,17 @@ impl SongLinkService {
             pairs.append_pair("songIfSingle", "true");
         }
 
-        let res_text = self.client.get(url).send().await?.text().await?;
+        let res_text = self
+            .client
+            .get(url)
+            .send()
+            .await?
+            .error_for_status()?
+            .text()
+            .await?;
 
         let res = serde_json::from_str::<SongLinkResponse>(&res_text)
-            .with_context(|| format!("Failed parsing json responce:\n{res_text}"))?;
+            .with_context(|| format!("Failed parsing json response:\n{res_text}"))?;
 
         Ok(res)
     }
