@@ -8,8 +8,8 @@ use std::sync::Arc;
 use anyhow::{Context, anyhow};
 use auth::SpotifyAuthService;
 use chrono::Duration;
+use deadpool_redis::redis::AsyncCommands;
 pub use errors::SpotifyError;
-use redis::AsyncCommands;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
 use rspotify::model::{

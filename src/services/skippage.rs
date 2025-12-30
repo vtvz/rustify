@@ -1,4 +1,4 @@
-use redis::AsyncCommands;
+use deadpool_redis::redis::AsyncCommands;
 
 pub struct SkippageService {}
 
@@ -67,7 +67,7 @@ impl SkippageService {
 
         loop {
             // SCAN with pattern matching
-            let (new_cursor, keys): (u64, Vec<String>) = redis::cmd("SCAN")
+            let (new_cursor, keys): (u64, Vec<String>) = deadpool_redis::redis::cmd("SCAN")
             .arg(cursor)
             .arg("MATCH")
             .arg(&pattern)

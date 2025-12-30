@@ -1,6 +1,6 @@
 use anyhow::{Context as _, bail};
+use deadpool_redis::redis::AsyncCommands as _;
 use isolang::Language;
-use redis::AsyncCommands as _;
 use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
