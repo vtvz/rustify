@@ -1,0 +1,37 @@
+_version: 2
+
+song-links.button:
+  en: |
+    Links to other platforms 🔗
+  ru: |
+    Ссылки на другие платформы 🔗
+
+song-links.fetch:
+  en: |
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    🔍 Finding links to other platforms...
+  ru: |
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    🔍 Поиск ссылок на другие платформы...
+
+song-links.result:
+  en: |
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    🎧 Available on:
+    %{links}
+
+    ⚡ Links provided by <a href="https://odesli.co/">SongLink</a>
+  ru: |
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    🎧 Доступно на:
+    %{links}
+
+    ⚡ Ссылки предоставлены <a href="https://odesli.co/">SongLink</a>

@@ -150,6 +150,10 @@ async fn common(
 
     let mut keyboard = InlineButtons::from_track_status(status, track.id(), state.locale());
 
+    keyboard.push(vec![
+        InlineButtons::SongLinks(track.id().to_owned()).into_inline_keyboard_button(state.locale()),
+    ]);
+
     // NOTE: It works because I have old token I need to cherish
     #[allow(deprecated)]
     let features = spotify.track_features(track.raw_id().clone()).await?;

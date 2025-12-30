@@ -13,7 +13,7 @@ use teloxide::dispatching::dialogue::serializer::Bincode;
 
 use crate::infrastructure::cache;
 use crate::metrics::influx::InfluxClient;
-use crate::services::UserService;
+use crate::services::{SongLinkService, UserService};
 use crate::user::UserState;
 use crate::{lyrics, profanity, spotify};
 
@@ -27,6 +27,7 @@ pub struct App {
     ai: Option<AIConfig>,
     dialogue_storage: Arc<RedisStorage<Bincode>>,
     server_http_address: String,
+    song_link: SongLinkService,
 }
 
 pub struct AIConfig {
@@ -100,6 +101,10 @@ impl App {
 
     pub fn influx(&self) -> &Option<InfluxClient> {
         &self.influx
+    }
+
+    pub fn song_link(&self) -> &SongLinkService {
+        &self.song_link
     }
 
     pub fn ai(&self) -> Option<&AIConfig> {
@@ -252,6 +257,14 @@ fn init_ai(env: &EnvConfig) -> anyhow::Result<Option<AIConfig>> {
     Ok(Some(config))
 }
 
+fn init_song_link() -> anyhow::Result<SongLinkService> {
+    let http_client = reqwest::ClientBuilder::new()
+        .timeout(Duration::from_secs(10))
+        .build()?;
+
+    Ok(SongLinkService::new(http_client))
+}
+
 impl App {
     pub async fn init() -> anyhow::Result<&'static Self> {
         tracing::trace!("Init application");
@@ -275,6 +288,8 @@ impl App {
 
         let influx = init_influx(&env).context("Cannot configure Influx Client")?;
 
+        let song_link = init_song_link()?;
+
         // Make state global static variable to prevent hassle with Arc and cloning this mess
         let app = Box::new(Self {
             bot,
@@ -284,6 +299,7 @@ impl App {
             influx,
             redis,
             ai,
+            song_link,
             dialogue_storage: RedisStorage::open(redis_url, Bincode).await?,
             server_http_address: env.server_http_address.unwrap_or("0.0.0.0:3000".into()),
         });
