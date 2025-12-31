@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-again = "0.1.2"
 anyhow = { version = "1.0.100", features = ["backtrace"] }
 async-openai = { version = "0.32.2", features = ["chat-completion"] }
 axum = "0.8.8"

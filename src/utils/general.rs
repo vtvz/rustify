@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 use std::time::Duration;
 
-use again::RetryPolicy;
 use chrono::{NaiveDateTime, SubsecRound, Utc};
 use tokio::sync::{RwLock, broadcast};
 use tokio::time::Instant;
@@ -95,18 +94,6 @@ macro_rules! tick {
 }
 
 pub(crate) use tick;
-
-pub async fn retry<T>(task: T) -> Result<T::Item, T::Error>
-where
-    T: again::Task,
-{
-    let policy = RetryPolicy::exponential(Duration::from_millis(100))
-        .with_jitter(true)
-        .with_max_delay(Duration::from_secs(50))
-        .with_max_retries(10);
-
-    policy.retry(task).await
-}
 
 static KILL: LazyLock<(broadcast::Sender<()>, broadcast::Receiver<()>)> =
     LazyLock::new(|| broadcast::channel(1));
