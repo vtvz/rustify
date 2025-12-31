@@ -25,7 +25,6 @@ influxdb = { version = "0.7.2", features = ["derive"] }
 itertools = "0.14.0"
 lazy_static = "1.5.0"
 rand = "0.9.2"
-redis = { version = "1.0.2", features = ["aio", "tokio-comp"] }
 regex = { version = "1.12.2", features = ["pattern"] }
 reqwest = { version = "0.13", features = ["json", "query"] }
 reqwest-compat = { package = "reqwest", version = "0.12" }
