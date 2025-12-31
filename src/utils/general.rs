@@ -1,16 +1,14 @@
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use again::RetryPolicy;
 use chrono::{NaiveDateTime, SubsecRound, Utc};
-use lazy_static::lazy_static;
 use tokio::sync::{RwLock, broadcast};
 use tokio::time::Instant;
 
-lazy_static! {
-    pub static ref TICK_STATUS: RwLock<HashMap<(&'static str, Duration), Instant>> =
-        RwLock::new(HashMap::new());
-}
+pub static TICK_STATUS: LazyLock<RwLock<HashMap<(&'static str, Duration), Instant>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 #[derive(Clone, Debug)]
 pub struct TickHealthStatus {
@@ -110,9 +108,8 @@ where
     policy.retry(task).await
 }
 
-lazy_static! {
-    static ref KILL: (broadcast::Sender<()>, broadcast::Receiver<()>) = broadcast::channel(1);
-}
+static KILL: LazyLock<(broadcast::Sender<()>, broadcast::Receiver<()>)> =
+    LazyLock::new(|| broadcast::channel(1));
 
 static mut KILLED: bool = false;
 

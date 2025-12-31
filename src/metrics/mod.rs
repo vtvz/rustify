@@ -1,3 +1,4 @@
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use chrono::Utc;
@@ -70,9 +71,7 @@ struct UsersStatusStats {
     status: String,
 }
 
-lazy_static::lazy_static! {
-    static ref START_TIME: Instant = Instant::now();
-}
+static START_TIME: LazyLock<Instant> = LazyLock::new(Instant::now);
 
 #[derive(InfluxDbWriteable, Debug)]
 struct Uptime {
@@ -192,13 +191,13 @@ pub async fn collect_user_timings(
 }
 
 pub async fn collect_daemon(app: &'static App) {
-    let Some(ref client) = app.influx() else {
+    let Some(client) = app.influx() else {
         tracing::info!("Metrics collection disabled");
 
         return;
     };
 
-    lazy_static::initialize(&START_TIME);
+    let _ = *START_TIME;
 
     tokio::spawn(async {
         let mut rx = PROCESS_TIME_CHANNEL.0.subscribe();
