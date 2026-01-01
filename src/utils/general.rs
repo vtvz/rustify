@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::LazyLock;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use chrono::{NaiveDateTime, SubsecRound, Utc};
@@ -98,18 +99,18 @@ pub(crate) use tick;
 static KILL: LazyLock<(broadcast::Sender<()>, broadcast::Receiver<()>)> =
     LazyLock::new(|| broadcast::channel(1));
 
-static mut KILLED: bool = false;
+static KILLED: AtomicBool = AtomicBool::new(false);
 
 pub async fn listen_for_ctrl_c() {
     tokio::signal::ctrl_c().await.ok();
 
     KILL.0.send(()).ok();
 
-    unsafe { KILLED = true };
+    KILLED.store(true, Ordering::Relaxed);
 }
 
 pub async fn ctrl_c() {
-    if unsafe { KILLED } {
+    if KILLED.load(Ordering::Relaxed) {
         return;
     }
 
