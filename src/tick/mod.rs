@@ -3,7 +3,7 @@ mod magic;
 mod skippage;
 mod user;
 
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 
 use anyhow::Context;
@@ -26,12 +26,10 @@ use crate::utils;
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
 const PARALLEL_CHECKS: usize = 2;
 
-lazy_static::lazy_static! {
-    pub static ref PROCESS_TIME_CHANNEL: (
-        broadcast::Sender<CheckReport>,
-        broadcast::Receiver<CheckReport>
-    ) = broadcast::channel(5);
-}
+pub static PROCESS_TIME_CHANNEL: LazyLock<(
+    broadcast::Sender<CheckReport>,
+    broadcast::Receiver<CheckReport>,
+)> = LazyLock::new(|| broadcast::channel(5));
 
 #[derive(Clone)]
 pub struct CheckReport {

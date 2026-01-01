@@ -1,16 +1,14 @@
 use std::collections::HashMap;
+use std::sync::LazyLock;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use again::RetryPolicy;
 use chrono::{NaiveDateTime, SubsecRound, Utc};
-use lazy_static::lazy_static;
 use tokio::sync::{RwLock, broadcast};
 use tokio::time::Instant;
 
-lazy_static! {
-    pub static ref TICK_STATUS: RwLock<HashMap<(&'static str, Duration), Instant>> =
-        RwLock::new(HashMap::new());
-}
+pub static TICK_STATUS: LazyLock<RwLock<HashMap<(&'static str, Duration), Instant>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 #[derive(Clone, Debug)]
 pub struct TickHealthStatus {
@@ -98,34 +96,21 @@ macro_rules! tick {
 
 pub(crate) use tick;
 
-pub async fn retry<T>(task: T) -> Result<T::Item, T::Error>
-where
-    T: again::Task,
-{
-    let policy = RetryPolicy::exponential(Duration::from_millis(100))
-        .with_jitter(true)
-        .with_max_delay(Duration::from_secs(50))
-        .with_max_retries(10);
+static KILL: LazyLock<(broadcast::Sender<()>, broadcast::Receiver<()>)> =
+    LazyLock::new(|| broadcast::channel(1));
 
-    policy.retry(task).await
-}
-
-lazy_static! {
-    static ref KILL: (broadcast::Sender<()>, broadcast::Receiver<()>) = broadcast::channel(1);
-}
-
-static mut KILLED: bool = false;
+static KILLED: AtomicBool = AtomicBool::new(false);
 
 pub async fn listen_for_ctrl_c() {
     tokio::signal::ctrl_c().await.ok();
 
     KILL.0.send(()).ok();
 
-    unsafe { KILLED = true };
+    KILLED.store(true, Ordering::Relaxed);
 }
 
 pub async fn ctrl_c() {
-    if unsafe { KILLED } {
+    if KILLED.load(Ordering::Relaxed) {
         return;
     }
 

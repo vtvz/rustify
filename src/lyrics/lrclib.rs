@@ -1,3 +1,4 @@
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use backon::{ExponentialBuilder, Retryable};
@@ -162,10 +163,10 @@ impl LrcLib {
             for (hit_i, hit) in hits.into_iter().enumerate() {
                 let index_lyrics = match (&hit.synced_lyrics, &hit.plain_lyrics) {
                     (Some(lyrics), _) => {
-                        lazy_static::lazy_static! {
-                            static ref RE: regex::Regex = regex::Regex::new(r"^\[(.*?)\.\d{2}\](.*)$")
-                                .expect("Valid regex pattern");
-                        };
+                        static RE: LazyLock<regex::Regex> = LazyLock::new(|| {
+                            regex::Regex::new(r"^\[(.*?)\.\d{2}\](.*)$")
+                                .expect("Valid regex pattern")
+                        });
                         lyrics
                             .lines()
                             .enumerate()

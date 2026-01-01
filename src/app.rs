@@ -242,7 +242,7 @@ fn init_ai(env: &EnvConfig) -> anyhow::Result<Option<AIConfig>> {
         .with_api_key(api_key)
         .with_api_base(env.openai_api_base.as_deref().unwrap_or(OPENAI_API_BASE));
 
-    let http_client = reqwest::ClientBuilder::new()
+    let http_client = reqwest_compat::ClientBuilder::new()
         .timeout(Duration::from_secs(180))
         .build()?;
 

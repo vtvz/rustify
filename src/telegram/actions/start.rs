@@ -52,7 +52,7 @@ pub async fn handle(
             NotificationService::notify_user_joined(app, m.from.as_ref(), ref_code).await
         {
             tracing::error!(err = ?err, user_id = state.user_id(), "Failed to notify admins about joined user");
-        };
+        }
     }
 
     Ok(HandleStatus::Handled)

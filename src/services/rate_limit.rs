@@ -1,5 +1,5 @@
 use chrono::Duration;
-use redis::AsyncCommands;
+use deadpool_redis::redis::AsyncCommands;
 
 pub enum RateLimitOutput {
     Allowed,

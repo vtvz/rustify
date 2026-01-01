@@ -1,19 +1,20 @@
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
+use std::sync::LazyLock;
 
-use lazy_static::lazy_static;
 use regex::Regex;
 
-lazy_static! {
-    // https://github.com/khanhas/spicetify-cli/blob/master/CustomApps/lyrics-plus/Utils.js#L50
-    static ref RG_EXTRA_1: Regex = Regex::new(r"\s-\s.*").expect("Should be compilable");
-    static ref RG_EXTRA_2: Regex = Regex::new(r"[^\pL_]+").expect("Should be compilable");
-    // https://github.com/khanhas/spicetify-cli/blob/master/CustomApps/lyrics-plus/Utils.js#L41
-    static ref RG_FEAT_1: Regex =
-        Regex::new(r"(?i)-\s+(feat|with).*").expect("Should be compilable");
-    static ref RG_FEAT_2: Regex =
-        Regex::new(r"(?i)(\(|\[)(feat|with)\.?\s+.*(\)|\])$").expect("Should be compilable");
-}
+// https://github.com/khanhas/spicetify-cli/blob/master/CustomApps/lyrics-plus/Utils.js#L50
+static RG_EXTRA_1: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"\s-\s.*").expect("Should be compilable"));
+static RG_EXTRA_2: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"[^\pL_]+").expect("Should be compilable"));
+// https://github.com/khanhas/spicetify-cli/blob/master/CustomApps/lyrics-plus/Utils.js#L41
+static RG_FEAT_1: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)-\s+(feat|with).*").expect("Should be compilable"));
+static RG_FEAT_2: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?i)(\(|\[)(feat|with)\.?\s+.*(\)|\])$").expect("Should be compilable")
+});
 
 fn remove_extra_info(name: &str) -> String {
     name.replace(&*RG_EXTRA_1, "")
@@ -61,7 +62,7 @@ impl SearchResultConfidence {
 
     #[must_use]
     pub fn avg(&self) -> f64 {
-        (self.title + self.artist) / 2.0
+        f64::midpoint(self.title, self.artist)
     }
 }
 

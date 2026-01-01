@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fmt::Formatter;
-use std::sync::RwLock;
+use std::sync::{LazyLock, RwLock};
 
 use strum_macros::EnumIter;
 use teloxide::types::BotCommand;
@@ -79,9 +79,8 @@ impl UserCommand {
 
     #[must_use]
     pub fn localized_descriptions(locale: &str) -> CommandDescriptions<'static> {
-        lazy_static::lazy_static! {
-            static ref CACHE: RwLock<HashMap<String, &'static [CommandDescription<'static>]>> = RwLock::new(HashMap::new());
-        }
+        static CACHE: LazyLock<RwLock<HashMap<String, &'static [CommandDescription<'static>]>>> =
+            LazyLock::new(|| RwLock::new(HashMap::new()));
 
         let entry = { CACHE.read().expect("Lock is poisoned").get(locale).copied() };
 

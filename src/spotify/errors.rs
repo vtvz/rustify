@@ -1,4 +1,4 @@
-use reqwest::Response;
+use reqwest_compat::Response;
 use rspotify::ClientError;
 use rspotify::http::HttpError;
 
@@ -40,7 +40,7 @@ pub enum SpotifyError {
 }
 
 impl SpotifyError {
-    pub fn extract_response(err: &mut anyhow::Error) -> Option<&mut reqwest::Response> {
+    pub fn extract_response(err: &mut anyhow::Error) -> Option<&mut Response> {
         let err = err.downcast_mut::<rspotify::ClientError>()?;
 
         let ClientError::Http(box HttpError::StatusCode(response)) = err else {

@@ -1,7 +1,7 @@
 use anyhow::Context;
-use async_openai::types::{
-    ChatCompletionRequestSystemMessageArgs,
-    ChatCompletionRequestUserMessageArgs,
+use async_openai::types::chat::{
+    ChatCompletionRequestSystemMessage,
+    ChatCompletionRequestUserMessage,
     CreateChatCompletionRequestArgs,
 };
 use sea_orm::ActiveValue::Set;
@@ -74,14 +74,8 @@ impl WordDefinitionService {
             .model(config.model())
             // .temperature(0.5)
             .messages([
-                ChatCompletionRequestSystemMessageArgs::default()
-                    .content("You are a helpful assistant.")
-                    .build()?
-                    .into(),
-                ChatCompletionRequestUserMessageArgs::default()
-                    .content(prompt.as_ref())
-                    .build()?
-                    .into(),
+                ChatCompletionRequestSystemMessage::from("You are a helpful assistant.").into(),
+                ChatCompletionRequestUserMessage::from(prompt.as_ref()).into(),
             ])
             .build()?;
 
