@@ -1,4 +1,6 @@
-use tokio::task::JoinHandle;
+use apalis::layers::WorkerBuilderExt as _;
+use apalis::layers::retry::RetryPolicy;
+use apalis::prelude::{Monitor, WorkerBuilder};
 
 use crate as rustify;
 use crate::app::App;
@@ -17,7 +19,16 @@ pub async fn work() {
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
 
-    let handler: JoinHandle<anyhow::Result<_>> = tokio::spawn(profanity_check::worker(app));
-
-    handler.await.expect("Should work").expect("Should work");
+    Monitor::new()
+        .register(move |_| {
+            WorkerBuilder::new("rustify:profanity_check")
+                .backend(app.queue_manager().profanity_queue())
+                .concurrency(2)
+                .retry(RetryPolicy::retries(2))
+                .data(app)
+                .build(profanity_check::consume)
+        })
+        .run_with_signal(tokio::signal::ctrl_c())
+        .await
+        .expect("Should Work");
 }

@@ -1,7 +1,5 @@
 use anyhow::Context as _;
-use apalis::layers::WorkerBuilderExt as _;
-use apalis::layers::retry::RetryPolicy;
-use apalis::prelude::{Data, TaskSink, WorkerBuilder};
+use apalis::prelude::{Data, TaskSink};
 use isolang::Language;
 use rustrict::Type;
 use teloxide::prelude::*;
@@ -43,20 +41,7 @@ pub async fn queue(app: &App, user_id: &str, track: &ShortTrack) -> anyhow::Resu
     Ok(())
 }
 
-#[tracing::instrument(skip_all)]
-pub async fn worker(app: &'static App) -> anyhow::Result<()> {
-    WorkerBuilder::new("rustify:profanity_check")
-        .backend(app.queue_manager().profanity_queue())
-        .retry(RetryPolicy::retries(2))
-        .data(app)
-        .build(consume)
-        .run_until(tokio::signal::ctrl_c())
-        .await?;
-
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
+#[tracing::instrument(skip_all, fields(user_id = %data.user_id, track_id = %data.track.id()))]
 pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) -> anyhow::Result<()> {
     let app = *app;
 
