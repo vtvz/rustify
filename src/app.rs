@@ -8,11 +8,12 @@ use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
-use teloxide::dispatching::dialogue::RedisStorage;
+use teloxide::dispatching::dialogue::RedisStorage as TeloxideRedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
 
 use crate::infrastructure::cache;
 use crate::metrics::influx::InfluxClient;
+use crate::queue::QueueManager;
 use crate::services::{SongLinkService, UserService};
 use crate::user::UserState;
 use crate::{lyrics, profanity, spotify};
@@ -25,9 +26,10 @@ pub struct App {
     influx: Option<InfluxClient>,
     redis: deadpool_redis::Pool,
     ai: Option<AIConfig>,
-    dialogue_storage: Arc<RedisStorage<Bincode>>,
+    dialogue_storage: Arc<TeloxideRedisStorage<Bincode>>,
     server_http_address: String,
     song_link: SongLinkService,
+    queue_manager: QueueManager,
 }
 
 pub struct AIConfig {
@@ -111,12 +113,16 @@ impl App {
         self.ai.as_ref()
     }
 
-    pub fn dialogue_storage(&self) -> &RedisStorage<Bincode> {
+    pub fn dialogue_storage(&self) -> &TeloxideRedisStorage<Bincode> {
         &self.dialogue_storage
     }
 
     pub fn server_http_address(&self) -> &str {
         &self.server_http_address
+    }
+
+    pub fn queue_manager(&self) -> &QueueManager {
+        &self.queue_manager
     }
 }
 
@@ -290,6 +296,8 @@ impl App {
 
         let song_link = init_song_link()?;
 
+        let queue_manager = QueueManager::new(redis_url).await?;
+
         // Make state global static variable to prevent hassle with Arc and cloning this mess
         let app = Box::new(Self {
             bot,
@@ -300,8 +308,9 @@ impl App {
             redis,
             ai,
             song_link,
-            dialogue_storage: RedisStorage::open(redis_url, Bincode).await?,
+            dialogue_storage: TeloxideRedisStorage::open(redis_url, Bincode).await?,
             server_http_address: env.server_http_address.unwrap_or("0.0.0.0:3000".into()),
+            queue_manager,
         });
 
         let app = &*Box::leak(app);

@@ -1,10 +1,9 @@
-use anyhow::Context as _;
-use tokio::task::JoinHandle;
+use apalis::layers::WorkerBuilderExt as _;
+use apalis::prelude::{Monitor, WorkerBuilder};
 
 use crate as rustify;
 use crate::app::App;
 use crate::queue::profanity_check;
-use crate::utils;
 
 pub async fn work() {
     rustify::infrastructure::logger::init().expect("Logger should be built");
@@ -19,23 +18,15 @@ pub async fn work() {
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
 
-    let handler: JoinHandle<anyhow::Result<_>> = tokio::spawn(async move {
-        loop {
-            let redis = app.redis_conn().await.context("Connection anavailable")?;
-
-            tokio::select! {
-                () = utils::ctrl_c() => break,
-
-                res = profanity_check::consume(app, redis) => {
-                    if let Err(err) = res {
-                        tracing::error!(err = ?err, "Error on profanity_check queue process");
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    });
-
-    handler.await.expect("Should work").expect("Should work");
+    Monitor::new()
+        .register(move |_| {
+            WorkerBuilder::new("rustify:profanity_check")
+                .backend(app.queue_manager().profanity_queue())
+                .concurrency(2)
+                .data(app)
+                .build(profanity_check::consume)
+        })
+        .run_with_signal(tokio::signal::ctrl_c())
+        .await
+        .expect("Should Work");
 }

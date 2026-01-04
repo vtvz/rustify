@@ -8,6 +8,8 @@ rust-version = "1.94.0"
 anyhow = { version = "1.0.100", features = ["backtrace"] }
 async-openai = { version = "0.32.2", features = ["chat-completion"] }
 axum = "0.8.8"
+apalis = "1.0.0-rc.1"
+apalis-redis = "1.0.0-rc.1"
 backon = "1.6.0"
 # base64 = "0.22.1"
 cached = { version = "0.56.0", features = ["async", "redis_tokio"] }
@@ -43,6 +45,7 @@ tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
 url = "2.5.7"
 uuid = "1.19.0"
 whatlang = { version = "0.18.0", features = ["serde"] }
+redis = "0.32.7"
 
 [dependencies.isolang]
 features = ["serde"]

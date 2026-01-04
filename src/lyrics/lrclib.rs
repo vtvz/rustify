@@ -91,7 +91,7 @@ impl LrcLib {
     pub fn new() -> anyhow::Result<Self> {
         Ok(Self {
             reqwest: ClientBuilder::new()
-                .timeout(Duration::from_secs(5))
+                .timeout(Duration::from_secs(15))
                 .build()?,
         })
     }

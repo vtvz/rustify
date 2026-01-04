@@ -1,5 +1,5 @@
-use anyhow::{Context as _, bail};
-use deadpool_redis::redis::AsyncCommands as _;
+use anyhow::Context as _;
+use apalis::prelude::{Data, TaskSink};
 use isolang::Language;
 use rustrict::Type;
 use teloxide::prelude::*;
@@ -15,13 +15,11 @@ use crate::user::UserState;
 use crate::utils::StringUtils;
 use crate::{lyrics, profanity, telegram};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct ProfanityCheckQueueTask {
     track: ShortTrack,
     user_id: String,
 }
-
-const REDIS_QUEUE_CHANNEL: &str = "rustify:profanity_check";
 
 #[tracing::instrument(
     skip_all,
@@ -31,33 +29,21 @@ const REDIS_QUEUE_CHANNEL: &str = "rustify:profanity_check";
         user_id,
     )
 )]
-pub async fn queue(
-    mut redis: deadpool_redis::Connection,
-    user_id: &str,
-    track: &ShortTrack,
-) -> anyhow::Result<()> {
-    let data = serde_json::to_string(&ProfanityCheckQueueTask {
-        track: track.clone(),
-        user_id: user_id.into(),
-    })?;
-
-    let _: () = redis.lpush(REDIS_QUEUE_CHANNEL, data).await?;
+pub async fn queue(app: &App, user_id: &str, track: &ShortTrack) -> anyhow::Result<()> {
+    app.queue_manager()
+        .profanity_queue()
+        .push(ProfanityCheckQueueTask {
+            track: track.clone(),
+            user_id: user_id.into(),
+        })
+        .await?;
 
     Ok(())
 }
 
-#[tracing::instrument(skip_all)]
-pub async fn consume(
-    app: &'static App,
-    mut redis: deadpool_redis::Connection,
-) -> anyhow::Result<()> {
-    let message: Option<(String, String)> = redis.brpop(REDIS_QUEUE_CHANNEL, 0.0).await?;
-
-    let Some((_channel, message)) = message else {
-        bail!("No message")
-    };
-
-    let data: ProfanityCheckQueueTask = serde_json::from_str(&message)?;
+#[tracing::instrument(skip_all, fields(user_id = %data.user_id, track_id = %data.track.id()))]
+pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) {
+    let app = *app;
 
     let user_state = app.user_state(&data.user_id).await;
 
@@ -66,7 +52,7 @@ pub async fn consume(
         Err(mut err) => {
             error_handler::handle(&mut err, app, &data.user_id, "en").await;
 
-            return Ok(());
+            return;
         },
     };
 
@@ -91,8 +77,6 @@ pub async fn consume(
             error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
         },
     }
-
-    Ok(())
 }
 
 #[derive(Default)]
