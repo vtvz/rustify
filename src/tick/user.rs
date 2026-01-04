@@ -74,7 +74,7 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
                     return Ok(CheckUserResult::SkipSame);
                 }
 
-                queue::profanity_check::queue(app.redis_conn().await?, state.user_id(), &track)
+                queue::profanity_check::queue(app, state.user_id(), &track)
                     .await
                     .context("Check bad words")?;
             }
