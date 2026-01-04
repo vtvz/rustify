@@ -1,11 +1,13 @@
 use std::time::Duration;
 
 use anyhow::Context;
-use async_openai::types::{
-    ChatCompletionRequestSystemMessageArgs,
-    ChatCompletionRequestUserMessageArgs,
-    ChatCompletionToolArgs,
-    ChatCompletionToolType,
+use async_openai::types::chat::{
+    ChatCompletionMessageToolCalls,
+    ChatCompletionNamedToolChoice,
+    ChatCompletionRequestSystemMessage,
+    ChatCompletionRequestUserMessage,
+    ChatCompletionTool,
+    ChatCompletionToolChoiceOption,
     CreateChatCompletionRequestArgs,
     FunctionObjectArgs,
 };
@@ -484,59 +486,47 @@ async fn get_raw_recommendations(
         .model(config.model())
         // .temperature(2.0)
         .messages([
-            ChatCompletionRequestSystemMessageArgs::default()
-                .content(system_prompt.as_str())
-                .build()?.
-                into(),
-            ChatCompletionRequestUserMessageArgs::default()
-                .content(liked_prompt.as_str())
-                .build()?
-                .into(),
-            ChatCompletionRequestUserMessageArgs::default()
-                .content(task_prompt.as_str())
-                .build()?
-                .into(),
+            ChatCompletionRequestSystemMessage::from(system_prompt.as_str()).into(),
+            ChatCompletionRequestUserMessage::from(liked_prompt.as_str()).into(),
+            ChatCompletionRequestUserMessage::from(task_prompt.as_str()).into(),
         ])
-        .tools(vec![
-            ChatCompletionToolArgs::default()
-                .r#type(ChatCompletionToolType::Function)
-                .function(
-                    FunctionObjectArgs::default()
-                        .name("recommend_tracks")
-                        .description(format!("Generate {amount} music track recommendations based on user's listening history and preferences"))
-                        .strict(true)
-                        .parameters(json!({
-                            "type": "object",
-                            "properties": {
-                                "recommendations": {
-                                    "type": "array",
-                                    "minItems": amount,
-                                    "description": format!("List of {amount} recommended music tracks"),
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "artist_name": {
-                                                "type": "string",
-                                                "description": "Name of the artist"
-                                            },
-                                            "track_title": {
-                                                "type": "string",
-                                                "description": "Title of the track"
-                                            }
-                                        },
-                                        "additionalProperties": false,
-                                        "required": ["artist_name", "track_title"]
+        .tools(ChatCompletionTool {
+            function: FunctionObjectArgs::default()
+                .name("recommend_tracks")
+                .description(format!("Generate {amount} music track recommendations based on user's listening history and preferences"))
+                .strict(true)
+                .parameters(json!({
+                    "type": "object",
+                    "properties": {
+                        "recommendations": {
+                            "type": "array",
+                            "minItems": amount,
+                            "description": format!("List of {amount} recommended music tracks"),
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "artist_name": {
+                                        "type": "string",
+                                        "description": "Name of the artist"
                                     },
+                                    "track_title": {
+                                        "type": "string",
+                                        "description": "Title of the track"
+                                    }
                                 },
+                                "additionalProperties": false,
+                                "required": ["artist_name", "track_title"]
                             },
-                            "additionalProperties": false,
-                            "required": ["recommendations"]
-                        }))
-                        .build()?,
-                )
+                        },
+                    },
+                    "additionalProperties": false,
+                    "required": ["recommendations"]
+                }))
                 .build()?,
-        ])
-        .tool_choice("recommend_tracks")
+        })
+        .tool_choice(ChatCompletionToolChoiceOption::Function(
+            ChatCompletionNamedToolChoice::from("recommend_tracks"),
+        ))
         .build()?;
 
     let response_message = config
@@ -555,11 +545,15 @@ async fn get_raw_recommendations(
         .cloned()
         .context("No tool call found in response")?;
 
-    if response_message.function.name != "recommend_tracks" {
+    let ChatCompletionMessageToolCalls::Function(tool_call) = response_message else {
+        anyhow::bail!("Expected function tool call");
+    };
+
+    if tool_call.function.name != "recommend_tracks" {
         anyhow::bail!("Wrong function is called");
     }
 
-    let tracks: RecommendationsRaw = serde_json::from_str(&response_message.function.arguments)?;
+    let tracks: RecommendationsRaw = serde_json::from_str(&tool_call.function.arguments)?;
 
     Ok(tracks)
 }

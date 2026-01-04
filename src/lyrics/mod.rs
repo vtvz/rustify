@@ -1,8 +1,8 @@
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use genius::GeniusLocal;
 use isolang::Language;
-use lazy_static::lazy_static;
 use lrclib::LrcLib;
 use musixmatch::Musixmatch;
 use serde::Serialize;
@@ -120,9 +120,7 @@ impl Manager {
 #[derive(Debug)]
 pub struct LyricsCacheManager {}
 
-lazy_static! {
-    static ref LYRICS_CACHE_TTL: RwLock<u64> = RwLock::new(24 * 60 * 60);
-}
+static LYRICS_CACHE_TTL: LazyLock<RwLock<u64>> = LazyLock::new(|| RwLock::new(24 * 60 * 60));
 
 impl LyricsCacheManager {
     pub async fn init(lyrics_cache_ttl: u64) {

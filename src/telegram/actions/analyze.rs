@@ -1,4 +1,7 @@
-use async_openai::types::{ChatCompletionRequestUserMessageArgs, CreateChatCompletionRequestArgs};
+use async_openai::types::chat::{
+    ChatCompletionRequestUserMessage,
+    CreateChatCompletionRequestArgs,
+};
 use backon::{ExponentialBuilder, Retryable};
 use itertools::Itertools;
 use rspotify::model::TrackId;
@@ -156,10 +159,7 @@ async fn perform(
 
     let request = CreateChatCompletionRequestArgs::default()
         .model(model)
-        .messages([ChatCompletionRequestUserMessageArgs::default()
-            .content(prompt.as_ref())
-            .build()?
-            .into()])
+        .messages([ChatCompletionRequestUserMessage::from(prompt.as_ref()).into()])
         .build()?;
 
     let response = config.openai_client().chat().create(request).await?;

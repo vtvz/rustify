@@ -1,6 +1,6 @@
+use std::sync::LazyLock;
 use std::time::Duration;
 
-use lazy_static::lazy_static;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
@@ -8,9 +8,7 @@ use tokio::sync::RwLock;
 #[derive(Debug)]
 pub struct CacheManager {}
 
-lazy_static! {
-    static ref REDIS_URL: RwLock<String> = RwLock::new(String::new());
-}
+static REDIS_URL: LazyLock<RwLock<String>> = LazyLock::new(|| RwLock::new(String::new()));
 
 impl CacheManager {
     pub async fn init(redis_url: String) {

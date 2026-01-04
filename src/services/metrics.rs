@@ -1,4 +1,4 @@
-use redis::AsyncCommands as _;
+use deadpool_redis::redis::AsyncCommands as _;
 
 pub struct MetricsService {}
 

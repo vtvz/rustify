@@ -1,17 +1,15 @@
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
 use std::slice::Iter;
+use std::sync::LazyLock;
 
-use lazy_static::lazy_static;
 use regex::Regex;
 use rustrict::{Trie, Type, is_whitespace};
 use teloxide::utils::html;
 
-lazy_static! {
-    static ref TYPE_THRESHOLD: Type = Type::ANY & !Type::SPAM;
-    static ref TYPE_CUSTOM: Type = Type::MODERATE & Type::EVASIVE;
-    static ref TYPE_TRIGGER: Type = Type::INAPPROPRIATE | Type::EVASIVE;
-}
+static TYPE_THRESHOLD: LazyLock<Type> = LazyLock::new(|| Type::ANY & !Type::SPAM);
+static TYPE_CUSTOM: LazyLock<Type> = LazyLock::new(|| Type::MODERATE & Type::EVASIVE);
+static TYPE_TRIGGER: LazyLock<Type> = LazyLock::new(|| Type::INAPPROPRIATE | Type::EVASIVE);
 
 pub struct Manager;
 
@@ -179,10 +177,8 @@ impl LineResult {
 
     #[must_use]
     pub fn get_profine_words(&self) -> HashSet<String> {
-        lazy_static! {
-            static ref RG_WRAPPER: Regex =
-                Regex::new(r"<u>(.*?)</u>").expect("Should be compilable");
-        }
+        static RG_WRAPPER: LazyLock<Regex> =
+            LazyLock::new(|| Regex::new(r"<u>(.*?)</u>").expect("Should be compilable"));
 
         let haystack = &self.highlighted();
 

@@ -1,5 +1,5 @@
 use chrono::Duration;
-use redis::AsyncCommands;
+use deadpool_redis::redis::AsyncCommands;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr, Func};
 use sea_orm::{

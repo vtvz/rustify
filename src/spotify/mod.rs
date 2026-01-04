@@ -8,8 +8,8 @@ use std::sync::Arc;
 use anyhow::{Context, anyhow};
 use auth::SpotifyAuthService;
 use chrono::Duration;
+use deadpool_redis::redis::AsyncCommands;
 pub use errors::SpotifyError;
-use redis::AsyncCommands;
 use rspotify::clients::{BaseClient, OAuthClient};
 use rspotify::http::HttpError;
 use rspotify::model::{
@@ -408,10 +408,10 @@ impl<S: Deref<Target = AuthCodeSpotify>> SpotifyWrapper<S> {
 
         let data: Option<String> = redis_conn.get(&key).await?;
 
-        if let Some(data) = data {
-            if let Ok(track) = serde_json::from_str(&data) {
-                return Ok(track);
-            }
+        if let Some(data) = data
+            && let Ok(track) = serde_json::from_str(&data)
+        {
+            return Ok(track);
         }
 
         let track: ShortTrack = self.spotify.track(track_id, None).await?.into();

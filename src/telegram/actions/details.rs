@@ -1,9 +1,9 @@
 use std::collections::HashSet;
+use std::sync::LazyLock;
 
 use anyhow::anyhow;
 use convert_case::{Case, Casing};
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use regex::Regex;
 use rspotify::clients::BaseClient as _;
 use rspotify::model::{Modality, TrackId};
@@ -71,9 +71,8 @@ pub async fn handle_current(
 }
 
 fn extract_id(url: &url::Url) -> Option<TrackId<'static>> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new("^/track/([a-zA-Z0-9]+)$").expect("Should be compilable");
-    }
+    static RE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new("^/track/([a-zA-Z0-9]+)$").expect("Should be compilable"));
 
     let cap = RE.captures(url.path())?;
 
