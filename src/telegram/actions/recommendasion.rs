@@ -9,7 +9,6 @@ use async_openai::types::chat::{
     ChatCompletionTool,
     ChatCompletionToolChoiceOption,
     CreateChatCompletionRequestArgs,
-    FunctionName,
     FunctionObjectArgs,
 };
 use backon::{ExponentialBuilder, Retryable};
@@ -526,11 +525,7 @@ async fn get_raw_recommendations(
                 .build()?,
         })
         .tool_choice(ChatCompletionToolChoiceOption::Function(
-            ChatCompletionNamedToolChoice {
-                function: FunctionName {
-                    name: "recommend_tracks".to_string(),
-                },
-            },
+            ChatCompletionNamedToolChoice::from("recommend_tracks"),
         ))
         .build()?;
 
