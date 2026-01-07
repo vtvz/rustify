@@ -155,28 +155,47 @@ async fn common(
 
     // NOTE: It works because I have old token I need to cherish
     #[allow(deprecated)]
-    let features = spotify.track_features(track.raw_id().clone()).await?;
+    let features = match spotify.track_features(track.raw_id().clone()).await {
+        Ok(features) => {
+            let modality = match features.mode {
+                Modality::Minor => t!("details.minor", locale = state.locale()),
+                Modality::Major => t!("details.major", locale = state.locale()),
+                Modality::NoResult => t!("details.no-result", locale = state.locale()),
+            };
 
-    let modality = match features.mode {
-        Modality::Minor => t!("details.minor", locale = state.locale()),
-        Modality::Major => t!("details.major", locale = state.locale()),
-        Modality::NoResult => t!("details.no-result", locale = state.locale()),
-    };
+            let key = match features.key {
+                0 => "C",
+                1 => "C♯/D♭",
+                2 => "D",
+                3 => "D♯/E♭",
+                4 => "E",
+                5 => "F",
+                6 => "F♯/G♭",
+                7 => "G",
+                8 => "G♯/A♭",
+                9 => "A",
+                10 => "A♯/B♭",
+                11 => "B",
+                _ => "Unknown",
+            };
 
-    let key = match features.key {
-        0 => "C",
-        1 => "C♯/D♭",
-        2 => "D",
-        3 => "D♯/E♭",
-        4 => "E",
-        5 => "F",
-        6 => "F♯/G♭",
-        7 => "G",
-        8 => "G♯/A♭",
-        9 => "A",
-        10 => "A♯/B♭",
-        11 => "B",
-        _ => "Unknown",
+            t!(
+                "details.features",
+                locale = state.locale(),
+                key = key,
+                modality = modality,
+                tempo = features.tempo,
+                acousticness = (features.acousticness * 100.0).round() as u64,
+                danceability = (features.danceability * 100.0).round() as u64,
+                energy = (features.energy * 100.0).round() as u64,
+                instrumentalness = (features.instrumentalness * 100.0).round() as u64,
+                liveness = (features.liveness * 100.0).round() as u64,
+                speechiness = (features.speechiness * 100.0).round() as u64,
+                valence = (features.valence * 100.0).round() as u64,
+            )
+        },
+        // Dont care about error
+        Err(_) => "".into(),
     };
 
     let disliked_by =
@@ -241,18 +260,9 @@ async fn common(
     let header = t!(
         "details.header",
         locale = state.locale(),
-        key = key,
-        modality = modality,
-        tempo = features.tempo,
-        acousticness = (features.acousticness * 100.0).round() as u64,
-        danceability = (features.danceability * 100.0).round() as u64,
-        energy = (features.energy * 100.0).round() as u64,
-        instrumentalness = (features.instrumentalness * 100.0).round() as u64,
-        liveness = (features.liveness * 100.0).round() as u64,
-        speechiness = (features.speechiness * 100.0).round() as u64,
-        valence = (features.valence * 100.0).round() as u64,
         track_name = track.track_tg_link(),
         album_name = track.album_tg_link(),
+        features = features,
         disliked_by = disliked_by,
         ignored_by = ignored_by,
     );

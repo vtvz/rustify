@@ -30,11 +30,8 @@ details.no-result:
   ru: >-
     Что-то
 
-details.header:
-  en: |-
-    🎵 %{track_name}
-    Album: %{album_name}
-
+details.features:
+  en: |
     🎶 <code>%{key} %{modality}</code> ⌛ %{tempo} BPM
     🎻 Acoustic %{acousticness}%
     🕺 Danceability %{danceability}%
@@ -43,12 +40,7 @@ details.header:
     🏟 Live performance %{liveness}%
     🎤 Speech-like %{speechiness}%
     ☺️ Positivity %{valence}%
-    👎 Disliked by %{disliked_by} people
-    🙈 Ignored by %{ignored_by} people
-  ru: |-
-    🎵 %{track_name}
-    Альбом: %{album_name}
-
+  ru: |
     🎶 <code>%{key} %{modality}</code> ⌛ %{tempo} BPM
     🎻 Акустичность %{acousticness}%
     🕺 Подходит для танцев %{danceability}%
@@ -57,7 +49,19 @@ details.header:
     🏟 Исполнено вживую %{liveness}%
     🎤 Речевая составляющая %{speechiness}%
     ☺️ Позитивность %{valence}%
-    👎 Не нравится %{disliked_by} людям
+
+details.header:
+  en: |-
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    %{features}👎 Disliked by %{disliked_by} people
+    🙈 Ignored by %{ignored_by} people
+  ru: |-
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    %{features}👎 Не нравится %{disliked_by} людям
     🙈 Игнорируется %{ignored_by} людьми
 
 details.genres:
