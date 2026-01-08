@@ -7,7 +7,12 @@ use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
-use crate::services::{UserService, UserWordWhitelistService, WordStatsService};
+use crate::services::{
+    TrackLanguageStatsService,
+    UserService,
+    UserWordWhitelistService,
+    WordStatsService,
+};
 use crate::spotify::ShortTrack;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
@@ -102,11 +107,23 @@ pub async fn check(
     let mut ret = CheckBadWordsResult::default();
 
     let Some(hit) = app.lyrics().search_for_track(track).await? else {
+        if let Err(err) =
+            TrackLanguageStatsService::increase_count(app.db(), None, state.user_id()).await
+        {
+            tracing::error!(err = ?err, "Error occured on increasing language stats");
+        }
         return Ok(ret);
     };
 
     ret.provider = Some(hit.provider());
     ret.found = true;
+
+    if let Err(err) =
+        TrackLanguageStatsService::increase_count(app.db(), Some(hit.language()), state.user_id())
+            .await
+    {
+        tracing::error!(err = ?err, "Error occured on increasing language stats");
+    }
 
     if hit.language() != Language::Eng {
         tracing::trace!(language = %hit.language(), provider = %hit.provider(), "Track has non English lyrics");
