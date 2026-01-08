@@ -48,6 +48,12 @@ pub async fn handle(
         .map(|(lang, stat)| format!("• <i>{lang}:</i> <code>{stat}</code>"))
         .join("\n");
 
+    let languages = if languages.is_empty() {
+        "• <i>{No data yet}</i>".to_string()
+    } else {
+        languages
+    };
+
     let text = t!(
         "actions.stats",
         locale = state.locale(),
