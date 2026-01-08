@@ -33,7 +33,7 @@ pub struct RegularErrorContent {
     pub message: String,
 }
 
-#[derive(From, Debug)]
+#[derive(Debug, derive_more::From)]
 pub enum SpotifyError {
     Auth(AuthError),
     Regular(RegularError),
