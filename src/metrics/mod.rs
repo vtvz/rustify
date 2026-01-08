@@ -182,7 +182,7 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
                 language: language
                     .map_or("none", |language| language.to_639_3())
                     .into(),
-                count: count as _,
+                count: count.try_into().unwrap_or_default(),
             }
             .into_query("track_language"),
         );
