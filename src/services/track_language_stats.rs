@@ -1,8 +1,16 @@
 use isolang::Language;
+use itertools::Itertools;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Expr;
 use sea_orm::sea_query::{Alias, OnConflict};
-use sea_orm::{ConnectionTrait, EntityTrait as _};
+use sea_orm::{
+    ColumnTrait as _,
+    ConnectionTrait,
+    EntityTrait as _,
+    QueryFilter,
+    QueryOrder,
+    QuerySelect,
+};
 
 use crate::entity::prelude::{
     TrackLanguageStatsActiveModel,
@@ -14,7 +22,10 @@ use crate::utils::Clock;
 pub struct TrackLanguageStatsService {}
 
 impl TrackLanguageStatsService {
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip_all, fields(
+        user_id,
+        language = language.map_or("none", |l| l.to_639_3()))
+    )]
     pub async fn increase_count(
         db: &impl ConnectionTrait,
         language: Option<Language>,
@@ -46,5 +57,30 @@ impl TrackLanguageStatsService {
             .await?;
 
         Ok(())
+    }
+
+    #[tracing::instrument(skip_all, fields(user_id))]
+    pub async fn stats_for_user(
+        db: &impl ConnectionTrait,
+        user_id: &str,
+    ) -> anyhow::Result<Vec<(Option<Language>, i32)>> {
+        let res: Vec<(Option<String>, i32)> = TrackLanguageStatsEntity::find()
+            .filter(TrackLanguageStatsColumn::UserId.eq(user_id))
+            .select_only()
+            .columns([
+                TrackLanguageStatsColumn::Language,
+                TrackLanguageStatsColumn::Count,
+            ])
+            .order_by_desc(TrackLanguageStatsColumn::Count)
+            .into_tuple()
+            .all(db)
+            .await?;
+
+        let res = res
+            .into_iter()
+            .map(|(lang, stat)| (lang.and_then(|code| Language::from_639_3(&code)), stat))
+            .collect_vec();
+
+        Ok(res)
     }
 }
