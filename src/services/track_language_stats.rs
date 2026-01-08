@@ -83,4 +83,26 @@ impl TrackLanguageStatsService {
 
         Ok(res)
     }
+
+    #[tracing::instrument(skip_all, fields(user_id))]
+    pub async fn stats_all_users(
+        db: &impl ConnectionTrait,
+    ) -> anyhow::Result<Vec<(Option<Language>, i64)>> {
+        let res: Vec<(Option<String>, i64)> = TrackLanguageStatsEntity::find()
+            .select_only()
+            .column(TrackLanguageStatsColumn::Language)
+            .expr_as(TrackLanguageStatsColumn::Count.sum(), "sum")
+            .order_by_desc(TrackLanguageStatsColumn::Count.sum())
+            .group_by(TrackLanguageStatsColumn::Language)
+            .into_tuple()
+            .all(db)
+            .await?;
+
+        let res = res
+            .into_iter()
+            .map(|(lang, stat)| (lang.and_then(|code| Language::from_639_3(&code)), stat))
+            .collect_vec();
+
+        Ok(res)
+    }
 }

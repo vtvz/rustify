@@ -19,7 +19,7 @@ actions.stats:
     🙈 You ignored <code>%{ignored}</code> track lyrics
     🤬 <code>%{lyrics_profane}</code> lyrics were considered profane
 
-    <blockquote expandable>Languages stats:
+    <blockquote expandable><b>Languages stats:</b>
     %{languages}</blockquote>
   ru: |-
     📉 <b>Немного статистики для вас</b> 📈
@@ -33,7 +33,7 @@ actions.stats:
     🙈 Вы проигнорировали <code>%{ignored}</code> текстов треков
     🤬 <code>%{lyrics_profane}</code> текстов были признаны нецензурными
 
-    <blockquote expandable>Статистика по языкам (названия на английском):
+    <blockquote expandable><b>Статистика по языкам (названия на английском):</b>
     %{languages}</blockquote>
 
 actions.cleanup-start:

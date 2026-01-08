@@ -162,7 +162,7 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
             • MusixMatch: <code>{lyrics_musixmatch}</code>
             • LrcLib: <code>{lyrics_lrclib}</code>
 
-            <blockquote expandable>Languages stats:
+            <blockquote expandable><b>Languages stats:</b>
             {languages}</blockquote>
         "#,
         name = user.name,
