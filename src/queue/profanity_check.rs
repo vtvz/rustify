@@ -122,7 +122,7 @@ pub async fn check(
         TrackLanguageStatsService::increase_count(app.db(), Some(hit.language()), state.user_id())
             .await
     {
-        tracing::error!(err = ?err, "Error occured on increasing language stats");
+        tracing::error!(err = ?err, "Error occurred on increasing language stats");
     }
 
     if hit.language() != Language::Eng {
