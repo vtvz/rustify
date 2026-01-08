@@ -11,7 +11,13 @@ use tracing::Instrument;
 
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::{MetricsService, TrackStatusService, UserService, UserStats};
+use crate::services::{
+    MetricsService,
+    TrackLanguageStatsService,
+    TrackStatusService,
+    UserService,
+    UserStats,
+};
 use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::utils;
 
@@ -69,6 +75,14 @@ struct UsersStatusStats {
     count: u64,
     #[influxdb(tag)]
     status: String,
+}
+
+#[derive(InfluxDbWriteable, Debug)]
+struct TrackLanguageStats {
+    time: Timestamp,
+    count: u64,
+    #[influxdb(tag)]
+    language: String,
 }
 
 static START_TIME: LazyLock<Instant> = LazyLock::new(Instant::now);
@@ -158,6 +172,19 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
                 status: status.to_value(),
             }
             .into_query("user_status"),
+        );
+    }
+
+    for (language, count) in TrackLanguageStatsService::stats_all_users(app.db()).await? {
+        metrics.push(
+            TrackLanguageStats {
+                time,
+                language: language
+                    .map_or("none", |language| language.to_639_3())
+                    .into(),
+                count: count as _,
+            }
+            .into_query("track_language"),
         );
     }
 
