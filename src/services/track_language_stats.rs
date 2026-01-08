@@ -51,6 +51,7 @@ impl TrackLanguageStatsService {
                         Expr::col((Alias::new("excluded"), TrackLanguageStatsColumn::Count)),
                     ),
                 )
+                .update_column(TrackLanguageStatsColumn::UpdatedAt)
                 .to_owned(),
             )
             .exec(db)
@@ -84,7 +85,7 @@ impl TrackLanguageStatsService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all)]
     pub async fn stats_all_users(
         db: &impl ConnectionTrait,
     ) -> anyhow::Result<Vec<(Option<Language>, i64)>> {
