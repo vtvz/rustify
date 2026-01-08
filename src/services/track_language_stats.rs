@@ -39,7 +39,7 @@ impl TrackLanguageStatsService {
             ..Default::default()
         };
 
-        TrackLanguageStatsEntity::insert_many([model])
+        TrackLanguageStatsEntity::insert(model)
             .on_conflict(
                 OnConflict::columns([
                     TrackLanguageStatsColumn::UserId,

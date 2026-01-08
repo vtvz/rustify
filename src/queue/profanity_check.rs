@@ -110,7 +110,7 @@ pub async fn check(
         if let Err(err) =
             TrackLanguageStatsService::increase_count(app.db(), None, state.user_id()).await
         {
-            tracing::error!(err = ?err, "Error occured on increasing language stats");
+            tracing::error!(err = ?err, "Error occurred on increasing language stats");
         }
         return Ok(ret);
     };

@@ -44,12 +44,12 @@ pub async fn handle(
     let languages = TrackLanguageStatsService::stats_for_user(app.db(), state.user_id())
         .await?
         .into_iter()
-        .map(|(lang, stat)| (lang.map_or("None", |lang| lang.to_name()), stat))
+        .map(|(lang, stat)| (lang.map_or("Unknown", |lang| lang.to_name()), stat))
         .map(|(lang, stat)| format!("• <i>{lang}:</i> <code>{stat}</code>"))
         .join("\n");
 
     let languages = if languages.is_empty() {
-        "• <i>{No data yet}</i>".to_string()
+        "• <i>No data yet</i>".to_string()
     } else {
         languages
     };
