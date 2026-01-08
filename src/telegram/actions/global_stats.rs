@@ -6,7 +6,7 @@ use teloxide::types::{ParseMode, ReplyParameters};
 
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::{TrackStatusService, UserService, UserStats};
+use crate::services::{TrackLanguageStatsService, TrackStatusService, UserService, UserStats};
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
 
@@ -62,6 +62,13 @@ pub async fn handle(
     }
     let user_stats = user_stats.join("\n");
 
+    let languages = TrackLanguageStatsService::stats_all_users(app.db())
+        .await?
+        .into_iter()
+        .map(|(lang, stat)| (lang.map_or("None", |lang| lang.to_name()), stat))
+        .map(|(lang, stat)| format!("• <i>{lang}:</i> <code>{stat}</code>"))
+        .join("\n");
+
     let text = formatdoc!(
         r"
             📉 <b>Global stats</b> 📈
@@ -90,6 +97,10 @@ pub async fn handle(
             <b>Locales stats</b>
 
             {user_locales}
+
+            <blockquote expandable><b>Languages stats:</b>
+
+            {languages}</blockquote>
         "
     );
 

@@ -8,8 +8,6 @@
 use clap::Parser;
 
 #[macro_use]
-extern crate derive_more;
-#[macro_use]
 extern crate serde;
 #[macro_use]
 extern crate rust_i18n;

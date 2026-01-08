@@ -1,6 +1,7 @@
 pub mod prelude;
 
 mod spotify_auth;
+mod track_language_stats;
 mod track_status;
 mod user;
 mod user_word_whitelist;

@@ -320,7 +320,7 @@ mod tests {
     }
 }
 
-#[derive(Clone, Copy, Deref, From, Default)]
+#[derive(Clone, Copy, Default, derive_more::Deref, derive_more::From)]
 pub struct TypeWrapper(Type);
 
 impl TypeWrapper {

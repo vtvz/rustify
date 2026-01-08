@@ -18,6 +18,9 @@ actions.stats:
     🔍 Analyzed lyrics <code>%{lyrics_analyzed}</code> times
     🙈 You ignored <code>%{ignored}</code> track lyrics
     🤬 <code>%{lyrics_profane}</code> lyrics were considered profane
+
+    <blockquote expandable><b>Languages stats:</b>
+    %{languages}</blockquote>
   ru: |-
     📉 <b>Немного статистики для вас</b> 📈
 
@@ -29,6 +32,9 @@ actions.stats:
     🔍 Проанализировано текстов <code>%{lyrics_analyzed}</code> раз
     🙈 Вы проигнорировали <code>%{ignored}</code> текстов треков
     🤬 <code>%{lyrics_profane}</code> текстов были признаны нецензурными
+
+    <blockquote expandable><b>Статистика по языкам (названия на английском):</b>
+    %{languages}</blockquote>
 
 actions.cleanup-start:
   en: |-

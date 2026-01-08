@@ -65,7 +65,7 @@ impl WordStatsService {
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn increase_occurence(
+    async fn increase_occurence(
         db: &impl ConnectionTrait,
         words: impl IntoIterator<Item = impl Into<String>>,
         details: i32,
