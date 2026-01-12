@@ -117,7 +117,7 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
 
     let render_bool = |bool| if bool { "✅" } else { "❌" };
 
-    let languages = TrackLanguageStatsService::stats_for_user(app.db(), user_id)
+    let languages = TrackLanguageStatsService::stats_for_user(app.db(), user_id, Some(20))
         .await?
         .into_iter()
         .map(|(lang, stat)| (lang.map_or("None", |lang| lang.to_name()), stat))

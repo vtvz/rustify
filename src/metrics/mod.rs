@@ -175,7 +175,7 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
         );
     }
 
-    for (language, count) in TrackLanguageStatsService::stats_all_users(app.db()).await? {
+    for (language, count) in TrackLanguageStatsService::stats_all_users(app.db(), None).await? {
         metrics.push(
             TrackLanguageStats {
                 time,

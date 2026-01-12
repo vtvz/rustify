@@ -64,6 +64,7 @@ impl TrackLanguageStatsService {
     pub async fn stats_for_user(
         db: &impl ConnectionTrait,
         user_id: &str,
+        limit: Option<u64>,
     ) -> anyhow::Result<Vec<(Option<Language>, i32)>> {
         let res: Vec<(Option<String>, i32)> = TrackLanguageStatsEntity::find()
             .filter(TrackLanguageStatsColumn::UserId.eq(user_id))
@@ -73,6 +74,7 @@ impl TrackLanguageStatsService {
                 TrackLanguageStatsColumn::Count,
             ])
             .order_by_desc(TrackLanguageStatsColumn::Count)
+            .limit(limit)
             .into_tuple()
             .all(db)
             .await?;
@@ -88,6 +90,7 @@ impl TrackLanguageStatsService {
     #[tracing::instrument(skip_all)]
     pub async fn stats_all_users(
         db: &impl ConnectionTrait,
+        limit: Option<u64>,
     ) -> anyhow::Result<Vec<(Option<Language>, i64)>> {
         let res: Vec<(Option<String>, i64)> = TrackLanguageStatsEntity::find()
             .select_only()
@@ -95,6 +98,7 @@ impl TrackLanguageStatsService {
             .expr_as(TrackLanguageStatsColumn::Count.sum(), "sum")
             .order_by_desc(TrackLanguageStatsColumn::Count.sum())
             .group_by(TrackLanguageStatsColumn::Language)
+            .limit(limit)
             .into_tuple()
             .all(db)
             .await?;

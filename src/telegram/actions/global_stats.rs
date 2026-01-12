@@ -62,7 +62,7 @@ pub async fn handle(
     }
     let user_stats = user_stats.join("\n");
 
-    let languages = TrackLanguageStatsService::stats_all_users(app.db())
+    let languages = TrackLanguageStatsService::stats_all_users(app.db(), Some(20))
         .await?
         .into_iter()
         .map(|(lang, stat)| (lang.map_or("None", |lang| lang.to_name()), stat))
