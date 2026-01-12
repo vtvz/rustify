@@ -138,9 +138,9 @@ pub async fn handle_inline(
 }
 
 #[tracing::instrument(skip_all, fields(
-    user_id = state.user_id(),
-    track_id = track.id(),
-    track_name = track.name_with_artists()
+    user_id = %state.user_id(),
+    track_id = %track.id(),
+    track_name = %track.name_with_artists()
 ))]
 async fn perform(
     app: &App,

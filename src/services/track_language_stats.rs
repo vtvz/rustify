@@ -24,7 +24,7 @@ pub struct TrackLanguageStatsService {}
 impl TrackLanguageStatsService {
     #[tracing::instrument(skip_all, fields(
         %user_id,
-        language = language.map_or("none", |l| l.to_639_3()))
+        language = %language.map_or("none", |l| l.to_639_3()))
     )]
     pub async fn increase_count(
         db: &impl ConnectionTrait,

@@ -102,7 +102,7 @@ pub struct UserData {
 #[tracing::instrument(
     skip_all,
     fields(
-        user_id = state.user_id(),
+        user_id = %state.user_id(),
     )
 )]
 pub async fn handle(
@@ -147,7 +147,7 @@ pub async fn handle(
 #[tracing::instrument(
     skip_all,
     fields(
-        user_id = state.user_id(),
+        user_id = %state.user_id(),
     )
 )]
 pub async fn handle_inline(
