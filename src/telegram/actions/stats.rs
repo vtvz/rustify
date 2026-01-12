@@ -41,11 +41,18 @@ pub async fn handle(
         ..
     } = UserService::get_stats(app.db(), Some(state.user_id())).await?;
 
+    let all_langs = TrackLanguageStatsService::sum_for_user(app.db(), state.user_id()).await?;
+
     let languages = TrackLanguageStatsService::stats_for_user(app.db(), state.user_id(), Some(10))
         .await?
         .into_iter()
         .map(|(lang, stat)| (lang.map_or("Unknown", |lang| lang.to_name()), stat))
-        .map(|(lang, stat)| format!("• <i>{lang}:</i> <code>{stat}</code>"))
+        .map(|(lang, stat)| {
+            format!(
+                "• <i>{lang}:</i> <code>{:01}%</code>",
+                f64::from(stat) * 100.0 / all_langs as f64
+            )
+        })
         .join("\n");
 
     let languages = if languages.is_empty() {

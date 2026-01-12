@@ -62,11 +62,18 @@ pub async fn handle(
     }
     let user_stats = user_stats.join("\n");
 
+    let all_langs = TrackLanguageStatsService::sum_all_users(app.db()).await?;
+
     let languages = TrackLanguageStatsService::stats_all_users(app.db(), Some(20))
         .await?
         .into_iter()
         .map(|(lang, stat)| (lang.map_or("None", |lang| lang.to_name()), stat))
-        .map(|(lang, stat)| format!("• <i>{lang}:</i> <code>{stat}</code>"))
+        .map(|(lang, stat)| {
+            format!(
+                "• <i>{lang}:</i> <code>{stat}</code> — <code>{:01}%</code>",
+                stat as f64 * 100.0 / all_langs as f64
+            )
+        })
         .join("\n");
 
     let text = formatdoc!(

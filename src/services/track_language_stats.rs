@@ -61,6 +61,19 @@ impl TrackLanguageStatsService {
     }
 
     #[tracing::instrument(skip_all, fields(user_id))]
+    pub async fn sum_for_user(db: &impl ConnectionTrait, user_id: &str) -> anyhow::Result<i64> {
+        let res: Option<Option<i64>> = TrackLanguageStatsEntity::find()
+            .filter(TrackLanguageStatsColumn::UserId.eq(user_id))
+            .select_only()
+            .expr_as(TrackLanguageStatsColumn::Count.sum(), "sum")
+            .into_tuple()
+            .one(db)
+            .await?;
+
+        Ok(res.flatten().unwrap_or_default())
+    }
+
+    #[tracing::instrument(skip_all, fields(user_id))]
     pub async fn stats_for_user(
         db: &impl ConnectionTrait,
         user_id: &str,
@@ -85,6 +98,18 @@ impl TrackLanguageStatsService {
             .collect_vec();
 
         Ok(res)
+    }
+
+    #[tracing::instrument(skip_all, fields(user_id))]
+    pub async fn sum_all_users(db: &impl ConnectionTrait) -> anyhow::Result<i64> {
+        let res: Option<Option<i64>> = TrackLanguageStatsEntity::find()
+            .select_only()
+            .expr_as(TrackLanguageStatsColumn::Count.sum(), "sum")
+            .into_tuple()
+            .one(db)
+            .await?;
+
+        Ok(res.flatten().unwrap_or_default())
     }
 
     #[tracing::instrument(skip_all)]
