@@ -6,7 +6,7 @@ use rspotify::prelude::OAuthClient;
 use crate::app::App;
 use crate::user::UserState;
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn queue(app: &'static App, state: &UserState) -> anyhow::Result<()> {
     let key = format!("rustify:rickroll:{user_id}", user_id = state.user_id());
     let mut redis = app.redis_conn().await?;

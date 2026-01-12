@@ -305,7 +305,7 @@ pub async fn handle_inline(
     Ok(())
 }
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn get_recommendations(
     app: &'static App,
     state: &UserState,
@@ -370,7 +370,7 @@ async fn get_liked_tracks(
     Ok(liked_tracks)
 }
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn get_recommendations_attempt(
     app: &App,
     state: &UserState,

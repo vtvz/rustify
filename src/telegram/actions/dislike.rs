@@ -15,7 +15,7 @@ use crate::user::UserState;
 use crate::utils::DurationPrettyFormat;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
     app: &'static App,
     state: &UserState,
@@ -77,7 +77,7 @@ pub async fn handle(
     Ok(HandleStatus::Handled)
 }
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id(), %track_id))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), %track_id))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,

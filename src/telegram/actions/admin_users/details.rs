@@ -21,7 +21,7 @@ use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id(), target_user_id = user_id))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), target_user_id = user_id))]
 pub async fn handle_command(
     app: &'static App,
     state: &UserState,
@@ -50,7 +50,7 @@ pub async fn handle_command(
 }
 
 #[allow(clippy::too_many_arguments)]
-#[tracing::instrument(skip_all, fields(user_id = state.user_id(), target_user_id = user_id))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), target_user_id = user_id))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,

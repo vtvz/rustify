@@ -12,7 +12,7 @@ use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
     app: &'static App,
     state: &UserState,

@@ -7,7 +7,7 @@ use crate::app::App;
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_toggle_profanity_check(
     app: &App,
     state: &UserState,
@@ -34,7 +34,7 @@ pub async fn handle_toggle_profanity_check(
     Ok(HandleStatus::Handled)
 }
 
-#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_toggle_skip_tracks(
     app: &App,
     state: &UserState,
