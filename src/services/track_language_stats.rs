@@ -100,7 +100,7 @@ impl TrackLanguageStatsService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all)]
     pub async fn sum_all_users(db: &impl ConnectionTrait) -> anyhow::Result<i64> {
         let res: Option<Option<i64>> = TrackLanguageStatsEntity::find()
             .select_only()

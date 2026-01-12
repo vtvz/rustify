@@ -70,7 +70,7 @@ pub async fn handle(
         .map(|(lang, stat)| (lang.map_or("None", |lang| lang.to_name()), stat))
         .map(|(lang, stat)| {
             format!(
-                "• <i>{lang}:</i> <code>{stat}</code> — <code>{:01}%</code>",
+                "• <i>{lang}:</i> <code>{stat}</code> — <code>{:1}%</code>",
                 stat as f64 * 100.0 / all_langs as f64
             )
         })
