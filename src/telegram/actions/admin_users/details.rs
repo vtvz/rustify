@@ -125,7 +125,7 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
         .map(|(lang, stat)| (lang.map_or("None", |lang| lang.to_name()), stat))
         .map(|(lang, stat)| {
             format!(
-                "• <i>{lang}:</i> <code>{stat}</code> — <code>{:1}%</code>",
+                "• <i>{lang}:</i> <code>{stat}</code> — <code>{:.1}%</code>",
                 f64::from(stat) * 100.0 / all_langs as f64
             )
         })
