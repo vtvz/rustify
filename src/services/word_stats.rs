@@ -130,7 +130,7 @@ impl WordStatsService {
         Ok(count)
     }
 
-    #[tracing::instrument(skip_all, fields(locale, page, page_size))]
+    #[tracing::instrument(skip_all, fields(%locale, %page, %page_size))]
     pub async fn list_stats_with_definitions(
         db: &impl ConnectionTrait,
         locale: &str,

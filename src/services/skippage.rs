@@ -3,7 +3,7 @@ use deadpool_redis::redis::AsyncCommands;
 pub struct SkippageService {}
 
 impl SkippageService {
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn get_current_playing(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
@@ -16,7 +16,7 @@ impl SkippageService {
         Ok(current_playing)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id, track_id))]
+    #[tracing::instrument(skip_all, fields(%user_id, %track_id))]
     pub async fn save_current_playing(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
@@ -28,7 +28,7 @@ impl SkippageService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, fields(user_id, track_id))]
+    #[tracing::instrument(skip_all, fields(%user_id, %track_id))]
     pub async fn save_track_played(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
@@ -41,7 +41,7 @@ impl SkippageService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, fields(user_id, track_id))]
+    #[tracing::instrument(skip_all, fields(%user_id, %track_id))]
     pub async fn get_track_played(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
@@ -54,7 +54,7 @@ impl SkippageService {
         Ok(track_exists)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn update_skippage_entries_ttl(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,

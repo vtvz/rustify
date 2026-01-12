@@ -9,7 +9,7 @@ use crate::entity::prelude::*;
 pub struct UserWordWhitelistService;
 
 impl UserWordWhitelistService {
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn get_ok_words_for_user(
         db: &impl ConnectionTrait,
         user_id: &str,
@@ -33,7 +33,7 @@ impl UserWordWhitelistService {
         Ok(ok_words)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn count_ok_words_for_user(
         db: &impl ConnectionTrait,
         user_id: &str,
@@ -47,7 +47,7 @@ impl UserWordWhitelistService {
         Ok(count)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn add_ok_word_for_user(
         db: &impl ConnectionTrait,
         user_id: String,
@@ -78,7 +78,7 @@ impl UserWordWhitelistService {
         }
     }
 
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn remove_ok_word_for_user(
         db: &impl ConnectionTrait,
         user_id: &str,

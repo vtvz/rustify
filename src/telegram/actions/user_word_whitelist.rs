@@ -11,7 +11,7 @@ use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
 use crate::utils::StringUtils;
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 pub async fn handle_add_word(
     app: &App,
     state: &UserState,
@@ -91,7 +91,7 @@ pub async fn handle_add_word(
     Ok(HandleStatus::Handled)
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 pub async fn handle_remove_word(
     app: &App,
     state: &UserState,
@@ -141,7 +141,7 @@ pub async fn handle_remove_word(
     Ok(HandleStatus::Handled)
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 pub async fn handle_list_words(
     app: &App,
     state: &UserState,

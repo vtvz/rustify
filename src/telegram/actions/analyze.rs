@@ -29,7 +29,7 @@ use crate::user::UserState;
 use crate::utils::teloxide::CallbackQueryExt as _;
 use crate::utils::{DurationPrettyFormat, StringUtils};
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id(), %track_id))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
@@ -137,7 +137,11 @@ pub async fn handle_inline(
     Ok(())
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id = track.id(), track_name = track.name_with_artists()))]
+#[tracing::instrument(skip_all, fields(
+    user_id = state.user_id(),
+    track_id = track.id(),
+    track_name = track.name_with_artists()
+))]
 async fn perform(
     app: &App,
     state: &UserState,

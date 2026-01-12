@@ -22,7 +22,7 @@ use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 async fn get_playlist(
     state: &UserState,
     spotify_user_id: UserId<'static>,
@@ -58,7 +58,7 @@ async fn get_playlist(
     Ok(playlist.into())
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
@@ -146,7 +146,7 @@ pub async fn handle_inline(
     }
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 async fn generate_playlist(
     app: &App,
     state: &UserState,
@@ -177,7 +177,7 @@ async fn generate_playlist(
     Ok(playlist)
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 pub async fn handle(
     app: &'static App,
     state: &UserState,

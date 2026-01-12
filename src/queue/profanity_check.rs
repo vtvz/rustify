@@ -31,7 +31,7 @@ pub struct ProfanityCheckQueueTask {
     fields(
         track_id = track.id(),
         track_name = track.name_with_artists(),
-        user_id,
+        %user_id,
     )
 )]
 pub async fn queue(app: &App, user_id: &str, track: &ShortTrack) -> anyhow::Result<()> {

@@ -24,7 +24,7 @@ use crate::entity::prelude::{
 pub struct WordDefinitionService {}
 
 impl WordDefinitionService {
-    #[tracing::instrument(skip_all, fields(locale, profane_word))]
+    #[tracing::instrument(skip_all, fields(%locale, %profane_word))]
     pub async fn get_definition(
         db: &impl ConnectionTrait,
         locale: &str,
@@ -58,7 +58,7 @@ impl WordDefinitionService {
         Ok(definition)
     }
 
-    #[tracing::instrument(skip_all, fields(locale, profane_word))]
+    #[tracing::instrument(skip_all, fields(%locale, %profane_word))]
     pub async fn get_definition_internal(
         config: &AIConfig,
         locale: &str,
@@ -95,7 +95,7 @@ impl WordDefinitionService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(locale, profane_word))]
+    #[tracing::instrument(skip_all, fields(%locale, %profane_word))]
     pub async fn clear_definition(
         db: &impl ConnectionTrait,
         locale: &str,

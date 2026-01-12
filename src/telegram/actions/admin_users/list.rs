@@ -20,7 +20,7 @@ use crate::utils::teloxide::CallbackQueryExt as _;
 
 const USERS_PER_PAGE: u64 = 10;
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 pub async fn handle_command(
     app: &'static App,
     state: &UserState,
@@ -45,7 +45,7 @@ pub async fn handle_command(
     Ok(())
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), page, sort_by = ?sort_by, sort_order = ?sort_order, status_filter = ?status_filter))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id(), %page, ?sort_by, ?sort_order, ?status_filter))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,

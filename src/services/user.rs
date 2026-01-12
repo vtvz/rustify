@@ -138,7 +138,7 @@ impl UserService {
         Ok(update_result)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id, track_id))]
+    #[tracing::instrument(skip_all, fields(%user_id, %track_id))]
     pub async fn sync_current_playing(
         mut redis: deadpool_redis::Connection,
         user_id: &str,
@@ -315,7 +315,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(role = ?role))]
+    #[tracing::instrument(skip_all, fields(?role))]
     pub async fn get_users_by_role(
         db: &impl ConnectionTrait,
         role: UserRole,
@@ -471,7 +471,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(page, limit, sort_by = ?sort_by, sort_order = ?sort_order, status = ?status))]
+    #[tracing::instrument(skip_all, fields(%page, %limit, ?sort_by, ?sort_order, ?status))]
     pub async fn get_users_paginated(
         db: &impl ConnectionTrait,
         page: u64,

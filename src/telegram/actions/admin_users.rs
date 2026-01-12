@@ -28,7 +28,7 @@ impl From<AdminUsersSortOrder> for Order {
     }
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 pub async fn handle_command(
     app: &'static App,
     state: &UserState,

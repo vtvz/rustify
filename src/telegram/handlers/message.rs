@@ -8,7 +8,7 @@ use crate::telegram::handlers;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[tracing::instrument(skip_all, fields(user_id = state.user_id()))]
 pub async fn handle(
     app: &'static App,
     state: &UserState,

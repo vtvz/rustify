@@ -23,7 +23,7 @@ pub struct TrackLanguageStatsService {}
 
 impl TrackLanguageStatsService {
     #[tracing::instrument(skip_all, fields(
-        user_id,
+        %user_id,
         language = language.map_or("none", |l| l.to_639_3()))
     )]
     pub async fn increase_count(
@@ -60,7 +60,7 @@ impl TrackLanguageStatsService {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn sum_for_user(db: &impl ConnectionTrait, user_id: &str) -> anyhow::Result<i64> {
         let res: Option<Option<i64>> = TrackLanguageStatsEntity::find()
             .filter(TrackLanguageStatsColumn::UserId.eq(user_id))
@@ -73,7 +73,7 @@ impl TrackLanguageStatsService {
         Ok(res.flatten().unwrap_or_default())
     }
 
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn stats_for_user(
         db: &impl ConnectionTrait,
         user_id: &str,
