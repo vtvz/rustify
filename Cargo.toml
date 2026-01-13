@@ -8,8 +8,8 @@ rust-version = "1.94.0"
 anyhow = { version = "1.0.100", features = ["backtrace"] }
 async-openai = { version = "0.32.2", features = ["chat-completion"] }
 axum = "0.8.8"
-apalis = "1.0.0-rc.1"
-apalis-redis = "1.0.0-rc.1"
+apalis = { version = "1.0.0-rc.2", features = ["timeout"] }
+apalis-redis = "1.0.0-rc.2"
 backon = "1.6.0"
 # base64 = "0.22.1"
 cached = { version = "0.56.0", features = ["async", "redis_tokio"] }

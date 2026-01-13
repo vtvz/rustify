@@ -75,7 +75,7 @@ impl SpotifyError {
             (Ok(err), _) => Ok(err.into()),
             (_, Ok(err)) => Ok(err.into()),
             (Err(err), _) => Err(anyhow::anyhow!(
-                "Issue with parcing spotify error: {:?}\n{}",
+                "Issue with parsing spotify error: {:?}\n{}",
                 err,
                 String::from_utf8(body)?
             )),
