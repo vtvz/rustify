@@ -47,7 +47,7 @@ pub async fn queue(app: &App, user_id: &str, track: &ShortTrack) -> anyhow::Resu
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %data.user_id, track_id = %data.track.id()))]
-pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) {
+pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) -> anyhow::Result<()> {
     let app = *app;
 
     let user_state = app.user_state(&data.user_id).await;
@@ -55,9 +55,9 @@ pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) {
     let user_state = match user_state {
         Ok(user_state) => user_state,
         Err(mut err) => {
-            error_handler::handle(&mut err, app, &data.user_id, "en").await;
+            let res = error_handler::handle(&mut err, app, &data.user_id, "en").await;
 
-            return;
+            return if res.handled { Ok(()) } else { Err(err) };
         },
     };
 
@@ -79,9 +79,16 @@ pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) {
     match res {
         Ok(()) => {},
         Err(mut err) => {
-            error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
+            let res =
+                error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
+
+            if !res.handled {
+                return Err(err);
+            }
         },
     }
+
+    return Ok(());
 }
 
 #[derive(Default)]
