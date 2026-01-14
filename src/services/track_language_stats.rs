@@ -33,7 +33,9 @@ impl TrackLanguageStatsService {
     ) -> anyhow::Result<()> {
         let model = TrackLanguageStatsActiveModel {
             user_id: Set(user_id.into()),
-            language: Set(language.map(|language| language.to_639_3().into())),
+            language: Set(language
+                .map_or("none", |language| language.to_639_3())
+                .into()),
             count: Set(1),
             updated_at: Set(Clock::now()),
             ..Default::default()
@@ -79,7 +81,7 @@ impl TrackLanguageStatsService {
         user_id: &str,
         limit: Option<u64>,
     ) -> anyhow::Result<Vec<(Option<Language>, i32)>> {
-        let res: Vec<(Option<String>, i32)> = TrackLanguageStatsEntity::find()
+        let res: Vec<(String, i32)> = TrackLanguageStatsEntity::find()
             .filter(TrackLanguageStatsColumn::UserId.eq(user_id))
             .select_only()
             .columns([
@@ -94,7 +96,7 @@ impl TrackLanguageStatsService {
 
         let res = res
             .into_iter()
-            .map(|(lang, stat)| (lang.and_then(|code| Language::from_639_3(&code)), stat))
+            .map(|(lang, stat)| (Language::from_639_3(&lang), stat))
             .collect_vec();
 
         Ok(res)
@@ -117,7 +119,7 @@ impl TrackLanguageStatsService {
         db: &impl ConnectionTrait,
         limit: Option<u64>,
     ) -> anyhow::Result<Vec<(Option<Language>, i64)>> {
-        let res: Vec<(Option<String>, i64)> = TrackLanguageStatsEntity::find()
+        let res: Vec<(String, i64)> = TrackLanguageStatsEntity::find()
             .select_only()
             .column(TrackLanguageStatsColumn::Language)
             .expr_as(TrackLanguageStatsColumn::Count.sum(), "sum")
@@ -130,7 +132,7 @@ impl TrackLanguageStatsService {
 
         let res = res
             .into_iter()
-            .map(|(lang, stat)| (lang.and_then(|code| Language::from_639_3(&code)), stat))
+            .map(|(lang, stat)| (Language::from_639_3(&lang), stat))
             .collect_vec();
 
         Ok(res)

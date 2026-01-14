@@ -13,7 +13,7 @@ impl EntityName for Entity {
 pub struct Model {
     pub id: i32,
     pub user_id: String,
-    pub language: Option<String>,
+    pub language: String,
     pub count: i32,
     pub created_at: DateTime,
     pub updated_at: DateTime,
@@ -54,7 +54,7 @@ impl ColumnTrait for Column {
         match self {
             Self::Id => ColumnType::Integer.def(),
             Self::UserId => ColumnType::Text.def(),
-            Self::Language => ColumnType::Text.def().null(),
+            Self::Language => ColumnType::Text.def(),
             Self::Count => ColumnType::Integer.def(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),
