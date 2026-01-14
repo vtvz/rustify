@@ -212,7 +212,10 @@ pub async fn collect_user_timings(
     }
     .into_query("process_timings");
 
-    client.write([timings_stats].into_iter()).await?;
+    client
+        .write([timings_stats].into_iter())
+        .await?
+        .error_for_status()?;
 
     Ok(())
 }
