@@ -1,5 +1,15 @@
 use anyhow::{Context, anyhow};
-use prometheus::{BasicAuthentication, labels};
+use prometheus::{
+    BasicAuthentication,
+    Histogram,
+    IntGauge,
+    IntGaugeVec,
+    Registry,
+    labels,
+    register_histogram_with_registry,
+    register_int_gauge_vec_with_registry,
+    register_int_gauge_with_registry,
+};
 
 #[derive(Debug)]
 pub struct PrometheusClient {
@@ -7,6 +17,30 @@ pub struct PrometheusClient {
     job_name: String,
     instance_tag: String,
     basic_auth: Option<BasicAuthentication>,
+    registry: Registry,
+    metrics: PrometheusMetrics,
+}
+
+#[derive(Debug)]
+pub struct PrometheusMetrics {
+    pub track_status: IntGaugeVec,
+    pub lyrics_checked: IntGauge,
+    pub lyrics_analyzed: IntGauge,
+    pub lyrics_found: IntGauge,
+    pub lyrics_profane: IntGauge,
+    pub lyrics_source: IntGaugeVec,
+    pub process_duration: Histogram,
+    pub max_process_duration: Histogram,
+    pub process_users_count: IntGauge,
+    pub process_users_checked: IntGauge,
+    pub process_parallel_count: IntGauge,
+    pub tick_health_total: IntGauge,
+    pub tick_health_unhealthy: IntGauge,
+    pub tick_health_lagging: IntGauge,
+    pub spotify_rate_limit_errors: IntGauge,
+    pub users_by_status: IntGaugeVec,
+    pub tracks_by_language: IntGaugeVec,
+    pub uptime: IntGauge,
 }
 
 impl PrometheusClient {
@@ -32,11 +66,151 @@ impl PrometheusClient {
 
         let instance_tag = instance_tag.map_or_else(|| "unknown".into(), String::from);
 
+        // Create custom registry
+        let registry = Registry::new();
+
+        // Register all metrics with the custom registry
+        let metrics = PrometheusMetrics {
+            track_status: register_int_gauge_vec_with_registry!(
+                "rustify_track_status_total",
+                "Total tracks by status",
+                &["status"],
+                registry
+            )
+            .context("Failed to register track_status metric")?,
+
+            lyrics_checked: register_int_gauge_with_registry!(
+                "rustify_lyrics_checked_total",
+                "Total lyrics checked",
+                registry
+            )
+            .context("Failed to register lyrics_checked metric")?,
+
+            lyrics_analyzed: register_int_gauge_with_registry!(
+                "rustify_lyrics_analyzed_total",
+                "Total lyrics analyzed",
+                registry
+            )
+            .context("Failed to register lyrics_analyzed metric")?,
+
+            lyrics_found: register_int_gauge_with_registry!(
+                "rustify_lyrics_found_total",
+                "Total lyrics found",
+                registry
+            )
+            .context("Failed to register lyrics_found metric")?,
+
+            lyrics_profane: register_int_gauge_with_registry!(
+                "rustify_lyrics_profane_total",
+                "Total profane lyrics",
+                registry
+            )
+            .context("Failed to register lyrics_profane metric")?,
+
+            lyrics_source: register_int_gauge_vec_with_registry!(
+                "rustify_lyrics_source_total",
+                "Lyrics by source",
+                &["source"],
+                registry
+            )
+            .context("Failed to register lyrics_source metric")?,
+
+            process_duration: register_histogram_with_registry!(
+                "rustify_process_duration_seconds",
+                "Processing duration in seconds",
+                vec![0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
+                registry
+            )
+            .context("Failed to register process_duration metric")?,
+
+            max_process_duration: register_histogram_with_registry!(
+                "rustify_max_process_duration_seconds",
+                "Max processing duration in seconds",
+                vec![0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
+                registry
+            )
+            .context("Failed to register max_process_duration metric")?,
+
+            process_users_count: register_int_gauge_with_registry!(
+                "rustify_process_users_count",
+                "Number of users processed",
+                registry
+            )
+            .context("Failed to register process_users_count metric")?,
+
+            process_users_checked: register_int_gauge_with_registry!(
+                "rustify_process_users_checked_total",
+                "Total users checked",
+                registry
+            )
+            .context("Failed to register process_users_checked metric")?,
+
+            process_parallel_count: register_int_gauge_with_registry!(
+                "rustify_process_parallel_count",
+                "Parallel processing count",
+                registry
+            )
+            .context("Failed to register process_parallel_count metric")?,
+
+            tick_health_total: register_int_gauge_with_registry!(
+                "rustify_tick_health_total",
+                "Total tick health count",
+                registry
+            )
+            .context("Failed to register tick_health_total metric")?,
+
+            tick_health_unhealthy: register_int_gauge_with_registry!(
+                "rustify_tick_health_unhealthy_total",
+                "Unhealthy tick count",
+                registry
+            )
+            .context("Failed to register tick_health_unhealthy metric")?,
+
+            tick_health_lagging: register_int_gauge_with_registry!(
+                "rustify_tick_health_lagging_total",
+                "Lagging tick count",
+                registry
+            )
+            .context("Failed to register tick_health_lagging metric")?,
+
+            spotify_rate_limit_errors: register_int_gauge_with_registry!(
+                "rustify_errors_spotify_rate_limit_total",
+                "Total Spotify 429 rate limit errors",
+                registry
+            )
+            .context("Failed to register spotify_rate_limit_errors metric")?,
+
+            users_by_status: register_int_gauge_vec_with_registry!(
+                "rustify_users_by_status_total",
+                "Users by status",
+                &["status"],
+                registry
+            )
+            .context("Failed to register users_by_status metric")?,
+
+            tracks_by_language: register_int_gauge_vec_with_registry!(
+                "rustify_tracks_by_language_total",
+                "Tracks by language",
+                &["language"],
+                registry
+            )
+            .context("Failed to register tracks_by_language metric")?,
+
+            uptime: register_int_gauge_with_registry!(
+                "rustify_uptime_seconds",
+                "Application uptime in seconds",
+                registry
+            )
+            .context("Failed to register uptime metric")?,
+        };
+
         Ok(Self {
             pushgateway_url: pushgateway_url.to_owned(),
             job_name: job_name.to_owned(),
             instance_tag,
             basic_auth,
+            registry,
+            metrics,
         })
     }
 
@@ -50,23 +224,26 @@ impl PrometheusClient {
             password: ba.password.clone(),
         });
 
-        // prometheus::push_metrics is blocking, so run in blocking task
-        tokio::task::spawn_blocking(move || {
-            // Gather all registered metrics
-            let metric_families = prometheus::gather();
+        let registry = self.registry.clone();
 
-            // Create grouping labels
+        tokio::task::spawn_blocking(move || {
+            let metric_families = registry.gather();
+
             let grouping = labels! {
                 "app".to_owned() => "rustify".to_owned(),
                 "instance".to_owned() => instance,
             };
 
-            // Push to gateway
             prometheus::push_metrics(&job, grouping, &url, metric_families, auth)
                 .map_err(|e| anyhow!("Failed to push metrics: {e}"))
         })
         .await
         .context("Spawning blocking task failed")?
+    }
+
+    #[must_use]
+    pub fn metrics(&self) -> &PrometheusMetrics {
+        &self.metrics
     }
 }
 
