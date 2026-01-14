@@ -16,6 +16,7 @@ pub async fn work() {
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
     tokio::spawn(rustify::metrics::collect_daemon(app));
+    tokio::spawn(rustify::metrics::prometheus_collector::collect_daemon(app));
 
     rustify::tick::check_playing(app).await;
 }

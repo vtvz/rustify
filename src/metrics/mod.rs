@@ -22,6 +22,8 @@ use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::utils;
 
 pub mod influx;
+pub mod prometheus;
+pub mod prometheus_collector;
 
 #[derive(InfluxDbWriteable, Debug)]
 struct TrackStatusStats {
