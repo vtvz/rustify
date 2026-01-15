@@ -1,4 +1,8 @@
+use async_trait::async_trait;
+use sea_orm::ActiveValue::Set;
 use sea_orm::entity::prelude::*;
+
+use crate::utils::Clock;
 
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;
@@ -19,14 +23,16 @@ pub struct Model {
     pub updated_at: DateTime,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
-pub enum Column {
-    Id,
-    UserId,
-    Language,
-    Count,
-    CreatedAt,
-    UpdatedAt,
+#[async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    async fn before_save<C>(mut self, _db: &C, _insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        self.updated_at = Set(Clock::now());
+
+        Ok(self)
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -42,9 +48,14 @@ impl PrimaryKeyTrait for PrimaryKey {
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {
-    User,
+#[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
+pub enum Column {
+    Id,
+    UserId,
+    Language,
+    Count,
+    CreatedAt,
+    UpdatedAt,
 }
 
 impl ColumnTrait for Column {
@@ -60,6 +71,11 @@ impl ColumnTrait for Column {
             Self::UpdatedAt => ColumnType::DateTime.def(),
         }
     }
+}
+
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum Relation {
+    User,
 }
 
 impl RelationTrait for Relation {
@@ -78,5 +94,3 @@ impl Related<super::user::Entity> for Entity {
         Relation::User.def()
     }
 }
-
-impl ActiveModelBehavior for ActiveModel {}
