@@ -32,7 +32,7 @@ pub async fn work() {
                 .data(app)
                 .build(profanity_check::consume)
         })
-        .run_with_signal(tokio::signal::ctrl_c())
+        .run()
         .await
         .expect("Should Work");
 }
