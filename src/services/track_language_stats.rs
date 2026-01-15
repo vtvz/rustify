@@ -123,7 +123,7 @@ impl TrackLanguageStatsService {
             .select_only()
             .column(TrackLanguageStatsColumn::Language)
             .expr_as(TrackLanguageStatsColumn::Count.sum(), "sum")
-            .order_by_desc(TrackLanguageStatsColumn::Count.sum())
+            .order_by_desc(Expr::col(Alias::new("sum")))
             .group_by(TrackLanguageStatsColumn::Language)
             .limit(limit)
             .into_tuple()

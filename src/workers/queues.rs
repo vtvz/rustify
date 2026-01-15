@@ -26,7 +26,7 @@ pub async fn work() {
             WorkerBuilder::new("rustify:profanity_check")
                 .backend(app.queue_manager().profanity_queue())
                 .concurrency(2)
-                // Ordering of timeout and retry is matter!
+                // Ordering of timeout and retry matters!
                 .timeout(Duration::from_secs(90))
                 .retry(RetryPolicy::retries(2))
                 .data(app)

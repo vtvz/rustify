@@ -88,7 +88,7 @@ pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) -> 
         },
     }
 
-    return Ok(());
+    Ok(())
 }
 
 #[derive(Default)]
