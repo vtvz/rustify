@@ -142,7 +142,6 @@ pub async fn collect_user_timings(
     client: &PrometheusClient,
     report: CheckReport,
 ) -> anyhow::Result<()> {
-    // Update histogram metrics
     client
         .metrics()
         .process_duration
@@ -150,22 +149,21 @@ pub async fn collect_user_timings(
     client
         .metrics()
         .max_process_duration
-        .observe(report.max_process_time.as_secs_f64());
+        .set(report.max_process_time.as_secs_f64());
 
     client
         .metrics()
         .process_users_count
-        .set(i64::try_from(report.users_count).unwrap_or(0));
+        .inc_by(report.users_count as _);
     client
         .metrics()
         .process_users_checked
-        .set(i64::try_from(report.users_checked).unwrap_or(0));
+        .inc_by(report.users_checked as _);
     client
         .metrics()
         .process_parallel_count
         .set(i64::try_from(report.parallel_count).unwrap_or(0));
 
-    // Push metrics
     client.push().await?;
 
     Ok(())

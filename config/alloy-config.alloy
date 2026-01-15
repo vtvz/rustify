@@ -1,0 +1,22 @@
+// Scrape metrics from pushgateway
+prometheus.scrape "pushgateway" {
+  targets = [{
+    __address__ = "pushgateway:9091",
+  }]
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+  scrape_interval = "15s"
+  metrics_path    = "/metrics"
+  honor_labels    = true
+}
+
+// Remote write to Grafana Cloud
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_URL")
+
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_USERNAME")
+      password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}

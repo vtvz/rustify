@@ -1,22 +1,25 @@
-use std::time::Duration;
-
 use anyhow::{Context, anyhow};
 use prometheus::{
     BasicAuthentication,
+    Gauge,
     Histogram,
+    IntCounter,
     IntGauge,
     IntGaugeVec,
     Registry,
-    TextEncoder,
     labels,
+    register_gauge_with_registry,
     register_histogram_with_registry,
+    register_int_counter_with_registry,
     register_int_gauge_vec_with_registry,
     register_int_gauge_with_registry,
 };
 
 #[derive(Debug)]
 pub struct PrometheusClient {
-    pushgateway_url: url::Url,
+    url: url::Url,
+    job: String,
+    instance: String,
     basic_auth: Option<BasicAuthentication>,
     registry: Registry,
     metrics: PrometheusMetrics,
@@ -31,9 +34,9 @@ pub struct PrometheusMetrics {
     pub lyrics_profane: IntGauge,
     pub lyrics_source: IntGaugeVec,
     pub process_duration: Histogram,
-    pub max_process_duration: Histogram,
-    pub process_users_count: IntGauge,
-    pub process_users_checked: IntGauge,
+    pub max_process_duration: Gauge,
+    pub process_users_count: IntCounter,
+    pub process_users_checked: IntCounter,
     pub process_parallel_count: IntGauge,
     pub tick_health_total: IntGauge,
     pub tick_health_unhealthy: IntGauge,
@@ -47,37 +50,27 @@ pub struct PrometheusMetrics {
 impl PrometheusClient {
     pub fn new(
         pushgateway_url: &str,
-        job_name: &str,
-        instance_tag: Option<&str>,
+        job: &str,
+        instance: Option<&str>,
         username: Option<&str>,
         password: Option<&str>,
     ) -> anyhow::Result<Self> {
-        // Validate URL format
         let url = url::Url::parse(pushgateway_url).context("Invalid Pushgateway URL format")?;
-
-        // Ensure it's http or https
-        if url.scheme() != "http" && url.scheme() != "https" {
-            return Err(anyhow!("Pushgateway URL must use http or https scheme"));
-        }
 
         let basic_auth = username.map(|u| BasicAuthentication {
             username: u.to_owned(),
             password: password.unwrap_or("").to_owned(),
         });
 
-        let instance_tag = instance_tag.map_or_else(|| "unknown".into(), String::from);
+        let instance = instance.unwrap_or("unknown");
 
-        // Create custom registry
         let registry = Registry::new_custom(
             Some("rustify".into()),
             Some(labels! {
                 "app".to_owned() => "rustify".to_owned(),
-                "instance".to_owned() => instance_tag.clone(),
-                "job".to_owned() => job_name.to_owned(),
             }),
         )?;
 
-        // Register all metrics with the custom registry
         let metrics = PrometheusMetrics {
             track_status: register_int_gauge_vec_with_registry!(
                 "track_status_total",
@@ -126,27 +119,26 @@ impl PrometheusClient {
             process_duration: register_histogram_with_registry!(
                 "process_duration_seconds",
                 "Processing duration in seconds",
-                vec![0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
+                vec![0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 5.0],
                 registry
             )
             .context("Failed to register process_duration metric")?,
 
-            max_process_duration: register_histogram_with_registry!(
+            max_process_duration: register_gauge_with_registry!(
                 "max_process_duration_seconds",
                 "Max processing duration in seconds",
-                vec![0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
                 registry
             )
             .context("Failed to register max_process_duration metric")?,
 
-            process_users_count: register_int_gauge_with_registry!(
+            process_users_count: register_int_counter_with_registry!(
                 "process_users_count",
                 "Number of users processed",
                 registry
             )
             .context("Failed to register process_users_count metric")?,
 
-            process_users_checked: register_int_gauge_with_registry!(
+            process_users_checked: register_int_counter_with_registry!(
                 "process_users_checked_total",
                 "Total users checked",
                 registry
@@ -213,71 +205,40 @@ impl PrometheusClient {
         };
 
         Ok(Self {
-            pushgateway_url: url,
+            url,
             basic_auth,
             registry,
             metrics,
+            job: job.to_owned(),
+            instance: instance.to_owned(),
         })
     }
 
+    #[tracing::instrument(skip_all)]
     pub async fn push(&self) -> anyhow::Result<()> {
-        let client = reqwest_compat::ClientBuilder::new()
-            .timeout(Duration::from_secs(180))
-            .build()?;
-
-        let encoder = TextEncoder::new();
+        let url = self.url.clone();
+        let job = self.job.clone();
+        let instance = self.instance.clone();
+        let auth = self.basic_auth.as_ref().map(|ba| BasicAuthentication {
+            username: ba.username.clone(),
+            password: ba.password.clone(),
+        });
 
         let registry = self.registry.clone();
-        let metric_families = registry.gather();
-        let test = encoder.encode_to_string(&metric_families)?;
 
-        println!("{test}");
+        tokio::task::spawn_blocking(move || {
+            let metric_families = registry.gather();
 
-        let response = client
-            .post(self.pushgateway_url.clone())
-            .body(test)
-            .basic_auth(
-                &self.basic_auth.as_ref().unwrap().username,
-                self.basic_auth.as_ref().map(|item| &item.password),
-            )
-            .send()
-            .await?;
+            let grouping = labels! {
+                "instance".to_owned() => instance,
+            };
 
-        dbg!(&response);
-
-        let text = response.text().await?;
-
-        println!("{text}");
-
-        Ok(())
+            prometheus::push_metrics(&job, grouping, url.as_ref(), metric_families, auth)
+                .map_err(|e| anyhow!("Failed to push metrics: {e}"))
+        })
+        .await
+        .context("Spawning blocking task failed")?
     }
-
-    // #[tracing::instrument(skip_all)]
-    // pub async fn push2(&self) -> anyhow::Result<()> {
-    //     let url = self.pushgateway_url.clone();
-    //     let job = self.job_name.clone();
-    //     let instance = self.instance_tag.clone();
-    //     let auth = self.basic_auth.as_ref().map(|ba| BasicAuthentication {
-    //         username: ba.username.clone(),
-    //         password: ba.password.clone(),
-    //     });
-    //
-    //     let registry = self.registry.clone();
-    //
-    //     tokio::task::spawn_blocking(move || {
-    //         let metric_families = registry.gather();
-    //
-    //         let grouping = labels! {
-    //             "app".to_owned() => "rustify".to_owned(),
-    //             "instance".to_owned() => instance,
-    //         };
-    //
-    //         prometheus::push_metrics(&job, grouping, &url.to_string(), metric_families, auth)
-    //             .map_err(|e| anyhow!("Failed to push metrics: {e}"))
-    //     })
-    //     .await
-    //     .context("Spawning blocking task failed")?
-    // }
 
     #[must_use]
     pub fn metrics(&self) -> &PrometheusMetrics {
