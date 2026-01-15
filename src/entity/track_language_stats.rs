@@ -1,4 +1,8 @@
+use async_trait::async_trait;
+use sea_orm::ActiveValue::Set;
 use sea_orm::entity::prelude::*;
+
+use crate::utils::Clock;
 
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;
@@ -17,6 +21,18 @@ pub struct Model {
     pub count: i32,
     pub created_at: DateTime,
     pub updated_at: DateTime,
+}
+
+#[async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    async fn before_save<C>(mut self, _db: &C, _insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        self.updated_at = Set(Clock::now());
+
+        Ok(self)
+    }
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -78,5 +94,3 @@ impl Related<super::user::Entity> for Entity {
         Relation::User.def()
     }
 }
-
-impl ActiveModelBehavior for ActiveModel {}
