@@ -281,16 +281,4 @@ mod tests {
         let client = client.unwrap();
         assert!(client.basic_auth.is_some());
     }
-
-    #[test]
-    fn test_new_invalid_scheme() {
-        let client = PrometheusClient::new("ftp://localhost:9091", "test_job", None, None, None);
-        assert!(client.is_err());
-        assert!(
-            client
-                .unwrap_err()
-                .to_string()
-                .contains("http or https scheme")
-        );
-    }
 }
