@@ -16,9 +16,21 @@
       "CENSOR_WHITELIST": "{{ rustify_censor_whitelist | join(',') }}"
       "GENIUS_SERVICE_URL": "http://lyrics_provider:8090/genius"
       "REDIS_URL": "redis://redis:6379/"
+      {% if rustify_alloy_grafana_cloud_url -%}
+      "PUSHGATEWAY_URL": "http://pushgateway:9091"
+      "PUSHGATEWAY_JOB": "rustify"
+      "PUSHGATEWAY_INSTANCE": "{{ rustify_pushgateway_instance }}"
+      {% endif -%}
       {% for (key, value) in rustify_env.items() -%}
          {{ key | to_json }}: {{ value | to_json }}
       {% endfor %}
+
+- name: Copy Alloy config
+  ansible.builtin.template:
+    src: alloy-config.alloy.j2
+    dest: "{{ rustify_deploy_path }}/alloy-config.alloy"
+    mode: "0644"
+  when: rustify_alloy_grafana_cloud_url | length > 0
 
 - name: Docker Compose
   ansible.builtin.template:

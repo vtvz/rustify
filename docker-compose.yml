@@ -25,13 +25,13 @@ services:
       - 6379:6379
 
   pushgateway:
-    image: prom/pushgateway
+    image: prom/pushgateway:v1.11.2
     restart: unless-stopped
     ports:
       - 9091:9091
 
   alloy:
-    image: grafana/alloy:latest
+    image: grafana/alloy:v1.12.2
     restart: unless-stopped
     volumes:
       - ./config/alloy-config.alloy:/etc/alloy/config.alloy
