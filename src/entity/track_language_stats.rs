@@ -19,16 +19,6 @@ pub struct Model {
     pub updated_at: DateTime,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
-pub enum Column {
-    Id,
-    UserId,
-    Language,
-    Count,
-    CreatedAt,
-    UpdatedAt,
-}
-
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
 pub enum PrimaryKey {
     Id,
@@ -42,9 +32,14 @@ impl PrimaryKeyTrait for PrimaryKey {
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {
-    User,
+#[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
+pub enum Column {
+    Id,
+    UserId,
+    Language,
+    Count,
+    CreatedAt,
+    UpdatedAt,
 }
 
 impl ColumnTrait for Column {
@@ -60,6 +55,11 @@ impl ColumnTrait for Column {
             Self::UpdatedAt => ColumnType::DateTime.def(),
         }
     }
+}
+
+#[derive(Copy, Clone, Debug, EnumIter)]
+pub enum Relation {
+    User,
 }
 
 impl RelationTrait for Relation {
