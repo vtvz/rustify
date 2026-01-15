@@ -45,7 +45,7 @@ impl ErrorHandlingResult {
     }
 }
 
-#[tracing::instrument(skip_all, fields(user_id = user_id))]
+#[tracing::instrument(skip_all, fields(%user_id))]
 pub async fn handle_blocked_bot(
     err: &mut anyhow::Error,
     app: &App,
@@ -64,7 +64,7 @@ pub async fn handle_blocked_bot(
     return Ok(ErrorHandlingResult::unhandled());
 }
 
-#[tracing::instrument(skip_all, fields(user_id))]
+#[tracing::instrument(skip_all, fields(%user_id))]
 pub async fn spotify_resp_error(
     err: &mut anyhow::Error,
     app: &App,
@@ -168,7 +168,7 @@ pub async fn spotify_resp_error(
     };
 }
 
-#[tracing::instrument(skip_all, fields(user_id))]
+#[tracing::instrument(skip_all, fields(%user_id))]
 pub async fn spotify_client_error(
     err: &mut anyhow::Error,
     app: &App,
@@ -203,7 +203,7 @@ pub async fn spotify_client_error(
     Ok(ErrorHandlingResult::handled())
 }
 
-#[tracing::instrument(skip_all, fields(user_id))]
+#[tracing::instrument(skip_all, fields(%user_id))]
 async fn handle_inner(
     err: &mut anyhow::Error,
     app: &App,
@@ -230,7 +230,7 @@ async fn handle_inner(
     Ok(ErrorHandlingResult::unhandled())
 }
 
-#[tracing::instrument(skip_all, fields(user_id))]
+#[tracing::instrument(skip_all, fields(%user_id))]
 pub async fn handle(
     err: &mut anyhow::Error,
     app: &App,

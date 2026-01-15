@@ -119,7 +119,7 @@ impl UserService {
         query
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn sync_name(
         db: &impl ConnectionTrait,
         id: &str,
@@ -138,7 +138,7 @@ impl UserService {
         Ok(update_result)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id, track_id))]
+    #[tracing::instrument(skip_all, fields(%user_id, %track_id))]
     pub async fn sync_current_playing(
         mut redis: deadpool_redis::Connection,
         user_id: &str,
@@ -160,7 +160,7 @@ impl UserService {
         Ok(!played)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn get_by_id(
         db: &impl ConnectionTrait,
         id: &str,
@@ -172,7 +172,7 @@ impl UserService {
 
     /// Gets user by ID from database. If not found, creates a new user with that ID.
     /// Returns tuple of `(UserModel, bool)` where bool is `true` if user was newly created.
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn upsert_by_id(
         db: &impl ConnectionTrait,
         id: &str,
@@ -208,7 +208,7 @@ impl UserService {
         Ok(user)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn reset_spotify_state(
         db: &impl ConnectionTrait,
         id: &str,
@@ -222,7 +222,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn set_status(
         db: &impl ConnectionTrait,
         id: &str,
@@ -238,7 +238,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn set_ref_code(
         db: &impl ConnectionTrait,
         id: &str,
@@ -254,7 +254,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn set_cfg_skippage_secs(
         db: &impl ConnectionTrait,
         id: &str,
@@ -272,7 +272,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn set_cfg_skippage_enabled(
         db: &impl ConnectionTrait,
         id: &str,
@@ -287,7 +287,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn set_locale(
         db: &impl ConnectionTrait,
         id: &str,
@@ -315,7 +315,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(role = ?role))]
+    #[tracing::instrument(skip_all, fields(?role))]
     pub async fn get_users_by_role(
         db: &impl ConnectionTrait,
         role: UserRole,
@@ -344,7 +344,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn set_magic_playlist(
         db: &impl ConnectionTrait,
         id: &str,
@@ -388,7 +388,7 @@ impl UserService {
         Ok(skips.count.unwrap_or_default())
     }
 
-    #[tracing::instrument(skip_all, fields(user_id = id))]
+    #[tracing::instrument(skip_all)]
     pub async fn get_stats(
         db: &impl ConnectionTrait,
         id: Option<&str>,
@@ -471,7 +471,7 @@ impl UserService {
         Ok(res)
     }
 
-    #[tracing::instrument(skip_all, fields(page, limit, sort_by = ?sort_by, sort_order = ?sort_order, status = ?status))]
+    #[tracing::instrument(skip_all, fields(%page, %limit, ?sort_by, ?sort_order, ?status))]
     pub async fn get_users_paginated(
         db: &impl ConnectionTrait,
         page: u64,

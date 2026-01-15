@@ -7,7 +7,7 @@ use crate::spotify::ShortTrack;
 pub struct RecommendasionService {}
 
 impl RecommendasionService {
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn get_already_recommended(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
@@ -23,7 +23,7 @@ impl RecommendasionService {
         Ok(recommended)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id, track_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn save_already_recommended(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,

@@ -121,7 +121,11 @@ pub async fn handle_url(
     common(app, state, m.chat.id, track).await
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %state.user_id(), track_id = track.id(), track_name = track.name_with_artists()))]
+#[tracing::instrument(skip_all, fields(
+    user_id = %state.user_id(),
+    track_id = %track.id(),
+    track_name = %track.name_with_artists()
+))]
 async fn common(
     app: &'static App,
     state: &UserState,

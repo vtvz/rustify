@@ -1,9 +1,10 @@
+use itertools::Itertools as _;
 use teloxide::prelude::*;
 use teloxide::types::{ParseMode, ReplyParameters};
 
 use crate::app::App;
 use crate::entity::prelude::*;
-use crate::services::{TrackStatusService, UserService, UserStats};
+use crate::services::{TrackLanguageStatsService, TrackStatusService, UserService, UserStats};
 use crate::telegram::handlers::HandleStatus;
 use crate::user::UserState;
 
@@ -40,6 +41,26 @@ pub async fn handle(
         ..
     } = UserService::get_stats(app.db(), Some(state.user_id())).await?;
 
+    let all_langs = TrackLanguageStatsService::sum_for_user(app.db(), state.user_id()).await?;
+
+    let languages = TrackLanguageStatsService::stats_for_user(app.db(), state.user_id(), Some(10))
+        .await?
+        .into_iter()
+        .map(|(lang, stat)| (lang.map_or("Unknown", |lang| lang.to_name()), stat))
+        .map(|(lang, stat)| {
+            format!(
+                "• <i>{lang}:</i> <code>{:.1}%</code>",
+                f64::from(stat) * 100.0 / all_langs as f64
+            )
+        })
+        .join("\n");
+
+    let languages = if languages.is_empty() {
+        "• <i>No data yet</i>".to_string()
+    } else {
+        languages
+    };
+
     let text = t!(
         "actions.stats",
         locale = state.locale(),
@@ -50,7 +71,8 @@ pub async fn handle(
         lyrics_checked = lyrics_checked,
         lyrics_analyzed = lyrics_analyzed,
         ignored = ignored,
-        lyrics_profane = lyrics_profane
+        lyrics_profane = lyrics_profane,
+        languages = languages,
     );
 
     app.bot()

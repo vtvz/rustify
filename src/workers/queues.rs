@@ -1,4 +1,7 @@
+use std::time::Duration;
+
 use apalis::layers::WorkerBuilderExt as _;
+use apalis::layers::retry::RetryPolicy;
 use apalis::prelude::{Monitor, WorkerBuilder};
 
 use crate as rustify;
@@ -23,10 +26,13 @@ pub async fn work() {
             WorkerBuilder::new("rustify:profanity_check")
                 .backend(app.queue_manager().profanity_queue())
                 .concurrency(2)
+                // Ordering of timeout and retry matters!
+                .timeout(Duration::from_secs(90))
+                .retry(RetryPolicy::retries(2))
                 .data(app)
                 .build(profanity_check::consume)
         })
-        .run_with_signal(tokio::signal::ctrl_c())
+        .run()
         .await
         .expect("Should Work");
 }

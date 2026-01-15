@@ -7,7 +7,12 @@ use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
-use crate::services::{UserService, UserWordWhitelistService, WordStatsService};
+use crate::services::{
+    TrackLanguageStatsService,
+    UserService,
+    UserWordWhitelistService,
+    WordStatsService,
+};
 use crate::spotify::ShortTrack;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
@@ -24,9 +29,9 @@ pub struct ProfanityCheckQueueTask {
 #[tracing::instrument(
     skip_all,
     fields(
-        track_id = track.id(),
-        track_name = track.name_with_artists(),
-        user_id,
+        track_id = %track.id(),
+        track_name = %track.name_with_artists(),
+        %user_id,
     )
 )]
 pub async fn queue(app: &App, user_id: &str, track: &ShortTrack) -> anyhow::Result<()> {
@@ -42,7 +47,7 @@ pub async fn queue(app: &App, user_id: &str, track: &ShortTrack) -> anyhow::Resu
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %data.user_id, track_id = %data.track.id()))]
-pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) {
+pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) -> anyhow::Result<()> {
     let app = *app;
 
     let user_state = app.user_state(&data.user_id).await;
@@ -50,9 +55,9 @@ pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) {
     let user_state = match user_state {
         Ok(user_state) => user_state,
         Err(mut err) => {
-            error_handler::handle(&mut err, app, &data.user_id, "en").await;
+            let res = error_handler::handle(&mut err, app, &data.user_id, "en").await;
 
-            return;
+            return if res.handled { Ok(()) } else { Err(err) };
         },
     };
 
@@ -72,9 +77,12 @@ pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) {
     let res = err_wrap().await;
 
     match res {
-        Ok(()) => {},
+        Ok(()) => Ok(()),
         Err(mut err) => {
-            error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
+            let res =
+                error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
+
+            if res.handled { Ok(()) } else { Err(err) }
         },
     }
 }
@@ -90,8 +98,8 @@ pub struct CheckBadWordsResult {
 #[tracing::instrument(
     skip_all,
     fields(
-        track_id = track.id(),
-        track_name = track.name_with_artists(),
+        track_id = %track.id(),
+        track_name = %track.name_with_artists(),
     )
 )]
 pub async fn check(
@@ -102,11 +110,23 @@ pub async fn check(
     let mut ret = CheckBadWordsResult::default();
 
     let Some(hit) = app.lyrics().search_for_track(track).await? else {
+        if let Err(err) =
+            TrackLanguageStatsService::increase_count(app.db(), None, state.user_id()).await
+        {
+            tracing::error!(err = ?err, "Error occurred on increasing language stats");
+        }
         return Ok(ret);
     };
 
     ret.provider = Some(hit.provider());
     ret.found = true;
+
+    if let Err(err) =
+        TrackLanguageStatsService::increase_count(app.db(), Some(hit.language()), state.user_id())
+            .await
+    {
+        tracing::error!(err = ?err, "Error occurred on increasing language stats");
+    }
 
     if hit.language() != Language::Eng {
         tracing::trace!(language = %hit.language(), provider = %hit.provider(), "Track has non English lyrics");

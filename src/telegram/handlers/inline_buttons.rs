@@ -10,21 +10,10 @@ use crate::user::UserState;
 #[tracing::instrument(
     skip_all,
     fields(
-        user_id = state.user_id(),
+        user_id = %state.user_id(),
     )
 )]
 pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> anyhow::Result<()> {
-    if !state.is_spotify_authed().await {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text(t!("inline-buttons.alert-login", locale = state.locale()))
-            .await?;
-
-        actions::login::send_login_invite(app, state).await?;
-
-        return Ok(());
-    }
-
     let data = q.data.as_ref().context("Callback needs data")?;
 
     let admin_button: Result<AdminInlineButtons, _> = data.parse();
@@ -106,6 +95,17 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
                 .await?;
             },
         }
+
+        return Ok(());
+    }
+
+    if !state.is_spotify_authed().await {
+        app.bot()
+            .answer_callback_query(q.id.clone())
+            .text(t!("inline-buttons.alert-login", locale = state.locale()))
+            .await?;
+
+        actions::login::send_login_invite(app, state).await?;
 
         return Ok(());
     }

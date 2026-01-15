@@ -65,7 +65,7 @@ impl WordStatsService {
     }
 
     #[tracing::instrument(skip_all)]
-    pub async fn increase_occurence(
+    async fn increase_occurence(
         db: &impl ConnectionTrait,
         words: impl IntoIterator<Item = impl Into<String>>,
         details: i32,
@@ -130,7 +130,7 @@ impl WordStatsService {
         Ok(count)
     }
 
-    #[tracing::instrument(skip_all, fields(locale, page, page_size))]
+    #[tracing::instrument(skip_all, fields(%locale, %page, %page_size))]
     pub async fn list_stats_with_definitions(
         db: &impl ConnectionTrait,
         locale: &str,

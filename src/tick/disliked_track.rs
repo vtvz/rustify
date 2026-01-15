@@ -13,8 +13,8 @@ use crate::user::UserState;
 #[tracing::instrument(
     skip_all,
     fields(
-        track_id = track.id(),
-        track_name = track.name_with_artists(),
+        track_id = %track.id(),
+        track_name = %track.name_with_artists(),
     )
 )]
 pub async fn handle(

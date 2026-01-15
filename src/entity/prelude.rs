@@ -4,6 +4,12 @@ pub use super::spotify_auth::{
     Entity as SpotifyAuthEntity,
     Model as SpotifyAuthModel,
 };
+pub use super::track_language_stats::{
+    ActiveModel as TrackLanguageStatsActiveModel,
+    Column as TrackLanguageStatsColumn,
+    Entity as TrackLanguageStatsEntity,
+    Model as TrackLanguageStatsModel,
+};
 pub use super::track_status::{
     ActiveModel as TrackStatusActiveModel,
     Column as TrackStatusColumn,

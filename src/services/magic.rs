@@ -4,7 +4,7 @@ use deadpool_redis::redis::AsyncCommands;
 pub struct MagicService {}
 
 impl MagicService {
-    #[tracing::instrument(skip_all, fields(user_id, track_id))]
+    #[tracing::instrument(skip_all, fields(%user_id, %track_id))]
     pub async fn is_already_removed(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
@@ -17,7 +17,7 @@ impl MagicService {
         Ok(already_removed)
     }
 
-    #[tracing::instrument(skip_all, fields(user_id, track_id))]
+    #[tracing::instrument(skip_all, fields(%user_id, %track_id))]
     pub async fn set_already_removed(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,

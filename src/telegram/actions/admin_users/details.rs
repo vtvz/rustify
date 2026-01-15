@@ -1,11 +1,17 @@
 use indoc::formatdoc;
+use itertools::Itertools as _;
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::{TrackStatus, UserStatus};
-use crate::services::{SpotifyPollingBackoffService, TrackStatusService, UserService};
+use crate::services::{
+    SpotifyPollingBackoffService,
+    TrackLanguageStatsService,
+    TrackStatusService,
+    UserService,
+};
 use crate::telegram::inline_buttons_admin::{
     AdminInlineButtons,
     AdminUsersSortBy,
@@ -111,6 +117,20 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
 
     let render_bool = |bool| if bool { "✅" } else { "❌" };
 
+    let all_langs = TrackLanguageStatsService::sum_for_user(app.db(), user_id).await?;
+
+    let languages = TrackLanguageStatsService::stats_for_user(app.db(), user_id, Some(20))
+        .await?
+        .into_iter()
+        .map(|(lang, stat)| (lang.map_or("None", |lang| lang.to_name()), stat))
+        .map(|(lang, stat)| {
+            format!(
+                "• <i>{lang}:</i> <code>{stat}</code> — <code>{:.1}%</code>",
+                f64::from(stat) * 100.0 / all_langs as f64
+            )
+        })
+        .join("\n");
+
     let text = formatdoc!(
         r#"
             👤 <b>User Details</b>
@@ -148,6 +168,9 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
             • Genius: <code>{lyrics_genius}</code>
             • MusixMatch: <code>{lyrics_musixmatch}</code>
             • LrcLib: <code>{lyrics_lrclib}</code>
+
+            <blockquote expandable><b>Languages stats:</b>
+            {languages}</blockquote>
         "#,
         name = user.name,
         id = user.id,

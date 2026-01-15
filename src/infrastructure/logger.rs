@@ -53,7 +53,7 @@ pub fn init() -> anyhow::Result<()> {
                 tracing::Level::TRACE,
             )
             .with_target("teloxide", tracing::Level::INFO)
-            .with_target("again", tracing::Level::TRACE)
+            .with_target("apalis", tracing::Level::INFO)
             .with_default(tracing::Level::from_str(&level)?),
     );
 

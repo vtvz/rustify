@@ -120,9 +120,9 @@ dependencies = [
 
 [[package]]
 name = "apalis"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f93be0eb33b912f5e66004d0b756423c285273259068b1c80a71d7842658189b"
+checksum = "543708a780aff326f4fd63bf8ed85f9d79647af7fa1fbe33bb1e221930cd3e25"
 dependencies = [
  "apalis-core",
  "futures-util",
@@ -134,9 +134,9 @@ dependencies = [
 
 [[package]]
 name = "apalis-codec"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5ed6bb8e64c360ed4ad666a6cbc42e9e6df73087461dc4071f510a3af284637"
+checksum = "ce833bf2acb6984eaa4e58ee4afacc0eaaefabc2c54ad5df46ea43255d115f7f"
 dependencies = [
  "apalis-core",
  "serde",
@@ -145,9 +145,9 @@ dependencies = [
 
 [[package]]
 name = "apalis-core"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b1557d680ee4a9b42a76ab3a9572cee1a00d45e7eb455427d906c42774766e7"
+checksum = "54b7edea7ba9866a1bc2e58f39183bdf204d78db45402d9ac1eb67d0e482735e"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -164,9 +164,9 @@ dependencies = [
 
 [[package]]
 name = "apalis-redis"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46336d2880ecb3bacd96dc520bc7caced3b3e8abd61a6c49967234f364a982b3"
+checksum = "6f3d2c0f3a0d6132696b09d90b4b5348dfc7b0decc82503d33dc3cd51d8b947a"
 dependencies = [
  "apalis-codec",
  "apalis-core",

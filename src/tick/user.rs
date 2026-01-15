@@ -16,7 +16,7 @@ pub enum CheckUserResult {
     None(spotify::CurrentlyPlayingNoneReason),
 }
 
-#[tracing::instrument(skip_all, fields(user_id = %user_id))]
+#[tracing::instrument(skip_all, fields(%user_id))]
 pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUserResult> {
     let res = app.user_state(user_id).await.context("Get user state");
 

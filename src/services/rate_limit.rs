@@ -31,7 +31,7 @@ impl RateLimitAction {
 pub struct RateLimitService {}
 
 impl RateLimitService {
-    #[tracing::instrument(skip_all, fields(user_id))]
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn enforce_limit(
         redis_conn: &mut deadpool_redis::Connection,
         user_id: &str,
