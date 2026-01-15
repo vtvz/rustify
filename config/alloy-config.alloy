@@ -4,7 +4,7 @@ prometheus.scrape "pushgateway" {
     __address__ = "pushgateway:9091",
   }]
   forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
-  scrape_interval = "15s"
+  scrape_interval = "60s"
   metrics_path    = "/metrics"
   honor_labels    = true
 }
@@ -17,6 +17,12 @@ prometheus.remote_write "grafana_cloud" {
     basic_auth {
       username = sys.env("GRAFANA_CLOUD_USERNAME")
       password = sys.env("GRAFANA_CLOUD_API_KEY")
+    }
+
+    queue_config {
+      max_shards           = 1
+      max_samples_per_send = 500
+      batch_send_deadline  = "60s"
     }
   }
 }
