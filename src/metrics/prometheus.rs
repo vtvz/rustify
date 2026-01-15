@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::{Context, anyhow};
 use prometheus::{
     BasicAuthentication,
@@ -5,6 +7,7 @@ use prometheus::{
     IntGauge,
     IntGaugeVec,
     Registry,
+    TextEncoder,
     labels,
     register_histogram_with_registry,
     register_int_gauge_vec_with_registry,
@@ -13,9 +16,7 @@ use prometheus::{
 
 #[derive(Debug)]
 pub struct PrometheusClient {
-    pushgateway_url: String,
-    job_name: String,
-    instance_tag: String,
+    pushgateway_url: url::Url,
     basic_auth: Option<BasicAuthentication>,
     registry: Registry,
     metrics: PrometheusMetrics,
@@ -67,12 +68,19 @@ impl PrometheusClient {
         let instance_tag = instance_tag.map_or_else(|| "unknown".into(), String::from);
 
         // Create custom registry
-        let registry = Registry::new();
+        let registry = Registry::new_custom(
+            Some("rustify".into()),
+            Some(labels! {
+                "app".to_owned() => "rustify".to_owned(),
+                "instance".to_owned() => instance_tag.clone(),
+                "job".to_owned() => job_name.to_owned(),
+            }),
+        )?;
 
         // Register all metrics with the custom registry
         let metrics = PrometheusMetrics {
             track_status: register_int_gauge_vec_with_registry!(
-                "rustify_track_status_total",
+                "track_status_total",
                 "Total tracks by status",
                 &["status"],
                 registry
@@ -80,35 +88,35 @@ impl PrometheusClient {
             .context("Failed to register track_status metric")?,
 
             lyrics_checked: register_int_gauge_with_registry!(
-                "rustify_lyrics_checked_total",
+                "lyrics_checked_total",
                 "Total lyrics checked",
                 registry
             )
             .context("Failed to register lyrics_checked metric")?,
 
             lyrics_analyzed: register_int_gauge_with_registry!(
-                "rustify_lyrics_analyzed_total",
+                "lyrics_analyzed_total",
                 "Total lyrics analyzed",
                 registry
             )
             .context("Failed to register lyrics_analyzed metric")?,
 
             lyrics_found: register_int_gauge_with_registry!(
-                "rustify_lyrics_found_total",
+                "lyrics_found_total",
                 "Total lyrics found",
                 registry
             )
             .context("Failed to register lyrics_found metric")?,
 
             lyrics_profane: register_int_gauge_with_registry!(
-                "rustify_lyrics_profane_total",
+                "lyrics_profane_total",
                 "Total profane lyrics",
                 registry
             )
             .context("Failed to register lyrics_profane metric")?,
 
             lyrics_source: register_int_gauge_vec_with_registry!(
-                "rustify_lyrics_source_total",
+                "lyrics_source_total",
                 "Lyrics by source",
                 &["source"],
                 registry
@@ -116,7 +124,7 @@ impl PrometheusClient {
             .context("Failed to register lyrics_source metric")?,
 
             process_duration: register_histogram_with_registry!(
-                "rustify_process_duration_seconds",
+                "process_duration_seconds",
                 "Processing duration in seconds",
                 vec![0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
                 registry
@@ -124,7 +132,7 @@ impl PrometheusClient {
             .context("Failed to register process_duration metric")?,
 
             max_process_duration: register_histogram_with_registry!(
-                "rustify_max_process_duration_seconds",
+                "max_process_duration_seconds",
                 "Max processing duration in seconds",
                 vec![0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0],
                 registry
@@ -132,56 +140,56 @@ impl PrometheusClient {
             .context("Failed to register max_process_duration metric")?,
 
             process_users_count: register_int_gauge_with_registry!(
-                "rustify_process_users_count",
+                "process_users_count",
                 "Number of users processed",
                 registry
             )
             .context("Failed to register process_users_count metric")?,
 
             process_users_checked: register_int_gauge_with_registry!(
-                "rustify_process_users_checked_total",
+                "process_users_checked_total",
                 "Total users checked",
                 registry
             )
             .context("Failed to register process_users_checked metric")?,
 
             process_parallel_count: register_int_gauge_with_registry!(
-                "rustify_process_parallel_count",
+                "process_parallel_count",
                 "Parallel processing count",
                 registry
             )
             .context("Failed to register process_parallel_count metric")?,
 
             tick_health_total: register_int_gauge_with_registry!(
-                "rustify_tick_health_total",
+                "tick_health_total",
                 "Total tick health count",
                 registry
             )
             .context("Failed to register tick_health_total metric")?,
 
             tick_health_unhealthy: register_int_gauge_with_registry!(
-                "rustify_tick_health_unhealthy_total",
+                "tick_health_unhealthy_total",
                 "Unhealthy tick count",
                 registry
             )
             .context("Failed to register tick_health_unhealthy metric")?,
 
             tick_health_lagging: register_int_gauge_with_registry!(
-                "rustify_tick_health_lagging_total",
+                "tick_health_lagging_total",
                 "Lagging tick count",
                 registry
             )
             .context("Failed to register tick_health_lagging metric")?,
 
             spotify_rate_limit_errors: register_int_gauge_with_registry!(
-                "rustify_errors_spotify_rate_limit_total",
+                "errors_spotify_rate_limit_total",
                 "Total Spotify 429 rate limit errors",
                 registry
             )
             .context("Failed to register spotify_rate_limit_errors metric")?,
 
             users_by_status: register_int_gauge_vec_with_registry!(
-                "rustify_users_by_status_total",
+                "users_by_status_total",
                 "Users by status",
                 &["status"],
                 registry
@@ -189,7 +197,7 @@ impl PrometheusClient {
             .context("Failed to register users_by_status metric")?,
 
             tracks_by_language: register_int_gauge_vec_with_registry!(
-                "rustify_tracks_by_language_total",
+                "tracks_by_language_total",
                 "Tracks by language",
                 &["language"],
                 registry
@@ -197,7 +205,7 @@ impl PrometheusClient {
             .context("Failed to register tracks_by_language metric")?,
 
             uptime: register_int_gauge_with_registry!(
-                "rustify_uptime_seconds",
+                "uptime_seconds",
                 "Application uptime in seconds",
                 registry
             )
@@ -205,41 +213,71 @@ impl PrometheusClient {
         };
 
         Ok(Self {
-            pushgateway_url: pushgateway_url.to_owned(),
-            job_name: job_name.to_owned(),
-            instance_tag,
+            pushgateway_url: url,
             basic_auth,
             registry,
             metrics,
         })
     }
 
-    #[tracing::instrument(skip_all)]
     pub async fn push(&self) -> anyhow::Result<()> {
-        let url = self.pushgateway_url.clone();
-        let job = self.job_name.clone();
-        let instance = self.instance_tag.clone();
-        let auth = self.basic_auth.as_ref().map(|ba| BasicAuthentication {
-            username: ba.username.clone(),
-            password: ba.password.clone(),
-        });
+        let client = reqwest_compat::ClientBuilder::new()
+            .timeout(Duration::from_secs(180))
+            .build()?;
+
+        let encoder = TextEncoder::new();
 
         let registry = self.registry.clone();
+        let metric_families = registry.gather();
+        let test = encoder.encode_to_string(&metric_families)?;
 
-        tokio::task::spawn_blocking(move || {
-            let metric_families = registry.gather();
+        println!("{test}");
 
-            let grouping = labels! {
-                "app".to_owned() => "rustify".to_owned(),
-                "instance".to_owned() => instance,
-            };
+        let response = client
+            .post(self.pushgateway_url.clone())
+            .body(test)
+            .basic_auth(
+                &self.basic_auth.as_ref().unwrap().username,
+                self.basic_auth.as_ref().map(|item| &item.password),
+            )
+            .send()
+            .await?;
 
-            prometheus::push_metrics(&job, grouping, &url, metric_families, auth)
-                .map_err(|e| anyhow!("Failed to push metrics: {e}"))
-        })
-        .await
-        .context("Spawning blocking task failed")?
+        dbg!(&response);
+
+        let text = response.text().await?;
+
+        println!("{text}");
+
+        Ok(())
     }
+
+    // #[tracing::instrument(skip_all)]
+    // pub async fn push2(&self) -> anyhow::Result<()> {
+    //     let url = self.pushgateway_url.clone();
+    //     let job = self.job_name.clone();
+    //     let instance = self.instance_tag.clone();
+    //     let auth = self.basic_auth.as_ref().map(|ba| BasicAuthentication {
+    //         username: ba.username.clone(),
+    //         password: ba.password.clone(),
+    //     });
+    //
+    //     let registry = self.registry.clone();
+    //
+    //     tokio::task::spawn_blocking(move || {
+    //         let metric_families = registry.gather();
+    //
+    //         let grouping = labels! {
+    //             "app".to_owned() => "rustify".to_owned(),
+    //             "instance".to_owned() => instance,
+    //         };
+    //
+    //         prometheus::push_metrics(&job, grouping, &url.to_string(), metric_families, auth)
+    //             .map_err(|e| anyhow!("Failed to push metrics: {e}"))
+    //     })
+    //     .await
+    //     .context("Spawning blocking task failed")?
+    // }
 
     #[must_use]
     pub fn metrics(&self) -> &PrometheusMetrics {
