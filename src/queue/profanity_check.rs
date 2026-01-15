@@ -77,18 +77,14 @@ pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) -> 
     let res = err_wrap().await;
 
     match res {
-        Ok(()) => {},
+        Ok(()) => Ok(()),
         Err(mut err) => {
             let res =
                 error_handler::handle(&mut err, app, &data.user_id, user_state.locale()).await;
 
-            if !res.handled {
-                return Err(err);
-            }
+            if res.handled { Ok(()) } else { Err(err) }
         },
     }
-
-    Ok(())
 }
 
 #[derive(Default)]
