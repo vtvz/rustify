@@ -11,7 +11,7 @@ import-db:
   ssh {{ server }} "docker compose --project-directory /srv/rustify exec db pg_dump -U rustify --no-owner --clean --if-exists" | docker compose exec -T db psql -U postgres
   docker compose exec db psql -U postgres -c "update \"user\" set status='pending'; delete from spotify_auth"
 
-build-deploy:
+github-workflow-deploy:
   gh workflow run deploy.yml --ref "$(git rev-parse --abbrev-ref HEAD)"
 
 update-secret:
