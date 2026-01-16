@@ -17,7 +17,7 @@
 
 <div align="center">
 
-🤖 **Try the live bot:** **[@RustifyBot](https://t.me/RustifyBot)**
+🤖 **Try the live bot:** **[@RustifyBot](https://t.me/RustifyBot?start=telegram)**
 
 </div>
 
