@@ -153,8 +153,8 @@ pub async fn collect_user_timings(
 
     client
         .metrics()
-        .process_users_count
-        .inc_by(report.users_count as _);
+        .process_users_checked
+        .inc_by(report.users_checked as _);
     client
         .metrics()
         .process_users_processed

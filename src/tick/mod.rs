@@ -35,7 +35,7 @@ pub static PROCESS_TIME_CHANNEL: LazyLock<(
 pub struct CheckReport {
     pub max_process_time: Duration,
     pub users_process_time: Duration,
-    pub users_count: usize,
+    pub users_checked: usize,
     pub users_processed: usize,
     pub parallel_count: usize,
 }
@@ -144,7 +144,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
         max_process_time: CHECK_INTERVAL,
         users_process_time: start.elapsed(),
         parallel_count: PARALLEL_CHECKS,
-        users_count: user_ids_len,
+        users_checked: user_ids_len,
         users_processed,
     };
 

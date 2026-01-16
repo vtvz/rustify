@@ -35,7 +35,7 @@ pub struct PrometheusMetrics {
     pub lyrics_source: IntGaugeVec,
     pub process_duration: Histogram,
     pub max_process_duration: Gauge,
-    pub process_users_count: IntCounter,
+    pub process_users_checked: IntCounter,
     pub process_users_processed: IntCounter,
     pub process_parallel_count: IntGauge,
     pub tick_health_total: IntGauge,
@@ -131,19 +131,19 @@ impl PrometheusClient {
             )
             .context("Failed to register max_process_duration metric")?,
 
-            process_users_count: register_int_counter_with_registry!(
-                "process_users_count",
-                "Number of users processed",
+            process_users_checked: register_int_counter_with_registry!(
+                "process_users_checked_count",
+                "Number of users checked",
                 registry
             )
-            .context("Failed to register process_users_count metric")?,
+            .context("Failed to register process_users_checked_count metric")?,
 
             process_users_processed: register_int_counter_with_registry!(
                 "process_users_processed_count",
-                "Total users checked",
+                "Total users processed",
                 registry
             )
-            .context("Failed to register process_users_checked metric")?,
+            .context("Failed to register process_users_processed_count metric")?,
 
             process_parallel_count: register_int_gauge_with_registry!(
                 "process_parallel_count",
