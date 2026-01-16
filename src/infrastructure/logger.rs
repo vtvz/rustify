@@ -54,6 +54,7 @@ pub fn init() -> anyhow::Result<()> {
             )
             .with_target("teloxide", tracing::Level::INFO)
             .with_target("apalis", tracing::Level::INFO)
+            .with_target("rspotify", tracing::Level::WARN)
             .with_default(tracing::Level::from_str(&level)?),
     );
 

@@ -22,6 +22,8 @@ use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::utils;
 
 pub mod influx;
+pub mod prometheus;
+pub mod prometheus_collector;
 
 #[derive(InfluxDbWriteable, Debug)]
 struct TrackStatusStats {
@@ -50,8 +52,8 @@ struct TimingsStats {
     time: Timestamp,
     max_process_time: u64,
     users_process_time: u64,
-    users_count: u64,
     users_checked: u64,
+    users_processed: u64,
     parallel_count: u64,
 }
 
@@ -206,8 +208,8 @@ pub async fn collect_user_timings(
         time,
         users_process_time: report.users_process_time.as_millis() as u64,
         max_process_time: report.max_process_time.as_millis() as u64,
-        users_count: report.users_count as u64,
         users_checked: report.users_checked as u64,
+        users_processed: report.users_processed as u64,
         parallel_count: report.parallel_count as u64,
     }
     .into_query("process_timings");
