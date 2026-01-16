@@ -36,7 +36,7 @@ pub struct PrometheusMetrics {
     pub process_duration: Histogram,
     pub max_process_duration: Gauge,
     pub process_users_count: IntCounter,
-    pub process_users_checked: IntCounter,
+    pub process_users_processed: IntCounter,
     pub process_parallel_count: IntGauge,
     pub tick_health_total: IntGauge,
     pub tick_health_unhealthy: IntGauge,
@@ -138,8 +138,8 @@ impl PrometheusClient {
             )
             .context("Failed to register process_users_count metric")?,
 
-            process_users_checked: register_int_counter_with_registry!(
-                "process_users_checked_total",
+            process_users_processed: register_int_counter_with_registry!(
+                "process_users_processed_count",
                 "Total users checked",
                 registry
             )

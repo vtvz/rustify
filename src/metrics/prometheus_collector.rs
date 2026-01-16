@@ -157,8 +157,8 @@ pub async fn collect_user_timings(
         .inc_by(report.users_count as _);
     client
         .metrics()
-        .process_users_checked
-        .inc_by(report.users_checked as _);
+        .process_users_processed
+        .inc_by(report.users_processed as _);
     client
         .metrics()
         .process_parallel_count

@@ -36,7 +36,7 @@ pub struct CheckReport {
     pub max_process_time: Duration,
     pub users_process_time: Duration,
     pub users_count: usize,
-    pub users_checked: usize,
+    pub users_processed: usize,
     pub parallel_count: usize,
 }
 
@@ -80,7 +80,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
         ));
     }
 
-    let mut users_checked = 0;
+    let mut users_processed = 0;
     let mut redis_conn = app.redis_conn().await?;
     let mut users_to_suspend = vec![];
 
@@ -90,7 +90,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
                 SpotifyPollingBackoffService::update_activity(&mut redis_conn, &user_id).await?;
             },
             Ok((user_id, CheckUserResult::Complete)) => {
-                users_checked += 1;
+                users_processed += 1;
 
                 SpotifyPollingBackoffService::update_activity(&mut redis_conn, &user_id).await?;
             },
@@ -145,7 +145,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
         users_process_time: start.elapsed(),
         parallel_count: PARALLEL_CHECKS,
         users_count: user_ids_len,
-        users_checked,
+        users_processed,
     };
 
     PROCESS_TIME_CHANNEL.0.send(report).ok();
