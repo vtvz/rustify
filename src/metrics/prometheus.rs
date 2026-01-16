@@ -20,7 +20,7 @@ pub struct PrometheusClient {
     url: url::Url,
     job: String,
     instance: String,
-    basic_auth: Option<BasicAuthentication>,
+    basic_auth: Option<(String, String)>,
     registry: Registry,
     metrics: PrometheusMetrics,
 }
@@ -57,10 +57,7 @@ impl PrometheusClient {
     ) -> anyhow::Result<Self> {
         let url = url::Url::parse(pushgateway_url).context("Invalid Pushgateway URL format")?;
 
-        let basic_auth = username.map(|u| BasicAuthentication {
-            username: u.to_owned(),
-            password: password.unwrap_or("").to_owned(),
-        });
+        let basic_auth = username.map(|u| (u.to_owned(), password.unwrap_or_default().to_owned()));
 
         let instance = instance.unwrap_or("unknown");
 
@@ -219,9 +216,9 @@ impl PrometheusClient {
         let url = self.url.clone();
         let job = self.job.clone();
         let instance = self.instance.clone();
-        let auth = self.basic_auth.as_ref().map(|ba| BasicAuthentication {
-            username: ba.username.clone(),
-            password: ba.password.clone(),
+        let auth = self.basic_auth.clone().map(|ba| BasicAuthentication {
+            username: ba.0,
+            password: ba.1,
         });
 
         let registry = self.registry.clone();
