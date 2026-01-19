@@ -24,7 +24,7 @@ use crate::telegram::commands::UserCommandDisplay;
 use crate::utils;
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
-const PARALLEL_CHECKS: usize = 2;
+const PARALLEL_THREADS_COUNT: usize = 2;
 
 pub static PROCESS_TIME_CHANNEL: LazyLock<(
     broadcast::Sender<CheckReport>,
@@ -33,11 +33,11 @@ pub static PROCESS_TIME_CHANNEL: LazyLock<(
 
 #[derive(Clone)]
 pub struct CheckReport {
-    pub max_process_time: Duration,
+    pub check_interval: Duration,
     pub users_process_time: Duration,
     pub users_checked: usize,
     pub users_processed: usize,
-    pub parallel_count: usize,
+    pub threads_count: usize,
 }
 
 #[tracing::instrument(skip_all)]
@@ -48,7 +48,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
         .await
         .context("Get users for processing")?;
 
-    let semaphore = Arc::new(Semaphore::new(PARALLEL_CHECKS));
+    let semaphore = Arc::new(Semaphore::new(PARALLEL_THREADS_COUNT));
     let user_ids_len = user_ids.len();
     let mut join_handles = Vec::with_capacity(user_ids_len);
 
@@ -141,9 +141,9 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
     }
 
     let report = CheckReport {
-        max_process_time: CHECK_INTERVAL,
+        check_interval: CHECK_INTERVAL,
         users_process_time: start.elapsed(),
-        parallel_count: PARALLEL_CHECKS,
+        threads_count: PARALLEL_THREADS_COUNT,
         users_checked: user_ids_len,
         users_processed,
     };

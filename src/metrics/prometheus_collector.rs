@@ -93,15 +93,15 @@ pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()>
 
     client
         .metrics()
-        .tick_health_total
+        .ticks
         .set(i64::try_from(tick_health_status.total).unwrap_or(0));
     client
         .metrics()
-        .tick_health_unhealthy
+        .ticks_unhealthy
         .set(i64::try_from(tick_health_status.unhealthy.len()).unwrap_or(0));
     client
         .metrics()
-        .tick_health_lagging
+        .ticks_lagging
         .set(i64::try_from(tick_health_status.lagging.len()).unwrap_or(0));
 
     client
@@ -148,8 +148,8 @@ pub async fn collect_user_timings(
         .observe(report.users_process_time.as_secs_f64());
     client
         .metrics()
-        .max_process_duration
-        .set(report.max_process_time.as_secs_f64());
+        .process_check_interval_seconds
+        .set(report.check_interval.as_secs_f64());
 
     client
         .metrics()
@@ -161,8 +161,8 @@ pub async fn collect_user_timings(
         .inc_by(report.users_processed as _);
     client
         .metrics()
-        .process_parallel_count
-        .set(i64::try_from(report.parallel_count).unwrap_or(0));
+        .process_parallel_threads
+        .set(i64::try_from(report.threads_count).unwrap_or(0));
 
     client.push().await?;
 

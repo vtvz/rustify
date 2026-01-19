@@ -34,13 +34,13 @@ pub struct PrometheusMetrics {
     pub lyrics_profane: IntGauge,
     pub lyrics_source: IntGaugeVec,
     pub process_duration: Histogram,
-    pub max_process_duration: Gauge,
+    pub process_check_interval_seconds: Gauge,
     pub process_users_checked: IntCounter,
     pub process_users_processed: IntCounter,
-    pub process_parallel_count: IntGauge,
-    pub tick_health_total: IntGauge,
-    pub tick_health_unhealthy: IntGauge,
-    pub tick_health_lagging: IntGauge,
+    pub process_parallel_threads: IntGauge,
+    pub ticks: IntGauge,
+    pub ticks_unhealthy: IntGauge,
+    pub ticks_lagging: IntGauge,
     pub spotify_rate_limit_errors: IntGauge,
     pub users_by_status: IntGaugeVec,
     pub tracks_by_language: IntGaugeVec,
@@ -121,54 +121,54 @@ impl PrometheusClient {
             )
             .context("Failed to register process_duration metric")?,
 
-            max_process_duration: register_gauge_with_registry!(
-                "max_process_duration_seconds",
-                "Max processing duration in seconds",
+            process_check_interval_seconds: register_gauge_with_registry!(
+                "process_check_interval_seconds",
+                "Interval between user check cycles in seconds",
                 registry
             )
             .context("Failed to register max_process_duration metric")?,
 
             process_users_checked: register_int_counter_with_registry!(
-                "process_users_checked_count",
+                "process_users_checked_total",
                 "Number of users checked",
                 registry
             )
             .context("Failed to register process_users_checked_count metric")?,
 
             process_users_processed: register_int_counter_with_registry!(
-                "process_users_processed_count",
+                "process_users_processed_total",
                 "Total users processed",
                 registry
             )
             .context("Failed to register process_users_processed_count metric")?,
 
-            process_parallel_count: register_int_gauge_with_registry!(
-                "process_parallel_count",
-                "Parallel processing count",
+            process_parallel_threads: register_int_gauge_with_registry!(
+                "process_parallel_threads",
+                "Number of parallel processing threads",
                 registry
             )
-            .context("Failed to register process_parallel_count metric")?,
+            .context("Failed to register process_parallel_threads metric")?,
 
-            tick_health_total: register_int_gauge_with_registry!(
-                "tick_health_total",
-                "Total tick health count",
+            ticks: register_int_gauge_with_registry!(
+                "ticks",
+                "Total number of active ticks",
                 registry
             )
-            .context("Failed to register tick_health_total metric")?,
+            .context("Failed to register ticks metric")?,
 
-            tick_health_unhealthy: register_int_gauge_with_registry!(
-                "tick_health_unhealthy_total",
+            ticks_unhealthy: register_int_gauge_with_registry!(
+                "ticks_unhealthy",
                 "Unhealthy tick count",
                 registry
             )
-            .context("Failed to register tick_health_unhealthy metric")?,
+            .context("Failed to register ticks_unhealthy metric")?,
 
-            tick_health_lagging: register_int_gauge_with_registry!(
-                "tick_health_lagging_total",
+            ticks_lagging: register_int_gauge_with_registry!(
+                "ticks_lagging",
                 "Lagging tick count",
                 registry
             )
-            .context("Failed to register tick_health_lagging metric")?,
+            .context("Failed to register ticks_lagging metric")?,
 
             spotify_rate_limit_errors: register_int_gauge_with_registry!(
                 "errors_spotify_rate_limit_total",

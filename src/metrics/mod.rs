@@ -50,11 +50,11 @@ struct LyricsStats {
 #[derive(InfluxDbWriteable, Debug)]
 struct TimingsStats {
     time: Timestamp,
-    max_process_time: u64,
+    check_interval: u64,
     users_process_time: u64,
     users_checked: u64,
     users_processed: u64,
-    parallel_count: u64,
+    threads_count: u64,
 }
 
 #[derive(InfluxDbWriteable, Debug)]
@@ -207,10 +207,10 @@ pub async fn collect_user_timings(
     let timings_stats = TimingsStats {
         time,
         users_process_time: report.users_process_time.as_millis() as u64,
-        max_process_time: report.max_process_time.as_millis() as u64,
+        check_interval: report.check_interval.as_millis() as u64,
         users_checked: report.users_checked as u64,
         users_processed: report.users_processed as u64,
-        parallel_count: report.parallel_count as u64,
+        threads_count: report.threads_count as u64,
     }
     .into_query("process_timings");
 
