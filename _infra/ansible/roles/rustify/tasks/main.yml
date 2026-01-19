@@ -29,7 +29,7 @@
   ansible.builtin.template:
     src: alloy-config.alloy.j2
     dest: "{{ rustify_deploy_path }}/alloy-config.alloy"
-    mode: "0644"
+    mode: "0600"
   when: rustify_alloy_grafana_cloud_url | length > 0
 
 - name: Docker Compose
