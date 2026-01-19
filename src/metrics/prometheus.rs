@@ -126,21 +126,21 @@ impl PrometheusClient {
                 "Interval between user check cycles in seconds",
                 registry
             )
-            .context("Failed to register max_process_duration metric")?,
+            .context("Failed to register process_check_interval_seconds metric")?,
 
             process_users_checked: register_int_counter_with_registry!(
                 "process_users_checked_total",
                 "Number of users checked",
                 registry
             )
-            .context("Failed to register process_users_checked_count metric")?,
+            .context("Failed to register process_users_checked_total metric")?,
 
             process_users_processed: register_int_counter_with_registry!(
                 "process_users_processed_total",
                 "Total users processed",
                 registry
             )
-            .context("Failed to register process_users_processed_count metric")?,
+            .context("Failed to register process_users_processed_total metric")?,
 
             process_parallel_threads: register_int_gauge_with_registry!(
                 "process_parallel_threads",
