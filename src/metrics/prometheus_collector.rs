@@ -1,9 +1,7 @@
-use std::sync::LazyLock;
 use std::time::Duration;
 
 use sea_orm::{ActiveEnum as _, Iterable as _};
 use tokio::sync::broadcast::error::RecvError;
-use tokio::time::Instant;
 use tracing::Instrument;
 
 use super::prometheus::PrometheusClient;
@@ -18,8 +16,6 @@ use crate::services::{
 };
 use crate::tick::{CheckReport, PROCESS_TIME_CHANNEL};
 use crate::utils;
-
-static START_TIME: LazyLock<Instant> = LazyLock::new(Instant::now);
 
 pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()> {
     let disliked =
@@ -112,7 +108,7 @@ pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()>
     client
         .metrics()
         .uptime
-        .set(START_TIME.elapsed().as_secs().cast_signed());
+        .set(super::START_TIME.elapsed().as_secs().cast_signed());
 
     // Update users by status
     for status in UserStatus::iter() {
@@ -138,10 +134,7 @@ pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()>
     Ok(())
 }
 
-pub async fn collect_user_timings(
-    client: &PrometheusClient,
-    report: CheckReport,
-) -> anyhow::Result<()> {
+pub fn collect_user_timings(client: &PrometheusClient, report: &CheckReport) {
     client
         .metrics()
         .process_duration
@@ -163,10 +156,6 @@ pub async fn collect_user_timings(
         .metrics()
         .process_parallel_threads
         .set(i64::try_from(report.threads_count).unwrap_or(0));
-
-    client.push().await?;
-
-    Ok(())
 }
 
 pub async fn collect_daemon(app: &'static App) {
@@ -176,7 +165,7 @@ pub async fn collect_daemon(app: &'static App) {
         return;
     };
 
-    let _ = *START_TIME;
+    let _ = *super::START_TIME;
 
     tokio::spawn(
         async {
@@ -193,9 +182,7 @@ pub async fn collect_daemon(app: &'static App) {
                             Ok(timings) => timings,
                         };
 
-                        if let Err(err) = collect_user_timings(client, report).await {
-                            tracing::error!(err = ?err, "Something went wrong on Prometheus user timing metrics collection");
-                        }
+                        collect_user_timings(client, &report);
                     },
                     () = utils::ctrl_c() => { return },
                 }
