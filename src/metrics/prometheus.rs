@@ -59,7 +59,7 @@ impl PrometheusClient {
 
         let basic_auth = username.map(|u| (u.to_owned(), password.unwrap_or_default().to_owned()));
 
-        let instance = instance.unwrap_or("unknown");
+        let instance = instance.context("Instance should be set")?;
 
         let registry = Registry::new_custom(
             Some("rustify".into()),
