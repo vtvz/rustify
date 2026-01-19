@@ -51,15 +51,13 @@ impl PrometheusClient {
     pub fn new(
         pushgateway_url: &str,
         job: &str,
-        instance: Option<&str>,
+        instance: &str,
         username: Option<&str>,
         password: Option<&str>,
     ) -> anyhow::Result<Self> {
         let url = url::Url::parse(pushgateway_url).context("Invalid Pushgateway URL format")?;
 
         let basic_auth = username.map(|u| (u.to_owned(), password.unwrap_or_default().to_owned()));
-
-        let instance = instance.context("Instance should be set")?;
 
         let registry = Registry::new_custom(
             Some("rustify".into()),
@@ -252,7 +250,7 @@ mod tests {
         let client = PrometheusClient::new(
             "http://localhost:9091",
             "test_job",
-            Some("test_instance"),
+            "test_instance",
             None,
             None,
         );
@@ -261,7 +259,7 @@ mod tests {
 
     #[test]
     fn test_new_invalid_url() {
-        let client = PrometheusClient::new("not-a-url", "test_job", None, None, None);
+        let client = PrometheusClient::new("not-a-url", "test_job", "test_instance", None, None);
         assert!(client.is_err());
     }
 
@@ -270,7 +268,7 @@ mod tests {
         let client = PrometheusClient::new(
             "http://localhost:9091",
             "test_job",
-            None,
+            "test_instance",
             Some("user"),
             Some("pass"),
         );

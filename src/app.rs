@@ -178,7 +178,10 @@ fn init_prometheus(env: &EnvConfig) -> anyhow::Result<Option<PrometheusClient>> 
     }
 
     let job = env.pushgateway_job.as_deref().unwrap_or("rustify");
-    let instance = env.pushgateway_instance.as_deref();
+    let instance = env
+        .pushgateway_instance
+        .as_ref()
+        .context("PUSHGATEWAY_INSTANCE variable is required")?;
     let username = env.pushgateway_username.as_deref();
     let password = env.pushgateway_password.as_deref();
 
