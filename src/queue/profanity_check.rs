@@ -1,6 +1,7 @@
 use anyhow::Context as _;
 use apalis::prelude::{Data, TaskSink};
 use isolang::Language;
+use itertools::Itertools as _;
 use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
@@ -156,10 +157,9 @@ pub async fn check(
         })
         .map(|line: &profanity::LineResult| {
             format!(
-                "<code>{}:</code> {}, <code>[{}]</code>",
+                "<code>{}:</code> {}",
                 hit.line_index_name(line.no),
                 line.highlighted(),
-                line.typ
             )
         })
         .collect();
@@ -176,7 +176,7 @@ pub async fn check(
             "profanity-check.message",
             locale = state.locale(),
             track_name = track.track_tg_link(),
-            bad_lines = bad_lines[0..lines].join("\n"),
+            bad_lines = bad_lines.iter().take(lines).join("\n"),
             lyrics_link = hit.link().trim(),
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
         );
