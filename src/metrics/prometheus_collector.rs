@@ -110,7 +110,6 @@ pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()>
         .uptime
         .set(super::START_TIME.elapsed().as_secs().cast_signed());
 
-    // Update users by status
     for status in UserStatus::iter() {
         let users = UserService::count_users(app.db(), Some(status)).await?;
         client

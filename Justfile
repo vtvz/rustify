@@ -8,7 +8,7 @@ server := env_var_or_default('DEPLOY_DESTINATION', 'rustify')
 path := env_var_or_default("DEPLOY_PATH", "/srv/rustify")
 
 import-db:
-  ssh {{ server }} "docker compose --project-directory /srv/rustify exec db pg_dump -U rustify --no-owner --clean --if-exists" | docker compose exec -T db psql -U postgres
+  ssh {{ server }} "docker compose --project-directory {{ path }} exec db pg_dump -U rustify --no-owner --clean --if-exists" | docker compose exec -T db psql -U postgres
   docker compose exec db psql -U postgres -c "update \"user\" set status='pending'; delete from spotify_auth"
 
 github-workflow-deploy:
