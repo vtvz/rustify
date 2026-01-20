@@ -57,7 +57,7 @@
       ansible.builtin.template:
         src: "{{ item.key }}"
         dest: "{{ rustify_deploy_path }}/{{ item.value }}"
-        mode: 0644
+        mode: "0644"
       with_dict:
         "docker-compose.backup.yml.j2": docker-compose.backup.yml
 

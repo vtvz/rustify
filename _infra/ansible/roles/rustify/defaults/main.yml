@@ -1,3 +1,4 @@
+---
 rustify_deploy_path: "/srv/rustify"
 rustify_env: {}
 restic_version: 0.16.0

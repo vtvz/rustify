@@ -23,12 +23,12 @@ sea-orm-generate:
 validate:
   cargo clippy
   cargo test
-  ansible-lint .infra/ansible/playbook.yml
+  ansible-lint _infra/ansible/playbook.yml
 
 fix:
   cargo fmt
   cargo clippy --fix --allow-dirty --allow-staged
-  ansible-lint --write .infra/ansible/playbook.yml
+  ansible-lint --write _infra/ansible/playbook.yml
 
 compose +args:
   ssh {{ server }} -- docker-compose -f "{{ path }}/docker-compose.yml" {{ args }}
