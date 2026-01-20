@@ -22,7 +22,7 @@ pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()>
         TrackStatusService::count_status(app.db(), TrackStatus::Disliked, None, None).await?;
     let ignored =
         TrackStatusService::count_status(app.db(), TrackStatus::Ignore, None, None).await?;
-    let skipped = TrackStatusService::sum_skips(app.db(), None).await? as u64;
+    let skipped = TrackStatusService::sum_skips(app.db(), None).await?;
 
     let UserStats {
         removed_collection,
@@ -55,7 +55,7 @@ pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()>
         .metrics()
         .track_status
         .with_label_values(&["skipped"])
-        .set(skipped.cast_signed());
+        .set(skipped);
     client
         .metrics()
         .track_status
