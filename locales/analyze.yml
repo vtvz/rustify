@@ -6,7 +6,7 @@ analysis.word-analyzer-prompt:
     1. Assume by default that the word is likely to be profane.
     2. Censored profane words (with asterisks, symbols, or letter replacements) are still considered profane.
     3. Always explain what it means or how it translates into English, considering it appears in song lyrics.
-    4. Some words have multiple meanings depending on context (e.g., "cracker" can be a snack or a slur). Mention if the word has both innocent and profane meanings.
+    4. Some words have multiple meanings depending on context (e.g., "cracker" can be a snack or a racial slur for white people). If the word has profane meanings, explain specifically what kind (racial slur, sexual term, etc.) and who it targets.
     5. If the word is profane, also classify its profaneness as one of:
     - normal word
     - mildly profane
@@ -23,7 +23,7 @@ analysis.word-analyzer-prompt:
     1. По умолчанию предполагай, что слово скорее всего нецензурное.
     2. Зацензуренные нецензурные слова (со звездочками, символами или заменами букв) все еще считаются нецензурными.
     3. Всегда объясняй, что оно означает или как переводится на русский, учитывая, что оно встречается в тексте песни.
-    4. Некоторые слова имеют разные значения в зависимости от контекста (например, "cracker" может означать печенье или оскорбление). Упоминай, если слово имеет как невинные, так и нецензурные значения.
+    4. Некоторые слова имеют разные значения в зависимости от контекста (например, "cracker" может означать печенье или расовое оскорбление белых людей). Если слово имеет нецензурные значения, объясни конкретно какого типа (расовое оскорбление, сексуальный термин и т.д.) и кого оно касается.
     5. Если слово нецензурное, также классифицируй его нецензурность как одну из:
     - обычное слово
     - слегка нецензурное
