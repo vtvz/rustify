@@ -24,7 +24,7 @@ use crate::telegram::commands::UserCommandDisplay;
 use crate::utils;
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(3);
-const PARALLEL_CHECKS: usize = 2;
+const PARALLEL_THREADS_COUNT: usize = 2;
 
 pub static PROCESS_TIME_CHANNEL: LazyLock<(
     broadcast::Sender<CheckReport>,
@@ -33,11 +33,11 @@ pub static PROCESS_TIME_CHANNEL: LazyLock<(
 
 #[derive(Clone)]
 pub struct CheckReport {
-    pub max_process_time: Duration,
+    pub check_interval: Duration,
     pub users_process_time: Duration,
-    pub users_count: usize,
     pub users_checked: usize,
-    pub parallel_count: usize,
+    pub users_processed: usize,
+    pub threads_count: usize,
 }
 
 #[tracing::instrument(skip_all)]
@@ -48,7 +48,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
         .await
         .context("Get users for processing")?;
 
-    let semaphore = Arc::new(Semaphore::new(PARALLEL_CHECKS));
+    let semaphore = Arc::new(Semaphore::new(PARALLEL_THREADS_COUNT));
     let user_ids_len = user_ids.len();
     let mut join_handles = Vec::with_capacity(user_ids_len);
 
@@ -80,7 +80,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
         ));
     }
 
-    let mut users_checked = 0;
+    let mut users_processed = 0;
     let mut redis_conn = app.redis_conn().await?;
     let mut users_to_suspend = vec![];
 
@@ -90,7 +90,7 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
                 SpotifyPollingBackoffService::update_activity(&mut redis_conn, &user_id).await?;
             },
             Ok((user_id, CheckUserResult::Complete)) => {
-                users_checked += 1;
+                users_processed += 1;
 
                 SpotifyPollingBackoffService::update_activity(&mut redis_conn, &user_id).await?;
             },
@@ -141,11 +141,11 @@ async fn process(app: &'static App) -> anyhow::Result<()> {
     }
 
     let report = CheckReport {
-        max_process_time: CHECK_INTERVAL,
+        check_interval: CHECK_INTERVAL,
         users_process_time: start.elapsed(),
-        parallel_count: PARALLEL_CHECKS,
-        users_count: user_ids_len,
-        users_checked,
+        threads_count: PARALLEL_THREADS_COUNT,
+        users_checked: user_ids_len,
+        users_processed,
     };
 
     PROCESS_TIME_CHANNEL.0.send(report).ok();

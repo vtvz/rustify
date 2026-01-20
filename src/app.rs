@@ -13,6 +13,7 @@ use teloxide::dispatching::dialogue::serializer::Bincode;
 
 use crate::infrastructure::cache;
 use crate::metrics::influx::InfluxClient;
+use crate::metrics::prometheus::PrometheusClient;
 use crate::queue::QueueManager;
 use crate::services::{SongLinkService, UserService};
 use crate::user::UserState;
@@ -24,6 +25,7 @@ pub struct App {
     bot: Bot,
     db: DatabaseConnection,
     influx: Option<InfluxClient>,
+    prometheus: Option<PrometheusClient>,
     redis: deadpool_redis::Pool,
     ai: Option<AIConfig>,
     dialogue_storage: Arc<TeloxideRedisStorage<Bincode>>,
@@ -77,6 +79,12 @@ struct EnvConfig {
     influx_org: Option<String>,
     influx_instance: Option<String>,
 
+    pushgateway_url: Option<String>,
+    pushgateway_job: Option<String>,
+    pushgateway_instance: Option<String>,
+    pushgateway_username: Option<String>,
+    pushgateway_password: Option<String>,
+
     server_http_address: Option<String>,
 }
 
@@ -103,6 +111,10 @@ impl App {
 
     pub fn influx(&self) -> &Option<InfluxClient> {
         &self.influx
+    }
+
+    pub fn prometheus(&self) -> &Option<PrometheusClient> {
+        &self.prometheus
     }
 
     pub fn song_link(&self) -> &SongLinkService {
@@ -154,6 +166,26 @@ fn init_influx(env: &EnvConfig) -> anyhow::Result<Option<InfluxClient>> {
     let client = InfluxClient::new(&api_url, &bucket, &org, &token, instance_tag)?;
 
     Ok(Some(client))
+}
+
+fn init_prometheus(env: &EnvConfig) -> anyhow::Result<Option<PrometheusClient>> {
+    let Some(url) = env.pushgateway_url.clone() else {
+        return Ok(None);
+    };
+
+    if url.is_empty() {
+        return Ok(None);
+    }
+
+    let job = env.pushgateway_job.as_deref().unwrap_or("rustify");
+    let instance = env
+        .pushgateway_instance
+        .as_ref()
+        .context("PUSHGATEWAY_INSTANCE variable is required")?;
+    let username = env.pushgateway_username.as_deref();
+    let password = env.pushgateway_password.as_deref();
+
+    PrometheusClient::new(&url, job, instance, username, password).map(Some)
 }
 
 async fn init_db(env: &EnvConfig) -> anyhow::Result<DbConn> {
@@ -293,6 +325,7 @@ impl App {
         let db = init_db(&env).await?;
 
         let influx = init_influx(&env).context("Cannot configure Influx Client")?;
+        let prometheus = init_prometheus(&env).context("Cannot configure Prometheus Client")?;
 
         let song_link = init_song_link()?;
 
@@ -305,6 +338,7 @@ impl App {
             lyrics: lyrics_manager,
             db,
             influx,
+            prometheus,
             redis,
             ai,
             song_link,

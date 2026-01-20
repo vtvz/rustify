@@ -4,35 +4,34 @@ set positional-arguments
 just := quote(just_executable())
 this := just + " -f " + quote(justfile())
 
-server := env_var('DEPLOY_USER') + "@" + env_var('DEPLOY_HOST')
+server := env_var_or_default('DEPLOY_DESTINATION', 'rustify')
 path := env_var_or_default("DEPLOY_PATH", "/srv/rustify")
 
-generate:
+import-db:
+  ssh {{ server }} "docker compose --project-directory {{ path }} exec db pg_dump -U rustify --no-owner --clean --if-exists" | docker compose exec -T db psql -U postgres
+  docker compose exec db psql -U postgres -c "update \"user\" set status='pending'; delete from spotify_auth"
+
+github-workflow-deploy:
+  gh workflow run deploy.yml --ref "$(git rev-parse --abbrev-ref HEAD)"
+
+update-secret:
+  cat _infra/ansible/inventory/main/group_vars/all.yml | base64 -w 0 | gh secret set ANSIBLE_GROUP_VARS_ALL
+
+sea-orm-generate:
   sea-orm-cli generate entity -o src/entity.example --expanded-format
 
 validate:
   cargo clippy
   cargo test
-  ansible-lint .infra/ansible/playbook.yml
+  ansible-lint _infra/ansible/playbook.yml
 
 fix:
   cargo fmt
   cargo clippy --fix --allow-dirty --allow-staged
-  ansible-lint --write .infra/ansible/playbook.yml
-
-get-db:
-  scp "{{ server }}:{{ path }}/var/data.db" "var/data.db"
-  scp "{{ server }}:{{ path }}/var/data.db-shm" "var/data.db-shm"
-  scp "{{ server }}:{{ path }}/var/data.db-wal" "var/data.db-wal"
-
-upload-db:
-  ssh "{{ server }}" -- mkdir -p "{{ path }}/var"
-  rsync -P -e ssh "var/data.db" "{{ server }}:{{ path }}/var/data.db"
-  rsync -P -e ssh "var/data.db-shm" "{{ server }}:{{ path }}/var/data.db-shm"
-  rsync -P -e ssh "var/data.db-wal" "{{ server }}:{{ path }}/var/data.db-wal"
+  ansible-lint --write _infra/ansible/playbook.yml
 
 compose +args:
-  ssh "{{ server }}" -- docker-compose -f "{{ path }}/docker-compose.yml" {{ args }}
+  ssh {{ server }} -- docker-compose -f "{{ path }}/docker-compose.yml" {{ args }}
 
 logs:
   {{ this }} compose logs -f

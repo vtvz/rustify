@@ -15,7 +15,8 @@ pub async fn work() {
     let app = App::init().await.expect("State to be built");
 
     tokio::spawn(rustify::utils::listen_for_ctrl_c());
-    tokio::spawn(rustify::metrics::collect_daemon(app));
+    tokio::spawn(rustify::metrics::influx_collector::collect_daemon(app));
+    tokio::spawn(rustify::metrics::prometheus_collector::collect_daemon(app));
 
     rustify::tick::check_playing(app).await;
 }

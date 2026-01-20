@@ -82,6 +82,24 @@ services:
     volumes:
       - ./var/redis:/data
 
+  # {% if rustify_alloy_grafana_cloud_url %} #
+  pushgateway:
+    image: prom/pushgateway:v1.11.2
+    restart: always
+
+  alloy:
+    image: grafana/alloy:v1.12.2
+    restart: always
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+    depends_on:
+      - pushgateway
+  # {% endif %} #
+
 networks:
   default:
     name: "{{ rustify_docker_network }}"

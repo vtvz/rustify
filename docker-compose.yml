@@ -2,7 +2,7 @@ version: "3.8"
 services:
   db:
     image: postgres:16
-    restart: always
+    restart: unless-stopped
     ports:
       - 5432:5432
     volumes:
@@ -14,15 +14,37 @@ services:
   lyrics-provider:
     build:
       context: lyrics-provider
-    restart: always
+    restart: unless-stopped
     ports:
       - 8090:8090
 
   redis:
     image: redis:7.4.1
-    restart: always
+    restart: unless-stopped
     ports:
       - 6379:6379
+
+  pushgateway:
+    image: prom/pushgateway:v1.11.2
+    restart: unless-stopped
+    ports:
+      - 9091:9091
+
+  alloy:
+    image: grafana/alloy:v1.12.2
+    restart: unless-stopped
+    volumes:
+      - ./config/alloy-config.alloy:/etc/alloy/config.alloy
+    environment:
+      - GRAFANA_CLOUD_URL=${GRAFANA_CLOUD_URL}
+      - GRAFANA_CLOUD_USERNAME=${GRAFANA_CLOUD_USERNAME}
+      - GRAFANA_CLOUD_API_KEY=${GRAFANA_CLOUD_API_KEY}
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+    depends_on:
+      - pushgateway
 
   # app:
   #   build:

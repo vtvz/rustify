@@ -1,3 +1,4 @@
+---
 rustify_deploy_path: "/srv/rustify"
 rustify_env: {}
 restic_version: 0.16.0
@@ -16,6 +17,11 @@ rustify_db_database:
 rustify_db_port: 5432
 rustify_db_host: db
 rustify_docker_network: rustify
+
+rustify_alloy_grafana_cloud_url: ""
+rustify_alloy_grafana_cloud_username: ""
+rustify_alloy_grafana_cloud_api_key: ""
+rustify_pushgateway_instance: "prod"
 
 rustify_letsencrypt_email:
 rustify_hurricane_tokens:
