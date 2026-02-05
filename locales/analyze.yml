@@ -77,12 +77,24 @@ analysis.waiting:
     🎵 %{track_name}
     Album: %{album_name}
 
-    ⏳ Wait for analysis to finish 🔍
+    ⏳ Wait for analysis to start 🔍
   ru: |-
     🎵 %{track_name}
     Альбом: %{album_name}
 
-    ⏳ Ждите завершения анализа 🔍
+    ⏳ Ждите старта анализа 🔍
+
+analysis.partial-result:
+  en: |-
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    %{analysis_result} ⏳
+  ru: |-
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    %{analysis_result} ⏳
 
 analysis.failed:
   en: |-
