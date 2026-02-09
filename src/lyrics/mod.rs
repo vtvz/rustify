@@ -110,23 +110,25 @@ impl Manager {
     pub async fn set_track_cache(
         redis_conn: &mut deadpool_redis::Connection,
         track_id: &str,
-        data: &SearchResultData,
+        data: Option<&SearchResultData>,
         lyrics_cache_ttl: u64,
     ) -> anyhow::Result<()> {
         let track_key = format!("rustify:lyrics:{track_id}");
 
         let _: () = redis_conn
-            .set_ex(&track_key, serde_json::to_string(data)?, lyrics_cache_ttl)
+            .set_ex(&track_key, serde_json::to_string(&data)?, lyrics_cache_ttl)
             .await?;
 
         Ok(())
     }
 
+    /// Option<Option<_>> because first Option is about having entry in cache
+    /// And the second for data itself
     #[tracing::instrument(skip_all, fields(%track_id))]
     pub async fn get_track_cache(
         redis_conn: &mut deadpool_redis::Connection,
         track_id: &str,
-    ) -> anyhow::Result<Option<SearchResultData>> {
+    ) -> anyhow::Result<Option<Option<SearchResultData>>> {
         let track_key = format!("rustify:lyrics:{track_id}");
 
         let data: Option<String> = redis_conn.get(&track_key).await?;
@@ -135,7 +137,7 @@ impl Manager {
             return Ok(None);
         };
 
-        let data: Option<SearchResultData> = serde_json::from_str(&data).ok();
+        let data: Option<Option<SearchResultData>> = serde_json::from_str(&data).ok();
 
         Ok(data)
     }
@@ -153,7 +155,7 @@ impl Manager {
         track: &ShortTrack,
     ) -> anyhow::Result<Option<SearchResultData>> {
         if let Some(data) = Self::get_track_cache(redis_conn, track.id()).await? {
-            return Ok(Some(data));
+            return Ok(data);
         }
 
         // tired to fight type system to handle this with vec
@@ -165,7 +167,7 @@ impl Manager {
                     Ok(Some(res)) => {
                         let data = res.into();
 
-                        Self::set_track_cache(redis_conn, track.id(), &data, self.lyrics_cache_ttl).await?;
+                        Self::set_track_cache(redis_conn, track.id(), Some(&data), self.lyrics_cache_ttl).await?;
 
                         return Ok(Some(data));
                     },
@@ -198,6 +200,8 @@ impl Manager {
                 },
             }
         }
+
+        Self::set_track_cache(redis_conn, track.id(), None, self.lyrics_cache_ttl).await?;
 
         Ok(None)
     }
