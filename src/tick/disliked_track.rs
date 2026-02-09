@@ -2,7 +2,7 @@ use anyhow::Context;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{Context as SpotifyContext, PlayableId, PlaylistId, Type as SpotifyType};
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, ParseMode};
+use teloxide::types::ParseMode;
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
@@ -82,7 +82,7 @@ pub async fn handle(
 
     let result = app
         .bot()
-        .send_message(ChatId(state.user_id().parse()?), text)
+        .send_message(state.chat_id()?, text)
         .parse_mode(ParseMode::Html)
         .await;
 

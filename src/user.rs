@@ -2,6 +2,7 @@ use anyhow::Context;
 use rspotify::AuthCodeSpotify;
 use rspotify::clients::OAuthClient;
 use rspotify::model::{PrivateUser, SubscriptionLevel};
+use teloxide::types::ChatId;
 use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::entity::prelude::UserModel;
@@ -56,6 +57,10 @@ impl UserState {
 
     pub fn user_id(&self) -> &str {
         &self.user.id
+    }
+
+    pub fn chat_id(&self) -> anyhow::Result<ChatId> {
+        Ok(ChatId(self.user_id().parse()?))
     }
 
     pub async fn is_spotify_authed(&self) -> bool {

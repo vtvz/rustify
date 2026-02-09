@@ -9,7 +9,7 @@ use sea_orm::TransactionTrait;
 use serde::Deserialize;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
-use teloxide::types::{ChatId, ParseMode};
+use teloxide::types::ParseMode;
 
 use crate as rustify;
 use crate::app::App;
@@ -84,7 +84,7 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
 
     app.bot()
         .send_message(
-            ChatId(state.user_id().parse()?),
+            state.chat_id()?,
             t!(
                 "login.success",
                 magic_command = UserCommandDisplay::Magic,

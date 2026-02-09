@@ -1,6 +1,5 @@
 use teloxide::prelude::*;
 use teloxide::types::{
-    ChatId,
     InlineKeyboardButton,
     InlineKeyboardButtonKind,
     InlineKeyboardMarkup,
@@ -20,7 +19,7 @@ pub async fn send_login_invite(
     let url = app.spotify_manager().get_authorize_url(state).await?;
     app.bot()
         .send_message(
-            ChatId(state.user_id().parse()?),
+            state.chat_id()?,
             t!("login.invite", locale = state.locale()),
         )
         .parse_mode(ParseMode::Html)

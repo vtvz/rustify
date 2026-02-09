@@ -5,10 +5,14 @@ use async_openai::types::chat::{
 use backon::{ExponentialBuilder, Retryable};
 use itertools::Itertools;
 use rspotify::model::TrackId;
-use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
+use teloxide::payloads::{
+    AnswerCallbackQuerySetters as _,
+    EditMessageTextSetters as _,
+    SendMessageSetters,
+};
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, Message, ParseMode};
+use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode};
 
 use crate::app::{AIConfig, App};
 use crate::profanity;
@@ -103,7 +107,9 @@ pub async fn handle_inline(
         .parse_mode(ParseMode::Html)
         .await?;
 
-    let res = perform(app, state, &message, config, &track, &hit.lyrics()).await;
+    let res = perform(app, state, config, &track, &hit.lyrics()).await;
+
+    app.bot().delete(&message).await?;
 
     match res {
         Ok(()) => {
@@ -114,8 +120,8 @@ pub async fn handle_inline(
         },
         Err(err) => {
             app.bot()
-                .edit_text(
-                    &message,
+                .send_message(
+                    state.chat_id()?,
                     t!(
                         "analysis.failed",
                         locale = state.locale(),
@@ -145,7 +151,6 @@ pub async fn handle_inline(
 async fn perform(
     app: &App,
     state: &UserState,
-    message: &Message,
     config: &AIConfig,
     track: &ShortTrack,
     lyrics: &[&str],
@@ -238,7 +243,7 @@ async fn perform(
     }
 
     app.bot()
-        .edit_text(message, text)
+        .send_message(state.chat_id()?, text)
         .link_preview_options(link_preview_small_top(track.url()))
         .parse_mode(ParseMode::Html)
         .reply_markup(InlineKeyboardMarkup::new(keyboard))

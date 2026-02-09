@@ -4,7 +4,7 @@ use isolang::Language;
 use itertools::Itertools as _;
 use rustrict::Type;
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
@@ -201,7 +201,7 @@ pub async fn check(
 
     let result: Result<Message, teloxide::RequestError> = app
         .bot()
-        .send_message(ChatId(state.user_id().parse()?), text)
+        .send_message(state.chat_id()?, text)
         .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(

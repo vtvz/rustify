@@ -1,5 +1,6 @@
 use teloxide::prelude::*;
 use teloxide::types::{ChatId, ParseMode, User};
+use teloxide::utils::html;
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -36,24 +37,20 @@ impl NotificationService {
         user: Option<&User>,
         ref_code: Option<String>,
     ) -> anyhow::Result<()> {
-        let user = user
-            .map_or("Unknown".into(), |user| {
-                format!(
-                    "<code>{id}</code> <a href=\"tg://user?id={id}\">link</a> {name} {surname} {username}\nRef Code: {ref_code}",
-                    id = user.id,
-                    name = user.first_name,
-                    surname = user.last_name.as_deref().unwrap_or_default(),
-                    username = user
-                        .username
-                        .as_deref()
-                        .map(|username| format!("(@{username})"))
-                        .unwrap_or_default(),
-                    ref_code = ref_code
-                        .map_or("<i>None</i>".into(), |text| format!("<code>{text}</code>")),
-                )
-                .trim()
-                .to_string()
-            });
+        let user = user.map_or("Unknown".into(), |user| {
+            format!(
+                "<code>{id}</code> {link} {name} {surname} {username}\nRef Code: {ref_code}",
+                id = user.id,
+                link = html::user_mention(user.id, "link"),
+                name = user.first_name,
+                surname = user.last_name.as_deref().unwrap_or_default(),
+                username = user.mention().unwrap_or_default(),
+                ref_code =
+                    ref_code.map_or("<i>None</i>".into(), |text| format!("<code>{text}</code>")),
+            )
+            .trim()
+            .to_string()
+        });
 
         let message = format!("🆕 <b>New user joined</b>\n\n{user}");
 
