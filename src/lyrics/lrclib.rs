@@ -2,7 +2,6 @@ use std::sync::LazyLock;
 use std::time::Duration;
 
 use backon::{ExponentialBuilder, Retryable};
-use cached::proc_macro::io_cached;
 use indoc::formatdoc;
 use isolang::Language;
 use itertools::Itertools as _;
@@ -104,30 +103,6 @@ impl LrcLib {
         )
     )]
     pub async fn search_for_track(
-        &self,
-        track: &ShortTrack,
-    ) -> anyhow::Result<Option<SearchResult>> {
-        #[io_cached(
-            map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.id().into() }"#,
-            ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
-            create = r##" {
-                let prefix = module_path!().split("::").last().expect("Will be");
-                super::LyricsCacheManager::redis_cached_build(prefix).await.expect("Redis cache should build")
-            } "##
-        )]
-        async fn search_for_track_middleware(
-            lrclib: &LrcLib,
-            track: &ShortTrack,
-        ) -> anyhow::Result<Option<SearchResult>> {
-            LrcLib::search_for_track_internal(lrclib, track).await
-        }
-
-        // this weird construction required to make `cached` work
-        search_for_track_middleware(self, track).await
-    }
-
-    async fn search_for_track_internal(
         &self,
         track: &ShortTrack,
     ) -> anyhow::Result<Option<SearchResult>> {

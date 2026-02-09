@@ -1,17 +1,11 @@
-use std::sync::LazyLock;
-use std::time::Duration;
-
 use deadpool_redis::redis::AsyncCommands;
 use genius::GeniusLocal;
 use isolang::Language;
 use lrclib::LrcLib;
 use musixmatch::Musixmatch;
 use serde::Serialize;
-use serde::de::DeserializeOwned;
 use strum_macros::Display;
-use tokio::sync::RwLock;
 
-use crate::infrastructure::cache::CacheManager;
 use crate::spotify::ShortTrack;
 
 pub mod genius;
@@ -206,27 +200,5 @@ impl Manager {
         }
 
         Ok(None)
-    }
-}
-
-#[derive(Debug)]
-pub struct LyricsCacheManager {}
-
-static LYRICS_CACHE_TTL: LazyLock<RwLock<u64>> = LazyLock::new(|| RwLock::new(24 * 60 * 60));
-
-impl LyricsCacheManager {
-    pub async fn init(lyrics_cache_ttl: u64) {
-        let mut lock = LYRICS_CACHE_TTL.write().await;
-        *lock = lyrics_cache_ttl;
-    }
-
-    pub async fn redis_cached_build<T: Sync + Send + Serialize + DeserializeOwned>(
-        provider: &str,
-    ) -> anyhow::Result<cached::AsyncRedisCache<String, T>> {
-        CacheManager::redis_cached_build(
-            &format!("lyrics:{provider}"),
-            Duration::from_secs(*LYRICS_CACHE_TTL.read().await),
-        )
-        .await
     }
 }

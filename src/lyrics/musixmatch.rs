@@ -2,7 +2,6 @@ use std::collections::VecDeque;
 use std::time::Duration;
 
 use anyhow::Context;
-use cached::proc_macro::io_cached;
 use isolang::Language;
 use itertools::Itertools;
 use reqwest::{Client, ClientBuilder};
@@ -105,29 +104,6 @@ impl Musixmatch {
         )
     )]
     pub async fn search_for_track(&self, track: &ShortTrack) -> anyhow::Result<Option<Lyrics>> {
-        #[io_cached(
-            map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.id().into() }"#,
-            ty = "cached::AsyncRedisCache<String, Option<Lyrics>>",
-            create = r##" {
-                let prefix = module_path!().split("::").last().expect("Will be");
-                super::LyricsCacheManager::redis_cached_build(prefix).await.expect("Redis cache should build")
-            } "##
-        )]
-        async fn search_for_track_middleware(
-            musixmatch: &Musixmatch,
-            track: &ShortTrack,
-        ) -> anyhow::Result<Option<Lyrics>> {
-            Musixmatch::search_for_track_internal(musixmatch, track).await
-        }
-
-        search_for_track_middleware(self, track).await
-    }
-
-    async fn search_for_track_internal(
-        &self,
-        track: &ShortTrack,
-    ) -> anyhow::Result<Option<Lyrics>> {
         let mut url =
             url::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
 
