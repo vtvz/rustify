@@ -104,10 +104,7 @@ impl Musixmatch {
             track_name = %track.name_with_artists(),
         )
     )]
-    pub async fn search_for_track(
-        &self,
-        track: &ShortTrack,
-    ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send>>> {
+    pub async fn search_for_track(&self, track: &ShortTrack) -> anyhow::Result<Option<Lyrics>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
             convert = r#"{ track.id().into() }"#,
@@ -124,9 +121,7 @@ impl Musixmatch {
             Musixmatch::search_for_track_internal(musixmatch, track).await
         }
 
-        search_for_track_middleware(self, track)
-            .await
-            .map(|res| res.map(|opt| Box::new(opt) as _))
+        search_for_track_middleware(self, track).await
     }
 
     async fn search_for_track_internal(

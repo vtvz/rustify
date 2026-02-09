@@ -8,6 +8,7 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
+use crate::lyrics::SearchResult as _;
 use crate::services::{
     TrackLanguageStatsService,
     UserService,
@@ -110,7 +111,11 @@ pub async fn check(
 ) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
-    let Some(hit) = app.lyrics().search_for_track(track).await? else {
+    let Some(hit) = app
+        .lyrics()
+        .search_for_track(&mut app.redis_conn().await?, track)
+        .await?
+    else {
         if let Err(err) =
             TrackLanguageStatsService::increase_count(app.db(), None, state.user_id()).await
         {

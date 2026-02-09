@@ -198,6 +198,7 @@ pub async fn handle_inline(
                 duration = duration.pretty_format(),
                 locale = state.locale()
             ))
+            .show_alert(true)
             .await?;
 
         return Ok(());

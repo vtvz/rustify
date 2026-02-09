@@ -104,7 +104,7 @@ impl GeniusLocal {
     pub async fn search_for_track(
         &self,
         track: &ShortTrack,
-    ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
+    ) -> anyhow::Result<Option<SearchResult>> {
         #[io_cached(
             map_error = r##"|e| anyhow::Error::from(e) "##,
             convert = r#"{ track.id().into() }"#,
@@ -122,9 +122,7 @@ impl GeniusLocal {
         }
 
         // this weird construction required to make `cached` work
-        search_for_track_middleware(self, track)
-            .await
-            .map(|res| res.map(|opt| Box::new(opt) as _))
+        search_for_track_middleware(self, track).await
     }
 
     async fn search_for_track_internal(

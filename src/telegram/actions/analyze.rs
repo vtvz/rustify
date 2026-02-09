@@ -15,6 +15,7 @@ use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode};
 
 use crate::app::{AIConfig, App};
+use crate::lyrics::SearchResult as _;
 use crate::profanity;
 use crate::services::{
     RateLimitAction,
@@ -53,6 +54,7 @@ pub async fn handle_inline(
         app.bot()
             .answer_callback_query(q.id)
             .text(t!("analysis.disabled", locale = state.locale()))
+            .show_alert(true)
             .await?;
 
         return Ok(());
@@ -71,6 +73,7 @@ pub async fn handle_inline(
                 duration = duration.pretty_format(),
                 locale = state.locale()
             ))
+            .show_alert(true)
             .await?;
 
         return Ok(());
@@ -82,7 +85,11 @@ pub async fn handle_inline(
         .short_track_cached(&mut redis_conn, TrackId::from_id(track_id)?)
         .await?;
 
-    let Some(hit) = app.lyrics().search_for_track(&track).await? else {
+    let Some(hit) = app
+        .lyrics()
+        .search_for_track(&mut redis_conn, &track)
+        .await?
+    else {
         app.bot()
             .edit_text(
                 &message,

@@ -13,6 +13,7 @@ use teloxide::types::{InlineKeyboardMarkup, ParseMode};
 
 use crate::app::App;
 use crate::entity::prelude::*;
+use crate::lyrics::SearchResult as _;
 use crate::profanity::LineResult;
 use crate::services::{
     RateLimitAction,
@@ -271,7 +272,11 @@ async fn common(
         ignored_by = ignored_by,
     );
 
-    let Some(hit) = app.lyrics().search_for_track(&track).await? else {
+    let Some(hit) = app
+        .lyrics()
+        .search_for_track(&mut app.redis_conn().await?, &track)
+        .await?
+    else {
         app.bot()
             .edit_text(
                 &message,

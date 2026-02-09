@@ -23,6 +23,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
             app.bot()
                 .answer_callback_query(q.id.clone())
                 .text(t!("inline-buttons.alert-broken", locale = state.locale()))
+                .show_alert(true)
                 .await?;
 
             return Ok(());
@@ -103,6 +104,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         app.bot()
             .answer_callback_query(q.id.clone())
             .text(t!("inline-buttons.alert-login", locale = state.locale()))
+            .show_alert(true)
             .await?;
 
         actions::login::send_login_invite(app, state).await?;
@@ -117,7 +119,8 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         Err(err) => {
             app.bot()
                 .answer_callback_query(q.id.clone())
-                .text("Button is broken. Try another one")
+                .text(t!("inline-buttons.alert-broken", locale = state.locale()))
+                .show_alert(true)
                 .await?;
 
             tracing::error!(err = ?err, data, "Error parsing user inline button");

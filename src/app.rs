@@ -232,7 +232,12 @@ async fn init_lyrics_manager(env: &EnvConfig, redis_url: &str) -> anyhow::Result
 
     cache::CacheManager::init(redis_url.to_owned()).await;
     lyrics::LyricsCacheManager::init(lyrics_cache_ttl).await;
-    lyrics::Manager::new(genius_service_url, genius_token, musixmatch_tokens)
+    lyrics::Manager::new(
+        genius_service_url,
+        genius_token,
+        musixmatch_tokens,
+        lyrics_cache_ttl,
+    )
 }
 
 fn init_rustrict(env: &EnvConfig) {
