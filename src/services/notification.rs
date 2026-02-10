@@ -42,11 +42,15 @@ impl NotificationService {
                 "<code>{id}</code> {link} {name} {surname} {username}\nRef Code: {ref_code}",
                 id = user.id,
                 link = html::user_mention(user.id, "link"),
-                name = user.first_name,
-                surname = user.last_name.as_deref().unwrap_or_default(),
+                name = html::escape(&user.first_name),
+                surname = user
+                    .last_name
+                    .as_ref()
+                    .map(|n| html::escape(n))
+                    .as_deref()
+                    .unwrap_or_default(),
                 username = user.mention().unwrap_or_default(),
-                ref_code =
-                    ref_code.map_or("<i>None</i>".into(), |text| format!("<code>{text}</code>")),
+                ref_code = ref_code.map_or("<i>None</i>".into(), |text| html::code_inline(&text)),
             )
             .trim()
             .to_string()
