@@ -2,8 +2,8 @@ use async_openai::types::chat::{
     ChatCompletionRequestUserMessage,
     CreateChatCompletionRequestArgs,
 };
-use backon::{ExponentialBuilder, Retryable};
-use itertools::Itertools;
+use backon::{ExponentialBuilder, Retryable as _};
+use itertools::Itertools as _;
 use rspotify::model::TrackId;
 use teloxide::payloads::{
     AnswerCallbackQuerySetters as _,
@@ -32,7 +32,7 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::teloxide::CallbackQueryExt as _;
-use crate::utils::{DurationPrettyFormat, StringUtils};
+use crate::utils::{DurationPrettyFormat as _, StringUtils as _};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), %track_id))]
 pub async fn handle_inline(

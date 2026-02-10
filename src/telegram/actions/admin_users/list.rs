@@ -1,5 +1,5 @@
 use indoc::formatdoc;
-use sea_orm::Iterable;
+use sea_orm::Iterable as _;
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{InlineKeyboardMarkup, ParseMode};

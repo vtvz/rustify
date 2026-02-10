@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use itertools::Itertools as _;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Expr;
 use sea_orm::sea_query::{Alias, OnConflict};
@@ -7,7 +7,7 @@ use sea_orm::{
     ConnectionTrait,
     EntityTrait as _,
     PaginatorTrait as _,
-    QueryFilter,
+    QueryFilter as _,
     QueryOrder as _,
     QuerySelect as _,
 };

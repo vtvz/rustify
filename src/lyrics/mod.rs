@@ -1,4 +1,4 @@
-use deadpool_redis::redis::AsyncCommands;
+use deadpool_redis::redis::AsyncCommands as _;
 use genius::GeniusLocal;
 use isolang::Language;
 use lrclib::LrcLib;

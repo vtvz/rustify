@@ -2,8 +2,8 @@ use std::collections::HashSet;
 use std::sync::LazyLock;
 
 use anyhow::anyhow;
-use convert_case::{Case, Casing};
-use itertools::Itertools;
+use convert_case::{Case, Casing as _};
+use itertools::Itertools as _;
 use regex::Regex;
 use rspotify::clients::BaseClient as _;
 use rspotify::model::{Modality, TrackId};
@@ -27,7 +27,7 @@ use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::{DurationPrettyFormat as _, StringUtils};
+use crate::utils::{DurationPrettyFormat as _, StringUtils as _};
 use crate::{profanity, telegram};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]

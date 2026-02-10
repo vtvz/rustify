@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
-use anyhow::Context;
+use anyhow::Context as _;
 use backon::{ExponentialBuilder, Retryable as _};
 use serde::{Deserialize, Serialize};
 use url::Url;

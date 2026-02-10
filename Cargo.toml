@@ -95,3 +95,5 @@ unnecessary_literal_bound = "allow"
 match_same_arms = "allow"
 struct_excessive_bools = "allow"
 too_many_lines = "allow"
+
+unused_trait_names = "warn"

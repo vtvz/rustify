@@ -1,6 +1,6 @@
-use anyhow::Context;
+use anyhow::Context as _;
 use rspotify::AuthCodeSpotify;
-use rspotify::clients::OAuthClient;
+use rspotify::clients::OAuthClient as _;
 use rspotify::model::{PrivateUser, SubscriptionLevel};
 use teloxide::types::ChatId;
 use tokio::sync::{Mutex, RwLock, RwLockReadGuard, RwLockWriteGuard};

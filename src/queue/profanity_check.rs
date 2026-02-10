@@ -1,5 +1,5 @@
 use anyhow::Context as _;
-use apalis::prelude::{Data, TaskSink};
+use apalis::prelude::{Data, TaskSink as _};
 use isolang::Language;
 use itertools::Itertools as _;
 use rustrict::Type;
@@ -19,7 +19,7 @@ use crate::spotify::ShortTrack;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::StringUtils;
+use crate::utils::StringUtils as _;
 use crate::{lyrics, profanity, telegram};
 
 #[derive(Clone, Serialize, Deserialize)]

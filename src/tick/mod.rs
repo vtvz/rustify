@@ -6,13 +6,13 @@ mod user;
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;
 
-use anyhow::Context;
-use sea_orm::TransactionTrait;
-use teloxide::prelude::Requester;
+use anyhow::Context as _;
+use sea_orm::TransactionTrait as _;
+use teloxide::prelude::Requester as _;
 use teloxide::types::ChatId;
 use tokio::sync::{Semaphore, broadcast};
 use tokio::time::Instant;
-use tracing::Instrument;
+use tracing::Instrument as _;
 use user::CheckUserResult;
 
 use crate::app::App;

@@ -1,5 +1,5 @@
-use anyhow::Context;
-use rspotify::clients::OAuthClient;
+use anyhow::Context as _;
+use rspotify::clients::OAuthClient as _;
 use rspotify::model::{Context as SpotifyContext, PlayableId, PlaylistId, Type as SpotifyType};
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;

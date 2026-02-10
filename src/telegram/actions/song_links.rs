@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use itertools::Itertools as _;
 use rspotify::model::TrackId;
 use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
 use teloxide::prelude::Requester as _;

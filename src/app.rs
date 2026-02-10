@@ -1,8 +1,8 @@
-use std::str::FromStr;
+use std::str::FromStr as _;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::Context;
+use anyhow::Context as _;
 use async_openai::config::{OPENAI_API_BASE, OpenAIConfig};
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};

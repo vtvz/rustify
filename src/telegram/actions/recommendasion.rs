@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::Context;
+use anyhow::Context as _;
 use async_openai::types::chat::{
     ChatCompletionMessageToolCalls,
     ChatCompletionNamedToolChoice,
@@ -11,22 +11,22 @@ use async_openai::types::chat::{
     CreateChatCompletionRequestArgs,
     FunctionObjectArgs,
 };
-use backon::{ExponentialBuilder, Retryable};
-use futures::StreamExt;
+use backon::{ExponentialBuilder, Retryable as _};
+use futures::StreamExt as _;
 use indoc::formatdoc;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use rspotify::model::SearchType;
-use rspotify::prelude::{BaseClient, OAuthClient as _};
+use rspotify::prelude::{BaseClient as _, OAuthClient as _};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use teloxide::payloads::{
     AnswerCallbackQuerySetters as _,
-    EditMessageTextSetters,
-    SendMessageSetters,
+    EditMessageTextSetters as _,
+    SendMessageSetters as _,
 };
-use teloxide::prelude::Requester;
+use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::sugar::request::RequestLinkPreviewExt;
+use teloxide::sugar::request::RequestLinkPreviewExt as _;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 
 use crate::app::{AIConfig, App};

@@ -12,7 +12,7 @@ use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::DurationPrettyFormat;
+use crate::utils::DurationPrettyFormat as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]

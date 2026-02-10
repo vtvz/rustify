@@ -5,12 +5,12 @@ use std::borrow::Cow;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use anyhow::{Context, anyhow};
+use anyhow::{Context as _, anyhow};
 use auth::SpotifyAuthService;
 use chrono::Duration;
-use deadpool_redis::redis::AsyncCommands;
+use deadpool_redis::redis::AsyncCommands as _;
 pub use errors::SpotifyError;
-use rspotify::clients::{BaseClient, OAuthClient};
+use rspotify::clients::{BaseClient as _, OAuthClient as _};
 use rspotify::http::HttpError;
 use rspotify::model::{
     ArtistId,
@@ -24,7 +24,7 @@ use rspotify::model::{
     TrackId,
 };
 use rspotify::{AuthCodeSpotify, ClientError, ClientResult, Token, scopes};
-use sea_orm::{DbConn, TransactionTrait};
+use sea_orm::{DbConn, TransactionTrait as _};
 use teloxide::utils::html;
 
 use crate::entity::prelude::*;

@@ -1,5 +1,5 @@
-use rspotify::clients::OAuthClient;
-use rspotify::model::{Context as SpotifyContext, Id, PlaylistId, Type as SpotifyType};
+use rspotify::clients::OAuthClient as _;
+use rspotify::model::{Context as SpotifyContext, Id as _, PlaylistId, Type as SpotifyType};
 
 use crate::app::App;
 use crate::services::MagicService;

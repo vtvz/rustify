@@ -1,5 +1,12 @@
 use clap::Subcommand;
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, IntoActiveModel, QueryFilter, Set};
+use sea_orm::{
+    ActiveModelTrait as _,
+    ColumnTrait as _,
+    EntityTrait as _,
+    IntoActiveModel as _,
+    QueryFilter as _,
+    Set,
+};
 
 use crate::app::App;
 use crate::entity::prelude::*;

@@ -1,6 +1,6 @@
-use std::str::FromStr;
+use std::str::FromStr as _;
 
-use apalis::prelude::MakeShared;
+use apalis::prelude::MakeShared as _;
 use apalis_redis::shared::SharedRedisStorage;
 use apalis_redis::{RedisConfig, RedisStorage};
 use redis::aio::MultiplexedConnection;

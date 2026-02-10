@@ -1,10 +1,10 @@
 use chrono::Duration;
 use teloxide::payloads::{
     AnswerCallbackQuerySetters as _,
-    EditMessageTextSetters,
-    SendMessageSetters,
+    EditMessageTextSetters as _,
+    SendMessageSetters as _,
 };
-use teloxide::prelude::Requester;
+use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 

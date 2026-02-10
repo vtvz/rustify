@@ -1,4 +1,4 @@
-use anyhow::Context;
+use anyhow::Context as _;
 use async_openai::types::chat::{
     ChatCompletionRequestSystemMessage,
     ChatCompletionRequestUserMessage,
@@ -6,12 +6,12 @@ use async_openai::types::chat::{
 };
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
-    ColumnTrait,
+    ColumnTrait as _,
     ConnectionTrait,
     DeleteResult,
-    EntityTrait,
+    EntityTrait as _,
     QueryFilter as _,
-    QuerySelect,
+    QuerySelect as _,
 };
 
 use crate::app::AIConfig;

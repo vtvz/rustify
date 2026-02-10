@@ -1,5 +1,5 @@
 pub mod bool_from_int {
-    use serde::{Deserialize, Deserializer, Serializer};
+    use serde::{Deserialize as _, Deserializer, Serializer};
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
     where
@@ -17,7 +17,7 @@ pub mod bool_from_int {
 }
 
 pub mod lines_from_string {
-    use serde::{Deserialize, Deserializer, Serializer};
+    use serde::{Deserialize as _, Deserializer, Serializer};
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
     where

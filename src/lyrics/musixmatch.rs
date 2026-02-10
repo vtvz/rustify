@@ -1,9 +1,9 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
-use anyhow::Context;
+use anyhow::Context as _;
 use isolang::Language;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use reqwest::{Client, ClientBuilder};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, from_value};

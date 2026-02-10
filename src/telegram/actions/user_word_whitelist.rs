@@ -9,7 +9,7 @@ use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
-use crate::utils::StringUtils;
+use crate::utils::StringUtils as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_add_word(

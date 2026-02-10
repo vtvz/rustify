@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 use std::time::Duration;
 
-use backon::{ExponentialBuilder, Retryable};
+use backon::{ExponentialBuilder, Retryable as _};
 use indoc::formatdoc;
 use isolang::Language;
 use itertools::Itertools as _;

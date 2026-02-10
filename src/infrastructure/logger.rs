@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use std::str::FromStr;
+use std::str::FromStr as _;
 
 use tracing_loki::Layer;
 use tracing_subscriber::filter::Targets;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
+use tracing_subscriber::layer::SubscriberExt as _;
+use tracing_subscriber::util::SubscriberInitExt as _;
 
 pub fn loki() -> anyhow::Result<Option<Layer>> {
     let Ok(loki_url) = dotenv::var("LOKI_URL") else {

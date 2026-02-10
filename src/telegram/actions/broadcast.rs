@@ -1,4 +1,4 @@
-use backon::{ExponentialBuilder, Retryable};
+use backon::{ExponentialBuilder, Retryable as _};
 use indoc::formatdoc;
 use teloxide::prelude::*;
 use teloxide::types::ParseMode;

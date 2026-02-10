@@ -1,7 +1,13 @@
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr};
-use sea_orm::{ConnectionTrait, FromQueryResult, IntoActiveModel, QuerySelect, UpdateResult};
+use sea_orm::{
+    ConnectionTrait,
+    FromQueryResult,
+    IntoActiveModel as _,
+    QuerySelect as _,
+    UpdateResult,
+};
 
 use crate::entity::prelude::*;
 use crate::utils::Clock;

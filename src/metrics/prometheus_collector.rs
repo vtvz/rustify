@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use sea_orm::{ActiveEnum as _, Iterable as _};
 use tokio::sync::broadcast::error::RecvError;
-use tracing::Instrument;
+use tracing::Instrument as _;
 
 use super::prometheus::PrometheusClient;
 use crate::app::App;

@@ -1,8 +1,8 @@
 // use anyhow::Context;
 use reqwest::StatusCode;
 use teloxide::ApiError;
-use teloxide::payloads::SendMessageSetters;
-use teloxide::prelude::Requester;
+use teloxide::payloads::SendMessageSetters as _;
+use teloxide::prelude::Requester as _;
 use teloxide::types::{ChatId, ParseMode};
 
 use crate::app::App;

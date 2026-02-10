@@ -1,9 +1,15 @@
-use anyhow::Context;
+use anyhow::Context as _;
 use rspotify::Token;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::Expr;
-use sea_orm::{ConnectionTrait, IntoActiveModel, QuerySelect, QueryTrait, UpdateResult};
+use sea_orm::{
+    ConnectionTrait,
+    IntoActiveModel as _,
+    QuerySelect as _,
+    QueryTrait as _,
+    UpdateResult,
+};
 
 use crate::entity::prelude::*;
 use crate::services::UserService;

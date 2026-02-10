@@ -4,7 +4,7 @@ use chrono::Utc;
 use influxdb::{InfluxDbWriteable, Timestamp};
 use sea_orm::{ActiveEnum as _, Iterable as _};
 use tokio::sync::broadcast::error::RecvError;
-use tracing::Instrument;
+use tracing::Instrument as _;
 
 use crate::app::App;
 use crate::entity::prelude::*;

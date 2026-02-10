@@ -1,6 +1,6 @@
 use indoc::formatdoc;
-use itertools::Itertools;
-use sea_orm::Iterable;
+use itertools::Itertools as _;
+use sea_orm::Iterable as _;
 use teloxide::prelude::*;
 use teloxide::types::{ParseMode, ReplyParameters};
 

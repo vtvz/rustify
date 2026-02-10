@@ -1,13 +1,13 @@
-use futures::StreamExt;
-use rand::seq::SliceRandom;
-use rspotify::model::{Id, UserId};
+use futures::StreamExt as _;
+use rand::seq::SliceRandom as _;
+use rspotify::model::{Id as _, UserId};
 use rspotify::prelude::{BaseClient as _, OAuthClient as _};
 use teloxide::payloads::{
     AnswerCallbackQuerySetters as _,
-    EditMessageTextSetters,
-    SendMessageSetters,
+    EditMessageTextSetters as _,
+    SendMessageSetters as _,
 };
-use teloxide::prelude::Requester;
+use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
 

@@ -1,5 +1,5 @@
 use isolang::Language;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Expr;
 use sea_orm::sea_query::{Alias, OnConflict};
@@ -7,9 +7,9 @@ use sea_orm::{
     ColumnTrait as _,
     ConnectionTrait,
     EntityTrait as _,
-    QueryFilter,
-    QueryOrder,
-    QuerySelect,
+    QueryFilter as _,
+    QueryOrder as _,
+    QuerySelect as _,
 };
 
 use crate::entity::prelude::{
