@@ -116,7 +116,8 @@ pub async fn handle_inline(
 
     let res = perform(app, state, config, &track, &hit.lyrics()).await;
 
-    app.bot().delete(&message).await?;
+    // I don't care about error
+    app.bot().delete(&message).await.ok();
 
     match res {
         Ok(()) => {
