@@ -217,7 +217,7 @@ async fn send_definitions_page(
 
     let mut lines = vec![];
 
-    lines.push("<b>Word Definitions</b>".to_string());
+    lines.push("<b>Word Definitions</b>".to_owned());
     lines.push(format!(
         "<i>Page {} of {} ({} total)</i>",
         page + 1,

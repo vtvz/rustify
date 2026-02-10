@@ -53,7 +53,7 @@ impl NotificationService {
                 ref_code = ref_code.map_or("<i>None</i>".into(), |text| html::code_inline(&text)),
             )
             .trim()
-            .to_string()
+            .to_owned()
         });
 
         let message = format!("🆕 <b>New user joined</b>\n\n{user}");

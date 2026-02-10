@@ -61,7 +61,7 @@ pub async fn handle_add_word(
 
     let added = UserWordWhitelistService::add_ok_word_for_user(
         app.db(),
-        state.user_id().to_string(),
+        state.user_id().to_owned(),
         word.clone(),
     )
     .await?;

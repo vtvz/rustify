@@ -24,7 +24,7 @@ async fn sync_name(
             .display_name
             .as_deref()
             .unwrap_or("unknown")
-            .to_string()
+            .to_owned()
     });
 
     let tg_user = tg_user.map(|tg_user| {
@@ -39,7 +39,7 @@ async fn sync_name(
                 .unwrap_or_default()
         )
         .trim()
-        .to_string()
+        .to_owned()
     });
 
     let name = vec![tg_user, spotify_user]

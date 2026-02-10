@@ -56,7 +56,7 @@ pub async fn handle(
         .join("\n");
 
     let languages = if languages.is_empty() {
-        "• <i>No data yet</i>".to_string()
+        "• <i>No data yet</i>".to_owned()
     } else {
         languages
     };

@@ -160,11 +160,7 @@ impl GeniusLocal {
 
             hits_count += hits.len();
             for (hit_i, hit) in hits.into_iter().enumerate() {
-                let title = hit
-                    .full_title
-                    .replace(is_whitespace, " ")
-                    .trim()
-                    .to_string();
+                let title = hit.full_title.replace(is_whitespace, " ").trim().to_owned();
 
                 let confidence = SearchResultConfidence::new(
                     normalized_damerau_levenshtein(

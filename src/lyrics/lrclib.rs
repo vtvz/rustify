@@ -145,8 +145,8 @@ impl LrcLib {
                             .enumerate()
                             .map(|(index, line)| {
                                 RE.captures(line).map_or_else(
-                                    || (index.to_string(), line.to_string()),
-                                    |caps| (caps[1].to_string(), caps[2].trim().to_string()),
+                                    || (index.to_string(), line.to_owned()),
+                                    |caps| (caps[1].to_string(), caps[2].trim().to_owned()),
                                 )
                             })
                             .collect()
@@ -154,7 +154,7 @@ impl LrcLib {
                     (_, Some(lyrics)) => lyrics
                         .lines()
                         .enumerate()
-                        .map(|(index, line)| (index.to_string(), line.to_string()))
+                        .map(|(index, line)| (index.to_string(), line.to_owned()))
                         .collect_vec(),
                     _ => continue,
                 };
