@@ -2,15 +2,15 @@ _version: 2
 
 details.collecting-info:
   en: |-
-    🎵 %{track_name}
+    <tg-emoji emoji-id="5188621441926438751">🎵</tg-emoji> %{track_name}
     Album: %{album_name}
 
-    ⏳ Collecting information about the track 🔍
+    <tg-emoji emoji-id="5451646226975955576">⏳</tg-emoji> Collecting information about the track <tg-emoji emoji-id="5188217332748527444">🔍</tg-emoji>
   ru: |-
-    🎵 %{track_name}
+    <tg-emoji emoji-id="5188621441926438751">🎵</tg-emoji> %{track_name}
     Альбом: %{album_name}
 
-    ⏳ Собираем информацию о треке 🔍
+    <tg-emoji emoji-id="5451646226975955576">⏳</tg-emoji> Собираем информацию о треке <tg-emoji emoji-id="5188217332748527444">🔍</tg-emoji>
 
 details.minor:
   en: >-
