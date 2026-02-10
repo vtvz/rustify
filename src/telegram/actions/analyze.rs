@@ -8,7 +8,7 @@ use rspotify::model::TrackId;
 use teloxide::payloads::{
     AnswerCallbackQuerySetters as _,
     EditMessageTextSetters as _,
-    SendMessageSetters,
+    SendMessageSetters as _,
 };
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
