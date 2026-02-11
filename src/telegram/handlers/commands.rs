@@ -82,6 +82,7 @@ pub async fn handle(
                         ))
                         .to_string(),
                 )
+                .parse_mode(ParseMode::Html)
                 .reply_markup(StartKeyboard::markup(state.locale()))
                 .await?;
         },
