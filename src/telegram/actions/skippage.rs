@@ -6,7 +6,7 @@ use teloxide::payloads::{
 };
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ReplyMarkup};
 
 use crate::app::App;
 use crate::services::{SkippageService, UserService};
@@ -59,7 +59,6 @@ pub async fn handle_inline(
         .reply_markup(InlineKeyboardMarkup::new(vec![vec![
             InlineButtons::SkippageEnable(!to_enable).into_inline_keyboard_button(state.locale()),
         ]]))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     Ok(())
@@ -117,7 +116,6 @@ pub async fn handle(
             .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
                 markup,
             )))
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -149,7 +147,6 @@ pub async fn handle(
             chat_id,
             t!("skippage.updated", locale = state.locale(), days = days),
         )
-        .parse_mode(ParseMode::Html)
         .await?;
 
     Ok(HandleStatus::Handled)

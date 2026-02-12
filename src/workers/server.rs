@@ -9,7 +9,6 @@ use sea_orm::TransactionTrait as _;
 use serde::Deserialize;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
-use teloxide::types::ParseMode;
 
 use crate as rustify;
 use crate::app::App;
@@ -94,7 +93,6 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
                 locale = state.locale()
             ),
         )
-        .parse_mode(ParseMode::Html)
         .reply_markup(StartKeyboard::markup(state.locale()))
         .await?;
 

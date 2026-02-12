@@ -1,5 +1,5 @@
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, ParseMode, User};
+use teloxide::types::{ChatId, User};
 use teloxide::utils::html;
 
 use crate::app::App;
@@ -15,12 +15,7 @@ impl NotificationService {
         for admin in admins {
             let chat_id = ChatId(admin.id.parse()?);
 
-            if let Err(err) = app
-                .bot()
-                .send_message(chat_id, text)
-                .parse_mode(ParseMode::Html)
-                .await
-            {
+            if let Err(err) = app.bot().send_message(chat_id, text).await {
                 tracing::warn!(
                     admin_id = %admin.id,
                     error = ?err,

@@ -9,7 +9,7 @@ use rspotify::clients::BaseClient as _;
 use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode};
+use teloxide::types::InlineKeyboardMarkup;
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -145,7 +145,6 @@ async fn common(
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     let spotify = state.spotify().await;
@@ -287,7 +286,6 @@ async fn common(
                     genres_line = genres_line,
                 ),
             )
-            .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(keyboard))
             .link_preview_options(link_preview_small_top(track.url()))
             .await?;
@@ -338,7 +336,6 @@ async fn common(
 
     app.bot()
         .edit_text(&message, text)
-        .parse_mode(ParseMode::Html)
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .link_preview_options(link_preview_small_top(track.url()))
         .await?;

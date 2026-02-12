@@ -1,7 +1,7 @@
 use rspotify::model::TrackId;
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{InlineKeyboardMarkup, ReplyMarkup};
 
 use super::super::inline_buttons::InlineButtons;
 use crate::app::App;
@@ -68,7 +68,6 @@ pub async fn handle(
     app.bot()
         .send_message(m.chat.id, compose_message_text(&track, state.locale()))
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))
@@ -107,7 +106,6 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(&message, compose_message_text(&track, state.locale()))
-        .parse_mode(ParseMode::Html)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .await?;

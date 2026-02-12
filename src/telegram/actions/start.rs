@@ -1,5 +1,4 @@
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -34,7 +33,6 @@ pub async fn handle(
         app.bot()
             .send_message(m.chat.id, text)
             .reply_markup(StartKeyboard::markup(state.locale()))
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);

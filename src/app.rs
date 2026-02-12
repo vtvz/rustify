@@ -8,8 +8,10 @@ use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
+use teloxide::adaptors::DefaultParseMode;
 use teloxide::dispatching::dialogue::RedisStorage as TeloxideRedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
+use teloxide::requests::RequesterExt as _;
 
 use crate::metrics::influx::InfluxClient;
 use crate::metrics::prometheus::PrometheusClient;
@@ -21,7 +23,7 @@ use crate::{lyrics, profanity, spotify};
 pub struct App {
     spotify_manager: spotify::Manager,
     lyrics: lyrics::Manager,
-    bot: Bot,
+    bot: DefaultParseMode<Bot>,
     db: DatabaseConnection,
     influx: Option<InfluxClient>,
     prometheus: Option<PrometheusClient>,
@@ -96,7 +98,7 @@ impl App {
         &self.lyrics
     }
 
-    pub fn bot(&self) -> &Bot {
+    pub fn bot(&self) -> &DefaultParseMode<Bot> {
         &self.bot
     }
 
@@ -322,7 +324,7 @@ impl App {
 
         init_rustrict(&env);
 
-        let bot = Bot::new(&env.telegram_bot_token);
+        let bot = Bot::new(&env.telegram_bot_token).parse_mode(teloxide::types::ParseMode::Html);
 
         let db = init_db(&env).await?;
 

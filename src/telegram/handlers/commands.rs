@@ -1,6 +1,5 @@
 use anyhow::Context as _;
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands as _, ParseError};
 
 use super::HandleStatus;
@@ -35,7 +34,6 @@ pub async fn handle(
                         .to_string(),
                 )
                 .reply_markup(StartKeyboard::markup(state.locale()))
-                .parse_mode(ParseMode::Html)
                 .await?;
 
             return Ok(HandleStatus::Handled);
@@ -82,7 +80,6 @@ pub async fn handle(
                         ))
                         .to_string(),
                 )
-                .parse_mode(ParseMode::Html)
                 .reply_markup(StartKeyboard::markup(state.locale()))
                 .await?;
         },

@@ -1,7 +1,7 @@
 use rspotify::model::TrackId;
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode};
+use teloxide::types::InlineKeyboardMarkup;
 
 use super::super::inline_buttons::InlineButtons;
 use crate::app::App;
@@ -49,7 +49,6 @@ pub async fn handle_inline(
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .await?;
 

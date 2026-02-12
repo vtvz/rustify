@@ -2,7 +2,7 @@ use indoc::formatdoc;
 use itertools::Itertools as _;
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode};
+use teloxide::types::InlineKeyboardMarkup;
 
 use crate::app::App;
 use crate::entity::prelude::{TrackStatus, UserStatus};
@@ -42,7 +42,6 @@ pub async fn handle_command(
 
     app.bot()
         .send_message(m.chat.id, text)
-        .parse_mode(ParseMode::Html)
         .reply_markup(keyboard)
         .await?;
 
@@ -83,7 +82,6 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(&message, text)
-        .parse_mode(ParseMode::Html)
         .reply_markup(keyboard)
         .await?;
 

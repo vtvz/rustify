@@ -2,7 +2,6 @@ use anyhow::Context as _;
 use rspotify::clients::OAuthClient as _;
 use rspotify::model::{Context as SpotifyContext, PlayableId, PlaylistId, Type as SpotifyType};
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
@@ -80,11 +79,7 @@ pub async fn handle(
         track_name = track.track_tg_link(),
     );
 
-    let result = app
-        .bot()
-        .send_message(state.chat_id()?, text)
-        .parse_mode(ParseMode::Html)
-        .await;
+    let result = app.bot().send_message(state.chat_id()?, text).await;
 
     match result {
         Ok(_) => Ok(()),

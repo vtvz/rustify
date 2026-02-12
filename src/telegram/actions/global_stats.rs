@@ -2,7 +2,7 @@ use indoc::formatdoc;
 use itertools::Itertools as _;
 use sea_orm::Iterable as _;
 use teloxide::prelude::*;
-use teloxide::types::{ParseMode, ReplyParameters};
+use teloxide::types::ReplyParameters;
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -114,7 +114,6 @@ pub async fn handle(
     app.bot()
         .send_message(m.chat.id, text)
         .reply_parameters(ReplyParameters::new(m.id))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     Ok(HandleStatus::Handled)

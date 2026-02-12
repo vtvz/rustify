@@ -1,5 +1,5 @@
 use teloxide::prelude::*;
-use teloxide::types::{KeyboardRemove, ParseMode, ReplyMarkup};
+use teloxide::types::{KeyboardRemove, ReplyMarkup};
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -26,13 +26,11 @@ pub async fn handle(
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))
             .reply_markup(StartKeyboard::markup(locale))
-            .parse_mode(ParseMode::Html)
             .await?;
     } else {
         app.bot()
             .send_message(m.chat.id, t!("language.changed", locale = locale))
             .reply_markup(ReplyMarkup::KeyboardRemove(KeyboardRemove::new()))
-            .parse_mode(ParseMode::Html)
             .await?;
 
         actions::login::send_login_invite(app, &state).await?;

@@ -1,7 +1,7 @@
 use itertools::Itertools as _;
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode};
+use teloxide::types::InlineKeyboardMarkup;
 
 use crate::app::App;
 use crate::entity::prelude::UserLocale;
@@ -36,7 +36,6 @@ async fn generate_and_send_definition(
                 "Generating definition for <code>{word}</code> (locale: <code>{locale}</code>)...",
             ),
         )
-        .parse_mode(ParseMode::Html)
         .await?;
 
     if refresh {
@@ -61,7 +60,6 @@ async fn generate_and_send_definition(
                 "Definition for <code>{word}</code> (locale: <code>{locale}</code>):\n\n{definition}",
             ),
         )
-        .parse_mode(ParseMode::Html)
         .reply_markup(keyboard)
         .await?;
 
@@ -87,7 +85,6 @@ pub async fn handle_definition(
                     locale_codes.join("\n")
                 ),
             )
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -182,7 +179,6 @@ async fn send_definitions_page(
                         .join("\n")
                 ),
             )
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(());
@@ -194,15 +190,9 @@ async fn send_definitions_page(
         let text = format!("No word definitions found for locale: <code>{locale_filter}</code>");
 
         if let Some(message) = &message {
-            app.bot()
-                .edit_text(message, text)
-                .parse_mode(ParseMode::Html)
-                .await?;
+            app.bot().edit_text(message, text).await?;
         } else {
-            app.bot()
-                .send_message(chat_id, text)
-                .parse_mode(ParseMode::Html)
-                .await?;
+            app.bot().send_message(chat_id, text).await?;
         }
 
         return Ok(());
@@ -283,10 +273,7 @@ async fn send_definitions_page(
     };
 
     if let Some(message) = &message {
-        let mut req = app
-            .bot()
-            .edit_text(message, lines.join("\n"))
-            .parse_mode(ParseMode::Html);
+        let mut req = app.bot().edit_text(message, lines.join("\n"));
 
         if let Some(kb) = keyboard {
             req = req.reply_markup(kb);
@@ -294,10 +281,7 @@ async fn send_definitions_page(
 
         req.await?;
     } else {
-        let mut req = app
-            .bot()
-            .send_message(chat_id, lines.join("\n"))
-            .parse_mode(ParseMode::Html);
+        let mut req = app.bot().send_message(chat_id, lines.join("\n"));
 
         if let Some(kb) = keyboard {
             req = req.reply_markup(kb);

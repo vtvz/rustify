@@ -3,7 +3,7 @@ use reqwest::StatusCode;
 use teloxide::ApiError;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
-use teloxide::types::{ChatId, ParseMode};
+use teloxide::types::ChatId;
 
 use crate::app::App;
 use crate::entity::prelude::UserStatus;
@@ -152,7 +152,6 @@ pub async fn spotify_resp_error(
                                 error = serr.error_description,
                             ),
                         )
-                        .parse_mode(ParseMode::Html)
                         .await?;
 
                     return Ok(ErrorHandlingResult::handled_notified());

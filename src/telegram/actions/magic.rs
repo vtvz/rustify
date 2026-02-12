@@ -9,7 +9,7 @@ use teloxide::payloads::{
 };
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ReplyMarkup};
 
 use crate::app::App;
 use crate::services::{RateLimitAction, RateLimitOutput, RateLimitService, UserService};
@@ -109,7 +109,6 @@ pub async fn handle_inline(
             &message,
             t!("magic.generating", header = header, locale = state.locale()),
         )
-        .parse_mode(ParseMode::Html)
         .await?;
 
     let playlist = generate_playlist(app, state, spotify_user).await;
@@ -126,7 +125,6 @@ pub async fn handle_inline(
                         locale = state.locale()
                     ),
                 )
-                .parse_mode(ParseMode::Html)
                 .link_preview_options(link_preview_small_top(playlist.url()))
                 .await?;
 
@@ -139,7 +137,6 @@ pub async fn handle_inline(
                     &message,
                     t!("magic.failed", header = header, locale = state.locale()),
                 )
-                .parse_mode(ParseMode::Html)
                 .await?;
 
             Err(err)
@@ -201,7 +198,6 @@ pub async fn handle(
                 locale = state.locale()
             ),
         )
-        .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             vec![vec![
                 InlineButtons::Magic.into_inline_keyboard_button(state.locale()),

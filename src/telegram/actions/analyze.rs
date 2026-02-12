@@ -12,7 +12,7 @@ use teloxide::payloads::{
 };
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, ParseMode};
+use teloxide::types::{CallbackQuery, InlineKeyboardMarkup};
 
 use crate::app::{AIConfig, App};
 use crate::lyrics::SearchResult as _;
@@ -111,7 +111,6 @@ pub async fn handle_inline(
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     let res = perform(app, state, config, &track, &hit.lyrics()).await;
@@ -142,7 +141,6 @@ pub async fn handle_inline(
                     InlineButtons::Analyze(track.id().into())
                         .into_inline_keyboard_button(state.locale()),
                 ]]))
-                .parse_mode(ParseMode::Html)
                 .await?;
 
             tracing::warn!(err = ?err, "OpenAI request failed");
@@ -253,7 +251,6 @@ async fn perform(
     app.bot()
         .send_message(state.chat_id()?, text)
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .await?;
 

@@ -27,7 +27,7 @@ use teloxide::payloads::{
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::sugar::request::RequestLinkPreviewExt as _;
-use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ReplyMarkup};
 
 use crate::app::{AIConfig, App};
 use crate::entity::prelude::TrackStatus;
@@ -122,7 +122,6 @@ pub async fn handle(
                 chat_id,
                 t!("recommendasion.disabled", locale = state.locale()),
             )
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -133,7 +132,6 @@ pub async fn handle(
             chat_id,
             t!("recommendasion.welcome", locale = state.locale()),
         )
-        .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             vec![vec![
                 InlineButtons::Recommendasion.into_inline_keyboard_button(state.locale()),
@@ -176,7 +174,6 @@ pub async fn handle_inline(
                 &message,
                 t!("recommendasion.disabled", locale = state.locale()),
             )
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(());
@@ -296,7 +293,6 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(&message, text)
-        .parse_mode(ParseMode::Html)
         .disable_link_preview(true)
         .reply_markup(InlineKeyboardMarkup::new(vec![vec![
             InlineButtons::Recommendasion.into_inline_keyboard_button(state.locale()),

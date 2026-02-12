@@ -1,6 +1,5 @@
 use anyhow::Context as _;
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
 use teloxide::utils::command::{BotCommands as _, ParseError};
 
 use super::HandleStatus;
@@ -66,7 +65,6 @@ pub async fn handle(
                         timestamp = env!("GIT_COMMIT_TIMESTAMP")
                     ),
                 )
-                .parse_mode(ParseMode::Html)
                 .await?;
         },
     }

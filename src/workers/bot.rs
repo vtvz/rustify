@@ -1,9 +1,8 @@
 use indoc::formatdoc;
 use sea_orm::Iterable as _;
-use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::*;
 use teloxide::sugar::request::RequestLinkPreviewExt as _;
-use teloxide::types::{ParseMode, User};
+use teloxide::types::User;
 
 use crate::app::App;
 use crate::entity::prelude::UserLocale;
@@ -101,7 +100,6 @@ pub async fn work() {
                                 "#
                             )
                         )
-                            .parse_mode(ParseMode::Html)
                             .disable_link_preview(true)
                             .await?;
                     }

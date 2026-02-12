@@ -3,7 +3,6 @@ use teloxide::types::{
     InlineKeyboardButton,
     InlineKeyboardButtonKind,
     InlineKeyboardMarkup,
-    ParseMode,
     ReplyMarkup,
 };
 
@@ -22,7 +21,6 @@ pub async fn send_login_invite(
             state.chat_id()?,
             t!("login.invite", locale = state.locale()),
         )
-        .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             #[rustfmt::skip]
             vec![
