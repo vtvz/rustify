@@ -335,7 +335,7 @@ impl App {
 
         let queue_manager = QueueManager::new(redis_url).await?;
 
-        // Make state global static variable to prevent hassle with Arc and cloning this mess
+        // Make global static variable to prevent hassle with Arc
         let app = Box::new(Self {
             bot,
             spotify_manager,
