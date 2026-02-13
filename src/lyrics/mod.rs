@@ -167,7 +167,11 @@ impl Manager {
                     Ok(Some(res)) => {
                         let data = res.into();
 
-                        Self::set_track_cache(redis_conn, track.id(), Some(&data), self.lyrics_cache_ttl).await?;
+                        if let Err(err) =
+                            Self::set_track_cache(redis_conn, track.id(), Some(&data), self.lyrics_cache_ttl).await
+                        {
+                            tracing::error!(err = ?err, "Error occurred on saving lyrics cache");
+                        }
 
                         return Ok(Some(data));
                     },
@@ -201,7 +205,11 @@ impl Manager {
             }
         }
 
-        Self::set_track_cache(redis_conn, track.id(), None, self.lyrics_cache_ttl).await?;
+        if let Err(err) =
+            Self::set_track_cache(redis_conn, track.id(), None, self.lyrics_cache_ttl).await
+        {
+            tracing::error!(err = ?err, "Error occurred on saving lyrics cache");
+        };
 
         Ok(None)
     }
