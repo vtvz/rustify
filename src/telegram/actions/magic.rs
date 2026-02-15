@@ -27,7 +27,7 @@ use crate::utils::teloxide::CallbackQueryExt as _;
 async fn get_playlist(
     state: &UserState,
     spotify_user_id: UserId<'static>,
-    magic_playlist_id: String,
+    magic_playlist_id: Option<String>,
 ) -> anyhow::Result<ShortPlaylist> {
     let playlist_name = "Magic✨";
 
@@ -35,14 +35,16 @@ async fn get_playlist(
 
     let mut playlists_stream = spotify.user_playlists(spotify_user_id.clone());
 
-    while let Some(playlist) = playlists_stream.next().await {
-        let playlist = playlist?;
-        if playlist.id.id() == magic_playlist_id {
-            spotify
-                .playlist_replace_items(playlist.id.clone(), [])
-                .await?;
+    if let Some(magic_playlist_id) = magic_playlist_id {
+        while let Some(playlist) = playlists_stream.next().await {
+            let playlist = playlist?;
+            if playlist.id.id() == magic_playlist_id {
+                spotify
+                    .playlist_replace_items(playlist.id.clone(), [])
+                    .await?;
 
-            return Ok(playlist.into());
+                return Ok(playlist.into());
+            }
         }
     }
 
@@ -167,16 +169,8 @@ async fn generate_playlist(
 
     track_ids.shuffle(&mut rand::rng());
 
-    let playlist = get_playlist(
-        state,
-        spotify_user.id,
-        state
-            .user()
-            .magic_playlist
-            .clone()
-            .unwrap_or_else(|| "none".into()),
-    )
-    .await?;
+    let playlist =
+        get_playlist(state, spotify_user.id, state.user().magic_playlist.clone()).await?;
 
     UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id().id()).await?;
 
