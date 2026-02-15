@@ -21,13 +21,13 @@ impl InlineButtons {
     #[must_use]
     pub fn label(&self, locale: &str) -> Cow<'_, str> {
         match self {
-            InlineButtons::Dislike(_) => t!("inline-buttons.dislike", locale = locale),
-            InlineButtons::Ignore(_) => t!("inline-buttons.ignore", locale = locale),
-            InlineButtons::Analyze(_) => t!("inline-buttons.analyze", locale = locale),
-            InlineButtons::SongLinks(_) => t!("song-links.button", locale = locale),
-            InlineButtons::Magic => t!("magic.button", locale = locale),
-            InlineButtons::Recommendasion => t!("recommendasion.button", locale = locale),
-            InlineButtons::SkippageEnable(to_enable) => {
+            Self::Dislike(_) => t!("inline-buttons.dislike", locale = locale),
+            Self::Ignore(_) => t!("inline-buttons.ignore", locale = locale),
+            Self::Analyze(_) => t!("inline-buttons.analyze", locale = locale),
+            Self::SongLinks(_) => t!("song-links.button", locale = locale),
+            Self::Magic => t!("magic.button", locale = locale),
+            Self::Recommendasion => t!("recommendasion.button", locale = locale),
+            Self::SkippageEnable(to_enable) => {
                 if *to_enable {
                     t!("skippage.enable-button", locale = locale)
                 } else {

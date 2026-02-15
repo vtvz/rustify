@@ -110,7 +110,7 @@ impl FromStr for Status {
     type Err = sea_orm::DbErr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Status::try_from(s)
+        Self::try_from(s)
     }
 }
 
@@ -118,6 +118,6 @@ impl TryFrom<&str> for Status {
     type Error = sea_orm::DbErr;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Status::try_from_value(&value.to_owned())
+        Self::try_from_value(&value.to_owned())
     }
 }

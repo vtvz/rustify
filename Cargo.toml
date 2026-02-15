@@ -84,6 +84,7 @@ debug = 1
 unwrap_used = "warn"
 
 pedantic = { level = "warn", priority = -1 }
+nursery = { level = "warn", priority = -1 }
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 
@@ -95,6 +96,9 @@ unnecessary_literal_bound = "allow"
 match_same_arms = "allow"
 struct_excessive_bools = "allow"
 too_many_lines = "allow"
+
+missing_const_for_fn = "allow"
+future_not_send = "allow"
 
 unused_trait_names = "warn"
 str_to_string = "warn"

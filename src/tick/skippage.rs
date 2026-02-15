@@ -35,9 +35,9 @@ pub async fn handle(
         SkippageService::get_track_played(&mut redis_conn, state.user_id(), track.id()).await?;
 
     if track_exists {
-        let spotify = state.spotify().await;
-
-        spotify
+        state
+            .spotify()
+            .await
             .next_track(None)
             .await
             .context("Skip track in Spotify")?;

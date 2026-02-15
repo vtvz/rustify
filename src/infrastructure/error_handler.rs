@@ -22,7 +22,7 @@ pub struct ErrorHandlingResult {
 impl ErrorHandlingResult {
     #[must_use]
     pub fn unhandled() -> Self {
-        ErrorHandlingResult {
+        Self {
             handled: false,
             user_notified: false,
         }
@@ -30,7 +30,7 @@ impl ErrorHandlingResult {
 
     #[must_use]
     pub fn handled() -> Self {
-        ErrorHandlingResult {
+        Self {
             handled: true,
             user_notified: false,
         }
@@ -38,7 +38,7 @@ impl ErrorHandlingResult {
 
     #[must_use]
     pub fn handled_notified() -> Self {
-        ErrorHandlingResult {
+        Self {
             handled: true,
             user_notified: true,
         }
@@ -55,7 +55,7 @@ pub async fn handle_blocked_bot(
         return Ok(ErrorHandlingResult::unhandled());
     };
 
-    if let teloxide::RequestError::Api(ApiError::BotBlocked) = err {
+    if matches!(err, teloxide::RequestError::Api(ApiError::BotBlocked)) {
         UserService::set_status(app.db(), user_id, UserStatus::BotBlocked).await?;
 
         return Ok(ErrorHandlingResult::handled_notified());
@@ -178,7 +178,7 @@ pub async fn spotify_client_error(
         return Ok(ErrorHandlingResult::unhandled());
     };
 
-    if let rspotify::ClientError::InvalidToken = err {
+    if matches!(err, rspotify::ClientError::InvalidToken) {
         tracing::error!(err = ?err, user_id, "User has Invalid Spotify Token");
         UserService::set_status(app.db(), user_id, UserStatus::SpotifyTokenInvalid).await?;
 

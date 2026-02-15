@@ -32,24 +32,28 @@ impl NotificationService {
         user: Option<&User>,
         ref_code: Option<String>,
     ) -> anyhow::Result<()> {
-        let user = user.map_or("Unknown".into(), |user| {
-            format!(
-                "<code>{id}</code> {link} {name} {surname} {username}\nRef Code: {ref_code}",
-                id = user.id,
-                link = html::user_mention(user.id, "link"),
-                name = html::escape(&user.first_name),
-                surname = user
-                    .last_name
-                    .as_ref()
-                    .map(|n| html::escape(n))
-                    .as_deref()
-                    .unwrap_or_default(),
-                username = user.mention().unwrap_or_default(),
-                ref_code = ref_code.map_or("<i>None</i>".into(), |text| html::code_inline(&text)),
-            )
-            .trim()
-            .to_owned()
-        });
+        let user = user.map_or_else(
+            || "Unknown".into(),
+            |user| {
+                format!(
+                    "<code>{id}</code> {link} {name} {surname} {username}\nRef Code: {ref_code}",
+                    id = user.id,
+                    link = html::user_mention(user.id, "link"),
+                    name = html::escape(&user.first_name),
+                    surname = user
+                        .last_name
+                        .as_ref()
+                        .map(|n| html::escape(n))
+                        .as_deref()
+                        .unwrap_or_default(),
+                    username = user.mention().unwrap_or_default(),
+                    ref_code = ref_code
+                        .map_or_else(|| "<i>None</i>".into(), |text| html::code_inline(&text)),
+                )
+                .trim()
+                .to_owned()
+            },
+        );
 
         let message = format!("🆕 <b>New user joined</b>\n\n{user}");
 

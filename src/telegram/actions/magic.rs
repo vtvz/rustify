@@ -22,6 +22,7 @@ use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
+#[allow(clippy::significant_drop_tightening)]
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn get_playlist(
     state: &UserState,
@@ -145,30 +146,42 @@ pub async fn handle_inline(
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[allow(clippy::significant_drop_tightening)]
 async fn generate_playlist(
     app: &App,
     state: &UserState,
     spotify_user: rspotify::model::PrivateUser,
 ) -> Result<ShortPlaylist, anyhow::Error> {
-    let spotify = state.spotify().await;
-    let mut saved_tracks = spotify.current_user_saved_tracks(None);
-    let mut track_ids = vec![];
-    while let Some(track) = saved_tracks.next().await {
-        let track = track?;
-        if let Some(track_id) = track.track.id {
-            track_ids.push(track_id.into());
+    let mut track_ids = {
+        let mut track_ids = vec![];
+        let spotify = state.spotify().await;
+        let mut saved_tracks = spotify.current_user_saved_tracks(None);
+        while let Some(track) = saved_tracks.next().await {
+            let track = track?;
+            if let Some(track_id) = track.track.id {
+                track_ids.push(track_id.into());
+            }
         }
-    }
+        track_ids
+    };
+
     track_ids.shuffle(&mut rand::rng());
+
     let playlist = get_playlist(
         state,
         spotify_user.id,
-        state.user().magic_playlist.clone().unwrap_or("none".into()),
+        state
+            .user()
+            .magic_playlist
+            .clone()
+            .unwrap_or_else(|| "none".into()),
     )
     .await?;
     UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id().id()).await?;
     for chunk in track_ids.chunks(100) {
-        spotify
+        state
+            .spotify()
+            .await
             .playlist_add_items(playlist.id().clone(), chunk.iter().cloned(), None)
             .await?;
     }
