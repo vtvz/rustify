@@ -63,7 +63,7 @@ impl NotificationService {
         let message = format!(
             "✅ <b>User connected Spotify</b>\n\nName: {name}\nID: <code>{id}</code> <a href=\"tg://user?id={id}\">link</a>",
             id = user.id,
-            name = user.name
+            name = html::escape(&user.name)
         );
 
         Self::notify_admins(app, &message).await
