@@ -1,7 +1,6 @@
 use sea_orm::{ActiveModelTrait as _, IntoActiveModel as _, Set};
-use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
-use teloxide::types::{ChatId, ParseMode};
+use teloxide::types::ChatId;
 
 use crate::app::App;
 use crate::telegram::handlers::HandleStatus;
@@ -26,10 +25,7 @@ pub async fn handle_toggle_profanity_check(
         t!("settings.profanity-check-off", locale = state.locale())
     };
 
-    app.bot()
-        .send_message(chat_id, text)
-        .parse_mode(ParseMode::Html)
-        .await?;
+    app.bot().send_message(chat_id, text).await?;
 
     Ok(HandleStatus::Handled)
 }
@@ -53,10 +49,7 @@ pub async fn handle_toggle_skip_tracks(
         t!("settings.skip-off", locale = state.locale())
     };
 
-    app.bot()
-        .send_message(chat_id, text)
-        .parse_mode(ParseMode::Html)
-        .await?;
+    app.bot().send_message(chat_id, text).await?;
 
     Ok(HandleStatus::Handled)
 }

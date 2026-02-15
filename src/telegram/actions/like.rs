@@ -1,6 +1,5 @@
 use rspotify::prelude::OAuthClient as _;
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
 
 use crate::app::App;
 use crate::services::{RateLimitAction, RateLimitOutput, RateLimitService};
@@ -66,7 +65,6 @@ pub async fn handle(
         .send_message(m.chat.id, format!("Liked {}", track.track_tg_link()))
         .reply_markup(StartKeyboard::markup(state.locale()))
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     Ok(HandleStatus::Handled)

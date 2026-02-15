@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use anyhow::Context;
+use anyhow::Context as _;
 use async_openai::types::chat::{
     ChatCompletionMessageToolCalls,
     ChatCompletionNamedToolChoice,
@@ -11,23 +11,23 @@ use async_openai::types::chat::{
     CreateChatCompletionRequestArgs,
     FunctionObjectArgs,
 };
-use backon::{ExponentialBuilder, Retryable};
-use futures::StreamExt;
+use backon::{ExponentialBuilder, Retryable as _};
+use futures::StreamExt as _;
 use indoc::formatdoc;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use rspotify::model::SearchType;
-use rspotify::prelude::{BaseClient, OAuthClient as _};
+use rspotify::prelude::{BaseClient as _, OAuthClient as _};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use teloxide::payloads::{
     AnswerCallbackQuerySetters as _,
-    EditMessageTextSetters,
-    SendMessageSetters,
+    EditMessageTextSetters as _,
+    SendMessageSetters as _,
 };
-use teloxide::prelude::Requester;
+use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::sugar::request::RequestLinkPreviewExt;
-use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::sugar::request::RequestLinkPreviewExt as _;
+use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ReplyMarkup};
 
 use crate::app::{AIConfig, App};
 use crate::entity::prelude::TrackStatus;
@@ -122,7 +122,6 @@ pub async fn handle(
                 chat_id,
                 t!("recommendasion.disabled", locale = state.locale()),
             )
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -133,7 +132,6 @@ pub async fn handle(
             chat_id,
             t!("recommendasion.welcome", locale = state.locale()),
         )
-        .parse_mode(ParseMode::Html)
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             vec![vec![
                 InlineButtons::Recommendasion.into_inline_keyboard_button(state.locale()),
@@ -176,7 +174,6 @@ pub async fn handle_inline(
                 &message,
                 t!("recommendasion.disabled", locale = state.locale()),
             )
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(());
@@ -198,6 +195,7 @@ pub async fn handle_inline(
                 duration = duration.pretty_format(),
                 locale = state.locale()
             ))
+            .show_alert(true)
             .await?;
 
         return Ok(());
@@ -295,7 +293,6 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(&message, text)
-        .parse_mode(ParseMode::Html)
         .disable_link_preview(true)
         .reply_markup(InlineKeyboardMarkup::new(vec![vec![
             InlineButtons::Recommendasion.into_inline_keyboard_button(state.locale()),

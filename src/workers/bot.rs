@@ -1,9 +1,8 @@
 use indoc::formatdoc;
-use sea_orm::Iterable;
-use teloxide::payloads::SendMessageSetters;
+use sea_orm::Iterable as _;
 use teloxide::prelude::*;
 use teloxide::sugar::request::RequestLinkPreviewExt as _;
-use teloxide::types::{ParseMode, User};
+use teloxide::types::User;
 
 use crate::app::App;
 use crate::entity::prelude::UserLocale;
@@ -24,7 +23,7 @@ async fn sync_name(
             .display_name
             .as_deref()
             .unwrap_or("unknown")
-            .to_string()
+            .to_owned()
     });
 
     let tg_user = tg_user.map(|tg_user| {
@@ -39,7 +38,7 @@ async fn sync_name(
                 .unwrap_or_default()
         )
         .trim()
-        .to_string()
+        .to_owned()
     });
 
     let name = vec![tg_user, spotify_user]
@@ -101,7 +100,6 @@ pub async fn work() {
                                 "#
                             )
                         )
-                            .parse_mode(ParseMode::Html)
                             .disable_link_preview(true)
                             .await?;
                     }

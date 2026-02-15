@@ -42,10 +42,10 @@ error.general:
 
 error.unhandled-request:
   en: |-
-    Your request was not handled 😔
+    <tg-emoji emoji-id="6043973168291384891">😔</tg-emoji> Your request was not handled
 
-    📋 There are commands available to you:
+    <tg-emoji emoji-id="5424780918776671920">📋</tg-emoji> There are commands available to you:
   ru: |-
-    Ваш запрос не был обработан 😔
+    <tg-emoji emoji-id="6043973168291384891">😔</tg-emoji> Ваш запрос не был обработан
 
-    📋 Вам доступны следующие команды:
+    <tg-emoji emoji-id="5424780918776671920">📋</tg-emoji> Вам доступны следующие команды:

@@ -1,5 +1,5 @@
 pub mod bool_from_int {
-    use serde::{Deserialize, Deserializer, Serializer};
+    use serde::{Deserialize as _, Deserializer, Serializer};
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<bool, D::Error>
     where
@@ -17,7 +17,7 @@ pub mod bool_from_int {
 }
 
 pub mod lines_from_string {
-    use serde::{Deserialize, Deserializer, Serializer};
+    use serde::{Deserialize as _, Deserializer, Serializer};
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
     where
@@ -148,7 +148,7 @@ mod tests {
     #[test]
     fn test_lines_from_string_serialize_single_line() {
         let data = TestLinesStruct {
-            lines: vec!["single line".to_string()],
+            lines: vec!["single line".to_owned()],
         };
         let json = serde_json::to_string(&data).unwrap();
         assert_eq!(json, r#"{"lines":"single line"}"#);
@@ -158,9 +158,9 @@ mod tests {
     fn test_lines_from_string_serialize_multiple_lines() {
         let data = TestLinesStruct {
             lines: vec![
-                "line 1".to_string(),
-                "line 2".to_string(),
-                "line 3".to_string(),
+                "line 1".to_owned(),
+                "line 2".to_owned(),
+                "line 3".to_owned(),
             ],
         };
         let json = serde_json::to_string(&data).unwrap();
@@ -170,7 +170,7 @@ mod tests {
     #[test]
     fn test_lines_from_string_roundtrip_single_line() {
         let original = TestLinesStruct {
-            lines: vec!["single line".to_string()],
+            lines: vec!["single line".to_owned()],
         };
         let json = serde_json::to_string(&original).unwrap();
         let deserialized: TestLinesStruct = serde_json::from_str(&json).unwrap();
@@ -181,9 +181,9 @@ mod tests {
     fn test_lines_from_string_roundtrip_multiple_lines() {
         let original = TestLinesStruct {
             lines: vec![
-                "line 1".to_string(),
-                "line 2".to_string(),
-                "line 3".to_string(),
+                "line 1".to_owned(),
+                "line 2".to_owned(),
+                "line 3".to_owned(),
             ],
         };
         let json = serde_json::to_string(&original).unwrap();
@@ -202,7 +202,7 @@ mod tests {
     #[test]
     fn test_lines_from_string_with_unicode() {
         let data = TestLinesStruct {
-            lines: vec!["hello 世界".to_string(), "こんにちは".to_string()],
+            lines: vec!["hello 世界".to_owned(), "こんにちは".to_owned()],
         };
         let json = serde_json::to_string(&data).unwrap();
         let deserialized: TestLinesStruct = serde_json::from_str(&json).unwrap();

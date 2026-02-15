@@ -1,17 +1,18 @@
-use std::str::FromStr;
+use std::str::FromStr as _;
 use std::sync::Arc;
 use std::time::Duration;
 
-use anyhow::Context;
+use anyhow::Context as _;
 use async_openai::config::{OPENAI_API_BASE, OpenAIConfig};
 use rustrict::Replacements;
 use sea_orm::{DatabaseConnection, DbConn, SqlxPostgresConnector};
 use sqlx::postgres::PgConnectOptions;
 use teloxide::Bot;
+use teloxide::adaptors::DefaultParseMode;
 use teloxide::dispatching::dialogue::RedisStorage as TeloxideRedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
+use teloxide::requests::RequesterExt as _;
 
-use crate::infrastructure::cache;
 use crate::metrics::influx::InfluxClient;
 use crate::metrics::prometheus::PrometheusClient;
 use crate::queue::QueueManager;
@@ -22,7 +23,7 @@ use crate::{lyrics, profanity, spotify};
 pub struct App {
     spotify_manager: spotify::Manager,
     lyrics: lyrics::Manager,
-    bot: Bot,
+    bot: DefaultParseMode<Bot>,
     db: DatabaseConnection,
     influx: Option<InfluxClient>,
     prometheus: Option<PrometheusClient>,
@@ -97,7 +98,7 @@ impl App {
         &self.lyrics
     }
 
-    pub fn bot(&self) -> &Bot {
+    pub fn bot(&self) -> &DefaultParseMode<Bot> {
         &self.bot
     }
 
@@ -207,7 +208,7 @@ async fn init_db(env: &EnvConfig) -> anyhow::Result<DbConn> {
     Ok(SqlxPostgresConnector::from_sqlx_postgres_pool(pool))
 }
 
-async fn init_lyrics_manager(env: &EnvConfig, redis_url: &str) -> anyhow::Result<lyrics::Manager> {
+fn init_lyrics_manager(env: &EnvConfig) -> anyhow::Result<lyrics::Manager> {
     let mut musixmatch_tokens: Vec<_> = env
         .musixmatch_user_tokens
         .as_deref()
@@ -230,9 +231,12 @@ async fn init_lyrics_manager(env: &EnvConfig, redis_url: &str) -> anyhow::Result
     let default_ttl = chrono::Duration::hours(24).num_seconds() as u64;
     let lyrics_cache_ttl: u64 = env.lyrics_cache_ttl.unwrap_or(default_ttl);
 
-    cache::CacheManager::init(redis_url.to_owned()).await;
-    lyrics::LyricsCacheManager::init(lyrics_cache_ttl).await;
-    lyrics::Manager::new(genius_service_url, genius_token, musixmatch_tokens)
+    lyrics::Manager::new(
+        genius_service_url,
+        genius_token,
+        musixmatch_tokens,
+        lyrics_cache_ttl,
+    )
 }
 
 fn init_rustrict(env: &EnvConfig) {
@@ -315,12 +319,12 @@ impl App {
             &env.spotify_secret,
             env.spotify_redirect_uri.clone(),
         );
-        let lyrics_manager = init_lyrics_manager(&env, redis_url).await?;
+        let lyrics_manager = init_lyrics_manager(&env)?;
         let ai = init_ai(&env)?;
 
         init_rustrict(&env);
 
-        let bot = Bot::new(&env.telegram_bot_token);
+        let bot = Bot::new(&env.telegram_bot_token).parse_mode(teloxide::types::ParseMode::Html);
 
         let db = init_db(&env).await?;
 
@@ -331,7 +335,7 @@ impl App {
 
         let queue_manager = QueueManager::new(redis_url).await?;
 
-        // Make state global static variable to prevent hassle with Arc and cloning this mess
+        // Make global static variable to prevent hassle with Arc
         let app = Box::new(Self {
             bot,
             spotify_manager,

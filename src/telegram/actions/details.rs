@@ -2,17 +2,18 @@ use std::collections::HashSet;
 use std::sync::LazyLock;
 
 use anyhow::anyhow;
-use convert_case::{Case, Casing};
-use itertools::Itertools;
+use convert_case::{Case, Casing as _};
+use itertools::Itertools as _;
 use regex::Regex;
 use rspotify::clients::BaseClient as _;
 use rspotify::model::{Modality, TrackId};
 use teloxide::prelude::*;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{InlineKeyboardMarkup, ParseMode};
+use teloxide::types::InlineKeyboardMarkup;
 
 use crate::app::App;
 use crate::entity::prelude::*;
+use crate::lyrics::SearchResult as _;
 use crate::profanity::LineResult;
 use crate::services::{
     RateLimitAction,
@@ -26,7 +27,7 @@ use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::{DurationPrettyFormat as _, StringUtils};
+use crate::utils::{DurationPrettyFormat as _, StringUtils as _};
 use crate::{profanity, telegram};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
@@ -144,7 +145,6 @@ async fn common(
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     let spotify = state.spotify().await;
@@ -271,7 +271,11 @@ async fn common(
         ignored_by = ignored_by,
     );
 
-    let Some(hit) = app.lyrics().search_for_track(&track).await? else {
+    let Some(hit) = app
+        .lyrics()
+        .search_for_track(&mut app.redis_conn().await?, &track)
+        .await?
+    else {
         app.bot()
             .edit_text(
                 &message,
@@ -282,7 +286,6 @@ async fn common(
                     genres_line = genres_line,
                 ),
             )
-            .parse_mode(ParseMode::Html)
             .reply_markup(InlineKeyboardMarkup::new(keyboard))
             .link_preview_options(link_preview_small_top(track.url()))
             .await?;
@@ -333,7 +336,6 @@ async fn common(
 
     app.bot()
         .edit_text(&message, text)
-        .parse_mode(ParseMode::Html)
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .link_preview_options(link_preview_small_top(track.url()))
         .await?;

@@ -1,6 +1,6 @@
 use chrono::Duration;
-use deadpool_redis::redis::AsyncCommands;
-use itertools::Itertools;
+use deadpool_redis::redis::AsyncCommands as _;
+use itertools::Itertools as _;
 
 use crate::spotify::ShortTrack;
 

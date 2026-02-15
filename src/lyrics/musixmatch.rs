@@ -1,10 +1,9 @@
 use std::collections::VecDeque;
 use std::time::Duration;
 
-use anyhow::Context;
-use cached::proc_macro::io_cached;
+use anyhow::Context as _;
 use isolang::Language;
-use itertools::Itertools;
+use itertools::Itertools as _;
 use reqwest::{Client, ClientBuilder};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, from_value};
@@ -104,35 +103,7 @@ impl Musixmatch {
             track_name = %track.name_with_artists(),
         )
     )]
-    pub async fn search_for_track(
-        &self,
-        track: &ShortTrack,
-    ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send>>> {
-        #[io_cached(
-            map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.id().into() }"#,
-            ty = "cached::AsyncRedisCache<String, Option<Lyrics>>",
-            create = r##" {
-                let prefix = module_path!().split("::").last().expect("Will be");
-                super::LyricsCacheManager::redis_cached_build(prefix).await.expect("Redis cache should build")
-            } "##
-        )]
-        async fn search_for_track_middleware(
-            musixmatch: &Musixmatch,
-            track: &ShortTrack,
-        ) -> anyhow::Result<Option<Lyrics>> {
-            Musixmatch::search_for_track_internal(musixmatch, track).await
-        }
-
-        search_for_track_middleware(self, track)
-            .await
-            .map(|res| res.map(|opt| Box::new(opt) as _))
-    }
-
-    async fn search_for_track_internal(
-        &self,
-        track: &ShortTrack,
-    ) -> anyhow::Result<Option<Lyrics>> {
+    pub async fn search_for_track(&self, track: &ShortTrack) -> anyhow::Result<Option<Lyrics>> {
         let mut url =
             url::Url::parse("https://apic-desktop.musixmatch.com/ws/1.1/macro.subtitles.get")?;
 

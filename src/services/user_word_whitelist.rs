@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use sea_orm::prelude::*;
 use sea_orm::sea_query::OnConflict;
-use sea_orm::{ConnectionTrait, FromQueryResult, QuerySelect, Set};
+use sea_orm::{ConnectionTrait, FromQueryResult, QuerySelect as _, Set};
 
 use crate::entity::prelude::*;
 

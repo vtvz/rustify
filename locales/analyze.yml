@@ -74,15 +74,15 @@ analysis.lyrics-not-found:
 
 analysis.waiting:
   en: |-
-    🎵 %{track_name}
+    <tg-emoji emoji-id="5188621441926438751">🎵</tg-emoji> %{track_name}
     Album: %{album_name}
 
-    ⏳ Wait for analysis to finish 🔍
+    <tg-emoji emoji-id="5451646226975955576">⏳</tg-emoji> Wait for analysis to finish <tg-emoji emoji-id="5188217332748527444">🔍</tg-emoji>
   ru: |-
-    🎵 %{track_name}
+    <tg-emoji emoji-id="5188621441926438751">🎵</tg-emoji> %{track_name}
     Альбом: %{album_name}
 
-    ⏳ Ждите завершения анализа 🔍
+    <tg-emoji emoji-id="5451646226975955576">⏳</tg-emoji> Ждите завершения анализа <tg-emoji emoji-id="5188217332748527444">🔍</tg-emoji>
 
 analysis.failed:
   en: |-

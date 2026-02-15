@@ -1,13 +1,13 @@
 use chrono::Duration;
-use deadpool_redis::redis::AsyncCommands;
+use deadpool_redis::redis::AsyncCommands as _;
 use sea_orm::prelude::*;
 use sea_orm::sea_query::{Alias, Expr, Func};
 use sea_orm::{
     ConnectionTrait,
     FromQueryResult,
     Order,
-    QueryOrder,
-    QuerySelect,
+    QueryOrder as _,
+    QuerySelect as _,
     Set,
     UpdateMany,
     UpdateResult,

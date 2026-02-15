@@ -2,19 +2,19 @@ _version: 2
 
 command.not-found:
   en: |-
-    ❓ Command <code>%{command}</code> not found.
+    <tg-emoji emoji-id="5348337458754894202">❓</tg-emoji> Command <code>%{command}</code> not found.
 
-    📋 There are commands available to you:
+    <tg-emoji emoji-id="5424780918776671920">📋</tg-emoji> There are commands available to you:
   ru: |-
-    ❓ Команда <code>%{command}</code> не найдена.
+    <tg-emoji emoji-id="5348337458754894202">❓</tg-emoji> Команда <code>%{command}</code> не найдена.
 
-    📋 Вам доступны следующие команды:
+    <tg-emoji emoji-id="5424780918776671920">📋</tg-emoji> Вам доступны следующие команды:
 
 command.available-header:
   en: |-
-    📋 Commands available to you:
+    <tg-emoji emoji-id="5424780918776671920">📋</tg-emoji> Commands available to you:
   ru: |-
-    📋 Доступные вам команды:
+    <tg-emoji emoji-id="5424780918776671920">📋</tg-emoji> Доступные вам команды:
 
 command.help:
   en: |-

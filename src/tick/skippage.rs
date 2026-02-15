@@ -1,5 +1,5 @@
-use anyhow::Context;
-use rspotify::clients::OAuthClient;
+use anyhow::Context as _;
+use rspotify::clients::OAuthClient as _;
 
 use crate::app::App;
 use crate::services::SkippageService;

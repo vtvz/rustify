@@ -1,8 +1,7 @@
 use std::sync::LazyLock;
 use std::time::Duration;
 
-use backon::{ExponentialBuilder, Retryable};
-use cached::proc_macro::io_cached;
+use backon::{ExponentialBuilder, Retryable as _};
 use indoc::formatdoc;
 use isolang::Language;
 use itertools::Itertools as _;
@@ -106,32 +105,6 @@ impl LrcLib {
     pub async fn search_for_track(
         &self,
         track: &ShortTrack,
-    ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
-        #[io_cached(
-            map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.id().into() }"#,
-            ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
-            create = r##" {
-                let prefix = module_path!().split("::").last().expect("Will be");
-                super::LyricsCacheManager::redis_cached_build(prefix).await.expect("Redis cache should build")
-            } "##
-        )]
-        async fn search_for_track_middleware(
-            lrclib: &LrcLib,
-            track: &ShortTrack,
-        ) -> anyhow::Result<Option<SearchResult>> {
-            LrcLib::search_for_track_internal(lrclib, track).await
-        }
-
-        // this weird construction required to make `cached` work
-        search_for_track_middleware(self, track)
-            .await
-            .map(|res| res.map(|opt| Box::new(opt) as _))
-    }
-
-    async fn search_for_track_internal(
-        &self,
-        track: &ShortTrack,
     ) -> anyhow::Result<Option<SearchResult>> {
         let artist_name = track.first_artist_name();
 
@@ -172,8 +145,8 @@ impl LrcLib {
                             .enumerate()
                             .map(|(index, line)| {
                                 RE.captures(line).map_or_else(
-                                    || (index.to_string(), line.to_string()),
-                                    |caps| (caps[1].to_string(), caps[2].trim().to_string()),
+                                    || (index.to_string(), line.to_owned()),
+                                    |caps| (caps[1].to_string(), caps[2].trim().to_owned()),
                                 )
                             })
                             .collect()
@@ -181,7 +154,7 @@ impl LrcLib {
                     (_, Some(lyrics)) => lyrics
                         .lines()
                         .enumerate()
-                        .map(|(index, line)| (index.to_string(), line.to_string()))
+                        .map(|(index, line)| (index.to_string(), line.to_owned()))
                         .collect_vec(),
                     _ => continue,
                 };

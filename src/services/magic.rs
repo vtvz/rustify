@@ -1,5 +1,5 @@
 use chrono::Duration;
-use deadpool_redis::redis::AsyncCommands;
+use deadpool_redis::redis::AsyncCommands as _;
 
 pub struct MagicService {}
 

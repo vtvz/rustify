@@ -2,14 +2,13 @@ use anyhow::Context as _;
 use axum::Router;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Redirect, Response};
+use axum::response::{IntoResponse as _, Redirect, Response};
 use axum::routing::get;
-use rspotify::clients::OAuthClient;
-use sea_orm::TransactionTrait;
+use rspotify::clients::OAuthClient as _;
+use sea_orm::TransactionTrait as _;
 use serde::Deserialize;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
-use teloxide::types::{ChatId, ParseMode};
 
 use crate as rustify;
 use crate::app::App;
@@ -84,7 +83,7 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
 
     app.bot()
         .send_message(
-            ChatId(state.user_id().parse()?),
+            state.chat_id()?,
             t!(
                 "login.success",
                 magic_command = UserCommandDisplay::Magic,
@@ -94,7 +93,6 @@ async fn process_callback(app: &'static App, params: CallbackParams) -> anyhow::
                 locale = state.locale()
             ),
         )
-        .parse_mode(ParseMode::Html)
         .reply_markup(StartKeyboard::markup(state.locale()))
         .await?;
 

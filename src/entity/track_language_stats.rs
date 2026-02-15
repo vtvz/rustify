@@ -73,23 +73,17 @@ impl ColumnTrait for Column {
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::prelude::UserEntity",
+        from = "Column::UserId",
+        to = "super::prelude::UserColumn::Id"
+    )]
     User,
 }
 
-impl RelationTrait for Relation {
-    fn def(&self) -> RelationDef {
-        match self {
-            Self::User => Entity::belongs_to(super::user::Entity)
-                .from(Column::UserId)
-                .to(super::user::Column::Id)
-                .into(),
-        }
-    }
-}
-
-impl Related<super::user::Entity> for Entity {
+impl Related<super::prelude::UserEntity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
     }

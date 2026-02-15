@@ -80,14 +80,14 @@ impl ColumnTrait for Column {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::user::Entity",
+        belongs_to = "super::prelude::UserEntity",
         from = "Column::UserId",
-        to = "super::user::Column::Id"
+        to = "super::prelude::UserColumn::Id"
     )]
     User,
 }
 
-impl Related<super::user::Entity> for Entity {
+impl Related<super::prelude::UserEntity> for Entity {
     fn to() -> RelationDef {
         Relation::User.def()
     }

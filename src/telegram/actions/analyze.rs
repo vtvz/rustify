@@ -2,15 +2,20 @@ use async_openai::types::chat::{
     ChatCompletionRequestUserMessage,
     CreateChatCompletionRequestArgs,
 };
-use backon::{ExponentialBuilder, Retryable};
-use itertools::Itertools;
+use backon::{ExponentialBuilder, Retryable as _};
+use itertools::Itertools as _;
 use rspotify::model::TrackId;
-use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
+use teloxide::payloads::{
+    AnswerCallbackQuerySetters as _,
+    EditMessageTextSetters as _,
+    SendMessageSetters as _,
+};
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, Message, ParseMode};
+use teloxide::types::{CallbackQuery, InlineKeyboardMarkup};
 
 use crate::app::{AIConfig, App};
+use crate::lyrics::SearchResult as _;
 use crate::profanity;
 use crate::services::{
     RateLimitAction,
@@ -27,7 +32,7 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::teloxide::CallbackQueryExt as _;
-use crate::utils::{DurationPrettyFormat, StringUtils};
+use crate::utils::{DurationPrettyFormat as _, StringUtils as _};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), %track_id))]
 pub async fn handle_inline(
@@ -49,6 +54,7 @@ pub async fn handle_inline(
         app.bot()
             .answer_callback_query(q.id)
             .text(t!("analysis.disabled", locale = state.locale()))
+            .show_alert(true)
             .await?;
 
         return Ok(());
@@ -67,6 +73,7 @@ pub async fn handle_inline(
                 duration = duration.pretty_format(),
                 locale = state.locale()
             ))
+            .show_alert(true)
             .await?;
 
         return Ok(());
@@ -78,7 +85,11 @@ pub async fn handle_inline(
         .short_track_cached(&mut redis_conn, TrackId::from_id(track_id)?)
         .await?;
 
-    let Some(hit) = app.lyrics().search_for_track(&track).await? else {
+    let Some(hit) = app
+        .lyrics()
+        .search_for_track(&mut redis_conn, &track)
+        .await?
+    else {
         app.bot()
             .edit_text(
                 &message,
@@ -100,10 +111,12 @@ pub async fn handle_inline(
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
-    let res = perform(app, state, &message, config, &track, &hit.lyrics()).await;
+    let res = perform(app, state, config, &track, &hit.lyrics()).await;
+
+    // I don't care about error
+    app.bot().delete(&message).await.ok();
 
     match res {
         Ok(()) => {
@@ -114,8 +127,8 @@ pub async fn handle_inline(
         },
         Err(err) => {
             app.bot()
-                .edit_text(
-                    &message,
+                .send_message(
+                    state.chat_id()?,
                     t!(
                         "analysis.failed",
                         locale = state.locale(),
@@ -128,7 +141,6 @@ pub async fn handle_inline(
                     InlineButtons::Analyze(track.id().into())
                         .into_inline_keyboard_button(state.locale()),
                 ]]))
-                .parse_mode(ParseMode::Html)
                 .await?;
 
             tracing::warn!(err = ?err, "OpenAI request failed");
@@ -145,7 +157,6 @@ pub async fn handle_inline(
 async fn perform(
     app: &App,
     state: &UserState,
-    message: &Message,
     config: &AIConfig,
     track: &ShortTrack,
     lyrics: &[&str],
@@ -238,9 +249,8 @@ async fn perform(
     }
 
     app.bot()
-        .edit_text(message, text)
+        .send_message(state.chat_id()?, text)
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .await?;
 

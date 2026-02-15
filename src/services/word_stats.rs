@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use itertools::Itertools as _;
 use sea_orm::ActiveValue::Set;
 use sea_orm::prelude::Expr;
 use sea_orm::sea_query::{Alias, OnConflict};
@@ -7,7 +7,7 @@ use sea_orm::{
     ConnectionTrait,
     EntityTrait as _,
     PaginatorTrait as _,
-    QueryFilter,
+    QueryFilter as _,
     QueryOrder as _,
     QuerySelect as _,
 };
@@ -163,7 +163,7 @@ impl WordStatsService {
 
             let with_stats = StatsWithDefinition {
                 word: stat.word.clone(),
-                locale: locale.to_string(),
+                locale: locale.to_owned(),
                 definition,
                 check_occurrences: stat.check_occurrences,
                 details_occurrences: stat.details_occurrences,

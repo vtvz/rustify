@@ -1,12 +1,14 @@
 use anyhow::Context as _;
-use apalis::prelude::{Data, TaskSink};
+use apalis::prelude::{Data, TaskSink as _};
 use isolang::Language;
+use itertools::Itertools as _;
 use rustrict::Type;
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, InlineKeyboardMarkup, ParseMode, ReplyMarkup};
+use teloxide::types::{InlineKeyboardMarkup, ReplyMarkup};
 
 use crate::app::App;
 use crate::infrastructure::error_handler;
+use crate::lyrics::SearchResult as _;
 use crate::services::{
     TrackLanguageStatsService,
     UserService,
@@ -17,7 +19,7 @@ use crate::spotify::ShortTrack;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::StringUtils;
+use crate::utils::StringUtils as _;
 use crate::{lyrics, profanity, telegram};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -109,7 +111,11 @@ pub async fn check(
 ) -> anyhow::Result<CheckBadWordsResult> {
     let mut ret = CheckBadWordsResult::default();
 
-    let Some(hit) = app.lyrics().search_for_track(track).await? else {
+    let Some(hit) = app
+        .lyrics()
+        .search_for_track(&mut app.redis_conn().await?, track)
+        .await?
+    else {
         if let Err(err) =
             TrackLanguageStatsService::increase_count(app.db(), None, state.user_id()).await
         {
@@ -156,10 +162,9 @@ pub async fn check(
         })
         .map(|line: &profanity::LineResult| {
             format!(
-                "<code>{}:</code> {}, <code>[{}]</code>",
+                "<code>{}:</code> {}",
                 hit.line_index_name(line.no),
                 line.highlighted(),
-                line.typ
             )
         })
         .collect();
@@ -176,7 +181,7 @@ pub async fn check(
             "profanity-check.message",
             locale = state.locale(),
             track_name = track.track_tg_link(),
-            bad_lines = bad_lines[0..lines].join("\n"),
+            bad_lines = bad_lines.iter().take(lines).join("\n"),
             lyrics_link = hit.link().trim(),
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
         );
@@ -201,8 +206,7 @@ pub async fn check(
 
     let result: Result<Message, teloxide::RequestError> = app
         .bot()
-        .send_message(ChatId(state.user_id().parse()?), text)
-        .parse_mode(ParseMode::Html)
+        .send_message(state.chat_id()?, text)
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,

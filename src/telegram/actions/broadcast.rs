@@ -1,7 +1,6 @@
-use backon::{ExponentialBuilder, Retryable};
+use backon::{ExponentialBuilder, Retryable as _};
 use indoc::formatdoc;
 use teloxide::prelude::*;
-use teloxide::types::ParseMode;
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -61,11 +60,7 @@ pub async fn handle(
 
     let message = formatdoc!("Sent to {sent} users. Errors {errors}");
 
-    app.bot()
-        .send_message(m.chat.id, message)
-        .parse_mode(ParseMode::Html)
-        .send()
-        .await?;
+    app.bot().send_message(m.chat.id, message).await?;
 
     Ok(HandleStatus::Handled)
 }

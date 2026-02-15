@@ -1,5 +1,6 @@
 use teloxide::prelude::*;
-use teloxide::types::{ChatId, ParseMode, User};
+use teloxide::types::{ChatId, User};
+use teloxide::utils::html;
 
 use crate::app::App;
 use crate::entity::prelude::*;
@@ -14,12 +15,7 @@ impl NotificationService {
         for admin in admins {
             let chat_id = ChatId(admin.id.parse()?);
 
-            if let Err(err) = app
-                .bot()
-                .send_message(chat_id, text)
-                .parse_mode(ParseMode::Html)
-                .await
-            {
+            if let Err(err) = app.bot().send_message(chat_id, text).await {
                 tracing::warn!(
                     admin_id = %admin.id,
                     error = ?err,
@@ -36,24 +32,24 @@ impl NotificationService {
         user: Option<&User>,
         ref_code: Option<String>,
     ) -> anyhow::Result<()> {
-        let user = user
-            .map_or("Unknown".into(), |user| {
-                format!(
-                    "<code>{id}</code> <a href=\"tg://user?id={id}\">link</a> {name} {surname} {username}\nRef Code: {ref_code}",
-                    id = user.id,
-                    name = user.first_name,
-                    surname = user.last_name.as_deref().unwrap_or_default(),
-                    username = user
-                        .username
-                        .as_deref()
-                        .map(|username| format!("(@{username})"))
-                        .unwrap_or_default(),
-                    ref_code = ref_code
-                        .map_or("<i>None</i>".into(), |text| format!("<code>{text}</code>")),
-                )
-                .trim()
-                .to_string()
-            });
+        let user = user.map_or("Unknown".into(), |user| {
+            format!(
+                "<code>{id}</code> {link} {name} {surname} {username}\nRef Code: {ref_code}",
+                id = user.id,
+                link = html::user_mention(user.id, "link"),
+                name = html::escape(&user.first_name),
+                surname = user
+                    .last_name
+                    .as_ref()
+                    .map(|n| html::escape(n))
+                    .as_deref()
+                    .unwrap_or_default(),
+                username = user.mention().unwrap_or_default(),
+                ref_code = ref_code.map_or("<i>None</i>".into(), |text| html::code_inline(&text)),
+            )
+            .trim()
+            .to_owned()
+        });
 
         let message = format!("🆕 <b>New user joined</b>\n\n{user}");
 
@@ -67,7 +63,7 @@ impl NotificationService {
         let message = format!(
             "✅ <b>User connected Spotify</b>\n\nName: {name}\nID: <code>{id}</code> <a href=\"tg://user?id={id}\">link</a>",
             id = user.id,
-            name = user.name
+            name = html::escape(&user.name)
         );
 
         Self::notify_admins(app, &message).await

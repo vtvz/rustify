@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use influxdb::Query;
+use influxdb::Query as _;
 use reqwest::{Response, header};
 
 pub struct InfluxClient {

@@ -1,9 +1,9 @@
-use itertools::Itertools;
+use itertools::Itertools as _;
 use rspotify::model::TrackId;
 use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{CallbackQuery, ParseMode};
+use teloxide::types::CallbackQuery;
 
 use crate::app::App;
 use crate::telegram::utils::link_preview_small_top;
@@ -45,7 +45,6 @@ pub async fn handle_inline(
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     let res = app.song_link().get(&track).await?;
@@ -69,7 +68,6 @@ pub async fn handle_inline(
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     Ok(())

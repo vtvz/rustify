@@ -12,7 +12,6 @@ apalis = { version = "1.0.0-rc.2", features = ["timeout"] }
 apalis-redis = "1.0.0-rc.2"
 backon = "1.6.0"
 # base64 = "0.22.1"
-cached = { version = "0.56.0", features = ["async", "redis_tokio"] }
 chrono = "0.4.42"
 clap = { version = "4.5.53", features = ["derive"] }
 convert_case = "0.10.0"
@@ -96,3 +95,6 @@ unnecessary_literal_bound = "allow"
 match_same_arms = "allow"
 struct_excessive_bools = "allow"
 too_many_lines = "allow"
+
+unused_trait_names = "warn"
+str_to_string = "warn"

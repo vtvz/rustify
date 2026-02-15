@@ -3,7 +3,6 @@
 use std::time::Duration;
 
 use anyhow::anyhow;
-use cached::proc_macro::io_cached;
 use indoc::formatdoc;
 use isolang::Language;
 use reqwest::{Client, ClientBuilder, StatusCode};
@@ -104,32 +103,6 @@ impl GeniusLocal {
     pub async fn search_for_track(
         &self,
         track: &ShortTrack,
-    ) -> anyhow::Result<Option<Box<dyn super::SearchResult + Send + Sync>>> {
-        #[io_cached(
-            map_error = r##"|e| anyhow::Error::from(e) "##,
-            convert = r#"{ track.id().into() }"#,
-            ty = "cached::AsyncRedisCache<String, Option<SearchResult>>",
-            create = r##" {
-                let prefix = module_path!().split("::").last().expect("Will be");
-                super::LyricsCacheManager::redis_cached_build(prefix).await.expect("Redis cache should build")
-            } "##
-        )]
-        async fn search_for_track_middleware(
-            genius: &GeniusLocal,
-            track: &ShortTrack,
-        ) -> anyhow::Result<Option<SearchResult>> {
-            GeniusLocal::search_for_track_internal(genius, track).await
-        }
-
-        // this weird construction required to make `cached` work
-        search_for_track_middleware(self, track)
-            .await
-            .map(|res| res.map(|opt| Box::new(opt) as _))
-    }
-
-    async fn search_for_track_internal(
-        &self,
-        track: &ShortTrack,
     ) -> anyhow::Result<Option<SearchResult>> {
         let res = self.find_best_fit_entry(track).await?;
 
@@ -187,11 +160,7 @@ impl GeniusLocal {
 
             hits_count += hits.len();
             for (hit_i, hit) in hits.into_iter().enumerate() {
-                let title = hit
-                    .full_title
-                    .replace(is_whitespace, " ")
-                    .trim()
-                    .to_string();
+                let title = hit.full_title.replace(is_whitespace, " ").trim().to_owned();
 
                 let confidence = SearchResultConfidence::new(
                     normalized_damerau_levenshtein(

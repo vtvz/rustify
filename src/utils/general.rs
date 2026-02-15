@@ -3,7 +3,7 @@ use std::sync::LazyLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use chrono::{NaiveDateTime, SubsecRound, Utc};
+use chrono::{NaiveDateTime, SubsecRound as _, Utc};
 use tokio::sync::{RwLock, broadcast};
 use tokio::time::Instant;
 

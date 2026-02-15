@@ -1,7 +1,7 @@
 use itertools::Itertools as _;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
-use teloxide::types::{ChatId, ParseMode};
+use teloxide::types::ChatId;
 
 use crate::app::App;
 use crate::services::UserWordWhitelistService;
@@ -9,7 +9,7 @@ use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::keyboards::StartKeyboard;
 use crate::user::UserState;
-use crate::utils::StringUtils;
+use crate::utils::StringUtils as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle_add_word(
@@ -53,7 +53,6 @@ pub async fn handle_add_word(
         app.bot()
             .send_message(chat_id, text)
             .reply_markup(StartKeyboard::markup(state.locale()))
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -61,7 +60,7 @@ pub async fn handle_add_word(
 
     let added = UserWordWhitelistService::add_ok_word_for_user(
         app.db(),
-        state.user_id().to_string(),
+        state.user_id().to_owned(),
         word.clone(),
     )
     .await?;
@@ -85,7 +84,6 @@ pub async fn handle_add_word(
     app.bot()
         .send_message(chat_id, text)
         .reply_markup(StartKeyboard::markup(state.locale()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     Ok(HandleStatus::Handled)
@@ -108,7 +106,6 @@ pub async fn handle_remove_word(
         app.bot()
             .send_message(chat_id, text)
             .reply_markup(StartKeyboard::markup(state.locale()))
-            .parse_mode(ParseMode::Html)
             .await?;
 
         return Ok(HandleStatus::Handled);
@@ -135,7 +132,6 @@ pub async fn handle_remove_word(
     app.bot()
         .send_message(chat_id, text)
         .reply_markup(StartKeyboard::markup(state.locale()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     Ok(HandleStatus::Handled)
@@ -174,7 +170,6 @@ pub async fn handle_list_words(
     app.bot()
         .send_message(chat_id, text.trim())
         .reply_markup(StartKeyboard::markup(state.locale()))
-        .parse_mode(ParseMode::Html)
         .await?;
 
     Ok(HandleStatus::Handled)

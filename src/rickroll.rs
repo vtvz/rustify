@@ -1,7 +1,7 @@
 use chrono::Duration;
-use deadpool_redis::redis::AsyncCommands;
+use deadpool_redis::redis::AsyncCommands as _;
 use rspotify::model::TrackId;
-use rspotify::prelude::OAuthClient;
+use rspotify::prelude::OAuthClient as _;
 
 use crate::app::App;
 use crate::user::UserState;
