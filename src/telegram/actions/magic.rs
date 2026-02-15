@@ -177,14 +177,17 @@ async fn generate_playlist(
             .unwrap_or_else(|| "none".into()),
     )
     .await?;
+
     UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id().id()).await?;
+
+    let spotify = state.spotify().await;
+
     for chunk in track_ids.chunks(100) {
-        state
-            .spotify()
-            .await
+        spotify
             .playlist_add_items(playlist.id().clone(), chunk.iter().cloned(), None)
             .await?;
     }
+
     Ok(playlist)
 }
 
