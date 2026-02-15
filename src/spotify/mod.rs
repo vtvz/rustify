@@ -57,8 +57,7 @@ impl From<FullPlaylist> for ShortPlaylist {
                 .get("spotify")
                 .cloned()
                 .unwrap_or_else(|| {
-                    "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b"
-                        .into()
+                    "https://open.spotify.com/playlist/37i9dQZF1DZ06evO05tE88".into()
                 }),
         }
     }
@@ -73,8 +72,7 @@ impl From<SimplifiedPlaylist> for ShortPlaylist {
                 .get("spotify")
                 .cloned()
                 .unwrap_or_else(|| {
-                    "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b"
-                        .into()
+                    "https://open.spotify.com/playlist/37i9dQZF1DZ06evO05tE88".into()
                 }),
         }
     }
