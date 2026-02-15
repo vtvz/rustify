@@ -67,9 +67,10 @@ impl InfluxClient {
 
     pub async fn write<I>(&self, queries: I) -> anyhow::Result<Response>
     where
-        I: Iterator<Item = influxdb::WriteQuery>,
+        I: IntoIterator<Item = influxdb::WriteQuery>,
     {
         let queries: Vec<_> = queries
+            .into_iter()
             .map(|query| {
                 query
                     .add_tag("app", "rustify")

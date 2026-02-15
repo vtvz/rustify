@@ -175,9 +175,10 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
         status = user.status,
         role = user.role,
         locale = user.locale,
-        ref_code = user
-            .ref_code
-            .map_or("<i>None</i>".into(), |code| format!("<code>{code}</code>")),
+        ref_code = user.ref_code.map_or_else(
+            || "<i>None</i>".into(),
+            |code| format!("<code>{code}</code>")
+        ),
         created_at = user.created_at.format("%Y-%m-%d %H:%M:%S"),
         updated_at = user.updated_at.format("%Y-%m-%d %H:%M:%S"),
         check_profanity = render_bool(user.cfg_check_profanity),
@@ -187,7 +188,7 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
         magic_playlist = user.magic_playlist.as_deref().unwrap_or("Not set"),
         last_activity = last_activity.format("%Y-%m-%d %H:%M:%S"),
         idle_duration = idle_duration.pretty_format(),
-        suspend_time = suspend_time.map_or("Inactive".into(), |time| time.pretty_format()),
+        suspend_time = suspend_time.map_or_else(|| "Inactive".into(), |time| time.pretty_format()),
         removed_playlists = stats.removed_playlists,
         removed_collection = stats.removed_collection,
         lyrics_checked = stats.lyrics_checked,

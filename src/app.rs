@@ -293,7 +293,10 @@ fn init_ai(env: &EnvConfig) -> anyhow::Result<Option<AIConfig>> {
 
     let config = AIConfig {
         openai_client,
-        model: env.openai_api_model.clone().unwrap_or("gpt-4o".into()),
+        model: env
+            .openai_api_model
+            .clone()
+            .unwrap_or_else(|| "gpt-4o".into()),
     };
 
     Ok(Some(config))
@@ -347,7 +350,9 @@ impl App {
             ai,
             song_link,
             dialogue_storage: TeloxideRedisStorage::open(redis_url, Bincode).await?,
-            server_http_address: env.server_http_address.unwrap_or("0.0.0.0:3000".into()),
+            server_http_address: env
+                .server_http_address
+                .unwrap_or_else(|| "0.0.0.0:3000".into()),
             queue_manager,
         });
 

@@ -84,33 +84,34 @@ impl UserCommand {
 
         let entry = { CACHE.read().expect("Lock is poisoned").get(locale).copied() };
 
-        if let Some(descriptions) = entry {
-            CommandDescriptions::new(descriptions)
-        } else {
-            let descriptions: Vec<_> = Self::bot_commands()
-                .into_iter()
-                .map(|command| {
-                    let description = t!(&command.description, locale = locale);
-                    let command_str = Box::leak(command.command.into_boxed_str());
-                    let description_str = Box::leak(description.to_string().into_boxed_str());
-                    CommandDescription {
-                        prefix: "",
-                        command: command_str,
-                        aliases: &[],
-                        description: description_str,
-                    }
-                })
-                .collect();
+        entry.map_or_else(
+            || {
+                let descriptions: Vec<_> = Self::bot_commands()
+                    .into_iter()
+                    .map(|command| {
+                        let description = t!(&command.description, locale = locale);
+                        let command_str = Box::leak(command.command.into_boxed_str());
+                        let description_str = Box::leak(description.to_string().into_boxed_str());
+                        CommandDescription {
+                            prefix: "",
+                            command: command_str,
+                            aliases: &[],
+                            description: description_str,
+                        }
+                    })
+                    .collect();
 
-            let descriptions_static = Box::leak(descriptions.into_boxed_slice());
+                let descriptions_static = Box::leak(descriptions.into_boxed_slice());
 
-            CACHE
-                .write()
-                .expect("Lock is poisoned")
-                .insert(locale.into(), descriptions_static);
+                CACHE
+                    .write()
+                    .expect("Lock is poisoned")
+                    .insert(locale.into(), descriptions_static);
 
-            CommandDescriptions::new(descriptions_static)
-        }
+                CommandDescriptions::new(descriptions_static)
+            },
+            CommandDescriptions::new,
+        )
     }
 }
 

@@ -3,12 +3,12 @@ use std::env;
 fn emit_git() {
     println!(
         "cargo:rustc-env=GIT_COMMIT_TIMESTAMP={}",
-        env::var("GIT_COMMIT_TIMESTAMP").unwrap_or("<unknown>".into())
+        env::var("GIT_COMMIT_TIMESTAMP").unwrap_or_else(|_| "<unknown>".into())
     );
 
     println!(
         "cargo:rustc-env=GIT_SHA={}",
-        env::var("GIT_SHA").unwrap_or("<unknown>".into())
+        env::var("GIT_SHA").unwrap_or_else(|_| "<unknown>".into())
     );
 }
 

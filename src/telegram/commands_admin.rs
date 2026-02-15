@@ -44,14 +44,14 @@ pub enum AdminCommandDisplay {
 impl std::fmt::Display for AdminCommandDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let string = match self {
-            AdminCommandDisplay::Admin => "admin",
-            AdminCommandDisplay::GlobalStats => "global_stats",
-            AdminCommandDisplay::Broadcast => "broadcast",
-            AdminCommandDisplay::GetWordDefinition => "get_word_definition",
-            AdminCommandDisplay::ResetWordDefinition => "reset_word_definition",
-            AdminCommandDisplay::ListWordDefinitions => "list_word_definitions",
-            AdminCommandDisplay::Users => "users",
-            AdminCommandDisplay::BuildInfo => "build_info",
+            Self::Admin => "admin",
+            Self::GlobalStats => "global_stats",
+            Self::Broadcast => "broadcast",
+            Self::GetWordDefinition => "get_word_definition",
+            Self::ResetWordDefinition => "reset_word_definition",
+            Self::ListWordDefinitions => "list_word_definitions",
+            Self::Users => "users",
+            Self::BuildInfo => "build_info",
         };
 
         f.write_str(string)

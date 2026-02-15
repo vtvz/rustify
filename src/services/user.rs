@@ -148,7 +148,7 @@ impl UserService {
         // TODO: move somewhere else
         let default_ttl = Duration::hours(24).num_seconds() as u64;
         let ttl: u64 = dotenv::var("LAST_PLAYED_TTL")
-            .unwrap_or(default_ttl.to_string())
+            .unwrap_or_else(|_| default_ttl.to_string())
             .parse()
             .unwrap_or(default_ttl);
 

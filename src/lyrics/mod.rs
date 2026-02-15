@@ -46,9 +46,9 @@ impl SearchResultData {
     #[must_use]
     pub fn as_search_result(&self) -> &dyn SearchResult {
         match self {
-            SearchResultData::Musixmatch(result) => result,
-            SearchResultData::Genius(result) => result,
-            SearchResultData::LrcLib(result) => result,
+            Self::Musixmatch(result) => result,
+            Self::Genius(result) => result,
+            Self::LrcLib(result) => result,
         }
     }
 }

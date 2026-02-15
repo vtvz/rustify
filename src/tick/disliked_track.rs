@@ -23,9 +23,9 @@ pub async fn handle(
     context: Option<&SpotifyContext>,
 ) -> anyhow::Result<()> {
     if state.is_spotify_premium().await? {
-        let spotify = state.spotify().await;
-
-        spotify
+        state
+            .spotify()
+            .await
             .next_track(None)
             .await
             .context("Skip current track")?;
@@ -40,7 +40,9 @@ pub async fn handle(
             SpotifyType::Playlist => {
                 let hate: Option<PlayableId> = Some(track.raw_id().clone().into());
 
-                let res = spotify
+                let res = state
+                    .spotify()
+                    .await
                     .playlist_remove_all_occurrences_of_items(
                         PlaylistId::from_id_or_uri(&context.uri)?,
                         hate,
@@ -58,7 +60,9 @@ pub async fn handle(
             },
 
             SpotifyType::Collection => {
-                spotify
+                state
+                    .spotify()
+                    .await
                     .current_user_saved_tracks_delete(Some(track.raw_id().clone()))
                     .await?;
 

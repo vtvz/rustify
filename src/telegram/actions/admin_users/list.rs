@@ -103,7 +103,7 @@ pub async fn build_users_page(
         Sorted by: <code>{sort_by:?} {sort_order:?}</code> | Filter: <code>{status}</code>
         ",
         page = page + 1,
-        status = status_filter.map_or("All".into(), |status| format!("{status:?}")),
+        status = status_filter.map_or_else(|| "All".into(), |status| format!("{status:?}")),
     )];
 
     if users.is_empty() {
@@ -231,12 +231,15 @@ fn create_pages_keyboard(
     // - If no filter (None): start with first status
     // - If filtered by a status: skip to current status, then take the next one
     // - If at the end: wrap around to None (showing all users)
-    let next_filter = match status_filter {
-        None => UserStatus::iter().next(),
-        Some(current_status) => UserStatus::iter()
-            .skip_while(|&s| s != current_status)
-            .nth(1),
-    };
+
+    let next_filter = status_filter.map_or_else(
+        || UserStatus::iter().next(),
+        |current_status| {
+            UserStatus::iter()
+                .skip_while(|&s| s != current_status)
+                .nth(1)
+        },
+    );
 
     rows.push(vec![
         AdminInlineButtons::AdminUsersPage {

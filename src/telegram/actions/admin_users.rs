@@ -13,8 +13,8 @@ use crate::user::UserState;
 impl From<AdminUsersSortBy> for UserColumn {
     fn from(sort: AdminUsersSortBy) -> Self {
         match sort {
-            AdminUsersSortBy::CreatedAt => UserColumn::CreatedAt,
-            AdminUsersSortBy::LyricsChecked => UserColumn::LyricsChecked,
+            AdminUsersSortBy::CreatedAt => Self::CreatedAt,
+            AdminUsersSortBy::LyricsChecked => Self::LyricsChecked,
         }
     }
 }
@@ -22,8 +22,8 @@ impl From<AdminUsersSortBy> for UserColumn {
 impl From<AdminUsersSortOrder> for Order {
     fn from(order: AdminUsersSortOrder) -> Self {
         match order {
-            AdminUsersSortOrder::Asc => Order::Asc,
-            AdminUsersSortOrder::Desc => Order::Desc,
+            AdminUsersSortOrder::Asc => Self::Asc,
+            AdminUsersSortOrder::Desc => Self::Desc,
         }
     }
 }

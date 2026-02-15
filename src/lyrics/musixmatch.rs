@@ -41,11 +41,10 @@ impl super::SearchResult for Lyrics {
     }
 
     fn lyrics(&self) -> Vec<&str> {
-        if let Some(subtitle) = &self.subtitle {
-            subtitle.iter().map(|(_, text)| text.as_str()).collect()
-        } else {
-            self.lyrics.iter().map(String::as_str).collect()
-        }
+        self.subtitle.as_ref().map_or_else(
+            || self.lyrics.iter().map(String::as_str).collect(),
+            |subtitle| subtitle.iter().map(|(_, text)| text.as_str()).collect(),
+        )
     }
 
     fn link(&self) -> String {

@@ -52,9 +52,14 @@ impl From<FullPlaylist> for ShortPlaylist {
     fn from(value: FullPlaylist) -> Self {
         Self {
             id: value.id,
-            url: value.external_urls.get("spotify").cloned().unwrap_or(
-                "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b".into(),
-            ),
+            url: value
+                .external_urls
+                .get("spotify")
+                .cloned()
+                .unwrap_or_else(|| {
+                    "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b"
+                        .into()
+                }),
         }
     }
 }
@@ -63,9 +68,14 @@ impl From<SimplifiedPlaylist> for ShortPlaylist {
     fn from(value: SimplifiedPlaylist) -> Self {
         Self {
             id: value.id,
-            url: value.external_urls.get("spotify").cloned().unwrap_or(
-                "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b".into(),
-            ),
+            url: value
+                .external_urls
+                .get("spotify")
+                .cloned()
+                .unwrap_or_else(|| {
+                    "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT?si=23c50743cbd5462b"
+                        .into()
+                }),
         }
     }
 }
@@ -88,7 +98,7 @@ impl ShortTrack {
         Self {
             id: full_track
                 .id
-                .unwrap_or(TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8").expect("Valid ID")),
+                .unwrap_or_else(|| TrackId::from_id("4PTG3Z6ehGkBFwjybzWkR8").expect("Valid ID")),
             name: full_track.name,
 
             duration_secs: full_track.duration.num_seconds(),
@@ -109,14 +119,14 @@ impl ShortTrack {
                 .external_urls
                 .get("spotify")
                 .cloned()
-                .unwrap_or("https://vtvz.me/".into()),
+                .unwrap_or_else(|| "https://vtvz.me/".into()),
 
             album_url: full_track
                 .album
                 .external_urls
                 .get("spotify")
                 .cloned()
-                .unwrap_or("https://vtvz.me/".into()),
+                .unwrap_or_else(|| "https://vtvz.me/".into()),
 
             album_name: full_track.album.name,
         }
@@ -208,7 +218,7 @@ impl ShortTrack {
 
 impl From<FullTrack> for ShortTrack {
     fn from(value: FullTrack) -> Self {
-        ShortTrack::new(value)
+        Self::new(value)
     }
 }
 
@@ -248,7 +258,7 @@ pub enum CurrentlyPlaying {
 
 impl From<ClientError> for CurrentlyPlaying {
     fn from(err: ClientError) -> Self {
-        CurrentlyPlaying::Err(err)
+        Self::Err(err)
     }
 }
 

@@ -18,12 +18,12 @@ pub enum RateLimitAction {
 impl RateLimitAction {
     fn config(&self) -> (&str, u32, Duration) {
         match self {
-            RateLimitAction::Analyze => ("analyze", 1, Duration::minutes(5)),
-            RateLimitAction::Details => ("details", 1, Duration::seconds(15)),
-            RateLimitAction::Dislike => ("dislike", 2, Duration::seconds(20)),
-            RateLimitAction::Like => ("like", 1, Duration::seconds(10)),
-            RateLimitAction::Recommendasion => ("recommendasion", 1, Duration::hours(1)),
-            RateLimitAction::Magic => ("magic", 1, Duration::hours(6)),
+            Self::Analyze => ("analyze", 1, Duration::minutes(5)),
+            Self::Details => ("details", 1, Duration::seconds(15)),
+            Self::Dislike => ("dislike", 2, Duration::seconds(20)),
+            Self::Like => ("like", 1, Duration::seconds(10)),
+            Self::Recommendasion => ("recommendasion", 1, Duration::hours(1)),
+            Self::Magic => ("magic", 1, Duration::hours(6)),
         }
     }
 }
