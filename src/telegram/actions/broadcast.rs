@@ -60,7 +60,7 @@ pub async fn handle(
 
     let message = formatdoc!("Sent to {sent} users. Errors {errors}");
 
-    app.bot().send_message(m.chat.id, message).send().await?;
+    app.bot().send_message(m.chat.id, message).await?;
 
     Ok(HandleStatus::Handled)
 }
