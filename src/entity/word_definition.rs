@@ -43,7 +43,20 @@ impl PrimaryKeyTrait for PrimaryKey {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::prelude::WordStatsEntity",
+        from = "Column::Word",
+        to = "super::prelude::WordStatsColumn::Word"
+    )]
+    WordStats,
+}
+
+impl Related<super::prelude::WordStatsEntity> for Entity {
+    fn to() -> RelationDef {
+        Relation::WordStats.def()
+    }
+}
 
 impl ColumnTrait for Column {
     type EntityName = Entity;

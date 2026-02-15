@@ -135,13 +135,37 @@ impl ColumnTrait for Column {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_one = "super::spotify_auth::Entity")]
+    #[sea_orm(has_one = "super::prelude::SpotifyAuthEntity")]
     SpotifyAuth,
+    #[sea_orm(has_many = "super::prelude::TrackLanguageStatsEntity")]
+    TrackLanguageStats,
+    #[sea_orm(has_many = "super::prelude::TrackStatusEntity")]
+    TrackStatus,
+    #[sea_orm(has_many = "super::prelude::UserWordWhitelistEntity")]
+    UserWordWhitelist,
 }
 
-impl Related<super::spotify_auth::Entity> for Entity {
+impl Related<super::prelude::SpotifyAuthEntity> for Entity {
     fn to() -> RelationDef {
         Relation::SpotifyAuth.def()
+    }
+}
+
+impl Related<super::prelude::TrackLanguageStatsEntity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TrackLanguageStats.def()
+    }
+}
+
+impl Related<super::prelude::TrackStatusEntity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TrackStatus.def()
+    }
+}
+
+impl Related<super::prelude::UserWordWhitelistEntity> for Entity {
+    fn to() -> RelationDef {
+        Relation::UserWordWhitelist.def()
     }
 }
 
