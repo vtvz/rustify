@@ -27,7 +27,7 @@ use crate::utils::teloxide::CallbackQueryExt as _;
 async fn get_playlist(
     state: &UserState,
     spotify_user_id: UserId<'static>,
-    magic_playlist_id: Option<String>,
+    magic_playlist_id: Option<&str>,
 ) -> anyhow::Result<ShortPlaylist> {
     let playlist_name = "Magic✨";
 
@@ -169,8 +169,12 @@ async fn generate_playlist(
 
     track_ids.shuffle(&mut rand::rng());
 
-    let playlist =
-        get_playlist(state, spotify_user.id, state.user().magic_playlist.clone()).await?;
+    let playlist = get_playlist(
+        state,
+        spotify_user.id,
+        state.user().magic_playlist.as_deref(),
+    )
+    .await?;
 
     UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id().id()).await?;
 
