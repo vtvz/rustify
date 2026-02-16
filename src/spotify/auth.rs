@@ -92,7 +92,7 @@ impl SpotifyAuthService {
     ) -> anyhow::Result<UpdateResult> {
         let suspend_until = Clock::now() + duration;
 
-        SpotifyAuthService::suspend_until(db, user_id, suspend_until).await
+        Self::suspend_until(db, user_id, suspend_until).await
     }
 
     pub async fn get_active_unsuspended_user_ids(

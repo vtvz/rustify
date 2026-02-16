@@ -18,7 +18,7 @@ pub struct LrcLib {
     reqwest: Client,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Lyrics {
     pub id: i64,
@@ -53,15 +53,14 @@ impl super::SearchResult for SearchResult {
         self.indexes
             .get(index)
             .cloned()
-            .unwrap_or(index.to_string())
+            .unwrap_or_else(|| index.to_string())
     }
 
     fn link(&self) -> String {
         let url = url::Url::parse("https://lrclib.net/search/").expect("If it fails, it fails");
 
         url.join(&format!("{} {}", self.artist_name, self.track_name))
-            .map(|url| url.to_string())
-            .unwrap_or("https://lrclib.net/".into())
+            .map_or_else(|_| "https://lrclib.net/".into(), |url| url.to_string())
     }
 
     fn link_text(&self, full: bool) -> String {

@@ -22,11 +22,12 @@ use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
 use crate::utils::teloxide::CallbackQueryExt as _;
 
+#[allow(clippy::significant_drop_tightening)]
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 async fn get_playlist(
     state: &UserState,
     spotify_user_id: UserId<'static>,
-    magic_playlist_id: String,
+    magic_playlist_id: Option<String>,
 ) -> anyhow::Result<ShortPlaylist> {
     let playlist_name = "Magic✨";
 
@@ -34,14 +35,16 @@ async fn get_playlist(
 
     let mut playlists_stream = spotify.user_playlists(spotify_user_id.clone());
 
-    while let Some(playlist) = playlists_stream.next().await {
-        let playlist = playlist?;
-        if playlist.id.id() == magic_playlist_id {
-            spotify
-                .playlist_replace_items(playlist.id.clone(), [])
-                .await?;
+    if let Some(magic_playlist_id) = magic_playlist_id {
+        while let Some(playlist) = playlists_stream.next().await {
+            let playlist = playlist?;
+            if playlist.id.id() == magic_playlist_id {
+                spotify
+                    .playlist_replace_items(playlist.id.clone(), [])
+                    .await?;
 
-            return Ok(playlist.into());
+                return Ok(playlist.into());
+            }
         }
     }
 
@@ -145,33 +148,40 @@ pub async fn handle_inline(
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
+#[allow(clippy::significant_drop_tightening)]
 async fn generate_playlist(
     app: &App,
     state: &UserState,
     spotify_user: rspotify::model::PrivateUser,
 ) -> Result<ShortPlaylist, anyhow::Error> {
-    let spotify = state.spotify().await;
-    let mut saved_tracks = spotify.current_user_saved_tracks(None);
-    let mut track_ids = vec![];
-    while let Some(track) = saved_tracks.next().await {
-        let track = track?;
-        if let Some(track_id) = track.track.id {
-            track_ids.push(track_id.into());
+    let mut track_ids = {
+        let mut track_ids = vec![];
+        let spotify = state.spotify().await;
+        let mut saved_tracks = spotify.current_user_saved_tracks(None);
+        while let Some(track) = saved_tracks.next().await {
+            let track = track?;
+            if let Some(track_id) = track.track.id {
+                track_ids.push(track_id.into());
+            }
         }
-    }
+        track_ids
+    };
+
     track_ids.shuffle(&mut rand::rng());
-    let playlist = get_playlist(
-        state,
-        spotify_user.id,
-        state.user().magic_playlist.clone().unwrap_or("none".into()),
-    )
-    .await?;
+
+    let playlist =
+        get_playlist(state, spotify_user.id, state.user().magic_playlist.clone()).await?;
+
     UserService::set_magic_playlist(app.db(), state.user_id(), playlist.id().id()).await?;
+
+    let spotify = state.spotify().await;
+
     for chunk in track_ids.chunks(100) {
         spotify
             .playlist_add_items(playlist.id().clone(), chunk.iter().cloned(), None)
             .await?;
     }
+
     Ok(playlist)
 }
 

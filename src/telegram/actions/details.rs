@@ -55,8 +55,7 @@ pub async fn handle_current(
         return Ok(HandleStatus::Handled);
     }
 
-    let spotify = state.spotify().await;
-    let track = match spotify.current_playing_wrapped().await {
+    let track = match state.spotify().await.current_playing_wrapped().await {
         CurrentlyPlaying::Err(err) => return Err(err.into()),
         CurrentlyPlaying::None(reason) => {
             app.bot()
@@ -147,8 +146,6 @@ async fn common(
         .link_preview_options(link_preview_small_top(track.url()))
         .await?;
 
-    let spotify = state.spotify().await;
-
     let status = TrackStatusService::get_status(app.db(), state.user_id(), track.id()).await;
 
     let mut keyboard = InlineButtons::from_track_status(status, track.id(), state.locale());
@@ -159,7 +156,12 @@ async fn common(
 
     // NOTE: It works because I have old token I need to cherish
     #[allow(deprecated)]
-    let features = match spotify.track_features(track.raw_id().clone()).await {
+    let features = match state
+        .spotify()
+        .await
+        .track_features(track.raw_id().clone())
+        .await
+    {
         Ok(features) => {
             let modality = match features.mode {
                 Modality::Minor => t!("details.minor", locale = state.locale()),
@@ -213,7 +215,12 @@ async fn common(
     let genres: HashSet<_> = {
         let artist_ids = track.artist_raw_ids();
 
-        let artists = match spotify.artists(artist_ids.iter().cloned()).await {
+        let artists = match state
+            .spotify()
+            .await
+            .artists(artist_ids.iter().cloned())
+            .await
+        {
             // HACK: 403 "Spotify is unavailable in this country" error
             Err(rspotify::ClientError::Http(box rspotify::http::HttpError::StatusCode(resp))) => {
                 tracing::info!("Resp from artists fetching {:?}", resp.text().await);

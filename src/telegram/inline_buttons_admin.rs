@@ -161,13 +161,10 @@ impl AdminInlineButtons {
                         AdminUsersSortBy::LyricsChecked => Cow::Owned(format!("Lyrics{arrow}")),
                     }
                 },
-                AdminUsersPageButtonType::Filter => {
-                    if let Some(status) = status_filter {
-                        Cow::Owned(format!("Next filter: {status:?}"))
-                    } else {
-                        Cow::Borrowed("Next filter: All")
-                    }
-                },
+                AdminUsersPageButtonType::Filter => status_filter.map_or_else(
+                    || Cow::Borrowed("Next filter: All"),
+                    |status| Cow::Owned(format!("Next filter: {status:?}")),
+                ),
             },
         }
     }

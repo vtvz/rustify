@@ -46,12 +46,12 @@ use crate::user::{SpotifyWrapperType, UserState};
 use crate::utils::teloxide::CallbackQueryExt as _;
 use crate::utils::{DurationPrettyFormat as _, StringUtils as _};
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RecommendationsRaw {
     pub recommendations: Vec<TrackRaw>,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TrackRaw {
     pub artist_name: String,
     pub track_title: String,
@@ -203,9 +203,9 @@ pub async fn handle_inline(
 
     tracing::info!(user_id = state.user_id(), "User called Recommendasion");
 
-    let spotify = state.spotify().await;
-
-    let Some(_) = spotify
+    let Some(_) = state
+        .spotify()
+        .await
         .current_playback(None, None::<&[rspotify::model::AdditionalType]>)
         .await?
     else {
@@ -239,7 +239,7 @@ pub async fn handle_inline(
         )
         .await?,
 
-        liked: get_liked_tracks(&spotify).await?,
+        liked: get_liked_tracks(&state.spotify().await).await?,
     };
 
     app.bot()
@@ -263,7 +263,9 @@ pub async fn handle_inline(
 
     let mut recommendation_links = vec![];
     for recommendation in &recommendations.recommended {
-        spotify
+        state
+            .spotify()
+            .await
             .add_item_to_queue(recommendation.raw_id().clone().into(), None)
             .await?;
 
@@ -376,8 +378,6 @@ async fn get_recommendations_attempt(
 ) -> anyhow::Result<Recommendations> {
     let recommendations_raw = get_raw_recommendations(config, user_data).await?;
 
-    let spotify = state.spotify().await;
-
     let mut recommendations = Recommendations::default();
 
     for track_recommendation in recommendations_raw.recommendations {
@@ -387,7 +387,9 @@ async fn get_recommendations_attempt(
 
         let artist = track_recommendation.artist_name.chars_crop(100);
 
-        let rspotify::model::SearchResult::Tracks(res) = spotify
+        let rspotify::model::SearchResult::Tracks(res) = state
+            .spotify()
+            .await
             .search(
                 &format!("track:{track} artist:{artist}"),
                 SearchType::Track,

@@ -13,9 +13,9 @@ impl StartKeyboard {
     #[must_use]
     pub fn into_button(&self, locale: &str) -> KeyboardButton {
         let text = match self {
-            StartKeyboard::Dislike => t!("start-keyboard.dislike", locale = locale),
-            StartKeyboard::Stats => t!("start-keyboard.stats", locale = locale),
-            StartKeyboard::Details => t!("start-keyboard.details", locale = locale),
+            Self::Dislike => t!("start-keyboard.dislike", locale = locale),
+            Self::Stats => t!("start-keyboard.stats", locale = locale),
+            Self::Details => t!("start-keyboard.details", locale = locale),
         };
 
         KeyboardButton::new(text)
@@ -36,13 +36,13 @@ impl StartKeyboard {
     }
 
     #[must_use]
-    pub fn from_str(text: &str, locale: &str) -> Option<StartKeyboard> {
+    pub fn from_str(text: &str, locale: &str) -> Option<Self> {
         if text == t!("start-keyboard.dislike", locale = locale) {
-            Some(StartKeyboard::Dislike)
+            Some(Self::Dislike)
         } else if text == t!("start-keyboard.stats", locale = locale) {
-            Some(StartKeyboard::Stats)
+            Some(Self::Stats)
         } else if text == t!("start-keyboard.details", locale = locale) {
-            Some(StartKeyboard::Details)
+            Some(Self::Details)
         } else {
             None
         }
