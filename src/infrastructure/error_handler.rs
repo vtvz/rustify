@@ -101,7 +101,7 @@ pub async fn spotify_resp_error(
         Ok(Some(err)) => {
             match err {
                 spotify::SpotifyError::Regular(serr) => {
-                    if serr.error.status == 500 {
+                    if serr.error.status >= 500 && serr.error.status <= 599 {
                         // NOTE: Ignore these errors
                         // They are just spam
 
