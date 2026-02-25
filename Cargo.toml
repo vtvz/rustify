@@ -46,6 +46,7 @@ uuid = "1.20.0"
 whatlang = { version = "0.18.0", features = ["serde"] }
 redis = "0.32.7"
 prometheus = { version = "0.14.0", features = ["push", "process"] }
+csv = "1.4.0"
 
 [dependencies.isolang]
 features = ["serde"]

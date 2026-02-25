@@ -16,7 +16,7 @@ use teloxide::requests::RequesterExt as _;
 use crate::metrics::influx::InfluxClient;
 use crate::metrics::prometheus::PrometheusClient;
 use crate::queue::QueueManager;
-use crate::services::{SongLinkService, UserService};
+use crate::services::{AISlopDetectionService, SongLinkService, UserService};
 use crate::user::UserState;
 use crate::{lyrics, profanity, spotify};
 
@@ -32,6 +32,7 @@ pub struct App {
     dialogue_storage: Arc<TeloxideRedisStorage<Bincode>>,
     server_http_address: String,
     song_link: SongLinkService,
+    ai_slop_detection: AISlopDetectionService,
     queue_manager: QueueManager,
 }
 
@@ -136,6 +137,10 @@ impl App {
 
     pub fn queue_manager(&self) -> &QueueManager {
         &self.queue_manager
+    }
+
+    pub fn ai_slop_detection(&self) -> &AISlopDetectionService {
+        &self.ai_slop_detection
     }
 }
 
@@ -354,6 +359,7 @@ impl App {
                 .server_http_address
                 .unwrap_or_else(|| "0.0.0.0:3000".into()),
             queue_manager,
+            ai_slop_detection: AISlopDetectionService::new(),
         });
 
         let app = &*Box::leak(app);
