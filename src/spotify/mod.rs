@@ -197,20 +197,12 @@ impl ShortTrack {
 
     #[must_use]
     pub fn track_tg_link(&self) -> String {
-        format!(
-            r#"<a href="{link}">{name}</a>"#,
-            name = html::escape(self.name_with_artists().as_str()),
-            link = self.url()
-        )
+        html::link(self.url(), self.name_with_artists().as_str())
     }
 
     #[must_use]
     pub fn album_tg_link(&self) -> String {
-        format!(
-            r#"<a href="{link}">{name}</a>"#,
-            name = html::escape(self.album_name()),
-            link = self.album_url()
-        )
+        html::link(self.album_url(), self.album_name())
     }
 }
 
