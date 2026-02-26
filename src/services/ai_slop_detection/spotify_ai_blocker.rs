@@ -13,6 +13,9 @@ struct AIArtist {
     id: String,
 }
 
+const REDIS_KEY_POPULATED: &str = "rustify:ai_slop:spotify_ai_blocker:populated";
+const REDIS_KEY_ARTIST_PREFIX: &str = "rustify:ai_slop:spotify_ai_blocker:artist";
+
 impl SpotifyAIBlockerProvider {
     #[must_use]
     pub fn new() -> Self {
@@ -32,7 +35,7 @@ impl SpotifyAIBlockerProvider {
         &self,
         redis_conn: &mut deadpool_redis::Connection,
     ) -> anyhow::Result<()> {
-        let exists: bool = redis_conn.exists("rustify:ai_slop:populated").await?;
+        let exists: bool = redis_conn.exists(REDIS_KEY_POPULATED).await?;
 
         if exists {
             return Ok(());
@@ -42,7 +45,7 @@ impl SpotifyAIBlockerProvider {
 
         let _: () = redis_conn
             .set_ex(
-                "rustify:ai_slop:populated",
+                REDIS_KEY_POPULATED,
                 1,
                 (Duration::days(1) - Duration::minutes(10)).num_seconds() as _,
             )
@@ -52,6 +55,8 @@ impl SpotifyAIBlockerProvider {
     }
 
     async fn populate(&self, redis_conn: &mut deadpool_redis::Connection) -> anyhow::Result<()> {
+        tracing::trace!("Populating spotify-ai-blocker DB of AI slop");
+
         let res = self
             .client
             .get("https://github.com/CennoxX/spotify-ai-blocker/raw/refs/heads/main/SpotifyAiArtists.csv")
@@ -68,7 +73,7 @@ impl SpotifyAIBlockerProvider {
 
             let _: () = redis_conn
                 .set_ex(
-                    format!("rustify:ai_slop:artist:{}", record.id),
+                    format!("{REDIS_KEY_ARTIST_PREFIX}:{}", record.id),
                     1,
                     Duration::days(1).num_seconds() as _,
                 )
@@ -83,7 +88,7 @@ impl SpotifyAIBlockerProvider {
         artist_id: &str,
     ) -> anyhow::Result<bool> {
         let exists: bool = redis_conn
-            .exists(format!("rustify:ai_slop:artist:{artist_id}"))
+            .exists(format!("{REDIS_KEY_ARTIST_PREFIX}:{artist_id}"))
             .await?;
 
         Ok(exists)
