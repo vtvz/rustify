@@ -197,6 +197,7 @@ pub async fn check_pofanity(
             bad_lines = bad_lines.iter().take(lines).join("\n"),
             lyrics_link = hit.link().trim(),
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
+            ignore_button_label = t!("inline-buttons.ignore", locale = state.locale()),
         );
 
         if message.chars_len() <= telegram::MESSAGE_MAX_LEN {
@@ -267,31 +268,57 @@ pub async fn check_ai_slop(
         });
     }
 
-    // AI slop detected
-    if state.is_spotify_premium().await? {
-        state
-            .spotify()
-            .await
-            .next_track(None)
-            .await
-            .context("Skip current track")?;
+    let keyboard = vec![
+        vec![InlineButtons::Dislike(track.id().into()).into_inline_keyboard_button(state.locale())],
+        vec![InlineButtons::Ignore(track.id().into()).into_inline_keyboard_button(state.locale())],
+        vec![
+            InlineButtons::ArtistPage(track.first_artist_url().parse()?)
+                .into_inline_keyboard_button(state.locale()),
+        ],
+    ];
 
-        TrackStatusService::increase_skips(app.db(), state.user_id(), track.id()).await?;
+    app.bot()
+        .send_message(
+            state.chat_id()?,
+            t!(
+                "ai-slop.alert",
+                locale = state.locale(),
+                track_name = track.track_tg_link(),
+                album_name = track.album_tg_link(),
+            ),
+        )
+        .link_preview_options(link_preview_small_top(track.url()))
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            keyboard,
+        )))
+        .await?;
 
-        return Ok(AISlopCheckResult {
-            is_ai_slop,
-            skipped: true,
-        });
+    // TODO: Add setting to auto-skip ai-slop
+    if false {
+        if state.is_spotify_premium().await? {
+            state
+                .spotify()
+                .await
+                .next_track(None)
+                .await
+                .context("Skip current track")?;
+
+            TrackStatusService::increase_skips(app.db(), state.user_id(), track.id()).await?;
+
+            return Ok(AISlopCheckResult {
+                is_ai_slop,
+                skipped: true,
+            });
+        }
+
+        let text = t!(
+            "error.cannot-skip",
+            locale = state.locale(),
+            track_name = track.track_tg_link(),
+        );
+
+        app.bot().send_message(state.chat_id()?, text).await?;
     }
-
-    // Not premium, cannot skip
-    let text = t!(
-        "error.cannot-skip",
-        locale = state.locale(),
-        track_name = track.track_tg_link(),
-    );
-
-    app.bot().send_message(state.chat_id()?, text).await?;
 
     Ok(AISlopCheckResult {
         is_ai_slop,

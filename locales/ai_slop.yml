@@ -1,0 +1,27 @@
+_version: 2
+
+ai-slop.alert:
+  en: |-
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> This track is most likely <b>AI-generated</b>. You can dislike or ignore similar notifications for the current track
+
+    To permanently block this artist from recommendations:
+    <tg-emoji emoji-id="6028171274939797252">🔗</tg-emoji> Open the artist's page in Spotify
+    <tg-emoji emoji-id="6032924188828767321">➕</tg-emoji> Tap the three dots near the <i>"Follow"</i> button
+    <tg-emoji emoji-id="5774077015388852135">❌</tg-emoji> Select <i>"Don't play this artist"</i>
+
+    <b>Support real organic hand-made music instead of AI-slop!</b>
+  ru: |-
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> Этот трек скорее всего <b>создан ИИ</b>. Вы можете дизлайкнуть или отключить подобные уведомления для текущего трека
+
+    Чтобы навсегда скрыть этого исполнителя из рекомендаций:
+    <tg-emoji emoji-id="6028171274939797252">🔗</tg-emoji> Откройте страницу исполнителя в Spotify
+    <tg-emoji emoji-id="6032924188828767321">➕</tg-emoji> Нажмите на три точки рядом с кнопкой <i>«Подписаться»</i>
+    <tg-emoji emoji-id="5774077015388852135">❌</tg-emoji> Выберите <i>«Не воспроизводить этого исполнителя»</i>
+
+    <b>Поддерживайте настоящую живую музыку вместо ИИ-шлака!</b>
