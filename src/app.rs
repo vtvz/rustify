@@ -68,6 +68,8 @@ struct EnvConfig {
     genius_service_url: String,
     lyrics_cache_ttl: Option<u64>,
 
+    shlabs_api_key: Option<String>,
+
     censor_blacklist: Option<String>,
     censor_whitelist: Option<String>,
 
@@ -359,7 +361,7 @@ impl App {
                 .server_http_address
                 .unwrap_or_else(|| "0.0.0.0:3000".into()),
             queue_manager,
-            ai_slop_detection: AISlopDetectionService::new(),
+            ai_slop_detection: AISlopDetectionService::new(env.shlabs_api_key),
         });
 
         let app = &*Box::leak(app);

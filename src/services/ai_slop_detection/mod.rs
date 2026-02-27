@@ -1,3 +1,4 @@
+mod shlabs;
 mod soul_over_ai;
 mod spot_the_ai;
 mod spotify_ai_blocker;
@@ -12,15 +13,17 @@ pub struct AISlopDetectionService {
     spotify_ai_blocker_provider: SpotifyAIBlockerProvider,
     soul_over_ai_provider: SoulOverAIProvider,
     spot_the_ai: SpotTheAIProvider,
+    shlabs: Option<shlabs::SHLabsProvider>,
 }
 
 impl AISlopDetectionService {
     #[must_use]
-    pub fn new() -> Self {
+    pub fn new(shlabs_api_key: Option<String>) -> Self {
         Self {
             spotify_ai_blocker_provider: SpotifyAIBlockerProvider::new(),
             soul_over_ai_provider: SoulOverAIProvider::new(),
             spot_the_ai: SpotTheAIProvider::new(),
+            shlabs: shlabs_api_key.map(shlabs::SHLabsProvider::new),
         }
     }
 
@@ -54,12 +57,10 @@ impl AISlopDetectionService {
         handle_provider!("Soul Over AI", self.soul_over_ai_provider);
         handle_provider!("Spot the AI", self.spot_the_ai);
 
-        Ok(false)
-    }
-}
+        if let Some(shlabs) = &self.shlabs {
+            handle_provider!("SHLabs", shlabs);
+        }
 
-impl Default for AISlopDetectionService {
-    fn default() -> Self {
-        Self::new()
+        Ok(false)
     }
 }
