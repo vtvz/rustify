@@ -31,7 +31,7 @@ impl SoulOverAIProvider {
         }
     }
 
-    pub async fn ensure_populated(
+    async fn ensure_populated(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
     ) -> anyhow::Result<()> {
@@ -75,7 +75,7 @@ impl SoulOverAIProvider {
 
             let _: () = redis_conn
                 .set_ex(
-                    format!("{REDIS_KEY_ARTIST_PREFIX}:{}", id),
+                    format!("{REDIS_KEY_ARTIST_PREFIX}:{id}"),
                     1,
                     Duration::days(1).num_seconds() as _,
                 )
@@ -101,8 +101,6 @@ impl SoulOverAIProvider {
         redis_conn: &mut deadpool_redis::Connection,
         artist_ids: &[&str],
     ) -> anyhow::Result<bool> {
-        Self::ensure_populated(self, redis_conn).await?;
-
         for artist_id in artist_ids {
             if Self::is_artist_ai(redis_conn, artist_id).await? {
                 return Ok(true);
@@ -117,6 +115,8 @@ impl SoulOverAIProvider {
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
     ) -> anyhow::Result<bool> {
+        Self::ensure_populated(self, redis_conn).await?;
+
         self.any_artist_ai(redis_conn, &track.artist_ids()).await
     }
 }

@@ -1,7 +1,9 @@
 mod soul_over_ai;
+mod spot_the_ai;
 mod spotify_ai_blocker;
 
 use soul_over_ai::SoulOverAIProvider;
+use spot_the_ai::SpotTheAIProvider;
 use spotify_ai_blocker::SpotifyAIBlockerProvider;
 
 use crate::spotify::ShortTrack;
@@ -9,6 +11,7 @@ use crate::spotify::ShortTrack;
 pub struct AISlopDetectionService {
     spotify_ai_blocker_provider: SpotifyAIBlockerProvider,
     soul_over_ai_provider: SoulOverAIProvider,
+    spot_the_ai: SpotTheAIProvider,
 }
 
 impl AISlopDetectionService {
@@ -17,6 +20,7 @@ impl AISlopDetectionService {
         Self {
             spotify_ai_blocker_provider: SpotifyAIBlockerProvider::new(),
             soul_over_ai_provider: SoulOverAIProvider::new(),
+            spot_the_ai: SpotTheAIProvider::new(),
         }
     }
 
@@ -33,9 +37,15 @@ impl AISlopDetectionService {
             return Ok(true);
         }
 
-        self.soul_over_ai_provider
+        if self
+            .soul_over_ai_provider
             .is_track_ai(redis_conn, track)
-            .await
+            .await?
+        {
+            return Ok(true);
+        }
+
+        self.spot_the_ai.is_track_ai(redis_conn, track).await
     }
 }
 

@@ -3,20 +3,19 @@ use redis::AsyncCommands as _;
 
 use crate::spotify::ShortTrack;
 
-pub struct SpotifyAIBlockerProvider {
+pub struct SpotTheAIProvider {
     client: reqwest::Client,
 }
 
 #[derive(Debug, serde::Deserialize)]
-struct AIArtist {
-    // artist: String,
-    id: String,
+struct AIArtists {
+    artists: Vec<String>,
 }
 
-const REDIS_KEY_POPULATED: &str = "rustify:ai_slop:spotify_ai_blocker:populated";
-const REDIS_KEY_ARTIST_PREFIX: &str = "rustify:ai_slop:spotify_ai_blocker:artist";
+const REDIS_KEY_POPULATED: &str = "rustify:ai_slop:spot_the_ai:populated";
+const REDIS_KEY_ARTIST_PREFIX: &str = "rustify:ai_slop:spot_the_ai:artist";
 
-impl SpotifyAIBlockerProvider {
+impl SpotTheAIProvider {
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -31,7 +30,7 @@ impl SpotifyAIBlockerProvider {
         }
     }
 
-    pub async fn ensure_populated(
+    async fn ensure_populated(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
     ) -> anyhow::Result<()> {
@@ -55,25 +54,23 @@ impl SpotifyAIBlockerProvider {
     }
 
     async fn populate(&self, redis_conn: &mut deadpool_redis::Connection) -> anyhow::Result<()> {
-        tracing::trace!("Populating spotify-ai-blocker DB of AI slop");
+        tracing::trace!("Populating spot-the-ai DB of AI slop");
 
         let res = self
             .client
-            .get("https://github.com/CennoxX/spotify-ai-blocker/raw/refs/heads/main/SpotifyAiArtists.csv")
+            .get("https://spot-the-ai.com/api/list/")
             .send()
             .await?
             .error_for_status()?
             .bytes()
             .await?;
 
-        let mut rdr = csv::Reader::from_reader(res.as_ref());
+        let artists: AIArtists = serde_json::from_reader(res.as_ref())?;
 
-        for result in rdr.deserialize() {
-            let record: AIArtist = result?;
-
+        for artist_name in artists.artists {
             let _: () = redis_conn
                 .set_ex(
-                    format!("{REDIS_KEY_ARTIST_PREFIX}:{}", record.id),
+                    format!("{REDIS_KEY_ARTIST_PREFIX}:{:?}", md5::compute(artist_name)),
                     1,
                     Duration::days(1).num_seconds() as _,
                 )
@@ -85,10 +82,13 @@ impl SpotifyAIBlockerProvider {
 
     async fn is_artist_ai(
         redis_conn: &mut deadpool_redis::Connection,
-        artist_id: &str,
+        artist_name: &str,
     ) -> anyhow::Result<bool> {
         let exists: bool = redis_conn
-            .exists(format!("{REDIS_KEY_ARTIST_PREFIX}:{artist_id}"))
+            .exists(format!(
+                "{REDIS_KEY_ARTIST_PREFIX}:{:?}",
+                md5::compute(artist_name)
+            ))
             .await?;
 
         Ok(exists)
@@ -97,10 +97,10 @@ impl SpotifyAIBlockerProvider {
     async fn any_artist_ai(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
-        artist_ids: &[&str],
+        artist_names: &[&str],
     ) -> anyhow::Result<bool> {
-        for artist_id in artist_ids {
-            if Self::is_artist_ai(redis_conn, artist_id).await? {
+        for artist_name in artist_names {
+            if Self::is_artist_ai(redis_conn, artist_name).await? {
                 return Ok(true);
             }
         }
@@ -115,11 +115,11 @@ impl SpotifyAIBlockerProvider {
     ) -> anyhow::Result<bool> {
         Self::ensure_populated(self, redis_conn).await?;
 
-        self.any_artist_ai(redis_conn, &track.artist_ids()).await
+        self.any_artist_ai(redis_conn, &track.artist_names()).await
     }
 }
 
-impl Default for SpotifyAIBlockerProvider {
+impl Default for SpotTheAIProvider {
     fn default() -> Self {
         Self::new()
     }

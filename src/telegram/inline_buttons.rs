@@ -16,6 +16,7 @@ pub enum InlineButtons {
     Magic,
     SkippageEnable(bool),
     Recommendasion,
+    // TODO: Think about making separate type of buttons without callback data
     ArtistPage(Url),
 }
 
