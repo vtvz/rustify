@@ -29,23 +29,32 @@ impl AISlopDetectionService {
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
     ) -> anyhow::Result<bool> {
-        if self
-            .spotify_ai_blocker_provider
-            .is_track_ai(redis_conn, track)
-            .await?
-        {
-            return Ok(true);
+        macro_rules! handle_provider {
+            ($name:expr, $provider:expr) => {
+                let result = $provider.is_track_ai(redis_conn, track).await;
+
+                match result {
+                    Ok(res) => {
+                        if res {
+                            return Ok(res);
+                        }
+                    },
+                    Err(err) => {
+                        tracing::error!(
+                            err = ?err,
+                            "Error with {} occurred",
+                            $name
+                        );
+                    },
+                };
+            };
         }
 
-        if self
-            .soul_over_ai_provider
-            .is_track_ai(redis_conn, track)
-            .await?
-        {
-            return Ok(true);
-        }
+        handle_provider!("Spotify AI Blocker", self.spotify_ai_blocker_provider);
+        handle_provider!("Soul Over AI", self.soul_over_ai_provider);
+        handle_provider!("Spot the AI", self.spot_the_ai);
 
-        self.spot_the_ai.is_track_ai(redis_conn, track).await
+        Ok(false)
     }
 }
 
