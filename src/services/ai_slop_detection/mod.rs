@@ -10,18 +10,54 @@ use spotify_ai_blocker::SpotifyAIBlockerProvider;
 use crate::spotify::ShortTrack;
 
 pub struct AISlopDetectionService {
-    spotify_ai_blocker_provider: SpotifyAIBlockerProvider,
-    soul_over_ai_provider: SoulOverAIProvider,
+    spotify_ai_blocker: SpotifyAIBlockerProvider,
+    soul_over_ai: SoulOverAIProvider,
     spot_the_ai: SpotTheAIProvider,
     shlabs: Option<shlabs::SHLabsProvider>,
+}
+
+pub enum Provider {
+    SpotifyAIBlocker,
+    SoulOverAI,
+    SpotTheAI,
+    SHLabs,
+}
+
+pub struct AISlopDetectionResult {
+    pub provider: Option<Provider>,
+    pub is_track_ai: bool,
+}
+
+impl Provider {
+    pub fn tg_link(&self) -> String {
+        teloxide::utils::html::link(self.link(), self.name())
+    }
+
+    pub fn link(&self) -> &str {
+        match self {
+            Self::SpotifyAIBlocker => "https://github.com/CennoxX/spotify-ai-blocker",
+            Self::SoulOverAI => "https://github.com/xoundbyte/soul-over-ai",
+            Self::SpotTheAI => "https://spot-the-ai.com/list/",
+            Self::SHLabs => "https://www.submithub.com/ai-song-checker",
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            Self::SpotifyAIBlocker => "Spotify AI Music Blocker",
+            Self::SoulOverAI => "Soul Over AI",
+            Self::SpotTheAI => "SpotAI",
+            Self::SHLabs => "SubmitHub AI Song Checker",
+        }
+    }
 }
 
 impl AISlopDetectionService {
     #[must_use]
     pub fn new(shlabs_api_key: Option<String>) -> Self {
         Self {
-            spotify_ai_blocker_provider: SpotifyAIBlockerProvider::new(),
-            soul_over_ai_provider: SoulOverAIProvider::new(),
+            spotify_ai_blocker: SpotifyAIBlockerProvider::new(),
+            soul_over_ai: SoulOverAIProvider::new(),
             spot_the_ai: SpotTheAIProvider::new(),
             shlabs: shlabs_api_key.map(shlabs::SHLabsProvider::new),
         }
@@ -31,36 +67,42 @@ impl AISlopDetectionService {
         &self,
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
-    ) -> anyhow::Result<bool> {
+    ) -> anyhow::Result<AISlopDetectionResult> {
         macro_rules! handle_provider {
-            ($name:expr, $provider:expr) => {
+            ($provider_enum:expr, $provider:expr) => {
                 let result = $provider.is_track_ai(redis_conn, track).await;
 
                 match result {
                     Ok(res) => {
                         if res {
-                            return Ok(res);
+                            return Ok(AISlopDetectionResult {
+                                provider: Some($provider_enum),
+                                is_track_ai: res,
+                            });
                         }
                     },
                     Err(err) => {
                         tracing::error!(
                             err = ?err,
                             "Error with {} occurred",
-                            $name
+                            $provider_enum.name()
                         );
                     },
                 };
             };
         }
 
-        handle_provider!("Spotify AI Blocker", self.spotify_ai_blocker_provider);
-        handle_provider!("Soul Over AI", self.soul_over_ai_provider);
-        handle_provider!("Spot the AI", self.spot_the_ai);
+        handle_provider!(Provider::SpotifyAIBlocker, self.spotify_ai_blocker);
+        handle_provider!(Provider::SoulOverAI, self.soul_over_ai);
+        handle_provider!(Provider::SpotTheAI, self.spot_the_ai);
 
         if let Some(shlabs) = &self.shlabs {
-            handle_provider!("SHLabs", shlabs);
+            handle_provider!(Provider::SHLabs, shlabs);
         }
 
-        Ok(false)
+        Ok(AISlopDetectionResult {
+            provider: None,
+            is_track_ai: false,
+        })
     }
 }

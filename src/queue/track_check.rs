@@ -256,17 +256,21 @@ pub async fn check_ai_slop(
     state: &UserState,
     track: &ShortTrack,
 ) -> anyhow::Result<AISlopCheckResult> {
-    let is_ai_slop = app
+    let ai_detection_result = app
         .ai_slop_detection()
         .is_track_ai(&mut app.redis_conn().await?, track)
         .await?;
 
-    if !is_ai_slop {
+    if !ai_detection_result.is_track_ai {
         return Ok(AISlopCheckResult {
-            is_ai_slop,
+            is_ai_slop: false,
             skipped: false,
         });
     }
+
+    let Some(provider) = ai_detection_result.provider else {
+        anyhow::bail!("Provider should be set on positive result");
+    };
 
     let keyboard = vec![
         vec![InlineButtons::Dislike(track.id().into()).into_inline_keyboard_button(state.locale())],
@@ -285,6 +289,7 @@ pub async fn check_ai_slop(
                 locale = state.locale(),
                 track_name = track.track_tg_link(),
                 album_name = track.album_tg_link(),
+                ai_check_provider = provider.tg_link(),
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))
@@ -306,7 +311,7 @@ pub async fn check_ai_slop(
             TrackStatusService::increase_skips(app.db(), state.user_id(), track.id()).await?;
 
             return Ok(AISlopCheckResult {
-                is_ai_slop,
+                is_ai_slop: true,
                 skipped: true,
             });
         }
@@ -321,7 +326,7 @@ pub async fn check_ai_slop(
     }
 
     Ok(AISlopCheckResult {
-        is_ai_slop,
+        is_ai_slop: true,
         skipped: false,
     })
 }

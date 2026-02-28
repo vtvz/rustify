@@ -12,6 +12,8 @@ ai-slop.alert:
     <tg-emoji emoji-id="6032924188828767321">➕</tg-emoji> Tap the three dots near the <i>"Follow"</i> button
     <tg-emoji emoji-id="5774077015388852135">❌</tg-emoji> Select <i>"Don't play this artist"</i>
 
+    <i>Information provided by "%{ai_check_provider}"</i>
+
     <b>Support real organic hand-made music instead of AI-slop!</b>
   ru: |-
     🎵 %{track_name}
@@ -23,5 +25,7 @@ ai-slop.alert:
     <tg-emoji emoji-id="6028171274939797252">🔗</tg-emoji> Откройте страницу исполнителя в Spotify
     <tg-emoji emoji-id="6032924188828767321">➕</tg-emoji> Нажмите на три точки рядом с кнопкой <i>«Подписаться»</i>
     <tg-emoji emoji-id="5774077015388852135">❌</tg-emoji> Выберите <i>«Не воспроизводить этого исполнителя»</i>
+
+    <i>Информация предоставлена "%{ai_check_provider}"</i>
 
     <b>Поддерживайте настоящую живую музыку вместо ИИ-шлака!</b>
