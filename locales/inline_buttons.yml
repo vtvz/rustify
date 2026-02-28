@@ -18,6 +18,12 @@ inline-buttons.analyze:
   ru: |-
     Анализировать текст 🔍
 
+inline-buttons.artist-page:
+  en: |-
+    Go to artist's page 🔗
+  ru: |-
+    Перейти на страницу исполнителя 🔗
+
 inline-buttons.alert-login:
   en: |-
     You need to login first

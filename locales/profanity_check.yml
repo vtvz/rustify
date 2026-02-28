@@ -8,7 +8,7 @@ profanity-check.message:
 
     <a href="%{lyrics_link}">%{lyrics_link_text}</a>
 
-    Press 'Ignore text 🙈' to never see this notification for <b>this song</b> again
+    Press '%{ignore_button_label}' to never see this notification for <b>this song</b> again
   ru: |-
     🚨 Текущая песня (%{track_name}) <b>вероятно</b> содержит нецензурные слова:
 
@@ -16,4 +16,4 @@ profanity-check.message:
 
     <a href="%{lyrics_link}">%{lyrics_link_text}</a>
 
-    Нажмите 'Игнорировать текст 🙈', чтобы больше не видеть это уведомление для <b>этой песни</b>
+    Нажмите '%{ignore_button_label}', чтобы больше не видеть это уведомление для <b>этой песни</b>

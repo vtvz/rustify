@@ -86,6 +86,7 @@ pub struct ShortTrack {
     duration_secs: i64,
     artist_names: Vec<String>,
     artist_ids: Vec<ArtistId<'static>>,
+    artist_urls: Vec<String>,
     album_name: String,
     album_url: String,
 }
@@ -113,18 +114,32 @@ impl ShortTrack {
                 .filter_map(|artist| artist.id.clone())
                 .collect(),
 
+            artist_urls: full_track
+                .artists
+                .iter()
+                .map(|artist| {
+                    artist
+                        .external_urls
+                        .get("spotify")
+                        .cloned()
+                        .unwrap_or_else(|| {
+                            "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt".into()
+                        })
+                })
+                .collect(),
+
             url: full_track
                 .external_urls
                 .get("spotify")
                 .cloned()
-                .unwrap_or_else(|| "https://vtvz.me/".into()),
+                .unwrap_or_else(|| "https://open.spotify.com/track/4PTG3Z6ehGkBFwjybzWkR8".into()),
 
             album_url: full_track
                 .album
                 .external_urls
                 .get("spotify")
                 .cloned()
-                .unwrap_or_else(|| "https://vtvz.me/".into()),
+                .unwrap_or_else(|| "https://open.spotify.com/album/6eUW0wxWtzkFdaEFsTJto6".into()),
 
             album_name: full_track.album.name,
         }
@@ -173,6 +188,11 @@ impl ShortTrack {
     }
 
     #[must_use]
+    pub fn artist_urls(&self) -> Vec<&str> {
+        self.artist_urls.iter().map(String::as_str).collect()
+    }
+
+    #[must_use]
     pub fn artist_raw_ids(&self) -> &[ArtistId<'_>] {
         &self.artist_ids
     }
@@ -183,6 +203,14 @@ impl ShortTrack {
             .first()
             .copied()
             .unwrap_or("Rick Astley")
+    }
+
+    #[must_use]
+    pub fn first_artist_url(&self) -> &str {
+        self.artist_urls()
+            .first()
+            .copied()
+            .unwrap_or("https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt")
     }
 
     #[must_use]
@@ -197,20 +225,17 @@ impl ShortTrack {
 
     #[must_use]
     pub fn track_tg_link(&self) -> String {
-        format!(
-            r#"<a href="{link}">{name}</a>"#,
-            name = html::escape(self.name_with_artists().as_str()),
-            link = self.url()
-        )
+        html::link(self.url(), self.name_with_artists().as_str())
     }
 
     #[must_use]
     pub fn album_tg_link(&self) -> String {
-        format!(
-            r#"<a href="{link}">{name}</a>"#,
-            name = html::escape(self.album_name()),
-            link = self.album_url()
-        )
+        html::link(self.album_url(), self.album_name())
+    }
+
+    #[must_use]
+    pub fn first_artist_tg_link(&self) -> String {
+        html::link(self.first_artist_url(), self.first_artist_name())
     }
 }
 

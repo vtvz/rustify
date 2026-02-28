@@ -1,3 +1,4 @@
+mod ai_slop_detection;
 mod magic;
 mod metrics;
 mod notification;
@@ -13,6 +14,7 @@ mod user_word_whitelist;
 mod word_definition;
 mod word_stats;
 
+pub use ai_slop_detection::AISlopDetectionService;
 pub use magic::MagicService;
 pub use metrics::MetricsService;
 pub use notification::NotificationService;

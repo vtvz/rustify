@@ -5,21 +5,21 @@ use apalis_redis::shared::SharedRedisStorage;
 use apalis_redis::{RedisConfig, RedisStorage};
 use redis::aio::MultiplexedConnection;
 
-pub mod profanity_check;
+pub mod track_check;
 
 pub struct QueueManager {
     #[allow(dead_code)]
     storage: SharedRedisStorage,
 
-    profanity_queue: RedisStorage<profanity_check::ProfanityCheckQueueTask, MultiplexedConnection>,
+    track_check_queue: RedisStorage<track_check::TrackCheckQueueTask, MultiplexedConnection>,
 }
 
 impl QueueManager {
     #[must_use]
-    pub fn profanity_queue(
+    pub fn track_check_queue(
         &self,
-    ) -> RedisStorage<profanity_check::ProfanityCheckQueueTask, MultiplexedConnection> {
-        self.profanity_queue.clone()
+    ) -> RedisStorage<track_check::TrackCheckQueueTask, MultiplexedConnection> {
+        self.track_check_queue.clone()
     }
 
     pub async fn new(redis_url: &str) -> anyhow::Result<Self> {
@@ -29,13 +29,12 @@ impl QueueManager {
 
         let mut storage = SharedRedisStorage::new(client).await?;
 
-        let profanity_queue = storage.make_shared_with_config(
-            RedisConfig::default().set_namespace("rustify:profanity_check"),
-        )?;
+        let profanity_queue = storage
+            .make_shared_with_config(RedisConfig::default().set_namespace("rustify:track_check"))?;
 
         Ok(Self {
             storage,
-            profanity_queue,
+            track_check_queue: profanity_queue,
         })
     }
 }
