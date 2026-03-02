@@ -8,6 +8,7 @@ use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ReplyMarkup};
 
 use crate::app::App;
+use crate::entity::prelude::UserAISlopDetection;
 use crate::infrastructure::error_handler;
 use crate::lyrics::SearchResult as _;
 use crate::services::{
@@ -298,8 +299,10 @@ pub async fn check_ai_slop(
         )))
         .await?;
 
-    // TODO: Add setting to auto-skip ai-slop
-    if false {
+    if matches!(
+        state.user().cfg_ai_slop_detection,
+        UserAISlopDetection::Skip
+    ) {
         if state.is_spotify_premium().await? {
             state
                 .spotify()

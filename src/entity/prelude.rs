@@ -19,6 +19,7 @@ pub use super::track_status::{
 };
 #[allow(unused_imports)]
 pub use super::user::{
+    AISlopDetection as UserAISlopDetection,
     ActiveModel as UserActiveModel,
     Column as UserColumn,
     Entity as UserEntity,
