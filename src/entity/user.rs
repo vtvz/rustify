@@ -313,13 +313,13 @@ impl Role {
 )]
 #[sea_orm(rs_type = "String", db_type = "Text")]
 pub enum AISlopDetection {
+    #[sea_orm(string_value = "skip")]
+    Skip,
     #[sea_orm(string_value = "notify")]
     #[default]
     Notify,
     #[sea_orm(string_value = "ignore")]
     Ignore,
-    #[sea_orm(string_value = "skip")]
-    Skip,
 }
 
 impl FromStr for AISlopDetection {

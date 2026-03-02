@@ -61,6 +61,12 @@ pub enum UserCommand {
 
     #[command(description = "command.skippage")]
     Skippage { days: String },
+
+    #[command(
+        description = "command.ai-slop-detection",
+        rename = "ai_slop_detection"
+    )]
+    AISlopDetection,
 }
 
 impl UserCommand {
@@ -133,6 +139,7 @@ pub enum UserCommandDisplay {
     Skippage,
     Language,
     Recommendasion,
+    AISlopDetection,
 }
 
 impl std::fmt::Display for UserCommandDisplay {
@@ -155,6 +162,7 @@ impl std::fmt::Display for UserCommandDisplay {
             Self::Skippage => "skippage",
             Self::Language => "language",
             Self::Recommendasion => "recommendasion",
+            Self::AISlopDetection => "ai_slop_detection",
         };
 
         f.write_str(string)
@@ -187,6 +195,7 @@ mod tests {
             UserCommand::Magic => UserCommandDisplay::Magic,
             UserCommand::Skippage { .. } => UserCommandDisplay::Skippage,
             UserCommand::Language => UserCommandDisplay::Language,
+            UserCommand::AISlopDetection => UserCommandDisplay::AISlopDetection,
         };
     }
 

@@ -19,6 +19,7 @@ use crate::services::{
     WordStatsService,
 };
 use crate::spotify::ShortTrack;
+use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
@@ -269,36 +270,6 @@ pub async fn check_ai_slop(
         });
     }
 
-    let Some(provider) = ai_detection_result.provider else {
-        anyhow::bail!("Provider should be set on positive result");
-    };
-
-    let keyboard = vec![
-        vec![InlineButtons::Dislike(track.id().into()).into_inline_keyboard_button(state.locale())],
-        vec![InlineButtons::Ignore(track.id().into()).into_inline_keyboard_button(state.locale())],
-        vec![
-            InlineButtons::ArtistPage(track.first_artist_url().parse()?)
-                .into_inline_keyboard_button(state.locale()),
-        ],
-    ];
-
-    app.bot()
-        .send_message(
-            state.chat_id()?,
-            t!(
-                "ai-slop.alert",
-                locale = state.locale(),
-                track_name = track.track_tg_link(),
-                album_name = track.album_tg_link(),
-                ai_check_provider = provider.tg_link(),
-            ),
-        )
-        .link_preview_options(link_preview_small_top(track.url()))
-        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-            keyboard,
-        )))
-        .await?;
-
     if matches!(
         state.user().cfg_ai_slop_detection,
         UserAISlopDetection::Skip
@@ -326,6 +297,43 @@ pub async fn check_ai_slop(
         );
 
         app.bot().send_message(state.chat_id()?, text).await?;
+    } else {
+        let Some(provider) = ai_detection_result.provider else {
+            anyhow::bail!("Provider should be set on positive result");
+        };
+
+        let keyboard = vec![
+            vec![
+                InlineButtons::Dislike(track.id().into())
+                    .into_inline_keyboard_button(state.locale()),
+            ],
+            vec![
+                InlineButtons::Ignore(track.id().into())
+                    .into_inline_keyboard_button(state.locale()),
+            ],
+            vec![
+                InlineButtons::ArtistPage(track.first_artist_url().parse()?)
+                    .into_inline_keyboard_button(state.locale()),
+            ],
+        ];
+
+        app.bot()
+            .send_message(
+                state.chat_id()?,
+                t!(
+                    "ai-slop.alert",
+                    locale = state.locale(),
+                    track_name = track.track_tg_link(),
+                    album_name = track.album_tg_link(),
+                    ai_check_provider = provider.tg_link(),
+                    config_command = UserCommandDisplay::AISlopDetection,
+                ),
+            )
+            .link_preview_options(link_preview_small_top(track.url()))
+            .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+                keyboard,
+            )))
+            .await?;
     }
 
     Ok(AISlopCheckResult {

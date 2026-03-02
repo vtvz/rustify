@@ -15,6 +15,8 @@ ai-slop.alert:
     <i>Information provided by "%{ai_check_provider}"</i>
 
     <b>Support real organic hand-made music instead of AI-slop!</b>
+
+    <blockquote>Want to disable these alerts or auto-skip AI tracks? Try /%{config_command}</blockquote>
   ru: |-
     🎵 %{track_name}
     Альбом: %{album_name}
@@ -29,3 +31,37 @@ ai-slop.alert:
     <i>Информация предоставлена "%{ai_check_provider}"</i>
 
     <b>Поддерживайте настоящую живую музыку вместо ИИ-шлака!</b>
+
+    <blockquote>Хотите отключить уведомления или настроить автопропуск AI-треков? Попробуйте /%{config_command}</blockquote>
+
+ai-slop.setting-description:
+  en: |-
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> AI Music Detection
+
+    Bot automatically checks tracks for AI generation
+
+    Configure bot's reaction to such tracks:
+  ru: |-
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> Обнаружение ИИ-музыки
+
+    Бот автоматически проверяет треки на ИИ-генерацию
+
+    Настройте реакцию бота на такие треки:
+
+ai-slop.button-notify:
+  en: |-
+    %{mark}Notify
+  ru: |-
+    %{mark}Уведомлять
+
+ai-slop.button-ignore:
+  en: |-
+    %{mark}Don't notify
+  ru: |-
+    %{mark}Не уведомлять
+
+ai-slop.button-skip:
+  en: |-
+    %{mark}Skip automatically
+  ru: |-
+    %{mark}Пропускать автоматически

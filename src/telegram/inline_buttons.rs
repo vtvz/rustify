@@ -5,7 +5,7 @@ use std::str::FromStr;
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
 use url::Url;
 
-use crate::entity::prelude::TrackStatus;
+use crate::entity::prelude::{TrackStatus, UserAISlopDetection};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum InlineButtons {
@@ -14,6 +14,7 @@ pub enum InlineButtons {
     Analyze(String),
     SongLinks(String),
     Magic,
+    AISlopDetection(UserAISlopDetection, bool),
     SkippageEnable(bool),
     Recommendasion,
     // TODO: Think about making separate type of buttons without callback data
@@ -38,6 +39,20 @@ impl InlineButtons {
                 }
             },
             Self::ArtistPage(_) => t!("inline-buttons.artist-page", locale = locale),
+            Self::AISlopDetection(status, selected) => {
+                let mark = if *selected { "✅ " } else { "" };
+                match status {
+                    UserAISlopDetection::Notify => {
+                        t!("ai-slop.button-notify", locale = locale, mark = mark)
+                    },
+                    UserAISlopDetection::Ignore => {
+                        t!("ai-slop.button-ignore", locale = locale, mark = mark)
+                    },
+                    UserAISlopDetection::Skip => {
+                        t!("ai-slop.button-skip", locale = locale, mark = mark)
+                    },
+                }
+            },
         }
     }
 }
