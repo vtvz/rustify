@@ -345,6 +345,8 @@ impl App {
 
         let queue_manager = QueueManager::new(redis_url).await?;
 
+        let shlabs_api_key = env.shlabs_api_key.filter(|key| !key.trim().is_empty());
+
         // Make global static variable to prevent hassle with Arc
         let app = Box::new(Self {
             bot,
@@ -361,7 +363,7 @@ impl App {
                 .server_http_address
                 .unwrap_or_else(|| "0.0.0.0:3000".into()),
             queue_manager,
-            ai_slop_detection: AISlopDetectionService::new(env.shlabs_api_key),
+            ai_slop_detection: AISlopDetectionService::new(shlabs_api_key),
         });
 
         let app = &*Box::leak(app);

@@ -337,3 +337,20 @@ impl TryFrom<&str> for AISlopDetection {
         Self::try_from_value(&value.to_owned())
     }
 }
+
+impl AISlopDetection {
+    #[must_use]
+    pub fn is_skip(&self) -> bool {
+        matches!(self, Self::Skip)
+    }
+
+    #[must_use]
+    pub fn is_notify(&self) -> bool {
+        matches!(self, Self::Notify)
+    }
+
+    #[must_use]
+    pub fn is_ignore(&self) -> bool {
+        matches!(self, Self::Ignore)
+    }
+}

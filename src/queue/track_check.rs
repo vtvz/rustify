@@ -8,7 +8,6 @@ use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ReplyMarkup};
 
 use crate::app::App;
-use crate::entity::prelude::UserAISlopDetection;
 use crate::infrastructure::error_handler;
 use crate::lyrics::SearchResult as _;
 use crate::services::{
@@ -73,9 +72,6 @@ pub async fn consume(data: TrackCheckQueueTask, app: Data<&'static App>) -> anyh
             .context("Check AI Slop")?;
 
         if res.skipped {
-            TrackStatusService::increase_skips(app.db(), user_state.user_id(), data.track.id())
-                .await?;
-
             return Ok(());
         }
 
@@ -258,6 +254,13 @@ pub async fn check_ai_slop(
     state: &UserState,
     track: &ShortTrack,
 ) -> anyhow::Result<AISlopCheckResult> {
+    if state.user().cfg_ai_slop_detection.is_ignore() {
+        return Ok(AISlopCheckResult {
+            is_ai_slop: false,
+            skipped: false,
+        });
+    }
+
     let ai_detection_result = app
         .ai_slop_detection()
         .is_track_ai(&mut app.redis_conn().await?, track)
@@ -270,10 +273,7 @@ pub async fn check_ai_slop(
         });
     }
 
-    if matches!(
-        state.user().cfg_ai_slop_detection,
-        UserAISlopDetection::Skip
-    ) {
+    if state.user().cfg_ai_slop_detection.is_skip() {
         if state.is_spotify_premium().await? {
             state
                 .spotify()
@@ -297,44 +297,43 @@ pub async fn check_ai_slop(
         );
 
         app.bot().send_message(state.chat_id()?, text).await?;
-    } else {
-        let Some(provider) = ai_detection_result.provider else {
-            anyhow::bail!("Provider should be set on positive result");
-        };
 
-        let keyboard = vec![
-            vec![
-                InlineButtons::Dislike(track.id().into())
-                    .into_inline_keyboard_button(state.locale()),
-            ],
-            vec![
-                InlineButtons::Ignore(track.id().into())
-                    .into_inline_keyboard_button(state.locale()),
-            ],
-            vec![
-                InlineButtons::ArtistPage(track.first_artist_url().parse()?)
-                    .into_inline_keyboard_button(state.locale()),
-            ],
-        ];
-
-        app.bot()
-            .send_message(
-                state.chat_id()?,
-                t!(
-                    "ai-slop.alert",
-                    locale = state.locale(),
-                    track_name = track.track_tg_link(),
-                    album_name = track.album_tg_link(),
-                    ai_check_provider = provider.tg_link(),
-                    config_command = UserCommandDisplay::AISlopDetection,
-                ),
-            )
-            .link_preview_options(link_preview_small_top(track.url()))
-            .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
-                keyboard,
-            )))
-            .await?;
+        return Ok(AISlopCheckResult {
+            is_ai_slop: true,
+            skipped: true,
+        });
     }
+
+    let Some(provider) = ai_detection_result.provider else {
+        anyhow::bail!("Provider should be set on positive result");
+    };
+
+    let keyboard = vec![
+        vec![InlineButtons::Dislike(track.id().into()).into_inline_keyboard_button(state.locale())],
+        vec![InlineButtons::Ignore(track.id().into()).into_inline_keyboard_button(state.locale())],
+        vec![
+            InlineButtons::ArtistPage(track.first_artist_url().parse()?)
+                .into_inline_keyboard_button(state.locale()),
+        ],
+    ];
+
+    app.bot()
+        .send_message(
+            state.chat_id()?,
+            t!(
+                "ai-slop.alert",
+                locale = state.locale(),
+                track_name = track.track_tg_link(),
+                album_name = track.album_tg_link(),
+                ai_check_provider = provider.tg_link(),
+                config_command = UserCommandDisplay::AISlopDetection,
+            ),
+        )
+        .link_preview_options(link_preview_small_top(track.url()))
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            keyboard,
+        )))
+        .await?;
 
     Ok(AISlopCheckResult {
         is_ai_slop: true,

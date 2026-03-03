@@ -47,7 +47,7 @@ pub struct Usage {
     pub monthly_remaining: i64,
 }
 
-const REDIS_KEY_ARTIST_PREFIX: &str = "rustify:ai_slop:shlabs:artist";
+const REDIS_KEY_ARTIST_PREFIX: &str = "rustify:ai_slop:shlabs:track";
 
 pub struct SHLabsProvider {
     client: reqwest::Client,

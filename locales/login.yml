@@ -33,7 +33,7 @@ login.invite:
     <b>Features:</b>
     • Block unwanted songs ("Dislike")
     • Notifications for profanity in lyrics (English only)
-    • Detect and skip AI-generated music
+    • Detect AI-generated music (notify/ignore/auto-skip)
     • Get song lyrics and AI-powered analysis
     • Create <i>Magic Playlist™</i>✨ from your favorite tracks
     • <i>Skippage™</i> function will diverse your listening experience
@@ -49,7 +49,7 @@ login.invite:
     <b>Возможности:</b>
     • Блокировка нежелательных песен ("Дизлайк")
     • Уведомление на нецензурную лексику в тексте (только английский)
-    • Обнаружение и пропуск ИИ-музыки
+    • Обнаружение ИИ-музыки (уведомление/игнорирование/авто-пропуск)
     • Получение текстов песен и их анализ с помощью ИИ
     • Создание <i>Magic Playlist™</i>✨ из любимых треков
     • Функция <i>Skippage™</i> разнообразит ваши впечатления от прослушивания

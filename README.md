@@ -30,7 +30,7 @@ Rustify is an intelligent Telegram bot that integrates with Spotify to provide r
 ### 🎯 Core Features
 
 - **🔍 Real-time Profanity Detection** - Automatically analyzes song lyrics as you listen using advanced profanity detection algorithms
-- **🤖 AI-Generated Music Detection** - Identifies AI-generated tracks using multiple detection providers ([Spotify AI Music Blocker](https://github.com/CennoxX/spotify-ai-blocker), [Soul Over AI](https://github.com/xoundbyte/soul-over-ai), [SpotAI](https://spot-the-ai.com/list/), [SubmitHub AI Song Checker](https://www.submithub.com/ai-song-checker)) and shows notifications with attribution
+- **🤖 AI-Generated Music Detection** - Identifies AI-generated tracks using multiple detection providers and shows notifications with attribution
 - **⏭️ Auto-Skip** - Instantly skips tracks you've marked with dislike
 - **📊 Multi-Provider Lyrics** - Fetches lyrics from multiple sources (Musixmatch, Genius, LrcLib) for maximum coverage
 - **🤖 AI-Powered Analysis** - Optional OpenAI-compatible API integration for analyzing song lyrics meaning, storyline, and content themes, plus individual word analysis
