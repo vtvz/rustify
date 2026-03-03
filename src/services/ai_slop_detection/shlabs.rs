@@ -47,7 +47,7 @@ pub struct Usage {
     pub monthly_remaining: i64,
 }
 
-const REDIS_KEY_ARTIST_PREFIX: &str = "rustify:ai_slop:shlabs:track";
+const REDIS_KEY_TRACK_PREFIX: &str = "rustify:ai_slop:shlabs:track";
 
 pub struct SHLabsProvider {
     client: reqwest::Client,
@@ -75,7 +75,7 @@ impl SHLabsProvider {
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
     ) -> anyhow::Result<Root> {
-        let track_key = format!("{REDIS_KEY_ARTIST_PREFIX}:{}", track.id());
+        let track_key = format!("{REDIS_KEY_TRACK_PREFIX}:{}", track.id());
 
         if let Some(data) = redis_conn.get(&track_key).await?
             && let Ok(data) = serde_json::from_str(&data)
