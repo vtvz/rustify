@@ -75,7 +75,7 @@ pub async fn consume(data: TrackCheckQueueTask, app: Data<&'static App>) -> anyh
             return Ok(());
         }
 
-        let res = check_pofanity(app, &user_state, &data.track)
+        let res = check_profanity(app, &user_state, &data.track)
             .await
             .context("Check lyrics failed")?;
 
@@ -115,7 +115,7 @@ pub struct CheckBadWordsResult {
         track_name = %track.name_with_artists(),
     )
 )]
-pub async fn check_pofanity(
+pub async fn check_profanity(
     app: &'static App,
     state: &UserState,
     track: &ShortTrack,

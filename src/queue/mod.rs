@@ -29,12 +29,12 @@ impl QueueManager {
 
         let mut storage = SharedRedisStorage::new(client).await?;
 
-        let profanity_queue = storage
+        let track_check_queue = storage
             .make_shared_with_config(RedisConfig::default().set_namespace("rustify:track_check"))?;
 
         Ok(Self {
             storage,
-            track_check_queue: profanity_queue,
+            track_check_queue,
         })
     }
 }
