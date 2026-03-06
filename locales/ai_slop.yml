@@ -5,7 +5,7 @@ ai-slop.alert:
     🎵 %{track_name}
     Album: %{album_name}
 
-    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> This track is most likely <b>AI-generated</b>. You can dislike or ignore similar notifications for the current track
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> This track is most likely <b>%{prediction}</b>. You can dislike or ignore similar notifications for the current track
 
     To permanently block this artist from recommendations:
     <tg-emoji emoji-id="6028171274939797252">🔗</tg-emoji> Open the artist's page in Spotify
@@ -21,7 +21,7 @@ ai-slop.alert:
     🎵 %{track_name}
     Альбом: %{album_name}
 
-    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> Этот трек скорее всего <b>создан ИИ</b>. Вы можете дизлайкнуть или отключить подобные уведомления для текущего трека
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> Этот трек скорее всего <b>%{prediction}</b>. Вы можете дизлайкнуть или отключить подобные уведомления для текущего трека
 
     Чтобы навсегда скрыть этого исполнителя из рекомендаций:
     <tg-emoji emoji-id="6028171274939797252">🔗</tg-emoji> Откройте страницу исполнителя в Spotify
@@ -33,6 +33,14 @@ ai-slop.alert:
     <b>Поддерживайте настоящую живую музыку вместо ИИ-шлака!</b>
 
     <blockquote>Хотите отключить уведомления или настроить автопропуск AI-треков? Попробуйте /%{config_command}</blockquote>
+
+ai-slop.alert-pure-ai:
+  en: fully AI-generated
+  ru: полностью сгенерирован ИИ
+
+ai-slop.alert-processed-ai:
+  en: partially generated or processed by AI
+  ru: частично сгенерирован или обработан ИИ
 
 ai-slop.setting-description:
   en: |-

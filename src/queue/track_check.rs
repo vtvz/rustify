@@ -11,6 +11,7 @@ use crate::app::App;
 use crate::infrastructure::error_handler;
 use crate::lyrics::SearchResult as _;
 use crate::services::{
+    AISlopDetectionPrediction,
     TrackLanguageStatsService,
     TrackStatusService,
     UserService,
@@ -266,7 +267,7 @@ pub async fn check_ai_slop(
         .is_track_ai(&mut app.redis_conn().await?, track)
         .await?;
 
-    if !ai_detection_result.is_track_ai {
+    if !ai_detection_result.prediction.is_track_ai() {
         return Ok(AISlopCheckResult {
             is_ai_slop: false,
             skipped: false,
@@ -317,6 +318,14 @@ pub async fn check_ai_slop(
         ],
     ];
 
+    let prediction = match ai_detection_result.prediction {
+        AISlopDetectionPrediction::HumanMade => "Impossible".into(),
+        AISlopDetectionPrediction::PureAI => t!("ai-slop.alert-pure-ai", locale = state.locale()),
+        AISlopDetectionPrediction::ProcessedAI => {
+            t!("ai-slop.alert-processed-ai", locale = state.locale())
+        },
+    };
+
     app.bot()
         .send_message(
             state.chat_id()?,
@@ -327,6 +336,7 @@ pub async fn check_ai_slop(
                 album_name = track.album_tg_link(),
                 ai_check_provider = provider.tg_link(),
                 config_command = UserCommandDisplay::AISlopDetection,
+                prediction = prediction,
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))

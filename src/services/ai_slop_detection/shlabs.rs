@@ -1,7 +1,9 @@
+use async_trait::async_trait;
 use chrono::Duration;
 use redis::AsyncTypedCommands as _;
 use serde_json::json;
 
+use crate::services::ai_slop_detection::{AISlopDetectionPrediction, AISlopPredict};
 use crate::spotify::ShortTrack;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -108,14 +110,23 @@ impl SHLabsProvider {
 
         Ok(res)
     }
+}
 
-    pub async fn is_track_ai(
+#[async_trait]
+impl AISlopPredict for SHLabsProvider {
+    async fn predict(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
-    ) -> anyhow::Result<bool> {
+    ) -> anyhow::Result<AISlopDetectionPrediction> {
         let res = self.fetch(redis_conn, track).await?;
 
-        Ok(!matches!(res.result.prediction, Prediction::HumanMade))
+        Ok(match res.result.prediction {
+            Prediction::HumanMade => AISlopDetectionPrediction::HumanMade,
+            Prediction::PureAI | Prediction::PureAIGenerated => AISlopDetectionPrediction::PureAI,
+            Prediction::ProcessedAI | Prediction::ProcessedAIGenerated => {
+                AISlopDetectionPrediction::ProcessedAI
+            },
+        })
     }
 }

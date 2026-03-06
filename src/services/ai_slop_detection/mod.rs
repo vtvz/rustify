@@ -3,6 +3,7 @@ mod soul_over_ai;
 mod spot_the_ai;
 mod spotify_ai_blocker;
 
+use async_trait::async_trait;
 use soul_over_ai::SoulOverAIProvider;
 use spot_the_ai::SpotTheAIProvider;
 use spotify_ai_blocker::SpotifyAIBlockerProvider;
@@ -25,7 +26,30 @@ pub enum Provider {
 
 pub struct AISlopDetectionResult {
     pub provider: Option<Provider>,
-    pub is_track_ai: bool,
+    pub prediction: AISlopDetectionPrediction,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum AISlopDetectionPrediction {
+    HumanMade,
+    PureAI,
+    ProcessedAI,
+}
+
+impl AISlopDetectionPrediction {
+    #[must_use]
+    pub fn is_track_ai(self) -> bool {
+        self != Self::HumanMade
+    }
+}
+
+#[async_trait]
+pub trait AISlopPredict {
+    async fn predict(
+        &self,
+        redis_conn: &mut deadpool_redis::Connection,
+        track: &ShortTrack,
+    ) -> anyhow::Result<AISlopDetectionPrediction>;
 }
 
 impl Provider {
@@ -70,14 +94,14 @@ impl AISlopDetectionService {
     ) -> anyhow::Result<AISlopDetectionResult> {
         macro_rules! handle_provider {
             ($provider_enum:expr, $provider:expr) => {
-                let result = $provider.is_track_ai(redis_conn, track).await;
+                let result = AISlopPredict::predict($provider, redis_conn, track).await;
 
                 match result {
-                    Ok(res) => {
-                        if res {
+                    Ok(prediction) => {
+                        if prediction.is_track_ai() {
                             return Ok(AISlopDetectionResult {
                                 provider: Some($provider_enum),
-                                is_track_ai: res,
+                                prediction,
                             });
                         }
                     },
@@ -92,9 +116,9 @@ impl AISlopDetectionService {
             };
         }
 
-        handle_provider!(Provider::SpotifyAIBlocker, self.spotify_ai_blocker);
-        handle_provider!(Provider::SoulOverAI, self.soul_over_ai);
-        handle_provider!(Provider::SpotTheAI, self.spot_the_ai);
+        handle_provider!(Provider::SpotifyAIBlocker, &self.spotify_ai_blocker);
+        handle_provider!(Provider::SoulOverAI, &self.soul_over_ai);
+        handle_provider!(Provider::SpotTheAI, &self.spot_the_ai);
 
         if let Some(shlabs) = &self.shlabs {
             handle_provider!(Provider::SHLabs, shlabs);
@@ -102,7 +126,7 @@ impl AISlopDetectionService {
 
         Ok(AISlopDetectionResult {
             provider: None,
-            is_track_ai: false,
+            prediction: AISlopDetectionPrediction::HumanMade,
         })
     }
 }

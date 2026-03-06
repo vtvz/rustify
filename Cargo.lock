@@ -3425,6 +3425,7 @@ dependencies = [
  "apalis",
  "apalis-redis",
  "async-openai",
+ "async-trait",
  "axum",
  "backon",
  "chrono",

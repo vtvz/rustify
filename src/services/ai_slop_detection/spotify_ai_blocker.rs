@@ -1,6 +1,8 @@
+use async_trait::async_trait;
 use chrono::Duration;
 use redis::AsyncCommands as _;
 
+use crate::services::ai_slop_detection::{AISlopDetectionPrediction, AISlopPredict};
 use crate::spotify::ShortTrack;
 
 pub struct SpotifyAIBlockerProvider {
@@ -116,6 +118,23 @@ impl SpotifyAIBlockerProvider {
         Self::ensure_populated(self, redis_conn).await?;
 
         self.any_artist_ai(redis_conn, &track.artist_ids()).await
+    }
+}
+
+#[async_trait]
+impl AISlopPredict for SpotifyAIBlockerProvider {
+    async fn predict(
+        &self,
+        redis_conn: &mut deadpool_redis::Connection,
+        track: &ShortTrack,
+    ) -> anyhow::Result<AISlopDetectionPrediction> {
+        self.is_track_ai(redis_conn, track).await.map(|res| {
+            if res {
+                AISlopDetectionPrediction::PureAI
+            } else {
+                AISlopDetectionPrediction::HumanMade
+            }
+        })
     }
 }
 
