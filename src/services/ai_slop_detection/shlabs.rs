@@ -17,6 +17,8 @@ pub enum Prediction {
     HumanMade,
     #[serde(rename = "Pure AI")]
     PureAI,
+    #[serde(rename = "Pure AI Generated")]
+    PureAIGenerated,
     #[serde(rename = "Processed AI")]
     ProcessedAI,
     #[serde(rename = "Processed AI Generated")]
