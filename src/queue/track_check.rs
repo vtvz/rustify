@@ -301,7 +301,7 @@ pub async fn check_ai_slop(
 
         return Ok(AISlopCheckResult {
             is_ai_slop: true,
-            skipped: true,
+            skipped: false,
         });
     }
 
