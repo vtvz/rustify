@@ -87,6 +87,7 @@ impl AISlopDetectionService {
         }
     }
 
+    #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     pub async fn is_track_ai(
         &self,
         redis_conn: &mut deadpool_redis::Connection,

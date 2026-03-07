@@ -74,6 +74,7 @@ impl SHLabsProvider {
         }
     }
 
+    #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     async fn fetch(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
@@ -114,6 +115,7 @@ impl SHLabsProvider {
 
 #[async_trait]
 impl AISlopDetector for SHLabsProvider {
+    #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     async fn detect(
         &self,
         redis_conn: &mut deadpool_redis::Connection,

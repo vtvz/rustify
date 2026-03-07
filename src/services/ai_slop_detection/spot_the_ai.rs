@@ -39,6 +39,7 @@ impl SpotTheAIProvider {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     async fn ensure_populated(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
@@ -86,6 +87,7 @@ impl SpotTheAIProvider {
         anyhow::bail!("Timeout waiting for population to complete")
     }
 
+    #[tracing::instrument(skip_all)]
     async fn populate(&self, redis_conn: &mut deadpool_redis::Connection) -> anyhow::Result<()> {
         tracing::trace!("Populating spot-the-ai DB of AI slop");
 
@@ -113,6 +115,7 @@ impl SpotTheAIProvider {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, fields(%artist_name))]
     async fn is_artist_ai(
         redis_conn: &mut deadpool_redis::Connection,
         artist_name: &str,
@@ -127,6 +130,7 @@ impl SpotTheAIProvider {
         Ok(exists)
     }
 
+    #[tracing::instrument(skip_all, fields(artist_names = artist_names.join(", ")))]
     async fn any_artist_ai(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
@@ -141,6 +145,7 @@ impl SpotTheAIProvider {
         Ok(false)
     }
 
+    #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     pub async fn is_track_ai(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
@@ -154,6 +159,7 @@ impl SpotTheAIProvider {
 
 #[async_trait]
 impl AISlopDetector for SpotTheAIProvider {
+    #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     async fn detect(
         &self,
         redis_conn: &mut deadpool_redis::Connection,

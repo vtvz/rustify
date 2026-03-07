@@ -40,6 +40,7 @@ impl SpotifyAIBlockerProvider {
         }
     }
 
+    #[tracing::instrument(skip_all)]
     async fn ensure_populated(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
@@ -87,6 +88,7 @@ impl SpotifyAIBlockerProvider {
         anyhow::bail!("Timeout waiting for population to complete")
     }
 
+    #[tracing::instrument(skip_all)]
     async fn populate(&self, redis_conn: &mut deadpool_redis::Connection) -> anyhow::Result<()> {
         tracing::trace!("Populating spotify-ai-blocker DB of AI slop");
 
@@ -116,6 +118,7 @@ impl SpotifyAIBlockerProvider {
         Ok(())
     }
 
+    #[tracing::instrument(skip_all, fields(%artist_id))]
     async fn is_artist_ai(
         redis_conn: &mut deadpool_redis::Connection,
         artist_id: &str,
@@ -127,6 +130,7 @@ impl SpotifyAIBlockerProvider {
         Ok(exists)
     }
 
+    #[tracing::instrument(skip_all, fields(artist_ids = artist_ids.join(", ")))]
     async fn any_artist_ai(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
@@ -141,6 +145,7 @@ impl SpotifyAIBlockerProvider {
         Ok(false)
     }
 
+    #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     pub async fn is_track_ai(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
@@ -154,6 +159,7 @@ impl SpotifyAIBlockerProvider {
 
 #[async_trait]
 impl AISlopDetector for SpotifyAIBlockerProvider {
+    #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     async fn detect(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
