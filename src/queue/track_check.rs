@@ -319,7 +319,7 @@ pub async fn check_ai_slop(
     ];
 
     let prediction = match ai_detection_result.prediction {
-        AISlopDetectionPrediction::HumanMade => "Impossible".into(),
+        AISlopDetectionPrediction::HumanMade => "unreachable".into(),
         AISlopDetectionPrediction::PureAI => t!("ai-slop.alert-pure-ai", locale = state.locale()),
         AISlopDetectionPrediction::ProcessedAI => {
             t!("ai-slop.alert-processed-ai", locale = state.locale())
