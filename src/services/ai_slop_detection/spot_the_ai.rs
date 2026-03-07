@@ -55,15 +55,18 @@ impl SpotTheAIProvider {
         {
             let result = self.populate(redis_conn).await;
 
-            if result.is_ok() {
-                let _: () = redis_conn
+            let result = if result.is_ok() {
+                redis_conn
                     .set_ex(
                         REDIS_KEY_POPULATED,
                         1,
                         (Duration::days(1) - Duration::minutes(10)).num_seconds() as _,
                     )
-                    .await?;
-            }
+                    .await
+                    .map_err(Into::into)
+            } else {
+                result
+            };
 
             self.populating.store(false, Ordering::SeqCst);
 
