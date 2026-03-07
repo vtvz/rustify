@@ -1,5 +1,7 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use async_trait::async_trait;
-use chrono::Duration;
+use chrono::{Duration, Utc};
 use redis::AsyncCommands as _;
 
 use crate::services::ai_slop_detection::{AISlopDetectionPrediction, AISlopDetector};
@@ -7,6 +9,7 @@ use crate::spotify::ShortTrack;
 
 pub struct SoulOverAIProvider {
     client: reqwest::Client,
+    populating: AtomicBool,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -17,6 +20,9 @@ struct AIArtist {
 
 const REDIS_KEY_POPULATED: &str = "rustify:ai_slop:soul_over_ai:populated";
 const REDIS_KEY_ARTIST_PREFIX: &str = "rustify:ai_slop:soul_over_ai:artist";
+
+const RETRY_DELAY: Duration = Duration::milliseconds(100);
+const POPULATE_TIMEOUT: Duration = Duration::seconds(20);
 
 impl SoulOverAIProvider {
     #[must_use]
@@ -30,6 +36,7 @@ impl SoulOverAIProvider {
                 )
                 .build()
                 .expect("Should work"),
+            populating: AtomicBool::new(false),
         }
     }
 
@@ -37,23 +44,47 @@ impl SoulOverAIProvider {
         &self,
         redis_conn: &mut deadpool_redis::Connection,
     ) -> anyhow::Result<()> {
-        let exists: bool = redis_conn.exists(REDIS_KEY_POPULATED).await?;
-
-        if exists {
+        if redis_conn.exists(REDIS_KEY_POPULATED).await? {
             return Ok(());
         }
 
-        self.populate(redis_conn).await?;
+        if self
+            .populating
+            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+            .is_ok()
+        {
+            let result = self.populate(redis_conn).await;
 
-        let _: () = redis_conn
-            .set_ex(
-                REDIS_KEY_POPULATED,
-                1,
-                (Duration::days(1) - Duration::minutes(10)).num_seconds() as _,
-            )
-            .await?;
+            if result.is_ok() {
+                let _: () = redis_conn
+                    .set_ex(
+                        REDIS_KEY_POPULATED,
+                        1,
+                        (Duration::days(1) - Duration::minutes(10)).num_seconds() as _,
+                    )
+                    .await?;
+            }
 
-        Ok(())
+            self.populating.store(false, Ordering::SeqCst);
+
+            return result;
+        }
+
+        let deadline = Utc::now() + POPULATE_TIMEOUT;
+
+        while Utc::now() < deadline {
+            tokio::time::sleep(RETRY_DELAY.to_std().expect("positive duration")).await;
+
+            if !self.populating.load(Ordering::SeqCst) {
+                if redis_conn.exists(REDIS_KEY_POPULATED).await? {
+                    return Ok(());
+                }
+
+                anyhow::bail!("Population failed by another task");
+            }
+        }
+
+        anyhow::bail!("Timeout waiting for population to complete")
     }
 
     async fn populate(&self, redis_conn: &mut deadpool_redis::Connection) -> anyhow::Result<()> {
