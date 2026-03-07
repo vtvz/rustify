@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use chrono::Duration;
 use redis::AsyncCommands as _;
 
-use crate::services::ai_slop_detection::{AISlopDetectionPrediction, AISlopPredict};
+use crate::services::ai_slop_detection::{AISlopDetectionPrediction, AISlopDetector};
 use crate::spotify::ShortTrack;
 
 pub struct SpotTheAIProvider {
@@ -122,8 +122,8 @@ impl SpotTheAIProvider {
 }
 
 #[async_trait]
-impl AISlopPredict for SpotTheAIProvider {
-    async fn predict(
+impl AISlopDetector for SpotTheAIProvider {
+    async fn detect(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,

@@ -44,8 +44,8 @@ impl AISlopDetectionPrediction {
 }
 
 #[async_trait]
-pub trait AISlopPredict {
-    async fn predict(
+pub trait AISlopDetector {
+    async fn detect(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
@@ -94,7 +94,7 @@ impl AISlopDetectionService {
     ) -> anyhow::Result<AISlopDetectionResult> {
         macro_rules! handle_provider {
             ($provider_enum:expr, $provider:expr) => {
-                let result = AISlopPredict::predict($provider, redis_conn, track).await;
+                let result = AISlopDetector::detect($provider, redis_conn, track).await;
 
                 match result {
                     Ok(prediction) => {
@@ -116,8 +116,8 @@ impl AISlopDetectionService {
             };
         }
 
-        handle_provider!(Provider::SpotifyAIBlocker, &self.spotify_ai_blocker);
         handle_provider!(Provider::SoulOverAI, &self.soul_over_ai);
+        handle_provider!(Provider::SpotifyAIBlocker, &self.spotify_ai_blocker);
         handle_provider!(Provider::SpotTheAI, &self.spot_the_ai);
 
         if let Some(shlabs) = &self.shlabs {

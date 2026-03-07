@@ -2,15 +2,15 @@ _version: 2
 
 inline-buttons.dislike:
   en: |-
-    Dislike 👎
+    Block track 👎
   ru: |-
-    Не нравится 👎
+    Заблокировать трек 👎
 
 inline-buttons.ignore:
   en: |-
-    Ignore text 🙈
+    Hide alerts for this track 🙈
   ru: |-
-    Игнорировать текст 🙈
+    Скрыть уведомления для этого трека 🙈
 
 inline-buttons.analyze:
   en: |-

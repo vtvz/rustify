@@ -3,7 +3,7 @@ use chrono::Duration;
 use redis::AsyncTypedCommands as _;
 use serde_json::json;
 
-use crate::services::ai_slop_detection::{AISlopDetectionPrediction, AISlopPredict};
+use crate::services::ai_slop_detection::{AISlopDetectionPrediction, AISlopDetector};
 use crate::spotify::ShortTrack;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -113,8 +113,8 @@ impl SHLabsProvider {
 }
 
 #[async_trait]
-impl AISlopPredict for SHLabsProvider {
-    async fn predict(
+impl AISlopDetector for SHLabsProvider {
+    async fn detect(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
