@@ -105,15 +105,21 @@ impl SpotTheAIProvider {
 
         let artists: AIArtists = serde_json::from_reader(res.as_ref())?;
 
+        let expiry_seconds = Duration::days(1).num_seconds() as u64;
+        let mut pipe = deadpool_redis::redis::Pipeline::with_capacity(artists.artists.len());
+
         for artist_name in artists.artists {
-            let _: () = redis_conn
-                .set_ex(
-                    format!("{REDIS_KEY_ARTIST_PREFIX}:{:?}", md5::compute(artist_name)),
-                    1,
-                    Duration::days(1).num_seconds() as _,
-                )
-                .await?;
+            pipe.cmd("SETEX")
+                .arg(format!(
+                    "{REDIS_KEY_ARTIST_PREFIX}:{:?}",
+                    md5::compute(artist_name)
+                ))
+                .arg(expiry_seconds)
+                .arg(1)
+                .ignore();
         }
+
+        let _: () = pipe.query_async(redis_conn).await?;
 
         Ok(())
     }

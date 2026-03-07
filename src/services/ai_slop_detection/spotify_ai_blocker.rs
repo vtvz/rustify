@@ -106,17 +106,20 @@ impl SpotifyAIBlockerProvider {
 
         let mut rdr = csv::Reader::from_reader(res.as_ref());
 
+        let expiry_seconds = Duration::days(1).num_seconds() as u64;
+        let mut pipe = deadpool_redis::redis::Pipeline::new();
+
         for result in rdr.deserialize() {
             let record: AIArtist = result?;
 
-            let _: () = redis_conn
-                .set_ex(
-                    format!("{REDIS_KEY_ARTIST_PREFIX}:{}", record.id),
-                    1,
-                    Duration::days(1).num_seconds() as _,
-                )
-                .await?;
+            pipe.cmd("SETEX")
+                .arg(format!("{REDIS_KEY_ARTIST_PREFIX}:{}", record.id))
+                .arg(expiry_seconds)
+                .arg(1)
+                .ignore();
         }
+
+        let _: () = pipe.query_async(redis_conn).await?;
 
         Ok(())
     }

@@ -76,6 +76,12 @@ pub async fn handle(
     state: &UserState,
     chat_id: ChatId,
 ) -> anyhow::Result<HandleStatus> {
+    if !state.is_spotify_authed().await {
+        super::login::send_login_invite(app, state).await?;
+
+        return Ok(HandleStatus::Handled);
+    }
+
     app.bot()
         .send_message(
             chat_id,
