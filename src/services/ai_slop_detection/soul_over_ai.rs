@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Instant;
 
 use async_trait::async_trait;
 use chrono::{Duration, Utc};
@@ -74,9 +75,9 @@ impl SoulOverAIProvider {
             return result;
         }
 
-        let deadline = Utc::now() + POPULATE_TIMEOUT;
+        let deadline = Instant::now() + POPULATE_TIMEOUT.to_std().expect("to be positive");
 
-        while Utc::now() < deadline {
+        while Instant::now() < deadline {
             tokio::time::sleep(RETRY_DELAY.to_std().expect("positive duration")).await;
 
             if !self.populating.load(Ordering::SeqCst) {
