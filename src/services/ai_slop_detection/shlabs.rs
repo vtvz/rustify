@@ -84,14 +84,12 @@ impl SHLabsProvider {
 
         let seconds_hour = Duration::hours(1).num_seconds() as u64;
 
-        tracing::warn!(seconds_until_midnight, "SHLabs rate limited, pausing");
+        let seconds_pause = seconds_until_midnight.min(seconds_hour);
+
+        tracing::warn!(seconds_pause, "SHLabs rate limited, pausing");
 
         let _: () = redis_conn
-            .set_ex(
-                REDIS_KEY_RATE_LIMITED,
-                1,
-                seconds_until_midnight.min(seconds_hour),
-            )
+            .set_ex(REDIS_KEY_RATE_LIMITED, 1, seconds_pause)
             .await?;
 
         Ok(())
