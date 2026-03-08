@@ -3,7 +3,6 @@ use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use teloxide::types::{InlineKeyboardButton, InlineKeyboardButtonKind};
-use url::Url;
 
 use crate::entity::prelude::{TrackStatus, UserAISlopDetection};
 
@@ -17,8 +16,6 @@ pub enum InlineButtons {
     AISlopDetection(UserAISlopDetection, bool),
     SkippageEnable(bool),
     Recommendasion,
-    // TODO: Think about making separate type of buttons without callback data
-    ArtistPage(Url),
 }
 
 impl InlineButtons {
@@ -38,7 +35,6 @@ impl InlineButtons {
                     t!("skippage.disable-button", locale = locale)
                 }
             },
-            Self::ArtistPage(_) => t!("inline-buttons.artist-page", locale = locale),
             Self::AISlopDetection(status, selected) => {
                 let mark = if *selected { "✅ " } else { "" };
                 match status {
@@ -100,10 +96,7 @@ impl InlineButtons {
 #[allow(clippy::from_over_into)]
 impl Into<InlineKeyboardButtonKind> for InlineButtons {
     fn into(self) -> InlineKeyboardButtonKind {
-        match self {
-            Self::ArtistPage(url) => InlineKeyboardButtonKind::Url(url),
-            _ => InlineKeyboardButtonKind::CallbackData(self.to_string()),
-        }
+        InlineKeyboardButtonKind::CallbackData(self.to_string())
     }
 }
 

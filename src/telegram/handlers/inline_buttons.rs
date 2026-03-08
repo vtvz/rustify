@@ -151,7 +151,6 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
         InlineButtons::SkippageEnable(to_enable) => {
             actions::skippage::handle_inline(app, state, q, to_enable).await?;
         },
-        InlineButtons::ArtistPage(_) => (),
         InlineButtons::AISlopDetection(status, _) => {
             actions::ai_slop_detection::handle_inline(app, state, q, status).await?;
         },

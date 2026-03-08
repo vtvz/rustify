@@ -21,6 +21,7 @@ use crate::services::{
 use crate::spotify::ShortTrack;
 use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::inline_buttons::InlineButtons;
+use crate::telegram::inline_buttons_actions::InlineButtonsActions;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::StringUtils as _;
@@ -318,7 +319,7 @@ pub async fn check_ai_slop(
         vec![InlineButtons::Dislike(track.id().into()).into_inline_keyboard_button(state.locale())],
         vec![InlineButtons::Ignore(track.id().into()).into_inline_keyboard_button(state.locale())],
         vec![
-            InlineButtons::ArtistPage(track.first_artist_url().parse()?)
+            InlineButtonsActions::ArtistPage(track.first_artist_url().parse()?)
                 .into_inline_keyboard_button(state.locale()),
         ],
     ];
