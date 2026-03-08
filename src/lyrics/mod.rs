@@ -3,7 +3,6 @@ use genius::GeniusLocal;
 use isolang::Language;
 use lrclib::LrcLib;
 use musixmatch::Musixmatch;
-use serde::Serialize;
 use strum_macros::Display;
 
 use crate::spotify::ShortTrack;

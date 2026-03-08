@@ -101,16 +101,16 @@ impl SHLabsProvider {
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
     ) -> anyhow::Result<Option<Root>> {
-        if redis_conn.exists(REDIS_KEY_RATE_LIMITED).await? {
-            return Ok(None);
-        }
-
         let track_key = format!("{REDIS_KEY_TRACK_PREFIX}:{}", track.id());
 
         if let Some(data) = redis_conn.get(&track_key).await?
             && let Ok(data) = serde_json::from_str(&data)
         {
             return Ok(Some(data));
+        }
+
+        if redis_conn.exists(REDIS_KEY_RATE_LIMITED).await? {
+            return Ok(None);
         }
 
         let response = self
