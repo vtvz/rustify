@@ -1,11 +1,9 @@
 mod shlabs;
 mod soul_over_ai;
-mod spot_the_ai;
 mod spotify_ai_blocker;
 
 use async_trait::async_trait;
 use soul_over_ai::SoulOverAIProvider;
-use spot_the_ai::SpotTheAIProvider;
 use spotify_ai_blocker::SpotifyAIBlockerProvider;
 
 use crate::spotify::ShortTrack;
@@ -13,14 +11,12 @@ use crate::spotify::ShortTrack;
 pub struct AISlopDetectionService {
     spotify_ai_blocker: SpotifyAIBlockerProvider,
     soul_over_ai: SoulOverAIProvider,
-    spot_the_ai: SpotTheAIProvider,
     shlabs: Option<shlabs::SHLabsProvider>,
 }
 
 pub enum Provider {
     SpotifyAIBlocker,
     SoulOverAI,
-    SpotTheAI,
     SHLabs,
 }
 
@@ -61,7 +57,6 @@ impl Provider {
         match self {
             Self::SpotifyAIBlocker => "https://github.com/CennoxX/spotify-ai-blocker",
             Self::SoulOverAI => "https://github.com/xoundbyte/soul-over-ai",
-            Self::SpotTheAI => "https://spot-the-ai.com/list/",
             Self::SHLabs => "https://www.submithub.com/ai-song-checker",
         }
     }
@@ -70,7 +65,6 @@ impl Provider {
         match self {
             Self::SpotifyAIBlocker => "Spotify AI Music Blocker",
             Self::SoulOverAI => "Soul Over AI",
-            Self::SpotTheAI => "SpotAI",
             Self::SHLabs => "SubmitHub AI Song Checker",
         }
     }
@@ -82,7 +76,6 @@ impl AISlopDetectionService {
         Self {
             spotify_ai_blocker: SpotifyAIBlockerProvider::new(),
             soul_over_ai: SoulOverAIProvider::new(),
-            spot_the_ai: SpotTheAIProvider::new(),
             shlabs: shlabs_api_key.map(shlabs::SHLabsProvider::new),
         }
     }
@@ -119,7 +112,6 @@ impl AISlopDetectionService {
 
         handle_provider!(Provider::SoulOverAI, &self.soul_over_ai);
         handle_provider!(Provider::SpotifyAIBlocker, &self.spotify_ai_blocker);
-        handle_provider!(Provider::SpotTheAI, &self.spot_the_ai);
 
         if let Some(shlabs) = &self.shlabs {
             handle_provider!(Provider::SHLabs, shlabs);
