@@ -3,6 +3,7 @@ mod soul_over_ai;
 mod spotify_ai_blocker;
 
 use async_trait::async_trait;
+use chrono::NaiveDate;
 use soul_over_ai::SoulOverAIProvider;
 use spotify_ai_blocker::SpotifyAIBlockerProvider;
 
@@ -20,13 +21,15 @@ pub enum Provider {
     SHLabs,
 }
 
+#[derive(Default)]
 pub struct AISlopDetectionResult {
     pub provider: Option<Provider>,
     pub prediction: AISlopDetectionPrediction,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum AISlopDetectionPrediction {
+    #[default]
     HumanMade,
     PureAI,
     ProcessedAI,
@@ -80,6 +83,14 @@ impl AISlopDetectionService {
         }
     }
 
+    fn is_before_ai_era(date: Option<NaiveDate>) -> bool {
+        if date.is_none() {
+            return false;
+        }
+
+        date < NaiveDate::from_ymd_opt(2024, 1, 1)
+    }
+
     #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     pub async fn is_track_ai(
         &self,
@@ -110,6 +121,10 @@ impl AISlopDetectionService {
             };
         }
 
+        if Self::is_before_ai_era(track.album_release_date()) {
+            return Ok(AISlopDetectionResult::default());
+        }
+
         handle_provider!(Provider::SoulOverAI, &self.soul_over_ai);
         handle_provider!(Provider::SpotifyAIBlocker, &self.spotify_ai_blocker);
 
@@ -117,9 +132,30 @@ impl AISlopDetectionService {
             handle_provider!(Provider::SHLabs, shlabs);
         }
 
-        Ok(AISlopDetectionResult {
-            provider: None,
-            prediction: AISlopDetectionPrediction::HumanMade,
-        })
+        Ok(AISlopDetectionResult::default())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_before_ai_era() {
+        assert!(AISlopDetectionService::is_before_ai_era(
+            NaiveDate::from_ymd_opt(2023, 1, 1)
+        ));
+    }
+
+    #[test]
+    fn test_after_ai_era() {
+        assert!(!AISlopDetectionService::is_before_ai_era(
+            NaiveDate::from_ymd_opt(2024, 1, 1)
+        ));
+    }
+
+    #[test]
+    fn test_none_after_ai_era() {
+        assert!(!AISlopDetectionService::is_before_ai_era(None));
     }
 }
