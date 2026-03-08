@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use chrono::Duration;
+use chrono::{Duration, Timelike as _, Utc};
 use redis::AsyncTypedCommands as _;
 use serde_json::json;
 
@@ -52,6 +52,7 @@ pub struct Usage {
 }
 
 const REDIS_KEY_TRACK_PREFIX: &str = "rustify:ai_slop:shlabs:track";
+const REDIS_KEY_RATE_LIMITED: &str = "rustify:ai_slop:shlabs:rate_limited";
 
 pub struct SHLabsProvider {
     client: reqwest::Client,
@@ -74,21 +75,47 @@ impl SHLabsProvider {
         }
     }
 
+    async fn rate_limit(redis_conn: &mut deadpool_redis::Connection) -> anyhow::Result<()> {
+        let now = Utc::now();
+        let seconds_until_midnight = (Duration::days(1)
+            - Duration::seconds(i64::from(now.num_seconds_from_midnight())))
+        .num_seconds()
+        .max(1) as u64;
+
+        let seconds_hour = Duration::hours(1).num_seconds() as u64;
+
+        tracing::warn!(seconds_until_midnight, "SHLabs rate limited, pausing");
+
+        let _: () = redis_conn
+            .set_ex(
+                REDIS_KEY_RATE_LIMITED,
+                1,
+                seconds_until_midnight.min(seconds_hour),
+            )
+            .await?;
+
+        Ok(())
+    }
+
     #[tracing::instrument(skip_all, fields(track_id = %track.id()))]
     async fn fetch(
         &self,
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
-    ) -> anyhow::Result<Root> {
+    ) -> anyhow::Result<Option<Root>> {
+        if redis_conn.exists(REDIS_KEY_RATE_LIMITED).await? {
+            return Ok(None);
+        }
+
         let track_key = format!("{REDIS_KEY_TRACK_PREFIX}:{}", track.id());
 
         if let Some(data) = redis_conn.get(&track_key).await?
             && let Ok(data) = serde_json::from_str(&data)
         {
-            return Ok(data);
+            return Ok(Some(data));
         }
 
-        let res: Root = self
+        let response = self
             .client
             .post("https://shlabs.music/api/v1/detect")
             .header("X-API-Key", &self.api_key)
@@ -96,10 +123,15 @@ impl SHLabsProvider {
                 "spotifyTrackId": track.id(),
             }))
             .send()
-            .await?
-            .error_for_status()?
-            .json()
             .await?;
+
+        if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+            Self::rate_limit(redis_conn).await.ok();
+
+            return Ok(None);
+        }
+
+        let res: Root = response.error_for_status()?.json().await?;
 
         let _: () = redis_conn
             .set_ex(
@@ -109,7 +141,11 @@ impl SHLabsProvider {
             )
             .await?;
 
-        Ok(res)
+        if res.usage.daily_remaining == 0 {
+            Self::rate_limit(redis_conn).await.ok();
+        }
+
+        Ok(Some(res))
     }
 }
 
@@ -121,7 +157,9 @@ impl AISlopDetector for SHLabsProvider {
         redis_conn: &mut deadpool_redis::Connection,
         track: &ShortTrack,
     ) -> anyhow::Result<AISlopDetectionPrediction> {
-        let res = self.fetch(redis_conn, track).await?;
+        let Some(res) = self.fetch(redis_conn, track).await? else {
+            return Ok(AISlopDetectionPrediction::default());
+        };
 
         Ok(match res.result.prediction {
             Prediction::HumanMade => AISlopDetectionPrediction::HumanMade,
