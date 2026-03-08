@@ -282,34 +282,21 @@ pub async fn check_ai_slop(
         });
     }
 
-    if state.user().cfg_ai_slop_detection.is_skip() {
-        if state.is_spotify_premium().await? {
-            state
-                .spotify()
-                .await
-                .next_track(None)
-                .await
-                .context("Skip current track")?;
-
-            return Ok(AISlopCheckResult {
-                is_ai_slop: true,
-                skipped: true,
-            });
-        }
-
-        let text = t!(
-            "error.cannot-skip",
-            locale = state.locale(),
-            track_name = track.track_tg_link(),
-        );
-
-        app.bot().send_message(state.chat_id()?, text).await?;
+    if state.user().cfg_ai_slop_detection.is_skip() && state.is_spotify_premium().await? {
+        state
+            .spotify()
+            .await
+            .next_track(None)
+            .await
+            .context("Skip current track")?;
 
         return Ok(AISlopCheckResult {
             is_ai_slop: true,
-            skipped: false,
+            skipped: true,
         });
     }
+
+    // NOTE: Still notify user about AI-slop when unable to skip
 
     let Some(provider) = ai_detection_result.provider else {
         anyhow::bail!("Provider should be set on positive result");
