@@ -73,9 +73,12 @@ pub async fn consume(data: TrackCheckQueueTask, app: Data<&'static App>) -> anyh
             .context("Check AI Slop")?;
 
         if res.skipped {
-            TrackStatusService::increase_skips(app.db(), user_state.user_id(), data.track.id())
-                .await
-                .ok();
+            if let Err(err) =
+                TrackStatusService::increase_skips(app.db(), user_state.user_id(), data.track.id())
+                    .await
+            {
+                tracing::error!(err = ?err, "Error occurred on increasing skipping stats");
+            }
 
             return Ok(());
         }
