@@ -73,6 +73,10 @@ pub async fn consume(data: TrackCheckQueueTask, app: Data<&'static App>) -> anyh
             .context("Check AI Slop")?;
 
         if res.skipped {
+            TrackStatusService::increase_skips(app.db(), user_state.user_id(), data.track.id())
+                .await
+                .ok();
+
             return Ok(());
         }
 
@@ -282,8 +286,6 @@ pub async fn check_ai_slop(
                 .next_track(None)
                 .await
                 .context("Skip current track")?;
-
-            TrackStatusService::increase_skips(app.db(), state.user_id(), track.id()).await?;
 
             return Ok(AISlopCheckResult {
                 is_ai_slop: true,
