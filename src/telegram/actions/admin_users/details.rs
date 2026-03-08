@@ -146,6 +146,7 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
             <b>Configuration:</b>
             • Profanity Check: <code>{check_profanity}</code>
             • Track Skip: <code>{skip_tracks}</code>
+            • AI Slop: <code>{ai_slop:?}</code>
             • Skippage Enabled: <code>{skippage_enabled}</code>
             • Skippage Duration: <code>{skippage_secs} seconds</code>
             • Magic Playlist: <code>{magic_playlist}</code>
@@ -183,6 +184,7 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
         updated_at = user.updated_at.format("%Y-%m-%d %H:%M:%S"),
         check_profanity = render_bool(user.cfg_check_profanity),
         skip_tracks = render_bool(user.cfg_skip_tracks),
+        ai_slop = user.cfg_ai_slop_detection,
         skippage_enabled = render_bool(user.cfg_skippage_enabled),
         skippage_secs = user.cfg_skippage_secs,
         magic_playlist = user.magic_playlist.as_deref().unwrap_or("Not set"),
