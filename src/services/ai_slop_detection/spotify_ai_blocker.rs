@@ -13,7 +13,7 @@ pub struct SpotifyAIBlockerProvider {
     populating: AtomicBool,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 struct AIArtist {
     // artist: String,
     id: String,

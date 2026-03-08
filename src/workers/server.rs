@@ -6,7 +6,6 @@ use axum::response::{IntoResponse as _, Redirect, Response};
 use axum::routing::get;
 use rspotify::clients::OAuthClient as _;
 use sea_orm::TransactionTrait as _;
-use serde::Deserialize;
 use teloxide::payloads::SendMessageSetters as _;
 use teloxide::prelude::Requester as _;
 

@@ -13,7 +13,7 @@ pub struct SoulOverAIProvider {
     populating: AtomicBool,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 struct AIArtist {
     // name: String,
     spotify: Option<String>,
