@@ -107,8 +107,9 @@ impl SoulOverAIProvider {
 
         let artists: Vec<AIArtist> = serde_json::from_reader(res.as_ref())?;
 
-        let expiry_seconds = Duration::days(1).num_seconds() as u64;
         let mut pipe = deadpool_redis::redis::Pipeline::with_capacity(artists.len());
+
+        const EXPIRY_SECONDS: u64 = Duration::days(1).num_seconds() as u64;
 
         for artist in artists {
             let Some(id) = artist.spotify else {
@@ -117,7 +118,7 @@ impl SoulOverAIProvider {
 
             pipe.cmd("SETEX")
                 .arg(format!("{REDIS_KEY_ARTIST_PREFIX}:{id}"))
-                .arg(expiry_seconds)
+                .arg(EXPIRY_SECONDS)
                 .arg(1)
                 .ignore();
         }
