@@ -76,15 +76,15 @@ impl SHLabsProvider {
     }
 
     async fn rate_limit(redis_conn: &mut deadpool_redis::Connection) -> anyhow::Result<()> {
+        const SECONDS_HOUR: u64 = Duration::hours(1).num_seconds() as u64;
+
         let now = Utc::now();
         let seconds_until_midnight = (Duration::days(1)
             - Duration::seconds(i64::from(now.num_seconds_from_midnight())))
         .num_seconds()
         .max(1) as u64;
 
-        let seconds_hour = Duration::hours(1).num_seconds() as u64;
-
-        let seconds_pause = seconds_until_midnight.min(seconds_hour);
+        let seconds_pause = seconds_until_midnight.min(SECONDS_HOUR);
 
         tracing::warn!(seconds_pause, "SHLabs rate limited, pausing");
 

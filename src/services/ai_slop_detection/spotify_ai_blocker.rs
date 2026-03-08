@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 
 use async_trait::async_trait;
-use chrono::{Duration, Utc};
+use chrono::Duration;
 use redis::AsyncCommands as _;
 
 use crate::services::ai_slop_detection::{AISlopDetectionPrediction, AISlopDetector};
