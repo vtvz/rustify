@@ -117,7 +117,8 @@ fn compose_message_text(track: &ShortTrack, locale: &str) -> String {
     t!(
         "actions.dislike",
         locale = locale,
-        track_link = track.track_tg_link()
+        track_link = track.track_tg_link(),
+        ignore_button_label = t!("inline-buttons.ignore", locale = locale),
     )
     .to_string()
 }

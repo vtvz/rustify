@@ -45,7 +45,8 @@ pub async fn handle_inline(
             t!(
                 "actions.ignore",
                 track_link = track.track_tg_link(),
-                locale = state.locale()
+                locale = state.locale(),
+                dislike_button_label = t!("inline-buttons.dislike", locale = state.locale()),
             ),
         )
         .link_preview_options(link_preview_small_top(track.url()))

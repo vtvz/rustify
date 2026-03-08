@@ -52,13 +52,13 @@ actions.dislike:
   en: |-
     👎 Disliked %{track_link}
 
-    If you change your mind, press 'Ignore text 🙈'
+    If you change your mind, press '%{ignore_button_label}'
 
     💡 Do not forget you can send a link to a song to find current status
   ru: |-
     👎 Дизлайкнул %{track_link}
 
-    Если передумаете, нажмите 'Игнорировать текст 🙈'
+    Если передумаете, нажмите '%{ignore_button_label}'
 
     💡 Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
 
@@ -66,12 +66,12 @@ actions.ignore:
   en: |-
     🙈 Bad words of %{track_link} will be forever ignored
 
-    If you change your mind, press 'Dislike 👎'
+    If you change your mind, press '%{dislike_button_label}'
 
     💡 Do not forget you can send a link to a song to find current status
   ru: |-
     🙈 Плохие слова из %{track_link} будут навсегда проигнорированы
 
-    Если передумаете, нажмите 'Не нравится 👎'
+    Если передумаете, нажмите '%{dislike_button_label}'
 
     💡 Не забывайте, что можете отправить ссылку на песню, чтобы узнать текущий статус
