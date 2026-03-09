@@ -58,12 +58,12 @@ impl SoulOverAIProvider {
             let result = self.populate(redis_conn).await;
 
             let result = if result.is_ok() {
+                // Expire 10 minutes before all entries to overlap a bit and have room for errors
+                let expiry_seconds =
+                    (Duration::days(1) - Duration::minutes(10)).num_seconds() as u64;
+
                 redis_conn
-                    .set_ex(
-                        REDIS_KEY_POPULATED,
-                        1,
-                        (Duration::days(1) - Duration::minutes(10)).num_seconds() as _,
-                    )
+                    .set_ex(REDIS_KEY_POPULATED, 1, expiry_seconds)
                     .await
                     .map_err(Into::into)
             } else {
