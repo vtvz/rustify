@@ -1,4 +1,3 @@
-use indoc::formatdoc;
 use sea_orm::Iterable as _;
 use teloxide::prelude::*;
 use teloxide::sugar::request::RequestLinkPreviewExt as _;
@@ -110,7 +109,7 @@ pub async fn work() {
                 let Some(m) = q.get_message() else {
                     app.bot()
                         .answer_callback_query(q.id.clone())
-                        .text(t!("error.inaccessible-message", locale = "en"))
+                        .text("This message is too old or no longer accessible")
                         .show_alert(true)
                         .await?;
 
