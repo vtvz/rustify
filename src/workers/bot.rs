@@ -10,6 +10,7 @@ use crate::infrastructure::error_handler;
 use crate::services::UserService;
 use crate::telegram::commands::UserCommand;
 use crate::user::UserState;
+use crate::utils::teloxide::CallbackQueryExt as _;
 use crate::{self as rustify};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
@@ -105,14 +106,46 @@ pub async fn work() {
                     }
                 }
 
-                Ok(())
+                anyhow::Ok(())
             }),
         )
         .branch(Update::filter_callback_query().endpoint(
             move |q: CallbackQuery| async {
-                let state = app.user_state(&q.from.id.to_string()).await?;
+                let Some(m) = q.get_message() else {
+                    app.bot()
+                        .answer_callback_query(q.id.clone())
+                        .text(t!("error.inaccessible-message", locale = "en"))
+                        .show_alert(true)
+                        .await?;
 
-                rustify::telegram::handlers::inline_buttons::handle(app, &state, q).await
+                    return Ok(());
+                };
+
+                let chat_id = m.chat.id;
+
+                let state = app.user_state(&chat_id.to_string()).await?;
+
+                let result = Box::pin(rustify::telegram::handlers::inline_buttons::handle(app, &state, q, m)).await;
+
+                if let Err(mut err) = result {
+                    let res = error_handler::handle(&mut err, app, state.user_id(), state.locale()).await;
+                    if !res.user_notified {
+                        app.bot().send_message(
+                            chat_id,
+                            formatdoc!(
+                                r#"
+                                    <b>Sorry, error has happened :(</b>
+
+                                    <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
+                                "#
+                            )
+                        )
+                            .disable_link_preview(true)
+                            .await?;
+                    }
+                }
+
+                Ok(())
             },
         ));
 

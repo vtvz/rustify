@@ -13,7 +13,6 @@ use crate::telegram::handlers::HandleStatus;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
-use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
 pub async fn handle(
@@ -80,7 +79,8 @@ pub async fn handle(
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
-    q: CallbackQuery,
+    _q: CallbackQuery,
+    m: Message,
     track_id: &str,
 ) -> anyhow::Result<()> {
     let track = state
@@ -95,17 +95,8 @@ pub async fn handle_inline(
     let keyboard =
         InlineButtons::from_track_status(TrackStatus::Disliked, track.id(), state.locale());
 
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
     app.bot()
-        .edit_text(&message, compose_message_text(&track, state.locale()))
+        .edit_text(&m, compose_message_text(&track, state.locale()))
         .link_preview_options(link_preview_small_top(track.url()))
         .reply_markup(InlineKeyboardMarkup::new(keyboard))
         .await?;

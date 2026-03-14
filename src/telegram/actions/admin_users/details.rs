@@ -19,7 +19,6 @@ use crate::telegram::inline_buttons_admin::{
 };
 use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
-use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), target_user_id = %user_id))]
 pub async fn handle_command(
@@ -53,21 +52,14 @@ pub async fn handle_command(
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
-    q: CallbackQuery,
+    _q: CallbackQuery,
+    m: Message,
     user_id: String,
     page: u64,
     sort_by: AdminUsersSortBy,
     sort_order: AdminUsersSortOrder,
     status_filter: Option<UserStatus>,
 ) -> anyhow::Result<()> {
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-        return Ok(());
-    };
-
     let text = format_user_details(app, &user_id).await?;
 
     let keyboard = InlineKeyboardMarkup::new(vec![vec![
@@ -80,10 +72,7 @@ pub async fn handle_inline(
         .into_inline_keyboard_button(state.locale()),
     ]]);
 
-    app.bot()
-        .edit_text(&message, text)
-        .reply_markup(keyboard)
-        .await?;
+    app.bot().edit_text(&m, text).reply_markup(keyboard).await?;
 
     Ok(())
 }

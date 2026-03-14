@@ -59,3 +59,6 @@ run:
 
 watch:
   cargo watch -s 'just run'
+
+lazysql:
+    lazysql 'postgresql://postgres:example@localhost:5432/postgres?sslmode=disable'

@@ -16,7 +16,6 @@ use crate::telegram::inline_buttons_admin::{
     AdminUsersSortOrder,
 };
 use crate::user::UserState;
-use crate::utils::teloxide::CallbackQueryExt as _;
 
 const USERS_PER_PAGE: u64 = 10;
 
@@ -45,31 +44,21 @@ pub async fn handle_command(
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), %page, ?sort_by, ?sort_order, ?status_filter))]
+#[allow(clippy::too_many_arguments)]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
-    q: CallbackQuery,
+    _q: CallbackQuery,
+    m: Message,
     page: u64,
     sort_by: AdminUsersSortBy,
     sort_order: AdminUsersSortOrder,
     status_filter: Option<UserStatus>,
 ) -> anyhow::Result<()> {
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
     let (text, keyboard) =
         build_users_page(app, state, page, sort_by, sort_order, status_filter).await?;
 
-    app.bot()
-        .edit_text(&message, text)
-        .reply_markup(keyboard)
-        .await?;
+    app.bot().edit_text(&m, text).reply_markup(keyboard).await?;
 
     Ok(())
 }

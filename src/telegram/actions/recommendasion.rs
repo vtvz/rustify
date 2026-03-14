@@ -27,7 +27,7 @@ use teloxide::payloads::{
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
 use teloxide::sugar::request::RequestLinkPreviewExt as _;
-use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ReplyMarkup};
+use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, Message, ReplyMarkup};
 
 use crate::app::{AIConfig, App};
 use crate::entity::prelude::TrackStatus;
@@ -43,7 +43,6 @@ use crate::telegram::actions;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::user::{SpotifyWrapperType, UserState};
-use crate::utils::teloxide::CallbackQueryExt as _;
 use crate::utils::{DurationPrettyFormat as _, StringUtils as _};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -152,16 +151,8 @@ pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
     q: CallbackQuery,
+    m: Message,
 ) -> anyhow::Result<()> {
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
     if !state.is_spotify_authed().await {
         actions::login::send_login_invite(app, state).await?;
 
@@ -170,10 +161,7 @@ pub async fn handle_inline(
 
     let Some(config) = app.ai() else {
         app.bot()
-            .edit_text(
-                &message,
-                t!("recommendasion.disabled", locale = state.locale()),
-            )
+            .edit_text(&m, t!("recommendasion.disabled", locale = state.locale()))
             .await?;
 
         return Ok(());
@@ -191,7 +179,7 @@ pub async fn handle_inline(
     else {
         app.bot()
             .edit_text(
-                &message,
+                &m,
                 t!("recommendasion.device-not-found", locale = state.locale()),
             )
             .reply_markup(InlineKeyboardMarkup::new(vec![vec![
@@ -224,7 +212,7 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(
-            &message,
+            &m,
             t!(
                 "recommendasion.collecting-favorites",
                 locale = state.locale()
@@ -243,10 +231,7 @@ pub async fn handle_inline(
     };
 
     app.bot()
-        .edit_text(
-            &message,
-            t!("recommendasion.ask-ai", locale = state.locale()),
-        )
+        .edit_text(&m, t!("recommendasion.ask-ai", locale = state.locale()))
         .await?;
 
     let recommendations = get_recommendations(app, state, config, &mut user_data).await?;
@@ -255,10 +240,7 @@ pub async fn handle_inline(
         / (recommendations.slop.len() + recommendations.recommended.len() + 1);
 
     app.bot()
-        .edit_text(
-            &message,
-            t!("recommendasion.queue", locale = state.locale()),
-        )
+        .edit_text(&m, t!("recommendasion.queue", locale = state.locale()))
         .await?;
 
     let mut recommendation_links = vec![];
@@ -294,7 +276,7 @@ pub async fn handle_inline(
     );
 
     app.bot()
-        .edit_text(&message, text)
+        .edit_text(&m, text)
         .disable_link_preview(true)
         .reply_markup(InlineKeyboardMarkup::new(vec![vec![
             InlineButtons::Recommendasion.into_inline_keyboard_button(state.locale()),

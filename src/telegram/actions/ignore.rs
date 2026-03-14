@@ -9,24 +9,15 @@ use crate::entity::prelude::*;
 use crate::services::TrackStatusService;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), %track_id))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
-    q: CallbackQuery,
+    _q: CallbackQuery,
+    m: Message,
     track_id: &str,
 ) -> anyhow::Result<()> {
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
     let track = state
         .spotify()
         .await
@@ -41,7 +32,7 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(
-            &message,
+            &m,
             t!(
                 "actions.ignore",
                 track_link = track.track_tg_link(),
