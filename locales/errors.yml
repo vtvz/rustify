@@ -40,10 +40,6 @@ error.general:
 
     <a href="https://github.com/vtvz/rustify/issues/new">Сообщить о проблеме на GitHub</a>
 
-error.inaccessible-message:
-  en: |-
-    This message is too old or no longer accessible
-
 error.unhandled-request:
   en: |-
     <tg-emoji emoji-id="6043973168291384891">😔</tg-emoji> Your request was not handled
