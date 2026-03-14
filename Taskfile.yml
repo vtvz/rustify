@@ -61,6 +61,5 @@ tasks:
         -i inventory/{{ .env }}/hosts.ini
         -e rustify_docker_image={{ .DOCKER_IMAGE_TAG | quote }}
         -t project
-        --check
         --diff
         playbook.yml
