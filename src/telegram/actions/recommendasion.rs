@@ -181,26 +181,6 @@ pub async fn handle_inline(
 
     let mut redis_conn = app.redis_conn().await?;
 
-    if let RateLimitOutput::NeedToWait(duration) = RateLimitService::enforce_limit(
-        &mut redis_conn,
-        state.user_id(),
-        RateLimitAction::Recommendasion,
-    )
-    .await?
-    {
-        app.bot()
-            .answer_callback_query(q.id)
-            .text(t!(
-                "rate-limit.recommendasion",
-                duration = duration.pretty_format(),
-                locale = state.locale()
-            ))
-            .show_alert(true)
-            .await?;
-
-        return Ok(());
-    }
-
     tracing::info!(user_id = state.user_id(), "User called Recommendasion");
 
     let Some(_) = state
@@ -221,6 +201,26 @@ pub async fn handle_inline(
 
         return Ok(());
     };
+
+    if let RateLimitOutput::NeedToWait(duration) = RateLimitService::enforce_limit(
+        &mut redis_conn,
+        state.user_id(),
+        RateLimitAction::Recommendasion,
+    )
+    .await?
+    {
+        app.bot()
+            .answer_callback_query(q.id)
+            .text(t!(
+                "rate-limit.recommendasion",
+                duration = duration.pretty_format(),
+                locale = state.locale()
+            ))
+            .show_alert(true)
+            .await?;
+
+        return Ok(());
+    }
 
     app.bot()
         .edit_text(
