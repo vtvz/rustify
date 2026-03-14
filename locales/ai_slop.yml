@@ -1,0 +1,75 @@
+_version: 2
+
+ai-slop.alert:
+  en: |-
+    🎵 %{track_name}
+    Album: %{album_name}
+
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> This track is most likely <b>%{prediction}</b>. You can block track or ignore similar notifications for this track
+
+    To permanently block this artist from recommendations:
+    <tg-emoji emoji-id="6028171274939797252">🔗</tg-emoji> Open the artist's page in Spotify
+    <tg-emoji emoji-id="6032924188828767321">➕</tg-emoji> Tap the three dots near the <i>"Follow"</i> button
+    <tg-emoji emoji-id="5774077015388852135">❌</tg-emoji> Select <i>"Don't play this artist"</i>
+
+    <i>Information provided by "%{ai_check_provider}"</i>
+
+    <b>Support real organic hand-made music instead of AI-slop!</b>
+
+    <blockquote>Want to disable these alerts or auto-skip AI tracks? Try /%{config_command}</blockquote>
+  ru: |-
+    🎵 %{track_name}
+    Альбом: %{album_name}
+
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> Этот трек скорее всего <b>%{prediction}</b>. Вы можете заблокировать трек или отключить подобные уведомления для этого трека
+
+    Чтобы навсегда скрыть этого исполнителя из рекомендаций:
+    <tg-emoji emoji-id="6028171274939797252">🔗</tg-emoji> Откройте страницу исполнителя в Spotify
+    <tg-emoji emoji-id="6032924188828767321">➕</tg-emoji> Нажмите на три точки рядом с кнопкой <i>«Подписаться»</i>
+    <tg-emoji emoji-id="5774077015388852135">❌</tg-emoji> Выберите <i>«Не включать треки этого исполнителя»</i>
+
+    <i>Информация предоставлена "%{ai_check_provider}"</i>
+
+    <b>Поддерживайте настоящую живую музыку вместо ИИ-шлака!</b>
+
+    <blockquote>Хотите отключить уведомления или настроить автопропуск AI-треков? Попробуйте /%{config_command}</blockquote>
+
+ai-slop.alert-pure-ai:
+  en: fully AI-generated
+  ru: полностью сгенерирован ИИ
+
+ai-slop.alert-processed-ai:
+  en: partially generated or processed by AI
+  ru: частично сгенерирован или обработан ИИ
+
+ai-slop.setting-description:
+  en: |-
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> AI Music Detection
+
+    Bot automatically checks tracks for AI generation
+
+    Configure bot's reaction to such tracks:
+  ru: |-
+    <tg-emoji emoji-id="5429334864010681294">💩</tg-emoji> Обнаружение ИИ-музыки
+
+    Бот автоматически проверяет треки на ИИ-генерацию
+
+    Настройте реакцию бота на такие треки:
+
+ai-slop.button-notify:
+  en: |-
+    %{mark}Notify
+  ru: |-
+    %{mark}Уведомлять
+
+ai-slop.button-ignore:
+  en: |-
+    %{mark}Don't notify
+  ru: |-
+    %{mark}Не уведомлять
+
+ai-slop.button-skip:
+  en: |-
+    %{mark}Skip automatically
+  ru: |-
+    %{mark}Пропускать автоматически

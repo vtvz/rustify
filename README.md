@@ -7,7 +7,7 @@
 
 > **📢 Subscribe to the author's telegram channel for updates and more projects:** [**@vtvz_dev**](https://t.me/vtvz_dev)
 
-> A Telegram bot that monitors your Spotify playback, detects profane lyrics, integrates with AI for text analysis, and automatically skips tracks you've disliked
+> A Telegram bot that monitors your Spotify playback, detects profane lyrics and AI-generated music, integrates with AI for text analysis, and automatically skips tracks you've disliked
 
 [![Rust](https://img.shields.io/badge/rust-nightly-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -23,13 +23,14 @@
 
 ---
 
-Rustify is an intelligent Telegram bot that integrates with Spotify to provide real-time profanity detection and track management. It continuously monitors what you're listening to, analyzes lyrics for inappropriate content, and automatically skips tracks you've marked with the dislike button.
+Rustify is an intelligent Telegram bot that integrates with Spotify to provide real-time profanity detection, AI-generated music detection, and track management. It continuously monitors what you're listening to, analyzes lyrics for inappropriate content, detects AI-generated tracks, and automatically skips tracks you've marked with the dislike button.
 
 ## ✨ Features
 
 ### 🎯 Core Features
 
 - **🔍 Real-time Profanity Detection** - Automatically analyzes song lyrics as you listen using advanced profanity detection algorithms
+- **🤖 AI-Generated Music Detection** - Identifies AI-generated tracks using multiple detection providers and shows notifications with attribution
 - **⏭️ Auto-Skip** - Instantly skips tracks you've marked with dislike
 - **📊 Multi-Provider Lyrics** - Fetches lyrics from multiple sources (Musixmatch, Genius, LrcLib) for maximum coverage
 - **🤖 AI-Powered Analysis** - Optional OpenAI-compatible API integration for analyzing song lyrics meaning, storyline, and content themes, plus individual word analysis

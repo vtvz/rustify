@@ -239,6 +239,22 @@ impl UserService {
     }
 
     #[tracing::instrument(skip_all, fields(user_id = %id))]
+    pub async fn set_cfg_ai_slop_detection(
+        db: &impl ConnectionTrait,
+        id: &str,
+        status: UserAISlopDetection,
+    ) -> anyhow::Result<UpdateResult> {
+        let res = UserEntity::update_many()
+            .filter(UserColumn::Id.eq(id))
+            .col_expr(UserColumn::CfgAISlopDetection, Expr::value(status))
+            .col_expr(UserColumn::UpdatedAt, Expr::value(Clock::now()))
+            .exec(db)
+            .await?;
+
+        Ok(res)
+    }
+
+    #[tracing::instrument(skip_all, fields(user_id = %id))]
     pub async fn set_ref_code(
         db: &impl ConnectionTrait,
         id: &str,

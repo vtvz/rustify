@@ -62,7 +62,7 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
             }
         },
         TrackStatus::None => {
-            if state.user().cfg_check_profanity {
+            if state.user().cfg_check_profanity || !state.user().cfg_ai_slop_detection.is_ignore() {
                 let changed = UserService::sync_current_playing(
                     app.redis_conn().await?,
                     state.user_id(),
@@ -74,9 +74,9 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
                     return Ok(CheckUserResult::SkipSame);
                 }
 
-                queue::profanity_check::queue(app, state.user_id(), &track)
+                queue::track_check::queue(app, state.user_id(), &track)
                     .await
-                    .context("Check bad words")?;
+                    .context("Check track")?;
             }
         },
         TrackStatus::Ignore => {},

@@ -38,6 +38,8 @@ pub struct Model {
     pub cfg_skip_tracks: bool,
     pub cfg_skippage_secs: i64,
     pub cfg_skippage_enabled: bool,
+    #[sea_orm(enum_name = "CfgAISlopDetection")]
+    pub cfg_ai_slop_detection: AISlopDetection,
     pub magic_playlist: Option<String>,
     pub spotify_state: Uuid,
     pub ref_code: Option<String>,
@@ -84,6 +86,8 @@ pub enum Column {
     CfgSkipTracks,
     CfgSkippageSecs,
     CfgSkippageEnabled,
+    #[sea_orm(column_name = "cfg_ai_slop_detection")]
+    CfgAISlopDetection,
     MagicPlaylist,
     SpotifyState,
     RefCode,
@@ -126,6 +130,7 @@ impl ColumnTrait for Column {
             Self::CfgSkipTracks => ColumnType::Boolean.def(),
             Self::CfgSkippageSecs => ColumnType::BigInteger.def(),
             Self::CfgSkippageEnabled => ColumnType::Boolean.def(),
+            Self::CfgAISlopDetection => AISlopDetection::db_type(),
             Self::MagicPlaylist => ColumnType::Text.def().null(),
             Self::SpotifyState => ColumnType::Uuid.def(),
             Self::RefCode => ColumnType::Text.def().null(),
@@ -300,5 +305,52 @@ impl Role {
     #[must_use]
     pub fn is_admin(&self) -> bool {
         matches!(self, Self::Admin)
+    }
+}
+
+#[derive(
+    Debug, Copy, Clone, EnumIter, DeriveActiveEnum, PartialEq, Eq, Default, Serialize, Deserialize,
+)]
+#[sea_orm(rs_type = "String", db_type = "Text")]
+pub enum AISlopDetection {
+    #[sea_orm(string_value = "skip")]
+    Skip,
+    #[sea_orm(string_value = "notify")]
+    #[default]
+    Notify,
+    #[sea_orm(string_value = "ignore")]
+    Ignore,
+}
+
+impl FromStr for AISlopDetection {
+    type Err = sea_orm::DbErr;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::try_from(s)
+    }
+}
+
+impl TryFrom<&str> for AISlopDetection {
+    type Error = sea_orm::DbErr;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::try_from_value(&value.to_owned())
+    }
+}
+
+impl AISlopDetection {
+    #[must_use]
+    pub fn is_skip(&self) -> bool {
+        matches!(self, Self::Skip)
+    }
+
+    #[must_use]
+    pub fn is_notify(&self) -> bool {
+        matches!(self, Self::Notify)
+    }
+
+    #[must_use]
+    pub fn is_ignore(&self) -> bool {
+        matches!(self, Self::Ignore)
     }
 }

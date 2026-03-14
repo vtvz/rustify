@@ -1,4 +1,5 @@
 pub mod admin_users;
+pub mod ai_slop_detection;
 pub mod analyze;
 pub mod broadcast;
 pub mod details;

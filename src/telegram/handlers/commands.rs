@@ -106,6 +106,9 @@ pub async fn handle(
         UserCommand::Recommendasion => {
             return actions::recommendasion::handle(app, state, m.chat.id).await;
         },
+        UserCommand::AISlopDetection => {
+            return actions::ai_slop_detection::handle(app, state, m.chat.id).await;
+        },
         UserCommand::Skippage { days } => {
             return actions::skippage::handle(app, state, m.chat.id, days).await;
         },

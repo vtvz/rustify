@@ -2,6 +2,7 @@ use anyhow::Context as _;
 use apalis::prelude::{Data, TaskSink as _};
 use isolang::Language;
 use itertools::Itertools as _;
+use rspotify::prelude::OAuthClient as _;
 use rustrict::Type;
 use teloxide::prelude::*;
 use teloxide::types::{InlineKeyboardMarkup, ReplyMarkup};
@@ -10,20 +11,24 @@ use crate::app::App;
 use crate::infrastructure::error_handler;
 use crate::lyrics::SearchResult as _;
 use crate::services::{
+    AISlopDetectionPrediction,
     TrackLanguageStatsService,
+    TrackStatusService,
     UserService,
     UserWordWhitelistService,
     WordStatsService,
 };
 use crate::spotify::ShortTrack;
+use crate::telegram::commands::UserCommandDisplay;
 use crate::telegram::inline_buttons::InlineButtons;
+use crate::telegram::inline_buttons_actions::InlineButtonsActions;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::StringUtils as _;
 use crate::{lyrics, profanity, telegram};
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct ProfanityCheckQueueTask {
+pub struct TrackCheckQueueTask {
     track: ShortTrack,
     user_id: String,
 }
@@ -38,8 +43,8 @@ pub struct ProfanityCheckQueueTask {
 )]
 pub async fn queue(app: &App, user_id: &str, track: &ShortTrack) -> anyhow::Result<()> {
     app.queue_manager()
-        .profanity_queue()
-        .push(ProfanityCheckQueueTask {
+        .track_check_queue()
+        .push(TrackCheckQueueTask {
             track: track.clone(),
             user_id: user_id.into(),
         })
@@ -49,7 +54,7 @@ pub async fn queue(app: &App, user_id: &str, track: &ShortTrack) -> anyhow::Resu
 }
 
 #[tracing::instrument(skip_all, fields(user_id = %data.user_id, track_id = %data.track.id()))]
-pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) -> anyhow::Result<()> {
+pub async fn consume(data: TrackCheckQueueTask, app: Data<&'static App>) -> anyhow::Result<()> {
     let app = *app;
 
     let user_state = app.user_state(&data.user_id).await;
@@ -64,7 +69,22 @@ pub async fn consume(data: ProfanityCheckQueueTask, app: Data<&'static App>) -> 
     };
 
     let err_wrap = || async {
-        let res = check(app, &user_state, &data.track)
+        let res = check_ai_slop(app, &user_state, &data.track)
+            .await
+            .context("Check AI Slop")?;
+
+        if res.skipped {
+            if let Err(err) =
+                TrackStatusService::increase_skips(app.db(), user_state.user_id(), data.track.id())
+                    .await
+            {
+                tracing::error!(err = ?err, "Error occurred on increasing skipping stats");
+            }
+
+            return Ok(());
+        }
+
+        let res = check_profanity(app, &user_state, &data.track)
             .await
             .context("Check lyrics failed")?;
 
@@ -104,7 +124,7 @@ pub struct CheckBadWordsResult {
         track_name = %track.name_with_artists(),
     )
 )]
-pub async fn check(
+pub async fn check_profanity(
     app: &'static App,
     state: &UserState,
     track: &ShortTrack,
@@ -184,6 +204,7 @@ pub async fn check(
             bad_lines = bad_lines.iter().take(lines).join("\n"),
             lyrics_link = hit.link().trim(),
             lyrics_link_text = hit.link_text(lines == bad_lines.len()),
+            ignore_button_label = t!("inline-buttons.ignore", locale = state.locale()),
         );
 
         if message.chars_len() <= telegram::MESSAGE_MAX_LEN {
@@ -221,4 +242,104 @@ pub async fn check(
             Err(err)
         },
     }
+}
+
+#[derive(Default)]
+pub struct AISlopCheckResult {
+    pub is_ai_slop: bool,
+    pub skipped: bool,
+    // pub provider: Option<lyrics::Provider>,
+}
+
+#[tracing::instrument(
+    skip_all,
+    fields(
+        track_id = %track.id(),
+        track_name = %track.name_with_artists(),
+    )
+)]
+pub async fn check_ai_slop(
+    app: &'static App,
+    state: &UserState,
+    track: &ShortTrack,
+) -> anyhow::Result<AISlopCheckResult> {
+    if state.user().cfg_ai_slop_detection.is_ignore() {
+        return Ok(AISlopCheckResult {
+            is_ai_slop: false,
+            skipped: false,
+        });
+    }
+
+    let ai_detection_result = app
+        .ai_slop_detection()
+        .is_track_ai(&mut app.redis_conn().await?, track)
+        .await?;
+
+    if !ai_detection_result.prediction.is_track_ai() {
+        return Ok(AISlopCheckResult {
+            is_ai_slop: false,
+            skipped: false,
+        });
+    }
+
+    if state.user().cfg_ai_slop_detection.is_skip() && state.is_spotify_premium().await? {
+        state
+            .spotify()
+            .await
+            .next_track(None)
+            .await
+            .context("Skip current track")?;
+
+        return Ok(AISlopCheckResult {
+            is_ai_slop: true,
+            skipped: true,
+        });
+    }
+
+    // NOTE: Still notify user about AI-slop when unable to skip
+
+    let Some(provider) = ai_detection_result.provider else {
+        anyhow::bail!("Provider should be set on positive result");
+    };
+
+    let keyboard = vec![
+        vec![InlineButtons::Dislike(track.id().into()).into_inline_keyboard_button(state.locale())],
+        vec![InlineButtons::Ignore(track.id().into()).into_inline_keyboard_button(state.locale())],
+        vec![
+            InlineButtonsActions::ArtistPage(track.first_artist_url().parse()?)
+                .into_inline_keyboard_button(state.locale()),
+        ],
+    ];
+
+    let prediction = match ai_detection_result.prediction {
+        AISlopDetectionPrediction::HumanMade => "unreachable".into(),
+        AISlopDetectionPrediction::PureAI => t!("ai-slop.alert-pure-ai", locale = state.locale()),
+        AISlopDetectionPrediction::ProcessedAI => {
+            t!("ai-slop.alert-processed-ai", locale = state.locale())
+        },
+    };
+
+    app.bot()
+        .send_message(
+            state.chat_id()?,
+            t!(
+                "ai-slop.alert",
+                locale = state.locale(),
+                track_name = track.track_tg_link(),
+                album_name = track.album_tg_link(),
+                ai_check_provider = provider.tg_link(),
+                config_command = UserCommandDisplay::AISlopDetection,
+                prediction = prediction,
+            ),
+        )
+        .link_preview_options(link_preview_small_top(track.url()))
+        .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
+            keyboard,
+        )))
+        .await?;
+
+    Ok(AISlopCheckResult {
+        is_ai_slop: true,
+        skipped: false,
+    })
 }
