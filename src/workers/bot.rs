@@ -93,13 +93,7 @@ pub async fn work() {
                     if !res.user_notified {
                         app.bot().send_message(
                             m.chat.id,
-                            formatdoc!(
-                                r#"
-                                    <b>Sorry, error has happened :(</b>
-
-                                    <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
-                                "#
-                            )
+                            t!("error.general", locale = state.locale())
                         )
                             .disable_link_preview(true)
                             .await?;
@@ -111,6 +105,8 @@ pub async fn work() {
         )
         .branch(Update::filter_callback_query().endpoint(
             move |q: CallbackQuery| async {
+                // Message can be None for: inline mode results, old messages (48+ hours),
+                // deleted messages, or inaccessible channels
                 let Some(m) = q.get_message() else {
                     app.bot()
                         .answer_callback_query(q.id.clone())
@@ -132,13 +128,7 @@ pub async fn work() {
                     if !res.user_notified {
                         app.bot().send_message(
                             chat_id,
-                            formatdoc!(
-                                r#"
-                                    <b>Sorry, error has happened :(</b>
-
-                                    <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
-                                "#
-                            )
+                            t!("error.general", locale = state.locale())
                         )
                             .disable_link_preview(true)
                             .await?;
