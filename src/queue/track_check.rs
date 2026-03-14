@@ -232,6 +232,7 @@ pub async fn check_profanity(
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))
+        .message_effect_id("5104858069142078462".into()) // 👎 Thumbs Down effect
         .await;
 
     match result {
@@ -336,6 +337,7 @@ pub async fn check_ai_slop(
         .reply_markup(ReplyMarkup::InlineKeyboard(InlineKeyboardMarkup::new(
             keyboard,
         )))
+        .message_effect_id("5046589136895476101".into()) // 💩 Poop effect
         .await?;
 
     Ok(AISlopCheckResult {
