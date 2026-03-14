@@ -12,7 +12,7 @@ use teloxide::payloads::{
 };
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{CallbackQuery, InlineKeyboardMarkup};
+use teloxide::types::{CallbackQuery, InlineKeyboardMarkup, Message};
 
 use crate::app::{AIConfig, App};
 use crate::lyrics::SearchResult as _;
@@ -31,7 +31,6 @@ use crate::telegram::MESSAGE_MAX_LEN;
 use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::teloxide::CallbackQueryExt as _;
 use crate::utils::{DurationPrettyFormat as _, StringUtils as _};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), %track_id))]
@@ -39,17 +38,9 @@ pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
     q: CallbackQuery,
+    m: Message,
     track_id: &str,
 ) -> anyhow::Result<()> {
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
     let Some(config) = app.ai() else {
         app.bot()
             .answer_callback_query(q.id)
@@ -91,10 +82,7 @@ pub async fn handle_inline(
         .await?
     else {
         app.bot()
-            .edit_text(
-                &message,
-                t!("analysis.lyrics-not-found", locale = state.locale()),
-            )
+            .edit_text(&m, t!("analysis.lyrics-not-found", locale = state.locale()))
             .await?;
 
         return Ok(());
@@ -102,7 +90,7 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(
-            &message,
+            &m,
             t!(
                 "analysis.waiting",
                 locale = state.locale(),
@@ -116,7 +104,7 @@ pub async fn handle_inline(
     let res = perform(app, state, config, &track, &hit.lyrics()).await;
 
     // I don't care about error
-    app.bot().delete(&message).await.ok();
+    app.bot().delete(&m).await.ok();
 
     match res {
         Ok(()) => {

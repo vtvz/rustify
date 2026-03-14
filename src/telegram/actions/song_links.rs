@@ -1,31 +1,21 @@
 use itertools::Itertools as _;
 use rspotify::model::TrackId;
-use teloxide::payloads::{AnswerCallbackQuerySetters as _, EditMessageTextSetters as _};
-use teloxide::prelude::Requester as _;
+use teloxide::payloads::EditMessageTextSetters as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::CallbackQuery;
+use teloxide::types::{CallbackQuery, Message};
 
 use crate::app::App;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
-use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id(), %track_id))]
 pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
-    q: CallbackQuery,
+    _q: CallbackQuery,
+    m: Message,
     track_id: &str,
 ) -> anyhow::Result<()> {
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
     let mut redis_conn = app.redis_conn().await?;
 
     let track = state
@@ -36,7 +26,7 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(
-            &message,
+            &m,
             t!(
                 "song-links.fetch",
                 track_name = track.track_tg_link(),
@@ -58,7 +48,7 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(
-            &message,
+            &m,
             t!(
                 "song-links.result",
                 track_name = track.track_tg_link(),

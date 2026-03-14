@@ -13,7 +13,12 @@ use crate::user::UserState;
         user_id = %state.user_id(),
     )
 )]
-pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> anyhow::Result<()> {
+pub async fn handle(
+    app: &'static App,
+    state: &UserState,
+    q: CallbackQuery,
+    m: Message,
+) -> anyhow::Result<()> {
     let data = q.data.as_ref().context("Callback needs data")?;
 
     let admin_button: Result<AdminInlineButtons, _> = data.parse();
@@ -31,10 +36,10 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
 
         match button {
             AdminInlineButtons::RegenerateWordDefinition { locale, word } => {
-                actions::word_definition::handle_inline_regenerate(app, q, locale, word).await?;
+                actions::word_definition::handle_inline_regenerate(app, q, m, locale, word).await?;
             },
             AdminInlineButtons::WordDefinitionsPage { locale, page, .. } => {
-                actions::word_definition::handle_inline_list(app, q, locale, page).await?;
+                actions::word_definition::handle_inline_list(app, q, m, locale, page).await?;
             },
             AdminInlineButtons::AdminUserSelect {
                 user_id,
@@ -48,6 +53,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
                     app,
                     state,
                     q,
+                    m,
                     user_id,
                     page,
                     sort_by,
@@ -66,6 +72,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
                     app,
                     state,
                     q,
+                    m,
                     page,
                     sort_by,
                     sort_order,
@@ -88,6 +95,7 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
                     app,
                     state,
                     q,
+                    m,
                     page,
                     sort_by,
                     sort_order,
@@ -131,28 +139,28 @@ pub async fn handle(app: &'static App, state: &UserState, q: CallbackQuery) -> a
 
     match button {
         InlineButtons::Dislike(id) => {
-            actions::dislike::handle_inline(app, state, q, &id).await?;
+            actions::dislike::handle_inline(app, state, q, m, &id).await?;
         },
         InlineButtons::Ignore(id) => {
-            actions::ignore::handle_inline(app, state, q, &id).await?;
+            actions::ignore::handle_inline(app, state, q, m, &id).await?;
         },
         InlineButtons::Analyze(id) => {
-            actions::analyze::handle_inline(app, state, q, &id).await?;
+            actions::analyze::handle_inline(app, state, q, m, &id).await?;
         },
         InlineButtons::SongLinks(id) => {
-            actions::song_links::handle_inline(app, state, q, &id).await?;
+            actions::song_links::handle_inline(app, state, q, m, &id).await?;
         },
         InlineButtons::Magic => {
-            actions::magic::handle_inline(app, state, q).await?;
+            actions::magic::handle_inline(app, state, q, m).await?;
         },
         InlineButtons::Recommendasion => {
-            actions::recommendasion::handle_inline(app, state, q).await?;
+            actions::recommendasion::handle_inline(app, state, q, m).await?;
         },
         InlineButtons::SkippageEnable(to_enable) => {
-            actions::skippage::handle_inline(app, state, q, to_enable).await?;
+            actions::skippage::handle_inline(app, state, q, m, to_enable).await?;
         },
         InlineButtons::AISlopDetection(status, _) => {
-            actions::ai_slop_detection::handle_inline(app, state, q, status).await?;
+            actions::ai_slop_detection::handle_inline(app, state, q, m, status).await?;
         },
     }
 

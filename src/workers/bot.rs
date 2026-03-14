@@ -1,4 +1,3 @@
-use indoc::formatdoc;
 use sea_orm::Iterable as _;
 use teloxide::prelude::*;
 use teloxide::sugar::request::RequestLinkPreviewExt as _;
@@ -10,6 +9,7 @@ use crate::infrastructure::error_handler;
 use crate::services::UserService;
 use crate::telegram::commands::UserCommand;
 use crate::user::UserState;
+use crate::utils::teloxide::CallbackQueryExt as _;
 use crate::{self as rustify};
 
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
@@ -92,13 +92,42 @@ pub async fn work() {
                     if !res.user_notified {
                         app.bot().send_message(
                             m.chat.id,
-                            formatdoc!(
-                                r#"
-                                    <b>Sorry, error has happened :(</b>
+                            t!("error.general", locale = state.locale())
+                        )
+                            .disable_link_preview(true)
+                            .await?;
+                    }
+                }
 
-                                    <a href="https://github.com/vtvz/rustify/issues/new">Report an issue on GitHub</a>
-                                "#
-                            )
+                anyhow::Ok(())
+            }),
+        )
+        .branch(Update::filter_callback_query().endpoint(
+            move |q: CallbackQuery| async {
+                // Message can be None for: inline mode results, old messages (48+ hours),
+                // deleted messages, or inaccessible channels
+                let Some(m) = q.get_message() else {
+                    app.bot()
+                        .answer_callback_query(q.id.clone())
+                        .text("This message is too old or no longer accessible")
+                        .show_alert(true)
+                        .await?;
+
+                    return Ok(());
+                };
+
+                let chat_id = m.chat.id;
+
+                let state = app.user_state(&chat_id.to_string()).await?;
+
+                let result = Box::pin(rustify::telegram::handlers::inline_buttons::handle(app, &state, q, m)).await;
+
+                if let Err(mut err) = result {
+                    let res = error_handler::handle(&mut err, app, state.user_id(), state.locale()).await;
+                    if !res.user_notified {
+                        app.bot().send_message(
+                            chat_id,
+                            t!("error.general", locale = state.locale())
                         )
                             .disable_link_preview(true)
                             .await?;
@@ -106,13 +135,6 @@ pub async fn work() {
                 }
 
                 Ok(())
-            }),
-        )
-        .branch(Update::filter_callback_query().endpoint(
-            move |q: CallbackQuery| async {
-                let state = app.user_state(&q.from.id.to_string()).await?;
-
-                rustify::telegram::handlers::inline_buttons::handle(app, &state, q).await
             },
         ));
 

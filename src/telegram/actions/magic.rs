@@ -9,7 +9,7 @@ use teloxide::payloads::{
 };
 use teloxide::prelude::Requester as _;
 use teloxide::sugar::bot::BotMessagesExt as _;
-use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, ReplyMarkup};
+use teloxide::types::{CallbackQuery, ChatId, InlineKeyboardMarkup, Message, ReplyMarkup};
 
 use crate::app::App;
 use crate::services::{RateLimitAction, RateLimitOutput, RateLimitService, UserService};
@@ -20,7 +20,6 @@ use crate::telegram::inline_buttons::InlineButtons;
 use crate::telegram::utils::link_preview_small_top;
 use crate::user::UserState;
 use crate::utils::DurationPrettyFormat as _;
-use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[allow(clippy::significant_drop_tightening)]
 #[tracing::instrument(skip_all, fields(user_id = %state.user_id()))]
@@ -66,16 +65,8 @@ pub async fn handle_inline(
     app: &'static App,
     state: &UserState,
     q: CallbackQuery,
+    m: Message,
 ) -> anyhow::Result<()> {
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
     if !state.is_spotify_authed().await {
         actions::login::send_login_invite(app, state).await?;
 
@@ -109,7 +100,7 @@ pub async fn handle_inline(
 
     app.bot()
         .edit_text(
-            &message,
+            &m,
             t!("magic.generating", header = header, locale = state.locale()),
         )
         .await?;
@@ -120,7 +111,7 @@ pub async fn handle_inline(
         Ok(playlist) => {
             app.bot()
                 .edit_text(
-                    &message,
+                    &m,
                     t!(
                         "magic.generated",
                         header = header,
@@ -137,7 +128,7 @@ pub async fn handle_inline(
         Err(err) => {
             app.bot()
                 .edit_text(
-                    &message,
+                    &m,
                     t!("magic.failed", header = header, locale = state.locale()),
                 )
                 .await?;

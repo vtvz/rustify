@@ -9,7 +9,6 @@ use crate::services::{WordDefinitionService, WordStatsService};
 use crate::telegram::commands_admin::AdminCommandDisplay;
 use crate::telegram::handlers::HandleStatus;
 use crate::telegram::inline_buttons_admin::AdminInlineButtons;
-use crate::utils::teloxide::CallbackQueryExt as _;
 
 #[tracing::instrument(skip_all, fields(%locale, %word))]
 async fn generate_and_send_definition(
@@ -100,20 +99,12 @@ pub async fn handle_definition(
 #[tracing::instrument(skip_all, fields(%locale, %word))]
 pub async fn handle_inline_regenerate(
     app: &'static App,
-    q: CallbackQuery,
+    _q: CallbackQuery,
+    m: Message,
     locale: String,
     word: String,
 ) -> anyhow::Result<()> {
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
-    generate_and_send_definition(app, &message, locale, word, true).await?;
+    generate_and_send_definition(app, &m, locale, word, true).await?;
 
     Ok(())
 }
@@ -133,21 +124,13 @@ pub async fn handle_list(
 pub async fn handle_inline_list(
     app: &'static App,
     q: CallbackQuery,
+    m: Message,
     locale_filter: String,
     page: usize,
 ) -> anyhow::Result<()> {
     app.bot().answer_callback_query(q.id.clone()).await?;
 
-    let Some(message) = q.get_message() else {
-        app.bot()
-            .answer_callback_query(q.id.clone())
-            .text("Inaccessible Message")
-            .await?;
-
-        return Ok(());
-    };
-
-    send_definitions_page(app, message.chat.id, Some(message), locale_filter, page).await?;
+    send_definitions_page(app, m.chat.id, Some(m), locale_filter, page).await?;
 
     Ok(())
 }
