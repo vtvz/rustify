@@ -118,7 +118,7 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
         })
         .join("\n");
 
-    let ai_slop_total = stats.ai_slop_spotify_ai_blocker
+    let ai_slop_total_checks = stats.ai_slop_spotify_ai_blocker
         + stats.ai_slop_soul_over_ai
         + stats.ai_slop_shlabs
         + stats.ai_slop_human_made;
@@ -163,7 +163,7 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
             • LrcLib: <code>{lyrics_lrclib}</code>
 
             <b>AI Slop Detection:</b>
-            • Total <code>{ai_slop_total}</code>
+            • Total <code>{ai_slop_total_checks}</code>
             • Soul Over AI <code>{ai_slop_soul_over_ai}</code>
             • Spotify AI Blocker <code>{ai_slop_spotify_ai_blocker}</code>
             • SHLabs <code>{ai_slop_shlabs}</code>
