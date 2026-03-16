@@ -82,6 +82,15 @@ struct TrackLanguageStats {
 }
 
 #[derive(InfluxDbWriteable, Debug)]
+struct AISlopDetectionStats {
+    time: Timestamp,
+    spotify_ai_blocker: u64,
+    soul_over_ai: u64,
+    shlabs: u64,
+    human_made: u64,
+}
+
+#[derive(InfluxDbWriteable, Debug)]
 struct Uptime {
     time: Timestamp,
     secs_elapsed: u64,
@@ -113,6 +122,10 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
         lyrics_musixmatch,
         lyrics_lrclib,
         lyrics_analyzed,
+        ai_slop_spotify_ai_blocker,
+        ai_slop_soul_over_ai,
+        ai_slop_shlabs,
+        ai_slop_human_made,
     } = UserService::get_stats(app.db(), None).await?;
 
     let tick_health_status = utils::tick_health().await;
@@ -154,6 +167,14 @@ pub async fn collect(client: &InfluxClient, app: &App) -> anyhow::Result<()> {
             spotify_429: MetricsService::spotify_429_get(&mut redis_conn).await?,
         }
         .into_query("errors"),
+        AISlopDetectionStats {
+            time,
+            spotify_ai_blocker: ai_slop_spotify_ai_blocker as u64,
+            soul_over_ai: ai_slop_soul_over_ai as u64,
+            shlabs: ai_slop_shlabs as u64,
+            human_made: ai_slop_human_made as u64,
+        }
+        .into_query("ai_slop_detection"),
         Uptime::new(time).into_query("uptime"),
     ];
 

@@ -33,6 +33,7 @@ pub struct PrometheusMetrics {
     pub lyrics_found: IntGauge,
     pub lyrics_profane: IntGauge,
     pub lyrics_source: IntGaugeVec,
+    pub ai_slop_detection: IntGaugeVec,
     pub process_duration: Histogram,
     pub process_check_interval_seconds: Gauge,
     pub process_users_checked: IntCounter,
@@ -110,6 +111,14 @@ impl PrometheusClient {
                 registry
             )
             .context("Failed to register lyrics_source metric")?,
+
+            ai_slop_detection: register_int_gauge_vec_with_registry!(
+                "ai_slop_detection_total",
+                "AI Detection Providers",
+                &["provider"],
+                registry
+            )
+            .context("Failed to register ai_slop_detection metric")?,
 
             process_duration: register_histogram_with_registry!(
                 "process_duration_seconds",
