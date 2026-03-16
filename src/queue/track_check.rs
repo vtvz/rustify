@@ -89,7 +89,7 @@ pub async fn consume(data: TrackCheckQueueTask, app: Data<&'static App>) -> anyh
             .context("Check lyrics failed")?;
 
         UserService::increase_stats_query(user_state.user_id())
-            .checked_lyrics(res.profane, res.provider)
+            .checked_lyrics(res.profane, res.provider.as_ref())
             .exec(app.db())
             .await?;
 
@@ -274,6 +274,11 @@ pub async fn check_ai_slop(
     let ai_detection_result = app
         .ai_slop_detection()
         .is_track_ai(&mut app.redis_conn().await?, track)
+        .await?;
+
+    UserService::increase_stats_query(state.user_id())
+        .ai_slop(ai_detection_result.provider.as_ref())
+        .exec(app.db())
         .await?;
 
     if !ai_detection_result.prediction.is_track_ai() {

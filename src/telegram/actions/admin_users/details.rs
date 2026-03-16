@@ -118,6 +118,11 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
         })
         .join("\n");
 
+    let ai_slop_total = stats.ai_slop_spotify_ai_blocker
+        + stats.ai_slop_soul_over_ai
+        + stats.ai_slop_shlabs
+        + stats.ai_slop_human_made;
+
     let text = formatdoc!(
         r#"
             👤 <b>User Details</b>
@@ -157,6 +162,13 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
             • MusixMatch: <code>{lyrics_musixmatch}</code>
             • LrcLib: <code>{lyrics_lrclib}</code>
 
+            <b>AI Slop Detection:</b>
+            • Total <code>{ai_slop_total}</code>
+            • Soul Over AI <code>{ai_slop_soul_over_ai}</code>
+            • Spotify AI Blocker <code>{ai_slop_spotify_ai_blocker}</code>
+            • SHLabs <code>{ai_slop_shlabs}</code>
+            • Human Made <code>{ai_slop_human_made}</code>
+
             <blockquote expandable><b>Languages stats:</b>
             {languages}</blockquote>
         "#,
@@ -189,6 +201,10 @@ async fn format_user_details(app: &'static App, user_id: &str) -> anyhow::Result
         lyrics_genius = stats.lyrics_genius,
         lyrics_musixmatch = stats.lyrics_musixmatch,
         lyrics_lrclib = stats.lyrics_lrclib,
+        ai_slop_spotify_ai_blocker = stats.ai_slop_spotify_ai_blocker,
+        ai_slop_soul_over_ai = stats.ai_slop_soul_over_ai,
+        ai_slop_shlabs = stats.ai_slop_shlabs,
+        ai_slop_human_made = stats.ai_slop_human_made,
     );
 
     Ok(text)

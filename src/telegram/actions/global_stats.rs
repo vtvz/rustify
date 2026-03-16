@@ -32,6 +32,10 @@ pub async fn handle(
         lyrics_musixmatch,
         lyrics_lrclib,
         lyrics_analyzed,
+        ai_slop_spotify_ai_blocker,
+        ai_slop_soul_over_ai,
+        ai_slop_shlabs,
+        ai_slop_human_made,
     } = UserService::get_stats(app.db(), None).await?;
 
     let user_locales = UserService::count_users_locales(app.db())
@@ -45,6 +49,14 @@ pub async fn handle(
         })
         .collect_vec()
         .join("\n");
+
+    let ai_slop_total =
+        ai_slop_spotify_ai_blocker + ai_slop_soul_over_ai + ai_slop_shlabs + ai_slop_human_made;
+    let ai_slop_spotify_ai_blocker_ratio =
+        100.0 * ai_slop_spotify_ai_blocker as f32 / ai_slop_total as f32;
+    let ai_slop_soul_over_ai_ratio = 100.0 * ai_slop_soul_over_ai as f32 / ai_slop_total as f32;
+    let ai_slop_shlabs_ratio = 100.0 * ai_slop_shlabs as f32 / ai_slop_total as f32;
+    let ai_slop_human_made_ratio = 100.0 * ai_slop_human_made as f32 / ai_slop_total as f32;
 
     let lyrics_found_ratio = 100.0 * lyrics_found as f32 / lyrics_checked as f32;
     let lyrics_genius_ratio = 100.0 * lyrics_genius as f32 / lyrics_found as f32;
@@ -104,6 +116,14 @@ pub async fn handle(
             <b>Locales stats</b>
 
             {user_locales}
+
+            <b>AI Slop Detection</b>
+
+            • Total <code>{ai_slop_total}</code>
+            • Soul Over AI <code>{ai_slop_soul_over_ai} ({ai_slop_soul_over_ai_ratio:.2}%)</code>
+            • Spotify AI Blocker <code>{ai_slop_spotify_ai_blocker} ({ai_slop_spotify_ai_blocker_ratio:.2}%)</code>
+            • SHLabs <code>{ai_slop_shlabs} ({ai_slop_shlabs_ratio:.2}%)</code>
+            • Human Made <code>{ai_slop_human_made} ({ai_slop_human_made_ratio:.2}%)</code>
 
             <blockquote expandable><b>Languages stats:</b>
 
