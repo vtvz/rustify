@@ -118,7 +118,7 @@ impl PrometheusClient {
                 &["provider"],
                 registry
             )
-            .context("Failed to register lyrics_source metric")?,
+            .context("Failed to register ai_slop_detection metric")?,
 
             process_duration: register_histogram_with_registry!(
                 "process_duration_seconds",

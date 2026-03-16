@@ -276,10 +276,13 @@ pub async fn check_ai_slop(
         .is_track_ai(&mut app.redis_conn().await?, track)
         .await?;
 
-    UserService::increase_stats_query(state.user_id())
+    if let Err(err) = UserService::increase_stats_query(state.user_id())
         .ai_slop(ai_detection_result.provider.as_ref())
         .exec(app.db())
-        .await?;
+        .await
+    {
+        tracing::error!(error = ?err, "Failed to increase ai_slop metric");
+    }
 
     if !ai_detection_result.prediction.is_track_ai() {
         return Ok(AISlopCheckResult {
