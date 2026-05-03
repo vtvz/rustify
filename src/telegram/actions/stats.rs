@@ -38,8 +38,13 @@ pub async fn handle(
         lyrics_checked,
         lyrics_profane,
         lyrics_analyzed,
+        ai_slop_spotify_ai_blocker,
+        ai_slop_soul_over_ai,
+        ai_slop_shlabs,
         ..
     } = UserService::get_stats(app.db(), Some(state.user_id())).await?;
+
+    let ai_slop_total = ai_slop_spotify_ai_blocker + ai_slop_soul_over_ai + ai_slop_shlabs;
 
     let all_langs = TrackLanguageStatsService::sum_for_user(app.db(), state.user_id()).await?;
 
@@ -72,6 +77,7 @@ pub async fn handle(
         lyrics_analyzed = lyrics_analyzed,
         ignored = ignored,
         lyrics_profane = lyrics_profane,
+        ai_slop_total = ai_slop_total,
         languages = languages,
     );
 

@@ -15,6 +15,7 @@ use sea_orm::{
 
 use crate::entity::prelude::*;
 use crate::lyrics;
+use crate::services::ai_slop_detection;
 use crate::utils::Clock;
 
 pub struct UserStatsIncreaseQueryBuilder(UpdateMany<UserEntity>);
@@ -46,8 +47,7 @@ impl UserStatsIncreaseQueryBuilder {
         self
     }
 
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn checked_lyrics(mut self, profane: bool, provider: Option<lyrics::Provider>) -> Self {
+    pub fn checked_lyrics(mut self, profane: bool, provider: Option<&lyrics::Provider>) -> Self {
         self.0 = self
             .0
             .col_expr(
@@ -64,6 +64,21 @@ impl UserStatsIncreaseQueryBuilder {
             Some(lyrics::Provider::Musixmatch) => UserColumn::LyricsMusixmatch,
             Some(lyrics::Provider::LrcLib) => UserColumn::LyricsLrcLib,
             None => return self,
+        };
+
+        self.0 = self.0.col_expr(col, Expr::col(col).add(1));
+
+        self
+    }
+
+    pub fn ai_slop(mut self, provider: Option<&ai_slop_detection::Provider>) -> Self {
+        let col = match provider {
+            Some(ai_slop_detection::Provider::SpotifyAIBlocker) => {
+                UserColumn::AISlopSpotifyAIBlocker
+            },
+            Some(ai_slop_detection::Provider::SoulOverAI) => UserColumn::AISlopSoulOverAI,
+            Some(ai_slop_detection::Provider::SHLabs) => UserColumn::AISlopSHLabs,
+            None => UserColumn::AISlopHumanMade,
         };
 
         self.0 = self.0.col_expr(col, Expr::col(col).add(1));
@@ -99,6 +114,10 @@ pub struct UserStats {
     pub lyrics_musixmatch: i64,
     pub lyrics_lrclib: i64,
     pub lyrics_analyzed: i64,
+    pub ai_slop_spotify_ai_blocker: i64,
+    pub ai_slop_soul_over_ai: i64,
+    pub ai_slop_shlabs: i64,
+    pub ai_slop_human_made: i64,
 }
 
 pub struct UserService;
@@ -478,6 +497,34 @@ impl UserService {
                     Expr::val(0).into(),
                 ]),
                 "lyrics_analyzed",
+            )
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::AISlopSpotifyAIBlocker.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
+                "ai_slop_spotify_ai_blocker",
+            )
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::AISlopSoulOverAI.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
+                "ai_slop_soul_over_ai",
+            )
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::AISlopSHLabs.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
+                "ai_slop_shlabs",
+            )
+            .expr_as(
+                Func::coalesce([
+                    UserColumn::AISlopHumanMade.sum().cast_as(bigint()),
+                    Expr::val(0).into(),
+                ]),
+                "ai_slop_human_made",
             )
             .into_model::<UserStats>()
             .one(db)

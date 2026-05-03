@@ -22,8 +22,10 @@ pub struct Model {
     pub name: String,
     pub locale: Locale,
     pub role: Role,
+
     pub removed_playlists: i64,
     pub removed_collection: i64,
+
     pub lyrics_checked: i64,
     pub lyrics_analyzed: i64,
     pub lyrics_genius: i64,
@@ -31,15 +33,27 @@ pub struct Model {
     #[sea_orm(enum_name = "LyricsLrcLib")]
     pub lyrics_lrclib: i64,
     pub lyrics_profane: i64,
+
+    #[sea_orm(enum_name = "AISlopSpotifyAIBlocker")]
+    pub ai_slop_spotify_ai_blocker: i64,
+    #[sea_orm(enum_name = "AISlopSoulOverAI")]
+    pub ai_slop_soul_over_ai: i64,
+    #[sea_orm(enum_name = "AISlopSHLabs")]
+    pub ai_slop_shlabs: i64,
+    #[sea_orm(enum_name = "AISlopHumanMade")]
+    pub ai_slop_human_made: i64,
+
     pub status: Status,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
+
     pub cfg_check_profanity: bool,
     pub cfg_skip_tracks: bool,
     pub cfg_skippage_secs: i64,
     pub cfg_skippage_enabled: bool,
     #[sea_orm(enum_name = "CfgAISlopDetection")]
     pub cfg_ai_slop_detection: AISlopDetection,
+
     pub magic_playlist: Option<String>,
     pub spotify_state: Uuid,
     pub ref_code: Option<String>,
@@ -70,8 +84,10 @@ pub enum Column {
     Name,
     Locale,
     Role,
+
     RemovedPlaylists,
     RemovedCollection,
+
     LyricsChecked,
     LyricsAnalyzed,
     LyricsGenius,
@@ -79,15 +95,27 @@ pub enum Column {
     #[sea_orm(column_name = "lyrics_lrclib")]
     LyricsLrcLib,
     LyricsProfane,
+
+    #[sea_orm(column_name = "ai_slop_spotify_ai_blocker")]
+    AISlopSpotifyAIBlocker,
+    #[sea_orm(column_name = "ai_slop_soul_over_ai")]
+    AISlopSoulOverAI,
+    #[sea_orm(column_name = "ai_slop_shlabs")]
+    AISlopSHLabs,
+    #[sea_orm(column_name = "ai_slop_human_made")]
+    AISlopHumanMade,
+
     Status,
     CreatedAt,
     UpdatedAt,
+
     CfgCheckProfanity,
     CfgSkipTracks,
     CfgSkippageSecs,
     CfgSkippageEnabled,
     #[sea_orm(column_name = "cfg_ai_slop_detection")]
     CfgAISlopDetection,
+
     MagicPlaylist,
     SpotifyState,
     RefCode,
@@ -115,14 +143,22 @@ impl ColumnTrait for Column {
             Self::Name => ColumnType::Text.def(),
             Self::Locale => Locale::db_type(),
             Self::Role => Role::db_type(),
+
             Self::RemovedPlaylists => ColumnType::BigInteger.def(),
             Self::RemovedCollection => ColumnType::BigInteger.def(),
+
             Self::LyricsChecked => ColumnType::BigInteger.def(),
             Self::LyricsAnalyzed => ColumnType::BigInteger.def(),
             Self::LyricsGenius => ColumnType::BigInteger.def(),
             Self::LyricsMusixmatch => ColumnType::BigInteger.def(),
             Self::LyricsLrcLib => ColumnType::BigInteger.def(),
             Self::LyricsProfane => ColumnType::BigInteger.def(),
+
+            Self::AISlopSpotifyAIBlocker => ColumnType::BigInteger.def(),
+            Self::AISlopSoulOverAI => ColumnType::BigInteger.def(),
+            Self::AISlopSHLabs => ColumnType::BigInteger.def(),
+            Self::AISlopHumanMade => ColumnType::BigInteger.def(),
+
             Self::Status => Status::db_type(),
             Self::CreatedAt => ColumnType::DateTime.def(),
             Self::UpdatedAt => ColumnType::DateTime.def(),

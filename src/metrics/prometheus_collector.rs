@@ -34,6 +34,10 @@ pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()>
         lyrics_musixmatch,
         lyrics_lrclib,
         lyrics_analyzed,
+        ai_slop_spotify_ai_blocker,
+        ai_slop_soul_over_ai,
+        ai_slop_shlabs,
+        ai_slop_human_made,
     } = UserService::get_stats(app.db(), None).await?;
 
     let tick_health_status = utils::tick_health().await;
@@ -86,6 +90,27 @@ pub async fn collect(client: &PrometheusClient, app: &App) -> anyhow::Result<()>
         .lyrics_source
         .with_label_values(&["lrclib"])
         .set(lyrics_lrclib);
+
+    client
+        .metrics()
+        .ai_slop_detection
+        .with_label_values(&["soul_over_ai"])
+        .set(ai_slop_soul_over_ai);
+    client
+        .metrics()
+        .ai_slop_detection
+        .with_label_values(&["spotify_ai_blocker"])
+        .set(ai_slop_spotify_ai_blocker);
+    client
+        .metrics()
+        .ai_slop_detection
+        .with_label_values(&["shlabs"])
+        .set(ai_slop_shlabs);
+    client
+        .metrics()
+        .ai_slop_detection
+        .with_label_values(&["human_made"])
+        .set(ai_slop_human_made);
 
     client
         .metrics()

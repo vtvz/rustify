@@ -18,6 +18,7 @@ actions.stats:
     🔍 Analyzed lyrics <code>%{lyrics_analyzed}</code> times
     🙈 You ignored <code>%{ignored}</code> track lyrics
     🤬 <code>%{lyrics_profane}</code> lyrics were considered profane
+    💩 <code>%{ai_slop_total}</code> tracks were detected as AI Slop
 
     <blockquote expandable><b>Languages stats:</b>
     %{languages}</blockquote>
@@ -32,6 +33,7 @@ actions.stats:
     🔍 Проанализировано текстов <code>%{lyrics_analyzed}</code> раз
     🙈 Вы проигнорировали <code>%{ignored}</code> текстов треков
     🤬 <code>%{lyrics_profane}</code> текстов были признаны нецензурными
+    💩 <code>%{ai_slop_total}</code> треков были определены как ИИ шлак
 
     <blockquote expandable><b>Статистика по языкам (названия на английском):</b>
     %{languages}</blockquote>
