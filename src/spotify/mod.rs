@@ -5,7 +5,7 @@ use std::borrow::Cow;
 use std::ops::Deref;
 use std::sync::Arc;
 
-use anyhow::{Context as _, anyhow};
+use anyhow::Context as _;
 use auth::SpotifyAuthService;
 use chrono::{Duration, NaiveDate};
 use deadpool_redis::redis::AsyncCommands as _;
@@ -378,7 +378,21 @@ impl Manager {
                 txn.commit().await?;
             }
 
-            return Err(anyhow!("Token is invalid"));
+            // Keep the spotify_auth row in the database, but drop the in-memory
+            // token so the state behaves as unauthenticated and handlers prompt
+            // the user to /login instead of failing before any reply is sent
+            *instance
+                .get_token()
+                .lock()
+                .await
+                .expect("Cannot acquire lock") = None;
+
+            tracing::warn!(
+                %user_id,
+                "Spotify refresh token is invalid, continuing with unauthenticated client"
+            );
+
+            return Ok(());
         }
 
         let token = instance
@@ -410,6 +424,7 @@ impl Manager {
         }
     }
 
+    #[tracing::instrument(skip_all, fields(%user_id))]
     pub async fn for_user(&self, db: &DbConn, user_id: &str) -> anyhow::Result<AuthCodeSpotify> {
         let mut instance = self.spotify.clone();
         instance.token = Arc::default();
