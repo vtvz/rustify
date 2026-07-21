@@ -13,12 +13,14 @@ use teloxide::dispatching::dialogue::RedisStorage as TeloxideRedisStorage;
 use teloxide::dispatching::dialogue::serializer::Bincode;
 use teloxide::requests::RequesterExt as _;
 
+use crate::entity::prelude::UserStatus;
 use crate::metrics::influx::InfluxClient;
 use crate::metrics::prometheus::PrometheusClient;
 use crate::queue::QueueManager;
 use crate::services::{AISlopDetectionService, SongLinkService, UserService};
+use crate::spotify::TokenState;
 use crate::user::UserState;
-use crate::{lyrics, profanity, spotify};
+use crate::{lyrics, profanity, spotify, telegram};
 
 pub struct App {
     spotify_manager: spotify::Manager,
@@ -372,8 +374,21 @@ impl App {
     }
 
     pub async fn user_state(&'static self, user_id: &str) -> anyhow::Result<UserState> {
-        let spotify = self.spotify_manager.for_user(&self.db, user_id).await?;
         let (user, newly_created) = UserService::upsert_by_id(self.db(), user_id).await?;
+        let (spotify, token_state) = self.spotify_manager.for_user(&self.db, user_id).await?;
+
+        if matches!(token_state, TokenState::Invalid)
+            && user.status != UserStatus::SpotifyTokenInvalid
+        {
+            UserService::set_status(self.db(), user_id, UserStatus::SpotifyTokenInvalid).await?;
+
+            // NOTE: Yes, it's a hack. I don't know how to handle invalid Spotify token in the right way
+            // with error_handler module
+            if let Err(err) = telegram::notify_token_invalid(self, &user).await {
+                tracing::error!(err = ?err, %user_id, "Failed to notify about invalid Spotify token");
+            }
+        }
+
         let state = UserState::new(user, newly_created, spotify);
 
         Ok(state)

@@ -29,6 +29,10 @@ pub async fn check(app: &'static App, user_id: &str) -> anyhow::Result<CheckUser
         Ok(state) => state,
     };
 
+    if !state.is_spotify_authed().await {
+        return Ok(CheckUserResult::Complete);
+    }
+
     let playing = state.spotify().await.current_playing_wrapped().await;
 
     let (track, context) = match playing {
