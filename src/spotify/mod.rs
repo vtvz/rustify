@@ -382,7 +382,7 @@ impl Manager {
                 .await
                 .expect("Cannot acquire lock") = None;
 
-            tracing::warn!(
+            tracing::debug!(
                 %user_id,
                 "Spotify refresh token is invalid, continuing with unauthenticated client"
             );
