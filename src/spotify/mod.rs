@@ -24,11 +24,9 @@ use rspotify::model::{
     TrackId,
 };
 use rspotify::{AuthCodeSpotify, ClientError, ClientResult, Token, scopes};
-use sea_orm::{DbConn, TransactionTrait as _};
+use sea_orm::DbConn;
 use teloxide::utils::html;
 
-use crate::entity::prelude::*;
-use crate::services::UserService;
 use crate::user::UserState;
 
 pub struct ShortPlaylist {
@@ -300,6 +298,11 @@ impl From<ClientError> for CurrentlyPlaying {
     }
 }
 
+pub enum TokenState {
+    Valid,
+    Invalid,
+}
+
 pub struct Manager {
     spotify: AuthCodeSpotify,
 }
@@ -354,7 +357,7 @@ impl Manager {
         db: &DbConn,
         user_id: &str,
         instance: &AuthCodeSpotify,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<TokenState> {
         let should_reauth = instance
             .get_token()
             .lock()
@@ -364,20 +367,12 @@ impl Manager {
             .is_some_and(Token::is_expired);
 
         if !should_reauth {
-            return Ok(());
+            return Ok(TokenState::Valid);
         }
 
         let res = instance.refresh_token().await;
 
         if !Self::is_token_valid(res).await? {
-            {
-                let txn = db.begin().await?;
-
-                UserService::set_status(&txn, user_id, UserStatus::SpotifyTokenInvalid).await?;
-
-                txn.commit().await?;
-            }
-
             // Keep the spotify_auth row in the database, but drop the in-memory
             // token so the state behaves as unauthenticated and handlers prompt
             // the user to /login instead of failing before any reply is sent
@@ -392,7 +387,7 @@ impl Manager {
                 "Spotify refresh token is invalid, continuing with unauthenticated client"
             );
 
-            return Ok(());
+            return Ok(TokenState::Invalid);
         }
 
         let token = instance
@@ -406,7 +401,7 @@ impl Manager {
             SpotifyAuthService::set_token(db, user_id, token).await?;
         }
 
-        Ok(())
+        Ok(TokenState::Valid)
     }
 
     async fn is_token_valid(mut res: ClientResult<()>) -> anyhow::Result<bool> {
@@ -425,7 +420,11 @@ impl Manager {
     }
 
     #[tracing::instrument(skip_all, fields(%user_id))]
-    pub async fn for_user(&self, db: &DbConn, user_id: &str) -> anyhow::Result<AuthCodeSpotify> {
+    pub async fn for_user(
+        &self,
+        db: &DbConn,
+        user_id: &str,
+    ) -> anyhow::Result<(AuthCodeSpotify, TokenState)> {
         let mut instance = self.spotify.clone();
         instance.token = Arc::default();
         let token = SpotifyAuthService::get_token(db, user_id).await?;
@@ -436,9 +435,9 @@ impl Manager {
             .await
             .expect("Cannot acquire lock") = token;
 
-        Self::token_refresh(db, user_id, &instance).await?;
+        let token_state = Self::token_refresh(db, user_id, &instance).await?;
 
-        Ok(instance)
+        Ok((instance, token_state))
     }
 
     pub async fn get_authorize_url(&self, state: &UserState) -> anyhow::Result<String> {
