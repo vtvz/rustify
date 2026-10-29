@@ -188,7 +188,11 @@ impl Manager {
             };
         }
 
-        let priority = [Provider::LrcLib, Provider::Genius, Provider::Musixmatch];
+        let priority = [
+            Provider::LrcLib,
+            Provider::Genius,
+            // Provider::Musixmatch
+        ];
 
         for provider in priority {
             match provider {
